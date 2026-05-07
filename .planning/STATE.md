@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-07T07:30:00.000Z"
+last_updated: "2026-05-07T07:45:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
-  completed_plans: 1
-  percent: 2
+  completed_plans: 2
+  percent: 5
 ---
 
 # State: Claude Alert Bot
@@ -25,23 +25,23 @@ progress:
 ## Current Position
 
 Phase: 01 (foundation) — EXECUTING
-Plan: 2 of 7 (next: 01-01 Xcode skeleton)
+Plan: 3 of 7 (next: 01-02 Reporter shell)
 
 - **Milestone:** v1
-- **Phase:** 01 — Foundation, Wave 0 complete
-- **Plan:** 01-00 complete (validation harness scaffolded)
+- **Phase:** 01 — Foundation, Wave 1 in progress
+- **Plan:** 01-01 complete (Xcode project skeleton + two targets)
 - **Status:** Executing Phase 01
-- **Progress:** `[░░░░░░] 0/6 phases complete (1/7 plans in Phase 01)`
+- **Progress:** `[░░░░░░] 0/6 phases complete (2/7 plans in Phase 01)`
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
 | Phases complete | 0 / 6 |
-| Plans complete | 1 / 7 in Phase 01 |
-| Requirements covered | 0 / 53 (Wave 0 ships harness only — no production reqs satisfied yet) |
+| Plans complete | 2 / 7 in Phase 01 |
+| Requirements covered | 1 / 53 (DIST-05 satisfied by LSUIElement=true Info.plist; production-path requirements still pending) |
 | Phase branch | master (no branching strategy per config.json) |
-| Last plan duration | ~5 min (01-00, validation harness scaffold) |
+| Last plan duration | ~10 min (01-01, Xcode skeleton via xcodegen) |
 
 ## Accumulated Context
 
@@ -78,12 +78,14 @@ None.
 
 ## Session Continuity
 
-- **Last action:** Completed Plan 01-00 (Wave 0 validation harness). `scripts/verify-phase-1.sh` shipped at commit `8c93620`; runs `--quick` to a `Results: 1 pass, 3 fail` baseline (expected — Wave 1+ artifacts not yet built).
+- **Last action:** Completed Plan 01-01 (Wave 1 Xcode project skeleton). Two-target project (App + cab-test) generated via xcodegen; commits `8f04e24` (D-12 dirs + .gitignore) and `1a01531` (project.yml + Info.plist + main.swift placeholders + project.pbxproj + shared scheme). `bash scripts/verify-phase-1.sh --quick` now reports `[PASS] 1-01-01`, `[PASS] 1-01-02` (the two rows this plan owned).
 - **Files written this session:**
-  - `scripts/verify-phase-1.sh` (created)
-  - `.planning/phases/01-foundation/01-00-SUMMARY.md` (created)
-  - `.planning/STATE.md` (this file)
-- **Next action:** Execute Plan 01-01 (Xcode project skeleton, Wave 1).
+  - `App/Info.plist`, `App/main.swift`, `CabTest/main.swift` (created)
+  - `project.yml`, `.gitignore` (created)
+  - `ClaudeAlertBot.xcodeproj/` including `project.pbxproj`, shared `ClaudeAlertBot.xcscheme`, `project.xcworkspace/contents.xcworkspacedata` (created)
+  - `.planning/phases/01-foundation/01-01-SUMMARY.md` (created)
+  - `.planning/STATE.md`, `.planning/ROADMAP.md` (updated — plan progress)
+- **Next action:** Execute Plan 01-02 (Reporter shell script — POSIX sh, exit 0 always, AF_UNIX nc transport, hook.log debug).
 
 ---
 *State initialized: 2026-05-07*

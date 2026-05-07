@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		79F43300AA53108A7C4C99B8 /* cab-test in Resources */ = {isa = PBXBuildFile; fileRef = 9A4CF07859800DE5173D901A /* cab-test */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C2373C8865C769E19E6F3B98 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85C8275D946E935468FEC149 /* main.swift */; };
+		DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 422669922C84673FA026FD1E /* HookEvent.swift */; };
 		E80832057B78D1BCC2CB7848 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7151E148769D039124B77B2F /* main.swift */; };
 /* End PBXBuildFile section */
 
@@ -23,6 +24,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		422669922C84673FA026FD1E /* HookEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookEvent.swift; sourceTree = "<group>"; };
 		4EFE56B7A8F24FC8FDBB7726 /* ClaudeAlertBot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeAlertBot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7151E148769D039124B77B2F /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		85C8275D946E935468FEC149 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
@@ -43,6 +45,7 @@
 		3B63D51CE34619A76B883906 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				422669922C84673FA026FD1E /* HookEvent.swift */,
 				C52574E53A8FD6995A80B23B /* Info.plist */,
 				85C8275D946E935468FEC149 /* main.swift */,
 			);
@@ -190,6 +193,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */,
 				C2373C8865C769E19E6F3B98 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

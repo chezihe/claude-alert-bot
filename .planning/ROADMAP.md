@@ -46,7 +46,7 @@ Plans:
 - [x] 01-02-PLAN.md — Wave 1: Reporter shell script (POSIX sh, exit 0 always, AF_UNIX nc transport, hook.log debug)
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 01-03-PLAN.md — Wave 2: App listener (NWListener AF_UNIX, HookEvent schema, AppDelegate, cab-test CLI)
+- [x] 01-03-PLAN.md — Wave 2: App listener (NWListener AF_UNIX, HookEvent schema, AppDelegate, cab-test CLI)
 - [ ] 01-04-PLAN.md — Wave 2: scripts/dev-install-hook.sh (D-04 user-data copy + idempotent ~/.claude/settings.json merge)
 
 **Wave 3** *(blocked on Wave 2 completion)*

@@ -9,7 +9,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Hook (이벤트 수신)
 
-- [ ] **HOOK-01**: Reporter shell script가 Claude Code의 `Stop` hook으로 실행되어 JSON 이벤트를 stdin으로 받아 App에 전달한다
+- [x] **HOOK-01**: Reporter shell script가 Claude Code의 `Stop` hook으로 실행되어 JSON 이벤트를 stdin으로 받아 App에 전달한다
 - [ ] **HOOK-02**: Reporter shell script가 Claude Code의 `UserPromptSubmit` hook으로도 실행되어 작업 시작 시점을 App에 전달한다
 - [ ] **HOOK-03**: Reporter는 항상 `exit 0`으로 종료한다 (Claude Code가 hook 실패로 멈추거나 무한 루프에 빠지지 않도록)
 - [ ] **HOOK-04**: Reporter가 `session_id`, `cwd`, `ITERM_SESSION_ID`, `tty`, `CLAUDE_PROJECT_DIR`, `ppid`, 타임스탬프를 캡처한다
@@ -18,9 +18,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### IPC (App ↔ Hook 통신)
 
-- [ ] **IPC-01**: App이 `Network.framework`의 `NWListener`로 AF_UNIX 소켓 서버를 띄우고 hook의 JSON 이벤트를 수신한다
-- [ ] **IPC-02**: 소켓 경로는 사용자 home 디렉토리 하위 (예: `~/Library/Application Support/ClaudeAlertBot/sock`) 를 사용한다
-- [ ] **IPC-03**: App 다중 인스턴스 실행을 방지한다 (소켓 점유 검사 등)
+- [x] **IPC-01**: App이 `Network.framework`의 `NWListener`로 AF_UNIX 소켓 서버를 띄우고 hook의 JSON 이벤트를 수신한다
+- [x] **IPC-02**: 소켓 경로는 사용자 home 디렉토리 하위 (예: `~/Library/Application Support/ClaudeAlertBot/sock`) 를 사용한다
+- [x] **IPC-03**: App 다중 인스턴스 실행을 방지한다 (소켓 점유 검사 등)
 
 ### Session (세션 추적)
 
@@ -154,15 +154,15 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HOOK-01 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693`; e2e gated by Plan 01-03 listener) |
+| HOOK-01 | Phase 1 | Satisfied (e2e verified Plan 01-03: Reporter `1458693` → listener `04d1004` → OSLog ingress with reporter-supplied session_id) |
 | HOOK-02 | Phase 2 | Pending |
-| HOOK-03 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693`; 100x burst PASS; e2e gated by Plan 01-03) |
-| HOOK-04 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693` — D-08 envelope all 10 fields; e2e gated by Plan 01-03) |
-| HOOK-05 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693` — silent no-op when socket missing; e2e gated by Plan 01-03) |
-| HOOK-06 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693` — hook.log via O_APPEND; e2e gated by Plan 01-03) |
-| IPC-01 | Phase 1 | Pending |
-| IPC-02 | Phase 1 | Pending |
-| IPC-03 | Phase 1 | Pending |
+| HOOK-03 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693`; 100x burst PASS; full Phase 1 verification in 01-06) |
+| HOOK-04 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693` — D-08 envelope all 10 fields; full verification in 01-06) |
+| HOOK-05 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693` — silent no-op when socket missing; full verification in 01-06) |
+| HOOK-06 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693` — hook.log via O_APPEND; full verification in 01-06) |
+| IPC-01 | Phase 1 | Satisfied (Plan 01-03 commit `04d1004` — NWListener.start with NWEndpoint.unix; ingress decode verified e2e via cab-test and Reporter) |
+| IPC-02 | Phase 1 | Satisfied (Plan 01-03 commit `04d1004` — SocketPaths.socketPath = ~/Library/Application Support/ClaudeAlertBot/sock; sun_path validator) |
+| IPC-03 | Phase 1 | Satisfied (Plan 01-03 commit `04d1004` — D-09 bind exclusivity → NSApp.terminate(nil) on .failed; Pattern 6 stale-socket reclaim) |
 | SESS-01 | Phase 2 | Pending |
 | SESS-02 | Phase 2 | Pending |
 | SESS-03 | Phase 2 | Pending |

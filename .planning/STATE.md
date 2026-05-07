@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-07T07:55:00.000Z"
+last_updated: "2026-05-07T08:30:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
-  completed_plans: 3
-  percent: 7
+  completed_plans: 4
+  percent: 10
 ---
 
 # State: Claude Alert Bot
@@ -25,23 +25,23 @@ progress:
 ## Current Position
 
 Phase: 01 (foundation) — EXECUTING
-Plan: 4 of 7 (next: 01-03 App listener — Wave 2)
+Plan: 5 of 7 (next: 01-04 dev-install-hook.sh — Wave 2)
 
 - **Milestone:** v1
-- **Phase:** 01 — Foundation, Wave 1 complete; Wave 2 ready to start
-- **Plan:** 01-02 complete (Reporter/cab-report.sh — POSIX sh hook reporter)
+- **Phase:** 01 — Foundation, Waves 1+2 (App listener) complete
+- **Plan:** 01-03 complete (App + cab-test — NWListener AF_UNIX + D-08 envelope ingest)
 - **Status:** Executing Phase 01
-- **Progress:** `[░░░░░░] 0/6 phases complete (3/7 plans in Phase 01)`
+- **Progress:** `[░░░░░░] 0/6 phases complete (4/7 plans in Phase 01)`
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
 | Phases complete | 0 / 6 |
-| Plans complete | 3 / 7 in Phase 01 |
-| Requirements covered | 1 / 53 (DIST-05 satisfied by LSUIElement=true Info.plist; HOOK-01/03/04/05/06 implementation-side covered by Reporter/cab-report.sh but verifier-checked end-to-end only when Plan 01-03's listener lands) |
+| Plans complete | 4 / 7 in Phase 01 |
+| Requirements covered | 5 / 53 (DIST-05 + IPC-01 + IPC-02 + IPC-03 + HOOK-01 e2e — Reporter→Listener confirmed; HOOK-03/04/05/06 implementation-side covered by Reporter/cab-report.sh and now verifier-checked end-to-end) |
 | Phase branch | master (no branching strategy per config.json) |
-| Last plan duration | ~10 min (01-02, Reporter shell) |
+| Last plan duration | ~25 min (01-03, App + cab-test) |
 
 ## Accumulated Context
 
@@ -78,16 +78,20 @@ None.
 
 ## Session Continuity
 
-- **Last action:** Completed Plan 01-02 (Wave 1 Reporter shell). `Reporter/cab-report.sh` is verbatim RESEARCH §"POSIX sh Reporter" + python3 `-S` cold-start trim; commit `1458693`. `bash scripts/verify-phase-1.sh --quick` now reports `[PASS] 1-01-01`, `[PASS] 1-01-02`, `[PASS] 1-03-04`, `[PASS] 1-07-01` (4/4 quick rows green). Full-suite reveals one expected red: `1-03-03` measures 64.8 ms (budget 50 ms) — documented as a measurement deviation, not a behavioral defect; resolution path delegated to Plan 01-06.
+- **Last action:** Completed Plan 01-03 (Wave 2 App listener + cab-test). 4 commits: `02291a4` (HookEvent), `04d1004` (SocketPaths + HookListener), `0a2056a` (AppDelegate + main.swift), `2eb166b` (cab-test embed into Contents/MacOS/). E2E verified: socket binds at D-10 path, mode 0700/0600, "listener bound" in OSLog, cab-test → ingress with `cab-test-<uuid>` session_id, Reporter/cab-report.sh → ingress with reporter-supplied session_id, single-instance lock works (verified via direct binary launch — second instance .failed → NSApp.terminate).
 - **Files written this session:**
-  - `Reporter/cab-report.sh` (created, 85 lines, mode 0755)
-  - `.planning/phases/01-foundation/01-02-SUMMARY.md` (created)
-  - `.planning/STATE.md`, `.planning/ROADMAP.md` (updated — plan progress)
-- **Next action:** Execute Plan 01-03 (Wave 2 App listener — NWListener AF_UNIX, HookEvent schema, AppDelegate, cab-test CLI). Wave 2 unblocked because Wave 1's two plans (01-01 + 01-02) are both complete.
+  - `App/HookEvent.swift`, `App/SocketPaths.swift`, `App/HookListener.swift`, `App/AppDelegate.swift` (created)
+  - `App/main.swift`, `CabTest/main.swift` (replaced placeholders)
+  - `project.yml` (postBuildScripts: cab-test → Contents/MacOS/)
+  - `.planning/phases/01-foundation/01-03-SUMMARY.md` (created)
+  - `.planning/STATE.md`, `.planning/ROADMAP.md`, `.planning/REQUIREMENTS.md` (updated — plan progress)
+- **Next action:** Execute Plan 01-04 (Wave 2 dev-install-hook.sh — copy cab-report.sh into user-data path + print/append `~/.claude/settings.json` Stop hook block).
 
-### Open follow-up for Plan 01-06
+### Open follow-ups for Plan 01-06
 
-- 1-03-03 latency budget overrun: harness `verify_1_03_03` enforces ≤ 0.050 s but `/usr/bin/python3` cold-start makes a clean Reporter run land at ~65 ms median / 138 ms p95. Adjudicate in Plan 01-06: revise budget upward (recommended 0.150 s), reclassify to manual, or accept FAIL as informational. Detailed numbers in `01-02-SUMMARY.md` "Measurement deviation" section.
+- **1-03-03 latency budget overrun** (carried from Plan 02): harness `verify_1_03_03` enforces ≤ 0.050 s but `/usr/bin/python3` cold-start makes Reporter land at ~65 ms median / 138 ms p95. Recommendation: revise budget to 0.150 s.
+- **1-04-01 / 1-02-01 cold-run sequencing** (NEW from Plan 03): the two rows depend on the app being already running, but verify-phase-1.sh's verify_1_05_01 launches and tears down the app via its own trap. When the suite is run cold, 1-02-01 and 1-04-01 always FAIL because no app is up. Recommended fix: launch the app once in a setup_ipc_tier function and tear down once in teardown_ipc_tier.
+- **1-05-01 `pgrep -fc` unsupported** (NEW from Plan 03): BSD `pgrep` does not implement `-c` (count). The harness reads `count=$(pgrep -fc ClaudeAlertBot 2>/dev/null || echo 0)` which silently fails. Replace with `count=$(pgrep -f ClaudeAlertBot | wc -l | tr -d ' ')`.
 
 ---
 *State initialized: 2026-05-07*

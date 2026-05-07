@@ -94,7 +94,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **DIST-02**: 릴리즈 산출물은 `create-dmg`로 빌드된 `.dmg`이다
 - [ ] **DIST-03**: README가 macOS 14 / 15+ 별 Gatekeeper 우회 절차를 정확히 안내한다 (System Settings → Privacy & Security → Open Anyway 경로 포함)
 - [ ] **DIST-04**: DMG 안에 `bypass-gatekeeper.command` 헬퍼가 포함되어 `xattr -cr`로 quarantine을 제거할 수 있다
-- [ ] **DIST-05**: App이 accessory 모드 (`LSUIElement=true`) 로 실행되어 Dock 아이콘 / 메뉴바 항목이 보이지 않는다
+- [x] **DIST-05**: App이 accessory 모드 (`LSUIElement=true`) 로 실행되어 Dock 아이콘 / 메뉴바 항목이 보이지 않는다
 - [ ] **DIST-06**: 신선한 macOS (테스트 사용자 계정) 에서 .dmg 다운 → 드래그 → 1회 우회 → 정상 동작이 검증된다
 
 ## v2 Requirements
@@ -206,7 +206,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | DIST-02 | Phase 6 | Pending |
 | DIST-03 | Phase 6 | Pending |
 | DIST-04 | Phase 6 | Pending |
-| DIST-05 | Phase 1 | Pending |
+| DIST-05 | Phase 1 | Complete |
 | DIST-06 | Phase 6 | Pending |
 
 **Coverage:**

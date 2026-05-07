@@ -64,7 +64,34 @@ Plans:
   4. Settings (threshold seconds, sound on/off, widget corner + offset) change behavior immediately, persist across app restart, and the "Test notification" button surfaces the widget and plays the sound on demand.
   5. Killing and restarting the app while a completed-but-unclicked alert is pending re-renders that alert from `sessions.json`; an in-flight session older than 6 hours does not.
   6. When a Stop event has no matching UserPromptSubmit (start lost), the configured fallback policy (default: alert with "?" duration) is applied — never silently dropped.
-**Plans:** TBD
+**Plans:** 12 plans
+Plans:
+**Wave 0** *(parallel — pre-implementation)*
+- [ ] 02-00-PLAN.md — Test scaffold: XCTest target + verify-phase-2.sh skeleton + CabTest argv extension
+- [ ] 02-01-PLAN.md — NSPopover composability spike (Pattern 8 vs 8a) — checkpoint:decision
+
+**Wave 1** *(parallel; blocked on 02-00 only for verifier scaffold)*
+- [ ] 02-02-PLAN.md — D2-33 Korean NSAppleEventsUsageDescription + D2-36 PermissionDeepLink helper
+- [ ] 02-03-PLAN.md — Domain models: SessionRecord (Codable), SettingsStore (@AppStorage), ProjectName, SocketPaths.sessionsJSONPath
+
+**Wave 2** *(parallel)*
+- [ ] 02-04-PLAN.md — SessionRegistry actor + SessionStore atomic persistence (SESS-01..04, THR-01/02, AUD-01)
+- [ ] 02-05-PLAN.md — AppleScriptHelper actor (compile-once, 1s timeout, error classification, state mirror)
+
+**Wave 3** *(parallel)*
+- [ ] 02-06-PLAN.md — NotificationOrchestrator (@MainActor) + SoundPlayer (AVAudioPlayer) + WidgetControllerProtocol
+- [ ] 02-07-PLAN.md — FloatingWidgetPanel (NSPanel subclass) + WindowController + WidgetIconView SwiftUI + positioning
+
+**Wave 4** *(parallel)*
+- [ ] 02-08-PLAN.md — PopoverContentView + PopoverRowView + WidgetPopoverController (topology per 02-01 spike verdict)
+- [ ] 02-09-PLAN.md — WakeObserver + WorkspaceFrontmostObserver + SessionGCTimer (SESS-04 Pattern 6 triple-trigger)
+
+**Wave 5**
+- [ ] 02-10-PLAN.md — SettingsView Form + PermissionBannerView + D2-35 Path A trigger (.onAppear → triggerPermissionPrompt)
+
+**Wave 6** *(integration + e2e — blocked on all)*
+- [ ] 02-11-PLAN.md — AppDelegate boot order (Pitfall #11) + HookListener.ingest dispatch + SC#1..6 verifier rows + manual checkpoint + 02-VERIFICATION.md
+
 **UI hint:** yes
 
 ### Phase 3: Click-to-iTerm2
@@ -125,7 +152,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 7/7 | Complete (phase_gate: green) | 2026-05-07 |
-| 2. Alert Loop | 0/0 | Not started | - |
+| 2. Alert Loop | 0/12 | Planned | - |
 | 3. Click-to-iTerm2 | 0/0 | Not started | - |
 | 4. Multi-Session UX | 0/0 | Not started | - |
 | 5. Hook Installer & Onboarding | 0/0 | Not started | - |

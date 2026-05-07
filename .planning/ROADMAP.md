@@ -38,7 +38,20 @@ Claude Code 사용자가 자리를 비웠을 때, 길게 걸린 작업의 완료
   3. The built `.app` bundle reports `Signature=adhoc` under `codesign -dv --verbose=4` and launches without `cs_invalid_page` errors on Apple Silicon.
   4. After launch the app shows no Dock icon, no menu-bar item, no Cmd-Tab entry; a second launch attempt is blocked because the Unix-domain socket is already held.
   5. The file `~/Library/Logs/ClaudeAlertBot/hook.log` accumulates a debug record for every hook fire (env snapshot, PPID chain, tty), including fires that happened while the app was down.
-**Plans:** TBD
+**Plans:** 7 plans
+Plans:
+**Wave 1**
+- [ ] 01-00-PLAN.md — Wave 0: scripts/verify-phase-1.sh validation harness scaffold
+- [ ] 01-01-PLAN.md — Wave 1: Xcode project skeleton (App + cab-test targets, Info.plist with LSUIElement)
+- [ ] 01-02-PLAN.md — Wave 1: Reporter shell script (POSIX sh, exit 0 always, AF_UNIX nc transport, hook.log debug)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 01-03-PLAN.md — Wave 2: App listener (NWListener AF_UNIX, HookEvent schema, AppDelegate, cab-test CLI)
+- [ ] 01-04-PLAN.md — Wave 2: scripts/dev-install-hook.sh (D-04 user-data copy + idempotent ~/.claude/settings.json merge)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 01-05-PLAN.md — Wave 3: scripts/build.sh (xcodebuild archive + per-Mach-O ad-hoc codesign + verification)
+- [ ] 01-06-PLAN.md — Wave 3: e2e verify-phase-1.sh wiring + 01-VERIFICATION.md sign-off (with manual checkpoint)
 
 ### Phase 2: Alert Loop
 **Goal:** Long Claude turns produce a persistent, focus-safe floating widget that survives until clicked. Settings persist, sound plays once, and the start/stop correlation is robust enough to compute elapsed time against a configurable threshold.
@@ -110,7 +123,7 @@ Claude Code 사용자가 자리를 비웠을 때, 길게 걸린 작업의 완료
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/0 | Not started | - |
+| 1. Foundation | 0/7 | Planned | - |
 | 2. Alert Loop | 0/0 | Not started | - |
 | 3. Click-to-iTerm2 | 0/0 | Not started | - |
 | 4. Multi-Session UX | 0/0 | Not started | - |

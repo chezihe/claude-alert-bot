@@ -1107,37 +1107,43 @@ struct ClaudeAlertBotApp: App {
 | A8 | NSTrackingArea(.activeAlways)가 LSUIElement 앱 + 비-activating panel에서 mouseEntered/Exited를 수신 | Pattern 8 (Wave 0 spike) | 중간 — fallback: SwiftUI .onHover 시도. 둘 다 실패 시 timer-based polling |
 | A9 | `NSScreen.safeAreaInsets`가 노치 없는 디스플레이에서 모두 0 반환 | Pattern 9 | 낮음 — Apple 문서 명시 |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **D2-18 Focus/DnD 자동 음소거 — public API 부재**
    - What we know: `NSWorkspace.shared.focusStatus`는 macOS 공개 API가 아님. iOS/iPadOS의 `INFocusStatusCenter`는 macOS에 없음. private darwin notification 경로(`com.apple.donotdisturbActive`)는 신뢰성/공개성 부족.
    - What's unclear: 사용자 의도가 "Focus/DnD 자동 무음" 였는지 vs. "사운드 토글 + 사용자가 직접 끔" 만으로 충분한지.
    - Recommendation: discuss-phase round 2에서 사용자 surface. Phase 2는 우선 path A (사용자 토글 단일 권한)로 진행 가정.
+   - **RESOLVED:** D2-18 RETRACTed in CONTEXT.md (commit 0e0b441) — public API does not exist; sound 재생은 사용자 사운드 토글 단일 권한으로 결정 (D2-19). Focus/DnD 자동 음소거는 Phase 2 범위에서 제외.
 
 2. **D2-35 첫 launch 권한 trigger UX**
    - What we know: App 첫 실행 직후 cheap-query → macOS 권한 다이얼로그가 사용자 컨텍스트 없이 등장.
    - What's unclear: 사용자가 의도한 trigger 시점이 정말 "처음 실행 즉시"인지, 아니면 "첫 Settings 열기" / "첫 hook 도착" 인지.
    - Recommendation: discuss-phase round 2 surface. Pitfall #3 (Apple Events deny rate)가 직접 결정 변수.
+   - **RESOLVED:** D2-35 hybrid locked in CONTEXT.md (commit 0e0b441) — Path A (Settings 첫 열림 trigger) implemented in plan 02-10 SettingsView.onAppear; Path B (첫 Stop hook lazy trigger) implemented in plan 02-11 HookListener dispatch. 사용자 컨텍스트 안에서 다이얼로그 등장.
 
 3. **NSPopover composability with `.nonactivatingPanel`**
    - What we know: 다수 보고가 NSPopover focus 동작 결함을 시사.
    - What's unclear: `.transient` + read-only contentView 조합에서 LSUIElement 안정성 정확한 행동.
    - Recommendation: Wave 0 spike (1-2시간 prototype). 결과에 따라 Pattern 8 vs 8a 선택.
+   - **RESOLVED:** D2-38 Wave 0 spike locked in CONTEXT.md (commit 0e0b441) — plan 02-01 = spike + checkpoint, 결과를 plan 02-08의 popover topology 결정으로 사용. Pattern 8 (NSPopover `.transient`) primary; Pattern 8a (custom NSWindow popover) as documented fallback.
 
 4. **Phase 1 V-2 follow-up — listener boot ↔ SessionRegistry boot race**
    - What we know: STATE.md에 Phase-2-prep owning으로 명시.
    - What's unclear: 실 race window 크기 (μs ~ ms).
    - Recommendation: AppDelegate boot 순서 (Pitfall #11) 명시 + cab-test에서 boot-직후-1ms fake event burst test.
+   - **RESOLVED:** Plan 02-11 AppDelegate boot order (Pitfall #11) — `await SessionRegistry.shared.restore()`가 `listener.start()` 이전에 동일 MainActor Task 안에서 실행되어 race window 닫힘. boot smoke + 02-11-99 Phase 1 회귀가 가드.
 
 5. **macOS 14/15/26 Privacy_Automation deep link 행동 차이**
    - What we know: Sequoia URL 변경됨 + 일부 anchor가 OS별로 다름.
    - What's unclear: 정확히 어떤 macOS 버전에서 어떤 URL이 안전한가.
    - Recommendation: Pattern 12의 순차 fallback 패턴으로 강건. Wave 0에서 dev 머신 (실 macOS 버전) 1회 검증.
+   - **RESOLVED:** D2-36 Pattern 12 sequential fallback locked. Plan 02-02가 `PermissionDeepLink` helper 구현 — Sequoia anchor URL 시도 → 실패 시 일반 Privacy & Security 페이지로 fallback. Wave 0 spike 4가 dev host 1회 검증.
 
 6. **위젯 click handler의 actor await 완료 전 UI 상태**
    - What we know: 위젯 클릭 → actor.clearOne(...) await 완료 후 NotificationOrch가 refreshQueueState로 큐 비면 widget orderOut.
    - What's unclear: await 동안 사용자가 다시 클릭하면? (debounce는 Phase 3 JUMP-05의 영역; Phase 2 dismiss는 idempotent라 두 번 제거해도 안전 — 그러나 click 핸들러 시각 상태 검토 필요)
    - Recommendation: Phase 2는 click 핸들러에서 즉시 row를 popover에서 시각적으로 fade out + actor await 결과로 최종 상태 동기화. visual-vs-state 분리.
+   - **RESOLVED:** Plan 02-08 idempotent click handler — row 즉시 fade-out (시각) + async actor.clearOne await (state). 두 번 클릭해도 actor가 idempotent라 안전. visual-vs-state 분리 명시.
 
 ## Environment Availability
 
@@ -1157,70 +1163,8 @@ struct ClaudeAlertBotApp: App {
 
 ## Validation Architecture
 
-(workflow.nyquist_validation = true — section 포함 필수)
-
-### Test Framework
-
-| Property | Value |
-|----------|-------|
-| Framework | XCTest (macOS 14 SDK 내장) + bash integration (`scripts/verify-phase-2.sh`) |
-| Config file | `ClaudeAlertBot.xcodeproj/xcshareddata/xcschemes/ClaudeAlertBotTests.xcscheme` (NEW Wave 0) |
-| Quick run command | `xcodebuild test -scheme ClaudeAlertBotTests -destination 'platform=macOS'` |
-| Full suite command | `bash scripts/verify-phase-2.sh` (XCTest + boot smoke + e2e hook simulation) |
-
-### Phase Requirements → Test Map
-
-| Req ID | Behavior | Test Type | Automated Command | File Exists? |
-|--------|----------|-----------|-------------------|-------------|
-| HOOK-02 | Reporter argv "user_prompt_submit" → envelope `event="user_prompt_submit"` 수신 | integration | `bash scripts/verify-phase-2.sh ::hook02_user_prompt_submit` | ❌ Wave 0 |
-| SESS-01 | actor isolation — 100 concurrent ingest 시 race 없음 | unit | `xcodebuild test -only-testing:ClaudeAlertBotTests/SessionRegistryConcurrencyTests` | ❌ Wave 0 |
-| SESS-02 | start→stop 경과시간 정확 (±100ms) | unit | `xcodebuild test -only-testing:ClaudeAlertBotTests/SessionRegistryElapsedTests` | ❌ Wave 0 |
-| SESS-03 | sessions.json save → kill -9 → restart → restore | integration | `bash scripts/verify-phase-2.sh ::sess03_persist_restore` | ❌ Wave 0 |
-| SESS-04 | 7h-stale in-flight session GC | unit | `xcodebuild test -only-testing:ClaudeAlertBotTests/GCTests` | ❌ Wave 0 |
-| THR-01 | 5s task → no widget; 31s task → widget | integration | `bash scripts/verify-phase-2.sh ::thr01_threshold` | ❌ Wave 0 |
-| THR-02 | start 누락 stop → widget with `?` | integration | `bash scripts/verify-phase-2.sh ::thr02_orphan_stop` | ❌ Wave 0 |
-| WIDG-01 | NSPanel collectionBehavior 3-flag 검증 | unit | `xcodebuild test -only-testing:ClaudeAlertBotTests/PanelConfigTests` | ❌ Wave 0 |
-| WIDG-02 | LSUIElement + NSApp 비-active 유지 (위젯 등장 후) | manual + visual | `bash scripts/verify-phase-2.sh ::widg02_no_focus_steal` (heuristic: NSApp.isActive false 체크) | ❌ Wave 0 |
-| WIDG-03 | popover row에 프로젝트명 표시 | unit | `xcodebuild test -only-testing:ClaudeAlertBotTests/PopoverRowTests` | ❌ Wave 0 |
-| WIDG-04 | 위젯이 Space 전환/sleep/lid open 후 잔존 | manual | `verify-phase-2.sh ::widg04_persistence` (manual checkpoint) | ❌ Wave 0 |
-| WIDG-05 | 평소 invisible (queue 비면 orderOut) | unit | `xcodebuild test -only-testing:ClaudeAlertBotTests/WidgetVisibilityTests` | ❌ Wave 0 |
-| WIDG-06 | 4코너 + offset 변경 → 위치 재계산 | unit | `xcodebuild test -only-testing:ClaudeAlertBotTests/PositioningTests` | ❌ Wave 0 |
-| WIDG-07 | safeAreaInsets clamp 검증 | unit | `xcodebuild test -only-testing:ClaudeAlertBotTests/SafeAreaClampTests` | ❌ Wave 0 |
-| AUD-01 | 사운드 1회 — dedupe key 동일 시 2번째 안 재생 | unit | `xcodebuild test -only-testing:ClaudeAlertBotTests/DedupeTests` | ❌ Wave 0 |
-| AUD-02 | sound_enabled=false 시 재생 안 함 | unit | `xcodebuild test -only-testing:ClaudeAlertBotTests/SoundToggleTests` | ❌ Wave 0 |
-| SET-01..03 | @AppStorage 변경 → 즉시 반영 + 재시작 후 영속 | unit + integration | `xcodebuild test -only-testing:ClaudeAlertBotTests/SettingsPersistenceTests` + `verify-phase-2.sh ::set03_persist` | ❌ Wave 0 |
-| SET-04 | "Test notification" 버튼 → 위젯 등장 + 30s 자동 정리 | manual + unit | `xcodebuild test -only-testing:ClaudeAlertBotTests/InjectTestTests` + manual visual | ❌ Wave 0 |
-
-### Phase 2 Success Criteria → Verification Recipe
-
-(ROADMAP "Phase 2 Success Criteria" 6개 항목 직접 매핑 — verify-phase-2.sh가 1:1 검증):
-
-| # | ROADMAP 기준 | 검증 방법 |
-|---|--------------|----------|
-| 1 | 31s 턴 → 플로팅 위젯 + 프로젝트명 + multi-Space | `verify-phase-2.sh ::sc01_31s_widget` (cab-test로 31s elapsed 합성 + widget 등장 OSLog grep + manual Space 전환) |
-| 2 | 5s 턴 → no widget no sound (default 30s threshold) | `verify-phase-2.sh ::sc02_threshold_5s` (cab-test 5s + ingress 후 30s 동안 widget 등장 X 검증) |
-| 3 | 위젯이 클릭까지 잔존 across Space/sleep/lid | manual checkpoint (Phase 1 DIST-05 패턴) |
-| 4 | Settings 즉시 반영 + 재시작 영속 + Test notification 동작 | `verify-phase-2.sh ::sc04_settings_full` |
-| 5 | kill+restart → 미클릭 alert 복원 + 6h+ in-flight GC | `verify-phase-2.sh ::sc05_restore_and_gc` |
-| 6 | start 누락 → fallback `?` alert | `verify-phase-2.sh ::sc06_orphan_alert` |
-
-### Sampling Rate
-
-- **Per task commit:** `xcodebuild test -only-testing:ClaudeAlertBotTests/<TaskScope>Tests`
-- **Per wave merge:** `bash scripts/verify-phase-2.sh` (전체) + Phase 1 회귀 (`bash scripts/verify-phase-1.sh`)
-- **Phase gate:** 위 두 스크립트 모두 green + manual checkpoint (WIDG-04 Space/sleep) 사용자 sign-off
-
-### Wave 0 Gaps
-
-- [ ] `ClaudeAlertBotTests/` XCTest target — 위 모든 *Tests 파일 hosting
-- [ ] `ClaudeAlertBotTests/Fixtures/HookEventFactory.swift` — 합성 envelope (event=stop / user_prompt_submit)
-- [ ] `ClaudeAlertBotTests/Fixtures/MockNotifier.swift` — NotificationOrchestrator stub for actor unit tests
-- [ ] `scripts/verify-phase-2.sh` — bash integration runner (Phase 1의 verify-phase-1.sh 패턴)
-- [ ] `scripts/regress-phase-1.sh` (if not already) — Phase 1 회귀 가드
-- [ ] **Spike 1 (advisor critical):** NSPopover-on-nonactivatingPanel composability — 1-2시간 prototype, LSUIElement Cmd-Tab 행동 검증
-- [ ] **Spike 2 (advisor critical):** AppleScript `tell application "iTerm2" to return id of current session ...` UUID와 hook envelope `iterm_session_id`의 매칭 형식 일치 검증 (Phase 1 hook.log 데이터에 실제 ITERM_SESSION_ID 사례 있음 — `w0t0p1:79C4699F-7C77-4B92-B46A-10F818C00F8D` 형태 → AppleScript의 `id of current session`이 같은 형식인지)
-- [ ] **Spike 3 (advisor critical):** D2-18 Focus/DnD 검증 — `NSWorkspace.shared.focusStatus`가 실제로 컴파일/링크되는지 macOS 14 SDK에서 확인 (예상: 컴파일 X) → discuss-phase 재논의 트리거
-- [ ] **Spike 4:** macOS 현재 dev host 버전(14/15/26?)에서 Privacy_Automation 두 URL 형태 모두 동작하는지 1회 클릭 검증
+> Validation strategy moved to `02-VALIDATION.md` (extracted by plan-checker fix-up).
+> Phase 1 shape: see `.planning/phases/01-foundation/01-VALIDATION.md` as the template.
 
 ## Security Domain
 

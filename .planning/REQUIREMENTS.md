@@ -152,70 +152,78 @@ Explicitly excluded. Documented to prevent scope creep.
 
 ## Traceability
 
-Empty initially — populated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HOOK-01 | TBD | Pending |
-| HOOK-02 | TBD | Pending |
-| HOOK-03 | TBD | Pending |
-| HOOK-04 | TBD | Pending |
-| HOOK-05 | TBD | Pending |
-| HOOK-06 | TBD | Pending |
-| IPC-01 | TBD | Pending |
-| IPC-02 | TBD | Pending |
-| IPC-03 | TBD | Pending |
-| SESS-01 | TBD | Pending |
-| SESS-02 | TBD | Pending |
-| SESS-03 | TBD | Pending |
-| SESS-04 | TBD | Pending |
-| THR-01 | TBD | Pending |
-| THR-02 | TBD | Pending |
-| WIDG-01 | TBD | Pending |
-| WIDG-02 | TBD | Pending |
-| WIDG-03 | TBD | Pending |
-| WIDG-04 | TBD | Pending |
-| WIDG-05 | TBD | Pending |
-| WIDG-06 | TBD | Pending |
-| WIDG-07 | TBD | Pending |
-| AGG-01 | TBD | Pending |
-| AGG-02 | TBD | Pending |
-| AGG-03 | TBD | Pending |
-| AGG-04 | TBD | Pending |
-| AGG-05 | TBD | Pending |
-| JUMP-01 | TBD | Pending |
-| JUMP-02 | TBD | Pending |
-| JUMP-03 | TBD | Pending |
-| JUMP-04 | TBD | Pending |
-| JUMP-05 | TBD | Pending |
-| AUD-01 | TBD | Pending |
-| AUD-02 | TBD | Pending |
-| AUD-03 | TBD | Pending |
-| SET-01 | TBD | Pending |
-| SET-02 | TBD | Pending |
-| SET-03 | TBD | Pending |
-| SET-04 | TBD | Pending |
-| SET-05 | TBD | Pending |
-| INST-01 | TBD | Pending |
-| INST-02 | TBD | Pending |
-| INST-03 | TBD | Pending |
-| INST-04 | TBD | Pending |
-| ONB-01 | TBD | Pending |
-| ONB-02 | TBD | Pending |
-| ONB-03 | TBD | Pending |
-| ONB-04 | TBD | Pending |
-| DIST-01 | TBD | Pending |
-| DIST-02 | TBD | Pending |
-| DIST-03 | TBD | Pending |
-| DIST-04 | TBD | Pending |
-| DIST-05 | TBD | Pending |
-| DIST-06 | TBD | Pending |
+| HOOK-01 | Phase 1 | Pending |
+| HOOK-02 | Phase 2 | Pending |
+| HOOK-03 | Phase 1 | Pending |
+| HOOK-04 | Phase 1 | Pending |
+| HOOK-05 | Phase 1 | Pending |
+| HOOK-06 | Phase 1 | Pending |
+| IPC-01 | Phase 1 | Pending |
+| IPC-02 | Phase 1 | Pending |
+| IPC-03 | Phase 1 | Pending |
+| SESS-01 | Phase 2 | Pending |
+| SESS-02 | Phase 2 | Pending |
+| SESS-03 | Phase 2 | Pending |
+| SESS-04 | Phase 2 | Pending |
+| THR-01 | Phase 2 | Pending |
+| THR-02 | Phase 2 | Pending |
+| WIDG-01 | Phase 2 | Pending |
+| WIDG-02 | Phase 2 | Pending |
+| WIDG-03 | Phase 2 | Pending |
+| WIDG-04 | Phase 2 | Pending |
+| WIDG-05 | Phase 2 | Pending |
+| WIDG-06 | Phase 2 | Pending |
+| WIDG-07 | Phase 2 | Pending |
+| AGG-01 | Phase 4 | Pending |
+| AGG-02 | Phase 4 | Pending |
+| AGG-03 | Phase 4 | Pending |
+| AGG-04 | Phase 4 | Pending |
+| AGG-05 | Phase 4 | Pending |
+| JUMP-01 | Phase 3 | Pending |
+| JUMP-02 | Phase 3 | Pending |
+| JUMP-03 | Phase 3 | Pending |
+| JUMP-04 | Phase 3 | Pending |
+| JUMP-05 | Phase 3 | Pending |
+| AUD-01 | Phase 2 | Pending |
+| AUD-02 | Phase 2 | Pending |
+| AUD-03 | Phase 4 | Pending |
+| SET-01 | Phase 2 | Pending |
+| SET-02 | Phase 2 | Pending |
+| SET-03 | Phase 2 | Pending |
+| SET-04 | Phase 2 | Pending |
+| SET-05 | Phase 3 | Pending |
+| INST-01 | Phase 5 | Pending |
+| INST-02 | Phase 5 | Pending |
+| INST-03 | Phase 5 | Pending |
+| INST-04 | Phase 5 | Pending |
+| ONB-01 | Phase 5 | Pending |
+| ONB-02 | Phase 3 | Pending |
+| ONB-03 | Phase 3 | Pending |
+| ONB-04 | Phase 5 | Pending |
+| DIST-01 | Phase 1 | Pending |
+| DIST-02 | Phase 6 | Pending |
+| DIST-03 | Phase 6 | Pending |
+| DIST-04 | Phase 6 | Pending |
+| DIST-05 | Phase 1 | Pending |
+| DIST-06 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 53 total
-- Mapped to phases: 0
-- Unmapped: 53 ⚠️ (will be filled by roadmap)
+- Mapped to phases: 53
+- Unmapped: 0
+- 100% coverage validated against ROADMAP.md
+
+**Phase distribution:**
+- Phase 1 (Foundation): 9 requirements
+- Phase 2 (Alert Loop): 20 requirements
+- Phase 3 (Click-to-iTerm2): 8 requirements
+- Phase 4 (Multi-Session UX): 6 requirements
+- Phase 5 (Hook Installer & Onboarding): 6 requirements
+- Phase 6 (Distribution): 4 requirements
+- **Total:** 53 (matches v1 count)
 
 ---
 *Requirements defined: 2026-05-07*
-*Last updated: 2026-05-07 after initial definition*
+*Last updated: 2026-05-07 — Traceability populated by roadmap creation*

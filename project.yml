@@ -1,0 +1,71 @@
+name: ClaudeAlertBot
+options:
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+targets:
+  ClaudeAlertBot:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+        name: App
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleIdentifier: com.claudealert.bot
+        CFBundleName: Claude Alert Bot
+        LSMinimumSystemVersion: "14.0"
+        LSUIElement: true
+        NSAppleEventsUsageDescription: "Claude Alert Bot needs to switch focus to your iTerm2 tab when a Claude Code task completes."
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.claudealert.bot
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: App/Info.plist
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        SWIFT_VERSION: "5"
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGNING_ALLOWED: YES
+    dependencies:
+      - target: cab-test
+        embed: true
+        codeSign: false
+    postBuildScripts:
+      - name: "Embed Reporter shell script"
+        script: |
+          SRC="${SRCROOT}/Reporter/cab-report.sh"
+          DEST="${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/cab-report.sh"
+          if [ -f "$SRC" ]; then
+              mkdir -p "$(dirname "$DEST")"
+              cp "$SRC" "$DEST"
+              chmod +x "$DEST"
+          fi
+        shell: /bin/sh
+  cab-test:
+    type: tool
+    platform: macOS
+    sources:
+      - path: CabTest
+        name: CabTest
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: ""
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        SWIFT_VERSION: "5"
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGNING_ALLOWED: YES
+schemes:
+  ClaudeAlertBot:
+    build:
+      targets:
+        ClaudeAlertBot: all
+        cab-test: all
+    run:
+      config: Debug
+    archive:
+      config: Release

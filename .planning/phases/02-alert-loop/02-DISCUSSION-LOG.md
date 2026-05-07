@@ -138,7 +138,48 @@
 
 - **위젯 아이콘 애니메이션 / 화면 내 모션:** Phase 6 직전 폴리싱 라운드. (D2-11)
 - **자체 제작 chat-bubble glyph 아이콘:** Phase 6 직전. (D2-12)
-- **iTerm2 frontmost / tab-level 감지 기반 auto-clear:** Phase 3 Apple Events 권한 도입 후 Phase 4 검토. (D2-15)
+- ~~iTerm2 frontmost / tab-level 감지 기반 auto-clear: Phase 3 Apple Events 권한 도입 후 Phase 4 검토~~ — **번복:** Apple Events 권한을 Phase 2로 당기기로 결정 (라운드 6 참조).
 - **Counter badge UI:** Phase 4 명시 영역. Phase 2의 +N 텍스트 배지는 임시.
 - **다중 디스플레이 동적 추적:** Phase 4+ 검토. (D2-28)
 - **추정 경과 시간 휴리스틱:** 도입 안 함, `?` 그대로. (D2-17)
+
+---
+
+## 라운드 6 — Stop 시점 alert suppress (Apple Events 당김)
+
+**User 질문:** "사용자가 봇을 켜두고 해당 터미널에 포커스를 두고있으면 알림이 안와야할까?"
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| 사운드만 끔 (visual 유지) — NSWorkspace iTerm2 frontmost 기준 | 권한 불필요, 코스 감지 | |
+| 아무것도 안 함 — 임계값 30s가 1차 필터 | 최대 단순, false-negative 없음 | |
+| Visual + 사운드 둘 다 suppress — frontmost + idle time | 완전 suppress, false-positive 위험 | |
+| **정확 tab-level (Apple Events 당김)** | 정보 완벽, ROADMAP 잠금 변경 | ✓ |
+
+**잠금 (CONTEXT.md D2-13~15, D2-33~37):**
+- 3계층 자동 정리/suppress: UserPromptSubmit → Stop 시점 cheap-query → NSWorkspace activate observer
+- NSAppleEventsUsageDescription 도입 (Phase 2)
+- AppleScript read-only query helper, 백그라운드 큐 + 1초 hard timeout
+- Permission denied → Settings 배너 + System Settings deep link
+- Phase 3는 jump 자체 + TTY fallback + 3s timeout + tab-not-found + click debounce 만 owning
+
+**ROADMAP 영향 (plan 단계에서 정식 반영):**
+- Phase 2 plan에 NSAppleEventsUsageDescription Info.plist 키, AppleScript helper, 권한 다이얼로그 첫 trigger, Settings 권한 배너 task 추가
+- Phase 3 task에서 권한 흐름 task 제거; jump + edge case 폴리싱만 남음
+- Pitfall #4 (TCC denial) 안전망이 Phase 2로 이동
+
+---
+
+## 라운드 7 — Phase 1 hook command quoting 핫픽스 (out-of-band)
+
+**User 보고:** "Stop hook error: Failed with non-blocking status code: /bin/sh: /Users/choijihye/Library/Application: No such file or directory"
+
+**원인:** Plan 01-04 dev-install-hook.sh가 emit하는 hook command 문자열이 cab-report.sh 경로의 공백("Application Support")을 quote하지 않음. `/bin/sh -c`가 token splitting.
+
+**조치 (commit 1de1c8e):**
+- `~/.claude/settings.json` 핫픽스 (백업: `.bak.1778155246`)
+- `scripts/dev-install-hook.sh`: 양쪽 emitted command를 `\"$HOME/...\"`로 escape-quote
+- `scripts/verify-phase-1.sh`: `verify_1_04_02` 회귀 가드 추가 (--quick + full 모두에서 실행)
+- 검증: 7 pass / 0 fail, sandbox idempotent 재적용 정상
+
+**Phase 5 prep (V-7):** 정식 in-app installer (INST-01..04) 작성 시 같은 quoting 패턴 필수.

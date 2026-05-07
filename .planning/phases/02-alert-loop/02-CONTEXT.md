@@ -55,10 +55,35 @@ Out of scope (다른 Phase 명시 owning):
 - **D2-11:** **아이콘 자체의 애니메이션 (idle bob, 클릭 spring 등) 및 화면 내 "돌아다니는" 모션**은 Phase 2 범위에서 제외 (deferred — 기능 가치보다 폴리싱). Phase 6 직전에 다시 검토. Phase 2는 정적 위젯 + 등장/퇴장만 자연스러운 fade/slide.
 - **D2-12:** 아이콘 아셋은 **placeholder SF Symbol** (`bell.badge.fill` 또는 `bubble.left.fill`)로 시작. Phase 6 직전에 자체 제작 chat-bubble glyph로 교체. D-06(Anthropic 로고 금지) 준수.
 
-### 자동 정리 정책 — alert이 stale해지지 않도록 (DISCUSSED — 잠금)
-- **D2-13:** **UserPromptSubmit 기반 auto-clear.** 새 UserPromptSubmit이 어떤 session_id로 도착하면, 그 session_id의 pending Stop alert을 SessionRegistry actor 내에서 조용히 큐에서 제거. visual 알림 없음. 큐가 비면 위젯이 자연스럽게 사라짐.
-- **D2-14:** 이게 false-positive 0의 신호인 이유: UserPromptSubmit = 사용자가 명백히 그 세션을 다시 활용 중. "그저 읽고자 탭 전환만" 케이스는 자동 정리 안 됨 — 그 경우는 +N 배지로 누적 시각화 + Clear all 버튼이 안전망.
-- **D2-15:** Apple Events / iTerm2 frontmost 감지는 **Phase 2에 도입 안 함**. Phase 3의 NSAppleEventsUsageDescription 권한 흐름 잠금 유지.
+### 자동 정리 + Stop 시점 suppress — 3계층 (DISCUSSED — 잠금)
+사용자가 이미 그 세션을 보고 있는 경우와 이미 끝난 세션으로 돌아간 경우 양쪽을 cover. ROADMAP 변경 — Apple Events 권한 도입을 Phase 2로 당김 (D2-33 참조).
+
+- **D2-13 (1차 — UserPromptSubmit auto-clear, passive):** 새 UserPromptSubmit이 어떤 session_id로 도착하면, 그 session_id의 pending Stop alert을 SessionRegistry actor 내에서 조용히 큐에서 제거. visual 알림 없음. 큐가 비면 위젯이 자연스럽게 사라짐. False-positive 0 — UserPromptSubmit = 사용자가 명백히 그 세션을 다시 활용 중.
+- **D2-14 (2차 — Stop 도착 시점 cheap-query suppress):** Stop 이벤트 도착 시 백그라운드 큐에서 AppleScript read-only 쿼리 (현재 frontmost iTerm2 탭의 unique ID) 실행 → pending session의 `iterm_session_id`와 매칭하면 alert을 큐에 추가하지 않고 즉시 dismiss + OSLog `pre-suppress`. visual + 사운드 둘 다 안 뜸. 사용자 입장에서 "이미 보고 있던 작업이 끝났을 때는 알람이 침묵".
+- **D2-15 (3차 — NSWorkspace activate observer):** 이미 큐에 있는 alert에 대해, frontmost 앱이 변경되는 순간(`NSWorkspace.didActivateApplicationNotification`) 재쿼리 → frontmost가 그 세션 탭이 되면 자동 정리. 사용자가 alert 뜬 후 그 터미널로 직접 이동한 경우를 cover.
+- **D2-15a:** 3계층 모두 실패하는 case ("그저 읽고자 탭 전환만 + 입력 안 함 + Apple Events denied" 등): +N 배지로 누적 시각화 + Clear all 버튼이 안전망.
+
+### Apple Events 권한 도입 (Phase 3 → Phase 2 당김) (DISCUSSED — 잠금)
+ROADMAP 원안은 NSAppleEventsUsageDescription을 Phase 3에 두었으나, "사용자가 보고 있는 터미널의 알림 침묵"이 Phase 2의 핵심 가치 보존(노이즈 vs 놓치지 않음 균형)에 결정적이라 도입 시점을 Phase 2로 이동.
+
+- **D2-33:** **`NSAppleEventsUsageDescription` Info.plist 키 도입.** 사용자에게 신뢰감 있는 한국어 문구: 예시 — "Claude Alert Bot이 iTerm2의 현재 탭을 확인해서 이미 보고 있는 작업의 알림을 끄고, 클릭 시 정확한 탭으로 이동하기 위해 사용합니다." (Phase 3에서 jump가 추가될 때를 미리 포함하는 표현).
+- **D2-34:** **AppleScript read-only 쿼리 helper.** 단일 컴파일된 `NSAppleScript` 인스턴스 (Phase 1 D-07 패턴 재사용). 쿼리 형태: `tell application "iTerm2" to return id of current session of current tab of current window` (또는 동등). 호출은 항상 백그라운드 DispatchQueue + **1초 hard timeout** (Stop 알림 latency 예산 보호 — Phase 3의 jump-시 3초보다 훨씬 짧아야 함). Pitfall #10 (main-thread block) 차단.
+- **D2-35:** **첫 권한 trigger 시점.** App 첫 launch 직후 cheap-query 1회 발사 → macOS가 권한 다이얼로그 표시. 사용자가 첫 alert을 받기 전에 권한 결정이 끝난 상태가 이상적. Settings → "Test notification" 버튼은 이미 권한이 grant된 상태에서 동작.
+- **D2-36:** **Denial 상태 처리.**
+  - cheap-query가 errAEEventNotPermitted (-1743) 반환 → SettingsStore에 `applescript_permission = .denied` 영속.
+  - Settings 윈도우 상단에 배너: "Automation 권한 없음 — alert이 이미 보고 있는 작업에서도 뜹니다. 클릭으로 시스템 설정 열기 →" (System Settings → Privacy & Security → Automation deep link).
+  - denied 상태에서는 D2-14/D2-15 layer가 silent skip (Pitfall #4 안전망). D2-13(UserPromptSubmit)은 권한 무관하게 동작.
+  - README troubleshooting에 `tccutil reset AppleEvents <bundle-id>` 명령 추가 (Phase 5 ONB-04와 동일 텍스트).
+- **D2-37:** **OSLog category 추가:** `applescript`. 모든 cheap-query 시도/성공/실패/timeout/permission-denied 기록. Phase 4 stress 디버깅 시 필요.
+
+### Phase 3로 잔존하는 범위 (정정)
+ROADMAP Phase 3는 여전히 **focus-jump 자체** + 그 주변 폴리싱을 owning. Phase 2가 Apple Events 권한·read-only 쿼리만 가져옴.
+- 실제 jump (focus tab) AppleScript 명령 (Phase 3)
+- TTY-기반 fallback lookup — `iterm_session_id`가 hook 시점에 캡처되지 않은 경우 (Phase 3, JUMP-05)
+- 3초 hard timeout, 클릭 debounce (500ms), background queue 디테일 (Phase 3, Pitfall #10)
+- Tab-not-found 친절한 에러 ("That terminal is gone") (Phase 3, JUMP-02)
+- popover row hover 시 즉시 점프 미리보기 등 UX 폴리싱 (Phase 3 검토)
+- Settings의 "iTerm2 connection test" 버튼 (Phase 3 — JUMP-04, 당기지 않음. Phase 2의 첫 launch trigger가 그 역할 일부 흡수)
 
 ### THR-02 fallback (start 누락) (DISCUSSED — 잠금)
 - **D2-16:** Stop이 매칭 UserPromptSubmit 없이 도착 시 → **임계값 필터 우회하고 항상 alert**. 경과시간은 `?`로 표시. ROADMAP 성공 기준 #6 default 그대로. "절대 silently drop 안 함"이 PROJECT.md "놓치지 않는다" 가치 직접 구현.
@@ -145,6 +170,7 @@ Out of scope (다른 Phase 명시 owning):
 
 ### Phase 1 carry-over follow-ups (Phase 2가 인계)
 - **V-2 (listener uptime polish):** Phase 1 verifier review에서 식별. Phase 2 실 구현 중 SessionRegistry 부팅 ~ HookListener bind 사이의 race window를 close. (Phase 2가 명시적으로 owning)
+- **V-7 (hook command path quoting):** 1de1c8e에서 dev-install-hook.sh 핫픽스 + verify_1_04_02 회귀 가드 완료. Phase 5의 정식 INST-01..04 in-app installer 작성 시 같은 quoting 패턴 적용 필수.
 
 </canonical_refs>
 
@@ -189,7 +215,7 @@ Out of scope (다른 Phase 명시 owning):
 
 - **위젯 아이콘 애니메이션 / 화면 내 모션 ("귀여운 클로드"):** Phase 2 범위에서 제외. Phase 6 직전 폴리싱 라운드에서 재검토. (D2-11)
 - **자체 제작 chat-bubble glyph 아이콘 아셋:** Phase 2는 SF Symbol placeholder. 실 아이콘 자산은 Phase 6 직전. (D2-12)
-- **iTerm2 frontmost / tab-level 감지 기반 자동 정리:** Phase 2에 도입 안 함. Phase 3의 Apple Events 권한 흐름 잠금 유지. (D2-15) Phase 4가 검토할 영역.
+- ~~iTerm2 frontmost / tab-level 감지 기반 자동 정리: Phase 2에 도입 안 함~~ — **결정 번복 (D2-13~15, D2-33~37):** Apple Events 권한 도입을 Phase 2로 당김. 3계층 정리(UserPromptSubmit + Stop 시점 cheap-query + NSWorkspace activate observer) 모두 Phase 2 범위. Phase 3는 **jump 자체**와 주변 폴리싱만 owning.
 - **Counter badge UI (Phase 4 owning):** Phase 2의 +N 텍스트 배지는 임시 형태. Phase 4가 정식 카운터 배지 + 더 풍부한 popover로 교체.
 - **다중 디스플레이 동적 추적:** 위젯 등장 시점 main display 고정. 디스플레이 추가/제거 반응은 Phase 4+ 검토. (D2-28)
 - **추정 경과 시간 (start 누락 시):** ppid lifetime 등 휴리스틱 도입하지 않음. `?` 그대로. (D2-17)

@@ -218,7 +218,19 @@ The two FAILs in the harness output are **harness bugs / sequencing issues** not
 
 1. **Row 1-03-03 latency budget overrun** (originally from Plan 02) — `Reporter/cab-report.sh` median 64.8ms exceeds the 50ms harness budget. Recommendation: revise to 150ms p95.
 2. **Row 1-04-01 / 1-02-01 cold-run sequencing** — verify-phase-1.sh's verify_1_02_01 / verify_1_04_01 do not themselves `open` the app. They depend on a previous step (verify_1_05_01) leaving the app running, but verify_1_05_01 has its own trap that kills the app on exit. Net effect: when running the full suite cold, these two rows always FAIL. Plan 06 should restructure the harness to launch the app once at the top of the IPC tier and tear it down at the end.
-3. **Row 1-05-01 `pgrep -fc` unsupported on macOS** — BSD `pgrep` does not support `-c` (count). The harness reads `count=$(pgrep -fc ClaudeAlertBot 2>/dev/null || echo 0)` which always silently sets `count=` to empty (then `[[ -eq 1 ]]` evaluates as false). Plan 06 should switch to `count=$(pgrep -f ClaudeAlertBot | wc -l | tr -d ' ')` or equivalent.
+3. **Row 1-05-01 `pgrep -fc` unsupported on macOS** — BSD `pgrep` does not support `-c` (count). The harness reads `count=$(pgrep -fc ClaudeAlertBot 2>/dev/null || echo 0)` which always silently sets `count=` to empty (then `[[ -eq 1 ]]` evaluates as false). Plan 06 should switch to `count=$(pgrep -f 'ClaudeAlertBot.app/Contents/MacOS/ClaudeAlertBot' | wc -l | tr -d ' ')` — anchoring to the full binary path avoids matching the harness's own parent-shell process tree.
+
+4. **Build artifact path inconsistency** — Three different paths now reference the built `.app`:
+   - Plan 03 plan text uses `build/Debug/ClaudeAlertBot.app`
+   - `scripts/verify-phase-1.sh` defaults to `build/export/ClaudeAlertBot.app` (Plan 00 deliverable)
+   - This plan's actual build (via `xcodebuild -derivedDataPath build`) lands at `build/Build/Products/Debug/ClaudeAlertBot.app`
+   - Plan 05's forthcoming `scripts/build.sh` will likely use `build/Release/...` or `build/export/...`
+
+   Plan 06 must reconcile by either (a) standardizing on one path in `scripts/build.sh` and updating verify-phase-1.sh's `APP_PATH` default, or (b) keeping `APP_PATH` overridable and documenting the standard launch path in `01-VERIFICATION.md`.
+
+### Post-ship spot check (Advisor-prompted)
+
+`kill -TERM <pid>` on the running app produces a CLEAN socket-file removal (verified — file at SocketPaths.socketPath is gone after SIGTERM, confirming the AppDelegate signal handler → `listener?.cancel()` → `removeItem(atPath:)` chain works as designed).
 
 ## Authentication Gates
 

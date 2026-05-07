@@ -68,10 +68,15 @@ ROADMAP 원안은 NSAppleEventsUsageDescription을 Phase 3에 두었으나, "사
 
 - **D2-33:** **`NSAppleEventsUsageDescription` Info.plist 키 도입.** 사용자에게 신뢰감 있는 한국어 문구: 예시 — "Claude Alert Bot이 iTerm2의 현재 탭을 확인해서 이미 보고 있는 작업의 알림을 끄고, 클릭 시 정확한 탭으로 이동하기 위해 사용합니다." (Phase 3에서 jump가 추가될 때를 미리 포함하는 표현).
 - **D2-34:** **AppleScript read-only 쿼리 helper.** 단일 컴파일된 `NSAppleScript` 인스턴스 (Phase 1 D-07 패턴 재사용). 쿼리 형태: `tell application "iTerm2" to return id of current session of current tab of current window` (또는 동등). 호출은 항상 백그라운드 DispatchQueue + **1초 hard timeout** (Stop 알림 latency 예산 보호 — Phase 3의 jump-시 3초보다 훨씬 짧아야 함). Pitfall #10 (main-thread block) 차단.
-- **D2-35:** **첫 권한 trigger 시점.** App 첫 launch 직후 cheap-query 1회 발사 → macOS가 권한 다이얼로그 표시. 사용자가 첫 alert을 받기 전에 권한 결정이 끝난 상태가 이상적. Settings → "Test notification" 버튼은 이미 권한이 grant된 상태에서 동작.
-- **D2-36:** **Denial 상태 처리.**
+- **D2-35 (정정 by 02-RESEARCH.md 권한 UX 분석 — hybrid trigger):** App 첫 launch 직후 blind cheap-query는 수락률을 떨어뜨림 (Pitfall #3 anchor). **Hybrid 채택:** 두 trigger path 중 먼저 발생하는 쪽이 권한 다이얼로그 노출.
+  - **Path A — Settings 첫 열림:** Settings 윈도우의 "Automation 권한" 섹션이 포커스되면(또는 Settings 첫 등장 시) 자동 cheap-query 1회 발사. 사용자가 명시적으로 설정 탐색 중이라 컨텍스트 안에서 권한 요청.
+  - **Path B — 첫 Stop hook 도착 (lazy):** 사용자가 Settings를 열기 전에 첫 Stop이 도착하면, 백그라운드에서 cheap-query를 발사하여 다이얼로그 표시. 이 첫 alert은 visual+사운드 정상 발사 (suppress 못 받음 — 트레이드오프 명시), 권한 grant 이후 alert부터 D2-14/D2-15 layer 동작.
+  - **상태 머신:** SettingsStore에 `applescript_permission: enum { unknown, granted, denied }`. `unknown` 상태에서 두 trigger path 중 하나가 발생할 때 cheap-query 발사 → 결과에 따라 enum 갱신 + 영속.
+  - 다이얼로그는 macOS가 (app, target) 쌍 당 한 번만 표시 후 영속이므로 trigger path가 둘이라도 사용자 경험은 한 번의 다이얼로그.
+- **D2-36 (정정 by 02-RESEARCH.md Pattern 12 — sequential deep-link fallback):** **Denial 상태 처리.**
   - cheap-query가 errAEEventNotPermitted (-1743) 반환 → SettingsStore에 `applescript_permission = .denied` 영속.
-  - Settings 윈도우 상단에 배너: "Automation 권한 없음 — alert이 이미 보고 있는 작업에서도 뜹니다. 클릭으로 시스템 설정 열기 →" (System Settings → Privacy & Security → Automation deep link).
+  - Settings 윈도우 상단에 배너: "Automation 권한 없음 — alert이 이미 보고 있는 작업에서도 뜹니다. 클릭으로 시스템 설정 열기 →".
+  - **Deep-link URL 시퀀셜 폴백** (macOS 15+ Sequoia에서 URL 변경): 우선 `x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Automation` (15+) 시도, 실패/응답 없음 시 `x-apple.systempreferences:com.apple.preference.security?Privacy_Automation` (14 Ventura) 폴백, 둘 다 실패 시 일반 `x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension` (Privacy 페이지 root)로. RESEARCH Pattern 12 helper.
   - denied 상태에서는 D2-14/D2-15 layer가 silent skip (Pitfall #4 안전망). D2-13(UserPromptSubmit)은 권한 무관하게 동작.
   - README troubleshooting에 `tccutil reset AppleEvents <bundle-id>` 명령 추가 (Phase 5 ONB-04와 동일 텍스트).
 - **D2-37:** **OSLog category 추가:** `applescript`. 모든 cheap-query 시도/성공/실패/timeout/permission-denied 기록. Phase 4 stress 디버깅 시 필요.
@@ -89,12 +94,9 @@ ROADMAP Phase 3는 여전히 **focus-jump 자체** + 그 주변 폴리싱을 own
 - **D2-16:** Stop이 매칭 UserPromptSubmit 없이 도착 시 → **임계값 필터 우회하고 항상 alert**. 경과시간은 `?`로 표시. ROADMAP 성공 기준 #6 default 그대로. "절대 silently drop 안 함"이 PROJECT.md "놓치지 않는다" 가치 직접 구현.
 - **D2-17:** 추정 경과 (예: ppid lifetime 기반)는 시도하지 않음 — 정확도 부족 + 복잡도 추가. `?`가 정직.
 
-### Sound during Focus/DnD (DISCUSSED — 잠금)
-- **D2-18:** **시스템 존중 + 사용자 Settings 우선:**
-  - 사용자 Settings의 사운드 토글이 1차 권한 (off면 무조건 무음)
-  - 사운드 on이라도 macOS Focus/DnD 활성 시 자동 음소거 (위젯 visual은 유지). `NSWorkspace.shared.focusStatus` (macOS 14+) 또는 동등 API로 cheap check
-  - DnD 중에도 알림 자체는 visual로 잔존 → 핵심 가치 보존, 청각만 정중하게 양보
-- **D2-19:** UNNotificationSound 채널은 사용 안 함 (배너 자동 dismiss 위험). AVAudioPlayer 직접 재생.
+### Sound during Focus/DnD (DISCUSSED + RESEARCH 정정)
+- **D2-18 (RETRACTED — 2026-05-07 by 02-RESEARCH.md primary-source 검증):** 원래 안은 "macOS Focus/DnD 활성 시 자동 음소거"였으나, `NSWorkspace.shared.focusStatus`는 **public macOS SDK에 존재하지 않는다** (Apple Developer Forum #682143). `INFocusStatusCenter`는 iOS/iPadOS 전용. Phase 2 timeline 안에서 이 기능을 public API로 구현할 방법이 없어 폐기. 사용자가 Focus/DnD 중에도 알림을 받지 않으려면 D2-19의 사운드 토글을 끄거나 macOS Focus 필터에서 직접 ClaudeAlertBot 차단.
+- **D2-19 (재확인 — 사운드 권한 단일 source):** 사용자 Settings의 **사운드 on/off 토글이 사운드 재생의 단일 권위**. on이면 항상 재생 (시스템 Focus/DnD 상태와 무관), off면 절대 재생 안 함. UNNotificationSound 채널은 사용 안 함 (배너 자동 dismiss 위험). AVAudioPlayer 직접 재생.
 
 ### AUD-01 "사운드 1회" dedupe (DISCUSSED — 잠금)
 - **D2-20:** dedupe 키 = `(session_id, ts_round_to_2s)`. 같은 세션의 Stop이 2초 내 두 번 들어와도 사운드는 한 번. Phase 4의 광범위 dedupe key (transcript_path 포함)는 호환되게 확장 가능 — 같은 자리에서 추가 component만 붙임.
@@ -171,6 +173,9 @@ ROADMAP Phase 3는 여전히 **focus-jump 자체** + 그 주변 폴리싱을 own
 ### Phase 1 carry-over follow-ups (Phase 2가 인계)
 - **V-2 (listener uptime polish):** Phase 1 verifier review에서 식별. Phase 2 실 구현 중 SessionRegistry 부팅 ~ HookListener bind 사이의 race window를 close. (Phase 2가 명시적으로 owning)
 - **V-7 (hook command path quoting):** 1de1c8e에서 dev-install-hook.sh 핫픽스 + verify_1_04_02 회귀 가드 완료. Phase 5의 정식 INST-01..04 in-app installer 작성 시 같은 quoting 패턴 적용 필수.
+
+### Wave 0 spike (NSPopover composability — RESEARCH 권고)
+- **D2-38 (planner 스케줄):** RESEARCH Pattern 8 (NSPopover) + Pattern 8a (sibling NSPanel 폴백) 사이의 결정을 **Wave 0의 1-2시간 spike** 로 검증. NSPopover가 `.nonactivatingPanel` 부모 위에서 focus stealing 없이 동작하면 8 채택, 아니면 8a로 동일 UI-SPEC 비주얼을 재현. planner는 이 spike task를 Wave 0에 명시 task로 추가하고, 결과에 따른 Wave 1+ 분기를 미리 문서화.
 
 </canonical_refs>
 

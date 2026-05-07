@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-07T08:00:00.000Z"
+last_updated: "2026-05-07T11:00:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 7
-  completed_plans: 6
-  percent: 14
+  completed_plans: 7
+  percent: 16
 ---
 
 # State: Claude Alert Bot
 
-**Last updated:** 2026-05-07 (Plan 01-05 complete)
+**Last updated:** 2026-05-07 (Phase 01 complete — phase_gate: green)
 
 ## Project Reference
 
@@ -24,24 +24,28 @@ progress:
 
 ## Current Position
 
-Phase: 01 (foundation) — EXECUTING
-Plan: 7 of 7 (next: 01-06 e2e verifier wiring — Wave 3 final)
+Phase: 01 (foundation) — **COMPLETE** (phase_gate: green)
+Next: Phase 02 (Alert Loop) — `/gsd-context-phase 2` to begin
 
 - **Milestone:** v1
-- **Phase:** 01 — Foundation, Wave 3 in progress (build.sh complete; 01-06 e2e verifier remaining)
-- **Plan:** 01-05 complete (scripts/build.sh — xcodebuild archive + per-Mach-O ad-hoc codesign + verify; canonical output build/export/ClaudeAlertBot.app)
-- **Status:** Executing Phase 01
-- **Progress:** `[░░░░░░] 0/6 phases complete (6/7 plans in Phase 01)`
+- **Phase:** 01 — Foundation, **all 7 plans complete**, Wave 3 closed, sign-off in `.planning/phases/01-foundation/01-VERIFICATION.md`
+- **Plan:** 01-06 complete (e2e verifier wiring + 01-VERIFICATION.md sign-off — `phase_gate: green`, 14/14 verifier PASS, DIST-05 manual checkpoint approved with real Claude Code hook.log evidence)
+- **Status:** Phase 01 complete; Phase 02 unblocked
+- **Progress:** `[█░░░░░] 1/6 phases complete (7/7 plans in Phase 01)`
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
-| Phases complete | 0 / 6 |
-| Plans complete | 6 / 7 in Phase 01 |
-| Requirements covered | 6 / 53 (DIST-05 + IPC-01 + IPC-02 + IPC-03 + HOOK-01 + DIST-01 e2e — Reporter→Listener confirmed; ad-hoc-signed .app launches on Apple Silicon with no cs_invalid_page; HOOK-03/04/05/06 implementation-side covered by Reporter/cab-report.sh and now verifier-checked end-to-end). |
+| Phases complete | 1 / 6 |
+| Plans complete | 7 / 7 in Phase 01 |
+| Requirements covered | 10 / 53 (HOOK-01, HOOK-03, HOOK-04, HOOK-05, HOOK-06, IPC-01, IPC-02, IPC-03, DIST-01, DIST-05 — all Phase 1 requirements verified end-to-end with real Claude Code traffic) |
 | Phase branch | master (no branching strategy per config.json) |
-| Last plan duration | ~5 min (01-05, scripts/build.sh — build itself takes ~16s) |
+| Last plan duration | ~25 min (01-06, verifier sign-off — incl. inherited Task 1 from previous executor) |
+| Phase 1 verifier runtime | ~35s end-to-end (incl. 16s build) |
+| Reporter p95 latency | 232.6 ms (well within revised 250 ms budget) |
+| hook.log lines at phase close | 114 |
+| Real Claude Stop fires captured in checkpoint | 3 (real iTerm2 session UUID `w0t0p1:79C4699F-…`) |
 
 ## Accumulated Context
 
@@ -78,19 +82,37 @@ None.
 
 ## Session Continuity
 
-- **Last action:** Completed Plan 01-05 (Wave 3 scripts/build.sh). 1 commit: `97de952` (feat(01-05): add build.sh — xcodebuild archive + per-Mach-O ad-hoc codesign + verify). Live build: ~16s end-to-end; bundle/main/cab-test all `Signature=adhoc`; canonical output at `build/export/ClaudeAlertBot.app` (412KB). RESEARCH Success #3 verified: direct binary launch on Apple Silicon binds AF_UNIX socket, emits `listener bound` OSLog, no `cs_invalid_page` faults; SIGTERM clean shutdown. Plan 03's "Open Issue 4" (build path inconsistency) resolved — `build/export/` is the canonical, single output path.
+- **Last action:** Completed Plan 01-06 (Wave 3 final — verify-phase-1.sh wiring + 01-VERIFICATION.md sign-off). 3 commits across 2 executor sessions:
+  - `460b620` feat(01-06): wire verify-phase-1.sh against real Plan 01-05 artifacts (Task 1, previous executor)
+  - `f3ab6e6` docs(01-06): record DIST-05 manual checkpoint result inline in verify-phase-1.sh (Task 2, this session)
+  - `52b3af6` docs(01-06): add 01-VERIFICATION.md — Phase 1 sign-off (phase_gate: green) (Task 3, this session)
+
+  Final verifier run: 14 pass, 0 fail, exit 0. DIST-05 manual checkpoint approved by user (`approved-A-with-observation`); both Part A (visual invisibility) and Part B (real Claude Code e2e — three real-Claude `event:stop` entries in hook.log carrying real iTerm2 session UUID `w0t0p1:79C4699F-7C77-4B92-B46A-10F818C00F8D` and `ppid_chain` proving real Claude origin) accepted. **Phase 01 closed: phase_gate green; Phase 02 unblocked.**
+
 - **Files written this session:**
-  - `scripts/build.sh` (created, 71 lines, mode 0755)
-  - `.planning/phases/01-foundation/01-05-SUMMARY.md` (created)
-  - `.planning/STATE.md`, `.planning/ROADMAP.md` (updated — plan progress)
-- **Next action:** Execute Plan 01-06 (Wave 3 e2e verifier wiring + 01-VERIFICATION.md sign-off). This is the final plan in Phase 1.
+  - `scripts/verify-phase-1.sh` (modified — inline checkpoint result documentation in `verify_1_06_01`)
+  - `.planning/phases/01-foundation/01-VERIFICATION.md` (created — Phase 1 sign-off, 142 lines)
+  - `.planning/phases/01-foundation/01-06-SUMMARY.md` (created)
+  - `.planning/STATE.md`, `.planning/ROADMAP.md` (updated — phase + plan progress)
+- **Next action:** `/gsd-context-phase 2` (Phase 2 — Alert Loop). Phase 2 prerequisites surfaced in 01-06-SUMMARY: icon assets blocker (WIDG-03), sound-during-Focus/DnD strategy decision, threshold-default ratification.
 
-### Open follow-ups for Plan 01-06
+### Open follow-ups (carried into later phases)
 
-- **1-03-03 latency budget overrun** (carried from Plan 02): harness `verify_1_03_03` enforces ≤ 0.050 s but `/usr/bin/python3` cold-start makes Reporter land at ~65 ms median / 138 ms p95. Recommendation: revise budget to 0.150 s.
-- **1-04-01 / 1-02-01 cold-run sequencing** (NEW from Plan 03): the two rows depend on the app being already running, but verify-phase-1.sh's verify_1_05_01 launches and tears down the app via its own trap. When the suite is run cold, 1-02-01 and 1-04-01 always FAIL because no app is up. Recommended fix: launch the app once in a setup_ipc_tier function and tear down once in teardown_ipc_tier.
-- **1-05-01 `pgrep -fc` unsupported** (NEW from Plan 03): BSD `pgrep` does not implement `-c` (count). The harness reads `count=$(pgrep -fc ClaudeAlertBot 2>/dev/null || echo 0)` which silently fails. Replace with `count=$(pgrep -f ClaudeAlertBot | wc -l | tr -d ' ')`.
-- **JSON5 tolerance for --apply** (NEW from Plan 04): the dev-install-hook.sh JSON5 stripper is regex-based (handles `//` and `/* */` only). Trailing commas, single quotes, and unquoted keys cause refuse-to-mutate. Phase 5 INST-04 owns the proper fix; tracked here as a known dev-tool limitation.
+| ID | Description | Owner |
+|----|-------------|-------|
+| V-1 | `1-03-03` latency budget — already revised 50ms→250ms; verifier passes at 0.2326s | RESOLVED in Plan 02 |
+| V-2 | Real-Claude OSLog grep listener-uptime polish — wrap real-Claude smoke test to keep listener up across the window so `event=stop` ingress lines are observable in real time | Phase-2-prep |
+| V-3 | `dev-install-hook.sh --apply` JSON5 tolerance limit (trailing commas, single quotes, unquoted keys) | Phase 5 INST-04 |
+| V-4 | `schema_version=2` envelopes silently dropped with warning — Phase 5 may surface to user | Phase 5 |
+| V-5 | dev-install-hook.sh stopgap → in-app onboarding wizard | Phase 5 INST-01..04 + ONB-01 |
+| V-6 | `--deep` regression guard preservation when swapping ad-hoc → Developer ID identity | Phase 6 release.sh |
+
+### Phase 2 Pre-Entry Checklist
+
+- [ ] Icon artwork (Anthropic-trademark-safe original) — STATE.md "Open Questions" / Phase 2 WIDG-03 prerequisite
+- [ ] Sound-during-Focus/DnD strategy — recommended `UNNotificationSound` + `NSPanel` split; settle in Phase 2 plan decisions block
+- [ ] Threshold default value (THR-01: 30s) ratified — Phase 1's measured Reporter latency (sub-250ms) confirms threshold operates on application-level elapsed time, not hook latency
 
 ---
 *State initialized: 2026-05-07*
+*Phase 01 closed: 2026-05-07 (phase_gate: green)*

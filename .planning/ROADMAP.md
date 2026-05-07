@@ -19,7 +19,7 @@ Claude Code 사용자가 자리를 비웠을 때, 길게 걸린 작업의 완료
 
 ## Phases
 
-- [ ] **Phase 1: Foundation** — Hook script + AF_UNIX IPC + headless app skeleton + ad-hoc-sign build pipeline; a Stop event lands as a structured log line in the running app.
+- [x] **Phase 1: Foundation** — Hook script + AF_UNIX IPC + headless app skeleton + ad-hoc-sign build pipeline; a Stop event lands as a structured log line in the running app. **(complete 2026-05-07; phase_gate: green; see `.planning/phases/01-foundation/01-VERIFICATION.md`)**
 - [ ] **Phase 2: Alert Loop** — UserPromptSubmit/Stop correlation, threshold filter, persistent floating NSPanel widget, sound, Settings window. A 31-second Claude turn produces a clickable widget showing the project name (no jump yet).
 - [ ] **Phase 3: Click-to-iTerm2** — UUID-based AppleScript jump, TTY fallback, Automation permission flow, click debounce, 3-second hard timeout. Clicking the widget lands on the exact originating tab.
 - [ ] **Phase 4: Multi-Session UX** — Counter-badge widget, expandable session list popover, batching window, sound dedupe, concurrency stress hardening. Five near-simultaneous completions produce one badge that opens a list and jumps each to its correct tab.
@@ -51,7 +51,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [x] 01-05-PLAN.md — Wave 3: scripts/build.sh (xcodebuild archive + per-Mach-O ad-hoc codesign + verification)
-- [ ] 01-06-PLAN.md — Wave 3: e2e verify-phase-1.sh wiring + 01-VERIFICATION.md sign-off (with manual checkpoint)
+- [x] 01-06-PLAN.md — Wave 3: e2e verify-phase-1.sh wiring + 01-VERIFICATION.md sign-off (with manual checkpoint) — **phase_gate: green**
 
 ### Phase 2: Alert Loop
 **Goal:** Long Claude turns produce a persistent, focus-safe floating widget that survives until clicked. Settings persist, sound plays once, and the start/stop correlation is robust enough to compute elapsed time against a configurable threshold.
@@ -124,7 +124,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 6/7 | Executing | - |
+| 1. Foundation | 7/7 | Complete (phase_gate: green) | 2026-05-07 |
 | 2. Alert Loop | 0/0 | Not started | - |
 | 3. Click-to-iTerm2 | 0/0 | Not started | - |
 | 4. Multi-Session UX | 0/0 | Not started | - |

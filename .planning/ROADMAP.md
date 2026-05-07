@@ -41,7 +41,7 @@ Claude Code 사용자가 자리를 비웠을 때, 길게 걸린 작업의 완료
 **Plans:** 7 plans
 Plans:
 **Wave 1**
-- [ ] 01-00-PLAN.md — Wave 0: scripts/verify-phase-1.sh validation harness scaffold
+- [x] 01-00-PLAN.md — Wave 0: scripts/verify-phase-1.sh validation harness scaffold
 - [ ] 01-01-PLAN.md — Wave 1: Xcode project skeleton (App + cab-test targets, Info.plist with LSUIElement)
 - [ ] 01-02-PLAN.md — Wave 1: Reporter shell script (POSIX sh, exit 0 always, AF_UNIX nc transport, hook.log debug)
 
@@ -123,7 +123,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/7 | Planned | - |
+| 1. Foundation | 1/7 | Executing | - |
 | 2. Alert Loop | 0/0 | Not started | - |
 | 3. Click-to-iTerm2 | 0/0 | Not started | - |
 | 4. Multi-Session UX | 0/0 | Not started | - |

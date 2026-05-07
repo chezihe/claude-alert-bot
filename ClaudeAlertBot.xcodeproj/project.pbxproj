@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		25A5F43CD41AC83F13E587D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A714300C48D443F40C0A625 /* AppDelegate.swift */; };
-		79F43300AA53108A7C4C99B8 /* cab-test in Resources */ = {isa = PBXBuildFile; fileRef = 9A4CF07859800DE5173D901A /* cab-test */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8ECAB8E9D4C43DADEF756A7A /* HookListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D54D1C911C95F984BA6C8A1 /* HookListener.swift */; };
 		C2373C8865C769E19E6F3B98 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85C8275D946E935468FEC149 /* main.swift */; };
 		DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 422669922C84673FA026FD1E /* HookEvent.swift */; };
@@ -105,7 +104,7 @@
 			buildConfigurationList = ED6171406D1BF8AB9FDBB0B2 /* Build configuration list for PBXNativeTarget "ClaudeAlertBot" */;
 			buildPhases = (
 				B37F43BA76B7FF38C73C91D7 /* Sources */,
-				E91A92EBBEF2F146AF2DE9BA /* Resources */,
+				64AA2AC3ADACB0F5DCB01F42 /* Embed cab-test helper into Contents/MacOS */,
 				D838B4AB29EFC4F6F0B17286 /* Embed Reporter shell script */,
 			);
 			buildRules = (
@@ -157,18 +156,25 @@
 		};
 /* End PBXProject section */
 
-/* Begin PBXResourcesBuildPhase section */
-		E91A92EBBEF2F146AF2DE9BA /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
+/* Begin PBXShellScriptBuildPhase section */
+		64AA2AC3ADACB0F5DCB01F42 /* Embed cab-test helper into Contents/MacOS */ = {
+			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				79F43300AA53108A7C4C99B8 /* cab-test in Resources */,
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed cab-test helper into Contents/MacOS";
+			outputFileListPaths = (
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "SRC=\"${BUILT_PRODUCTS_DIR}/cab-test\"\nDEST=\"${TARGET_BUILD_DIR}/${EXECUTABLE_FOLDER_PATH}/cab-test\"\nif [ -f \"$SRC\" ]; then\n    cp \"$SRC\" \"$DEST\"\n    chmod +x \"$DEST\"\n    codesign --force --sign - \"$DEST\" 2>/dev/null || true\nfi\n";
 		};
-/* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
 		D838B4AB29EFC4F6F0B17286 /* Embed Reporter shell script */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;

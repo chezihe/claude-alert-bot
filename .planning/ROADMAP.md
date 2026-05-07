@@ -47,7 +47,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [x] 01-03-PLAN.md — Wave 2: App listener (NWListener AF_UNIX, HookEvent schema, AppDelegate, cab-test CLI)
-- [ ] 01-04-PLAN.md — Wave 2: scripts/dev-install-hook.sh (D-04 user-data copy + idempotent ~/.claude/settings.json merge)
+- [x] 01-04-PLAN.md — Wave 2: scripts/dev-install-hook.sh (D-04 user-data copy + idempotent ~/.claude/settings.json merge)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 01-05-PLAN.md — Wave 3: scripts/build.sh (xcodebuild archive + per-Mach-O ad-hoc codesign + verification)
@@ -123,7 +123,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 3/7 | Executing | - |
+| 1. Foundation | 5/7 | Executing | - |
 | 2. Alert Loop | 0/0 | Not started | - |
 | 3. Click-to-iTerm2 | 0/0 | Not started | - |
 | 4. Multi-Session UX | 0/0 | Not started | - |

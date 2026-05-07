@@ -8,13 +8,13 @@ progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
-  completed_plans: 4
-  percent: 10
+  completed_plans: 5
+  percent: 12
 ---
 
 # State: Claude Alert Bot
 
-**Last updated:** 2026-05-07
+**Last updated:** 2026-05-07 (Plan 01-04 complete)
 
 ## Project Reference
 
@@ -25,23 +25,23 @@ progress:
 ## Current Position
 
 Phase: 01 (foundation) — EXECUTING
-Plan: 5 of 7 (next: 01-04 dev-install-hook.sh — Wave 2)
+Plan: 6 of 7 (next: 01-05 build.sh — Wave 3)
 
 - **Milestone:** v1
-- **Phase:** 01 — Foundation, Waves 1+2 (App listener) complete
-- **Plan:** 01-03 complete (App + cab-test — NWListener AF_UNIX + D-08 envelope ingest)
+- **Phase:** 01 — Foundation, Wave 2 complete (App listener + dev-install-hook.sh)
+- **Plan:** 01-04 complete (scripts/dev-install-hook.sh — D-04 user-data copy + idempotent ~/.claude/settings.json merge)
 - **Status:** Executing Phase 01
-- **Progress:** `[░░░░░░] 0/6 phases complete (4/7 plans in Phase 01)`
+- **Progress:** `[░░░░░░] 0/6 phases complete (5/7 plans in Phase 01)`
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
 | Phases complete | 0 / 6 |
-| Plans complete | 4 / 7 in Phase 01 |
-| Requirements covered | 5 / 53 (DIST-05 + IPC-01 + IPC-02 + IPC-03 + HOOK-01 e2e — Reporter→Listener confirmed; HOOK-03/04/05/06 implementation-side covered by Reporter/cab-report.sh and now verifier-checked end-to-end) |
+| Plans complete | 5 / 7 in Phase 01 |
+| Requirements covered | 5 / 53 (DIST-05 + IPC-01 + IPC-02 + IPC-03 + HOOK-01 e2e — Reporter→Listener confirmed; HOOK-03/04/05/06 implementation-side covered by Reporter/cab-report.sh and now verifier-checked end-to-end). Plan 01-04 unblocks but does not satisfy any v1 REQ — its content is fully under Phase 5 INST-01..04 (deferred per D-05). |
 | Phase branch | master (no branching strategy per config.json) |
-| Last plan duration | ~25 min (01-03, App + cab-test) |
+| Last plan duration | ~5 min (01-04, dev-install-hook.sh) |
 
 ## Accumulated Context
 
@@ -78,20 +78,19 @@ None.
 
 ## Session Continuity
 
-- **Last action:** Completed Plan 01-03 (Wave 2 App listener + cab-test). 4 commits: `02291a4` (HookEvent), `04d1004` (SocketPaths + HookListener), `0a2056a` (AppDelegate + main.swift), `2eb166b` (cab-test embed into Contents/MacOS/). E2E verified: socket binds at D-10 path, mode 0700/0600, "listener bound" in OSLog, cab-test → ingress with `cab-test-<uuid>` session_id, Reporter/cab-report.sh → ingress with reporter-supplied session_id, single-instance lock works (verified via direct binary launch — second instance .failed → NSApp.terminate).
+- **Last action:** Completed Plan 01-04 (Wave 2 dev-install-hook.sh). 1 commit: `baaf33e` (feat(01-04): add dev-install-hook.sh for hook registration). Three modes verified live: default-print, --apply (idempotent), --check. Idempotency proven via two-fire test on tempdir HOME — Stop=1 + UserPromptSubmit=1 cab-report registrations after re-run; unrelated `Stop /usr/bin/true` entry preserved; top-level `model: sonnet` key untouched.
 - **Files written this session:**
-  - `App/HookEvent.swift`, `App/SocketPaths.swift`, `App/HookListener.swift`, `App/AppDelegate.swift` (created)
-  - `App/main.swift`, `CabTest/main.swift` (replaced placeholders)
-  - `project.yml` (postBuildScripts: cab-test → Contents/MacOS/)
-  - `.planning/phases/01-foundation/01-03-SUMMARY.md` (created)
-  - `.planning/STATE.md`, `.planning/ROADMAP.md`, `.planning/REQUIREMENTS.md` (updated — plan progress)
-- **Next action:** Execute Plan 01-04 (Wave 2 dev-install-hook.sh — copy cab-report.sh into user-data path + print/append `~/.claude/settings.json` Stop hook block).
+  - `scripts/dev-install-hook.sh` (created, 151 lines, mode 0755)
+  - `.planning/phases/01-foundation/01-04-SUMMARY.md` (created)
+  - `.planning/STATE.md`, `.planning/ROADMAP.md` (updated — plan progress)
+- **Next action:** Execute Plan 01-05 (Wave 3 scripts/build.sh — xcodebuild archive + per-Mach-O ad-hoc codesign + verification). Wave 2 is now complete and Wave 3 unblocked.
 
 ### Open follow-ups for Plan 01-06
 
 - **1-03-03 latency budget overrun** (carried from Plan 02): harness `verify_1_03_03` enforces ≤ 0.050 s but `/usr/bin/python3` cold-start makes Reporter land at ~65 ms median / 138 ms p95. Recommendation: revise budget to 0.150 s.
 - **1-04-01 / 1-02-01 cold-run sequencing** (NEW from Plan 03): the two rows depend on the app being already running, but verify-phase-1.sh's verify_1_05_01 launches and tears down the app via its own trap. When the suite is run cold, 1-02-01 and 1-04-01 always FAIL because no app is up. Recommended fix: launch the app once in a setup_ipc_tier function and tear down once in teardown_ipc_tier.
 - **1-05-01 `pgrep -fc` unsupported** (NEW from Plan 03): BSD `pgrep` does not implement `-c` (count). The harness reads `count=$(pgrep -fc ClaudeAlertBot 2>/dev/null || echo 0)` which silently fails. Replace with `count=$(pgrep -f ClaudeAlertBot | wc -l | tr -d ' ')`.
+- **JSON5 tolerance for --apply** (NEW from Plan 04): the dev-install-hook.sh JSON5 stripper is regex-based (handles `//` and `/* */` only). Trailing commas, single quotes, and unquoted keys cause refuse-to-mutate. Phase 5 INST-04 owns the proper fix; tracked here as a known dev-tool limitation.
 
 ---
 *State initialized: 2026-05-07*

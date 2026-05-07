@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		25A5F43CD41AC83F13E587D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A714300C48D443F40C0A625 /* AppDelegate.swift */; };
 		79F43300AA53108A7C4C99B8 /* cab-test in Resources */ = {isa = PBXBuildFile; fileRef = 9A4CF07859800DE5173D901A /* cab-test */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8ECAB8E9D4C43DADEF756A7A /* HookListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D54D1C911C95F984BA6C8A1 /* HookListener.swift */; };
 		C2373C8865C769E19E6F3B98 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85C8275D946E935468FEC149 /* main.swift */; };
@@ -32,6 +33,7 @@
 		6B78D85FFDFAD8C99CF5951D /* SocketPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocketPaths.swift; sourceTree = "<group>"; };
 		7151E148769D039124B77B2F /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		85C8275D946E935468FEC149 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		8A714300C48D443F40C0A625 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		9A4CF07859800DE5173D901A /* cab-test */ = {isa = PBXFileReference; includeInIndex = 0; path = "cab-test"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C52574E53A8FD6995A80B23B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -49,6 +51,7 @@
 		3B63D51CE34619A76B883906 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				8A714300C48D443F40C0A625 /* AppDelegate.swift */,
 				422669922C84673FA026FD1E /* HookEvent.swift */,
 				1D54D1C911C95F984BA6C8A1 /* HookListener.swift */,
 				C52574E53A8FD6995A80B23B /* Info.plist */,
@@ -199,6 +202,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				25A5F43CD41AC83F13E587D9 /* AppDelegate.swift in Sources */,
 				DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */,
 				8ECAB8E9D4C43DADEF756A7A /* HookListener.swift in Sources */,
 				E6D06143C70520743ED73969 /* SocketPaths.swift in Sources */,

@@ -45,7 +45,7 @@ snippet() {
       {
         "matcher": "",
         "hooks": [
-          { "type": "command", "command": "\$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh stop", "timeout": 5 }
+          { "type": "command", "command": "\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" stop", "timeout": 5 }
         ]
       }
     ],
@@ -53,7 +53,7 @@ snippet() {
       {
         "matcher": "",
         "hooks": [
-          { "type": "command", "command": "\$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh user_prompt_submit", "timeout": 5 }
+          { "type": "command", "command": "\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" user_prompt_submit", "timeout": 5 }
         ]
       }
     ]

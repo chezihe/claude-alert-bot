@@ -452,6 +452,26 @@ verify_1_07_01() {
     fi
 }
 
+# Regression guard: dev-install-hook.sh must wrap the cab-report path in
+# double quotes inside the emitted hook command string. Without quoting,
+# `/bin/sh -c` splits on the space in "Application Support" and fails with
+# "/Users/<u>/Library/Application: No such file or directory".
+verify_1_04_02() {
+    local id="1-04-02" name="dev-install-hook.sh quotes the cab-report path"
+    if [[ ! -f scripts/dev-install-hook.sh ]]; then
+        _record_fail "$id" "$name" "scripts/dev-install-hook.sh missing"
+        return
+    fi
+    # The emitted command string MUST contain a quoted path. Look for the
+    # exact quoted prefix the snippet now emits.
+    if grep -qF '\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\"' scripts/dev-install-hook.sh; then
+        _record_pass "$id" "$name"
+    else
+        _record_fail "$id" "$name" \
+            "hook command path is not double-quoted (will break /bin/sh -c on space in 'Application Support')"
+    fi
+}
+
 # ---------------------------------------------------------------------------
 # Main dispatcher
 # ---------------------------------------------------------------------------
@@ -496,6 +516,7 @@ main() {
         verify_1_03_01
         verify_1_03_02
         verify_1_03_04
+        verify_1_04_02
         verify_1_07_01
     else
         # Full suite — dependency order: project skeleton → Reporter unit
@@ -517,6 +538,7 @@ main() {
         verify_1_05_01
         verify_roadmap_success_5
         verify_1_06_01
+        verify_1_04_02
         verify_1_07_01
     fi
 

@@ -154,12 +154,12 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HOOK-01 | Phase 1 | Pending |
+| HOOK-01 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693`; e2e gated by Plan 01-03 listener) |
 | HOOK-02 | Phase 2 | Pending |
-| HOOK-03 | Phase 1 | Pending |
-| HOOK-04 | Phase 1 | Pending |
-| HOOK-05 | Phase 1 | Pending |
-| HOOK-06 | Phase 1 | Pending |
+| HOOK-03 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693`; 100x burst PASS; e2e gated by Plan 01-03) |
+| HOOK-04 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693` — D-08 envelope all 10 fields; e2e gated by Plan 01-03) |
+| HOOK-05 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693` — silent no-op when socket missing; e2e gated by Plan 01-03) |
+| HOOK-06 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693` — hook.log via O_APPEND; e2e gated by Plan 01-03) |
 | IPC-01 | Phase 1 | Pending |
 | IPC-02 | Phase 1 | Pending |
 | IPC-03 | Phase 1 | Pending |

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-07T07:45:00.000Z"
+last_updated: "2026-05-07T07:55:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
-  completed_plans: 2
-  percent: 5
+  completed_plans: 3
+  percent: 7
 ---
 
 # State: Claude Alert Bot
@@ -25,23 +25,23 @@ progress:
 ## Current Position
 
 Phase: 01 (foundation) — EXECUTING
-Plan: 3 of 7 (next: 01-02 Reporter shell)
+Plan: 4 of 7 (next: 01-03 App listener — Wave 2)
 
 - **Milestone:** v1
-- **Phase:** 01 — Foundation, Wave 1 in progress
-- **Plan:** 01-01 complete (Xcode project skeleton + two targets)
+- **Phase:** 01 — Foundation, Wave 1 complete; Wave 2 ready to start
+- **Plan:** 01-02 complete (Reporter/cab-report.sh — POSIX sh hook reporter)
 - **Status:** Executing Phase 01
-- **Progress:** `[░░░░░░] 0/6 phases complete (2/7 plans in Phase 01)`
+- **Progress:** `[░░░░░░] 0/6 phases complete (3/7 plans in Phase 01)`
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
 | Phases complete | 0 / 6 |
-| Plans complete | 2 / 7 in Phase 01 |
-| Requirements covered | 1 / 53 (DIST-05 satisfied by LSUIElement=true Info.plist; production-path requirements still pending) |
+| Plans complete | 3 / 7 in Phase 01 |
+| Requirements covered | 1 / 53 (DIST-05 satisfied by LSUIElement=true Info.plist; HOOK-01/03/04/05/06 implementation-side covered by Reporter/cab-report.sh but verifier-checked end-to-end only when Plan 01-03's listener lands) |
 | Phase branch | master (no branching strategy per config.json) |
-| Last plan duration | ~10 min (01-01, Xcode skeleton via xcodegen) |
+| Last plan duration | ~10 min (01-02, Reporter shell) |
 
 ## Accumulated Context
 
@@ -78,14 +78,16 @@ None.
 
 ## Session Continuity
 
-- **Last action:** Completed Plan 01-01 (Wave 1 Xcode project skeleton). Two-target project (App + cab-test) generated via xcodegen; commits `8f04e24` (D-12 dirs + .gitignore) and `1a01531` (project.yml + Info.plist + main.swift placeholders + project.pbxproj + shared scheme). `bash scripts/verify-phase-1.sh --quick` now reports `[PASS] 1-01-01`, `[PASS] 1-01-02` (the two rows this plan owned).
+- **Last action:** Completed Plan 01-02 (Wave 1 Reporter shell). `Reporter/cab-report.sh` is verbatim RESEARCH §"POSIX sh Reporter" + python3 `-S` cold-start trim; commit `1458693`. `bash scripts/verify-phase-1.sh --quick` now reports `[PASS] 1-01-01`, `[PASS] 1-01-02`, `[PASS] 1-03-04`, `[PASS] 1-07-01` (4/4 quick rows green). Full-suite reveals one expected red: `1-03-03` measures 64.8 ms (budget 50 ms) — documented as a measurement deviation, not a behavioral defect; resolution path delegated to Plan 01-06.
 - **Files written this session:**
-  - `App/Info.plist`, `App/main.swift`, `CabTest/main.swift` (created)
-  - `project.yml`, `.gitignore` (created)
-  - `ClaudeAlertBot.xcodeproj/` including `project.pbxproj`, shared `ClaudeAlertBot.xcscheme`, `project.xcworkspace/contents.xcworkspacedata` (created)
-  - `.planning/phases/01-foundation/01-01-SUMMARY.md` (created)
+  - `Reporter/cab-report.sh` (created, 85 lines, mode 0755)
+  - `.planning/phases/01-foundation/01-02-SUMMARY.md` (created)
   - `.planning/STATE.md`, `.planning/ROADMAP.md` (updated — plan progress)
-- **Next action:** Execute Plan 01-02 (Reporter shell script — POSIX sh, exit 0 always, AF_UNIX nc transport, hook.log debug).
+- **Next action:** Execute Plan 01-03 (Wave 2 App listener — NWListener AF_UNIX, HookEvent schema, AppDelegate, cab-test CLI). Wave 2 unblocked because Wave 1's two plans (01-01 + 01-02) are both complete.
+
+### Open follow-up for Plan 01-06
+
+- 1-03-03 latency budget overrun: harness `verify_1_03_03` enforces ≤ 0.050 s but `/usr/bin/python3` cold-start makes a clean Reporter run land at ~65 ms median / 138 ms p95. Adjudicate in Plan 01-06: revise budget upward (recommended 0.150 s), reclassify to manual, or accept FAIL as informational. Detailed numbers in `01-02-SUMMARY.md` "Measurement deviation" section.
 
 ---
 *State initialized: 2026-05-07*

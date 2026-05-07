@@ -43,7 +43,7 @@ Plans:
 **Wave 1**
 - [x] 01-00-PLAN.md — Wave 0: scripts/verify-phase-1.sh validation harness scaffold
 - [x] 01-01-PLAN.md — Wave 1: Xcode project skeleton (App + cab-test targets, Info.plist with LSUIElement)
-- [ ] 01-02-PLAN.md — Wave 1: Reporter shell script (POSIX sh, exit 0 always, AF_UNIX nc transport, hook.log debug)
+- [x] 01-02-PLAN.md — Wave 1: Reporter shell script (POSIX sh, exit 0 always, AF_UNIX nc transport, hook.log debug)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 01-03-PLAN.md — Wave 2: App listener (NWListener AF_UNIX, HookEvent schema, AppDelegate, cab-test CLI)
@@ -123,7 +123,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 2/7 | Executing | - |
+| 1. Foundation | 3/7 | Executing | - |
 | 2. Alert Loop | 0/0 | Not started | - |
 | 3. Click-to-iTerm2 | 0/0 | Not started | - |
 | 4. Multi-Session UX | 0/0 | Not started | - |

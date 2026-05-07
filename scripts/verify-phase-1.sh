@@ -365,6 +365,22 @@ verify_1_05_01() {
 # 1-06-01: App invisibility — manual check only
 # DIST-05 visual: cannot be automated reliably. CI / non-interactive runs set
 # VERIFY_NONINTERACTIVE=1 to defer the visual to Plan 06's checkpoint.
+#
+# Plan 06 checkpoint result (2026-05-07): APPROVED-WITH-OBSERVATION.
+#   - Part A (Dock/Cmd-Tab/menubar invisibility) passed. PID confirmed via pgrep.
+#   - Part B (real Claude Code e2e) passed via hook.log evidence: three
+#     `"event":"stop"` entries at 2026-05-07T10:39:12Z and 10:39:16Z carrying
+#     the user's real iTerm2 session id (w0t0p1:79C4699F-…) with ppid_chain
+#     proving the fires came from real Claude turns. The user's
+#     `log show --predicate 'subsystem == "com.claudealert.bot.hook"' | grep event=stop`
+#     returned empty only because of a listener-uptime / time-window mismatch
+#     (the listener was launched AFTER the real Claude fires landed in the
+#     hook.log path, so OSLog ingress was never produced for those exact fires).
+#     The grep pattern itself is correct — actual ingress lines are emitted as
+#     `ingress event=stop session=… cwd=…` (verified in OSLog).
+#   - Carry-over note: future verifier polish should keep the listener up
+#     across the full real-Claude-Code e2e window so an ingress line is
+#     guaranteed to be available for the grep. Tracked in 01-VERIFICATION.md.
 verify_1_06_01() {
     local id="1-06-01" name="App is invisible (Dock/menubar/Cmd-Tab)"
     if [[ "${VERIFY_NONINTERACTIVE:-}" = "1" ]]; then

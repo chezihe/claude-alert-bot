@@ -90,7 +90,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Distribution (배포)
 
-- [ ] **DIST-01**: 빌드 파이프라인이 `codesign --force --deep --sign -` 으로 ad-hoc 서명한다 (Apple Silicon 실행 필수)
+- [x] **DIST-01**: 빌드 파이프라인이 ad-hoc 서명한다 (Apple Silicon 실행 필수). RESEARCH Pitfall #9 적용: `--deep` 대신 per-Mach-O `codesign --force --sign - --options=runtime` (cab-test → main → bundle 순)
 - [ ] **DIST-02**: 릴리즈 산출물은 `create-dmg`로 빌드된 `.dmg`이다
 - [ ] **DIST-03**: README가 macOS 14 / 15+ 별 Gatekeeper 우회 절차를 정확히 안내한다 (System Settings → Privacy & Security → Open Anyway 경로 포함)
 - [ ] **DIST-04**: DMG 안에 `bypass-gatekeeper.command` 헬퍼가 포함되어 `xattr -cr`로 quarantine을 제거할 수 있다
@@ -202,7 +202,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | ONB-02 | Phase 3 | Pending |
 | ONB-03 | Phase 3 | Pending |
 | ONB-04 | Phase 5 | Pending |
-| DIST-01 | Phase 1 | Pending |
+| DIST-01 | Phase 1 | Satisfied (Plan 01-05 commit `97de952` — scripts/build.sh runs xcodebuild archive + per-Mach-O ad-hoc codesign + verify; canonical output build/export/ClaudeAlertBot.app; bundle + main + cab-test all `Signature=adhoc`; launches on Apple Silicon with no `cs_invalid_page`) |
 | DIST-02 | Phase 6 | Pending |
 | DIST-03 | Phase 6 | Pending |
 | DIST-04 | Phase 6 | Pending |

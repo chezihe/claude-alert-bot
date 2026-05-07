@@ -50,7 +50,7 @@ Plans:
 - [x] 01-04-PLAN.md — Wave 2: scripts/dev-install-hook.sh (D-04 user-data copy + idempotent ~/.claude/settings.json merge)
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 01-05-PLAN.md — Wave 3: scripts/build.sh (xcodebuild archive + per-Mach-O ad-hoc codesign + verification)
+- [x] 01-05-PLAN.md — Wave 3: scripts/build.sh (xcodebuild archive + per-Mach-O ad-hoc codesign + verification)
 - [ ] 01-06-PLAN.md — Wave 3: e2e verify-phase-1.sh wiring + 01-VERIFICATION.md sign-off (with manual checkpoint)
 
 ### Phase 2: Alert Loop
@@ -79,6 +79,7 @@ Plans:
   5. AppleScript calls run on a background queue with a 3-second hard timeout and a 500ms click debounce; the main thread never beachballs even when iTerm2 is busy.
   6. When `ITERM_SESSION_ID` was unavailable at hook time (e.g., shell-integration-disabled environment), TTY-based fallback lookup still focuses the correct pane.
 **Plans:** TBD
+**Reference:** TokenEater (`AThevon/TokenEater`, MIT) — `Shared/Helpers/ProcessResolver.swift`의 TTY 기반 iTerm2 AppleScript 점프 (`focusITerm2Tab`, `getProcessTTY` via `kp_eproc.e_tdev`, `resolveHostApp` with Electron-helper / iTermServer skip, TCC -1743 osascript 폴백)을 차용 검토. Phase 3 plan 시 정식 평가.
 **UI hint:** yes
 
 ### Phase 4: Multi-Session UX
@@ -123,7 +124,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 5/7 | Executing | - |
+| 1. Foundation | 6/7 | Executing | - |
 | 2. Alert Loop | 0/0 | Not started | - |
 | 3. Click-to-iTerm2 | 0/0 | Not started | - |
 | 4. Multi-Session UX | 0/0 | Not started | - |

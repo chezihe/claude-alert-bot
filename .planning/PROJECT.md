@@ -20,7 +20,7 @@ Claude Code 작업이 끝났을 때 macOS 화면에 클로드 아이콘 플로�
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] Claude Code의 `Stop` hook을 받아 작업 완료 이벤트를 수신한다
+- [ ] Claude Code의 `Stop` hook과 `UserPromptSubmit` hook을 받아 작업 시작/종료 이벤트를 수신한다 (경과 시간 계산용)
 - [ ] 작업 소요 시간을 측정하고, 사용자가 설정한 임계값(기본 30초) 이상인 경우에만 알림을 발생시킨다
 - [ ] 알림 시 화면에 플로팅 클로드 아이콘 위젯이 팝업된다 (평소에는 보이지 않음)
 - [ ] 위젯에는 작업한 폴더(프로젝트)명이 함께 표시된다
@@ -61,13 +61,15 @@ Claude Code 작업이 끝났을 때 macOS 화면에 클로드 아이콘 플로�
 
 ## Constraints
 
-- **OS**: macOS 전용 (최소 지원 버전은 플랜 단계에서 결정 — 현실적으로 macOS 13 Ventura 또는 14 Sonoma 이상 권장)
+- **OS**: macOS 14 Sonoma 이상 (`MenuBarExtra` 안정성, `SMAppService.mainApp`, `Network.framework` UDS endpoint 모두 14에서 안정)
 - **터미널**: iTerm2 only — MVP 범위
-- **Tech stack**: Swift / SwiftUI 네이티브 — 배포 용이성, 플로팅 위젯 디테일, 멀티 세션 메모리 효율 모두에서 우월
-- **빌드 환경**: Xcode 필요 (Mac 개발자만 빌드 가능). 사용자는 빌드 산출물만 받음
-- **서명**: Apple Developer Program 미가입 → 사용자 첫 실행 시 Gatekeeper 우회 절차 1회 필요 (README에 명시)
+- **Tech stack**: Swift / SwiftUI + AppKit interop (NSPanel + NSHostingView). 외부 Swift 의존성 0. `Network.framework` AF_UNIX 소켓으로 hook ↔ App IPC
+- **빌드 환경**: Xcode 15.4+ 필요 (Mac 개발자만 빌드 가능). 사용자는 빌드 산출물만 받음
+- **서명**: Apple Developer Program 미가입. **Apple Silicon에서 실행되려면 ad-hoc 서명(`codesign --force --deep --sign -`)은 필수** (없으면 실행 자체 불가 — Gatekeeper 이전의 로드 단계 차단). Apple Developer 가입 없이 무료로 가능
+- **Gatekeeper 우회**: macOS 15+ 에서는 우클릭 → "열기" 단축이 제거됨. 사용자는 **System Settings → Privacy & Security → "Open Anyway"** 절차를 1회 거쳐야 하며, DMG에 포함된 `bypass-gatekeeper.command` 헬퍼(`xattr -cr` 실행)로 대안 제공 가능
 - **외부 의존**: Claude Code 설치 + iTerm2 설치 필수
-- **AppleScript 자동화 권한**: 첫 사용 시 macOS가 "Claude Alert Bot이 iTerm2를 제어하려 합니다" 권한 다이얼로그를 띄움 — 사용자가 허용해야 함
+- **Hook 등록**: Claude Code의 `Stop` hook + `UserPromptSubmit` hook **둘 다** 필요 (시작/종료 상관으로 경과 시간 계산). App이 `~/.claude/settings.json`에 멱등 병합으로 자동 등록
+- **AppleScript 자동화 권한**: 첫 사용 시 macOS가 "Claude Alert Bot이 iTerm2를 제어하려 합니다" 권한 다이얼로그를 띄움 — 사용자가 허용해야 함. `NSAppleEventsUsageDescription` Info.plist 키 필수
 
 ## Key Decisions
 
@@ -78,7 +80,7 @@ Claude Code 작업이 끝났을 때 macOS 화면에 클로드 아이콘 플로�
 | 시간 임계값 기본 30초 + 설정 가능 | 짧은 대화에 알림 노이즈 방지. 사용자별 작업 패턴 차이 흡수 | — Pending |
 | 위젯은 완료 시점에만 등장, 클릭까지 잔존 | "놓치지 않는다"는 Core Value를 직접 구현. 자동 사라짐은 그 가치를 깎음 | — Pending |
 | 동시 완료 = 카운터 배지 + 클릭 시 목록 펼침 | 화면 가리는 위젯 폭주 방지하면서도 모든 세션 접근 가능 | — Pending |
-| Apple 코드 서명 미적용 (서명 없이 .dmg 배포) | $99/년 비용 회피. 첫 실행 1회 우클릭 절차는 받아들임 | — Pending |
+| Apple Developer Program 미가입, ad-hoc 서명 + .dmg 배포 | $99/년 비용 회피. ad-hoc 서명은 무료지만 Apple Silicon 실행에 필수. macOS 15+ 사용자는 시스템 설정 1회 우회 절차 필요 | — Pending |
 | `Stop` hook으로만 트리거 (진행 중 알림 없음) | Claude Code가 표준으로 제공하는 진입점. 진행률은 노이즈 위험 | — Pending |
 
 ## Evolution
@@ -99,4 +101,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-07 after initialization*
+*Last updated: 2026-05-07 after initialization (research findings incorporated)*

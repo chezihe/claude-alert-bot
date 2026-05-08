@@ -33,8 +33,25 @@ final class SettingsStore: ObservableObject {
         didSet { UserDefaults.standard.set(applescriptPermission.rawValue, forKey: "applescript_permission") }
     }
 
+    /// D3-18 — written by SettingsView SET-05 button after testConnection() returns .ok.
+    /// Sentinel: stored as TimeInterval; 0 (or absent) maps to nil.
+    /// @Published so SettingsView re-renders when the value updates after a successful test.
+    /// Mirrors the applescriptPermission @Published+UserDefaults bridge above —
+    /// Date? has no native @AppStorage support, so this is the locked pattern.
+    @Published var lastConnectionTestAt: Date? {
+        didSet {
+            if let d = lastConnectionTestAt {
+                UserDefaults.standard.set(d.timeIntervalSince1970, forKey: "last_connection_test_at")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "last_connection_test_at")
+            }
+        }
+    }
+
     private init() {
         let raw = UserDefaults.standard.string(forKey: "applescript_permission") ?? PermissionStatus.unknown.rawValue
         self.applescriptPermission = PermissionStatus(rawValue: raw) ?? .unknown
+        let ti = UserDefaults.standard.double(forKey: "last_connection_test_at")
+        self.lastConnectionTestAt = ti > 0 ? Date(timeIntervalSince1970: ti) : nil
     }
 }

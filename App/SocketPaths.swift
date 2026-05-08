@@ -9,6 +9,7 @@ enum SocketPaths {
     }()
     static let socketPath: String = "\(appSupportDir)/sock"
     static let logsDir: String = "\(NSHomeDirectory())/Library/Logs/ClaudeAlertBot"
+    static let sessionsJSONPath: String = "\(appSupportDir)/sessions.json"
 
     /// Pitfall #6 — AF_UNIX sun_path is 104 bytes on Darwin (incl. NUL).
     /// Returns true iff the socket path fits.

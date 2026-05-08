@@ -1,0 +1,83 @@
+// App/SessionRecord.swift — Phase 2 domain models (D-08 ↔ App-internal bridge).
+// SESS-01..03, THR-01, AUD-01 (DedupeKey), WIDG-06 (WidgetCorner).
+// D2-20 dedupe key shape: (session_id, ts_round_to_2s).
+// D2-23/D2-25 sessions.json schema_version=1 (separate from D-08's schema_version=1; namespaces are independent).
+import Foundation
+
+/// In-flight start — created by user_prompt_submit, removed by matching stop or 6h GC.
+struct InFlightStart: Codable, Equatable {
+    let startedAt: Date
+    let cwd: String?
+}
+
+/// Completed-but-unclicked alert. Stored in SessionRegistry.completed FIFO + sessions.json.
+struct CompletedSession: Codable, Equatable, Identifiable {
+    let sessionID: String          // matches HookEvent.session_id
+    let projectName: String         // ProjectName.derive(...) result — D2-06
+    let stoppedAt: Date
+    let durationSec: Int?           // nil iff THR-02 fallback (start missing) — D2-16/D2-17
+    let itermSessionID: String?
+    let tty: String?
+    let cwd: String?
+
+    var id: String { sessionID }    // for SwiftUI ForEach in popover
+
+    /// D2-21 — SET-04 Test notification fixture. NOT persisted (D2-22) per SessionRegistry.injectTest.
+    static func testFixture() -> CompletedSession {
+        CompletedSession(
+            sessionID: "test-\(UUID().uuidString)",
+            projectName: "Test",
+            stoppedAt: Date(),
+            durationSec: 31,
+            itermSessionID: nil,
+            tty: nil,
+            cwd: nil
+        )
+    }
+}
+
+/// AUD-01 dedupe key — (session_id, ts/2s bucket).
+/// Phase 4 may extend with transcript_path; Phase 2 ships these two fields per D2-20.
+struct DedupeKey: Hashable, Codable {
+    let sessionID: String
+    let bucketedTS: Int             // Int(ts.timeIntervalSince1970) / 2
+
+    init(sessionID: String, bucketedTS: Int) {
+        self.sessionID = sessionID
+        self.bucketedTS = bucketedTS
+    }
+
+    static func from(sessionID: String, at date: Date) -> DedupeKey {
+        DedupeKey(sessionID: sessionID, bucketedTS: Int(date.timeIntervalSince1970) / 2)
+    }
+}
+
+/// WIDG-06 four-corner enum. RawValue String for @AppStorage compatibility (Pitfall #7).
+enum WidgetCorner: String, CaseIterable, Codable, Identifiable {
+    case topLeft, topRight, bottomLeft, bottomRight
+    var id: String { rawValue }
+    /// UI-SPEC: "왼쪽 위 / 오른쪽 위 / 왼쪽 아래 / 오른쪽 아래"
+    var localizedLabel: String {
+        switch self {
+        case .topLeft: return "왼쪽 위"
+        case .topRight: return "오른쪽 위"
+        case .bottomLeft: return "왼쪽 아래"
+        case .bottomRight: return "오른쪽 아래"
+        }
+    }
+}
+
+/// D2-35/D2-36 — Apple Events permission state machine.
+enum PermissionStatus: String, Codable {
+    case unknown, granted, denied
+}
+
+/// SESS-03 sessions.json on-disk shape. schema=1 locked; future migrations add cases here.
+struct SessionsSnapshot: Codable {
+    /// Bumped only when schema breaks. Phase 2 ships v1.
+    var schema: Int = 1
+    var inFlight: [String: InFlightStart]
+    var completed: [CompletedSession]
+
+    static let currentSchema = 1
+}

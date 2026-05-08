@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-08T07:34:58Z"
+last_updated: "2026-05-08T07:50:12.973Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 19
-  completed_plans: 10
-  percent: 53
+  completed_plans: 13
+  percent: 68
 ---
 
 # State: Claude Alert Bot
 
-**Last updated:** 2026-05-08 (Phase 02 Wave 2 — Plan 02-04 complete: SessionRegistry actor + SessionStore atomic persistence; SESS-01..04, THR-01/02 satisfied; AUD-01 partial)
+**Last updated:** 2026-05-08 (Phase 02 Wave 2 closes — Plan 02-05 complete: AppleScriptHelper actor with compile-once NSAppleScript + 1s timeout + error classification + state mirror; provides production body for the `suppressIfFrontmost` closure on SessionRegistry.ingest())
 
 ## Project Reference
 
@@ -25,21 +25,21 @@ progress:
 ## Current Position
 
 Phase: 2 (alert-loop) — EXECUTING
-Plan: 5 of 12 complete (Wave 0: 02-00 + 02-01 spike; Wave 1: 02-02 + 02-03; Wave 2: 02-04). Next executable: 02-05 (Wave 2 AppleScriptHelper actor).
-Next: Execute 02-05 — AppleScriptHelper actor (compile-once, 1s timeout, error classification, state mirror) — provides the `suppressIfFrontmost` closure body that 02-04's ingest() exposes.
+Plan: 6 of 12 complete (Wave 0: 02-00 + 02-01 spike; Wave 1: 02-02 + 02-03; Wave 2: 02-04 + 02-05). Next executable: 02-06 (Wave 3 NotificationOrchestrator).
+Next: Execute 02-06 — NotificationOrchestrator (concrete `NotifierProtocol` impl). Both Wave 2 plans now landed: SessionRegistry actor (frozen API) + AppleScriptHelper actor (suppress closure body) → Wave 3 has both seams it needs.
 
 - **Milestone:** v1
-- **Phase:** 02 — Alert Loop, 5/12 plans complete. 7 plans remain.
-- **Plan:** 02-04 complete (SessionRegistry actor + SessionStore atomic persistence). Public API frozen for downstream consumers (Wave 3 NotificationOrchestrator, Wave 4 observers, Wave 5 SettingsView injectTest, Wave 6 AppDelegate restore-then-listener boot order).
+- **Phase:** 02 — Alert Loop, 6/12 plans complete. 6 plans remain.
+- **Plan:** 02-05 complete (AppleScriptHelper actor: compile-once + 1s timeout + error classification + MainActor state mirror). 9/9 unit tests pass; full target 40/40; production build SUCCEEDED. AppleScriptHelper is leaf-level — no further consumers in Wave 3; Wave 6 02-11 wires it into HookListener dispatch.
 - **Status:** Executing Phase 2
-- **Progress:** [█████░░░░░] 53%
+- **Progress:** [██████░░░░] 68%
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
 | Phases complete | 1 / 6 |
-| Plans complete | 7 / 7 in Phase 01 + 5 / 12 in Phase 02 |
+| Plans complete | 7 / 7 in Phase 01 + 6 / 12 in Phase 02 |
 | Requirements covered | 16 / 53 (Phase 1: HOOK-01, HOOK-03, HOOK-04, HOOK-05, HOOK-06, IPC-01, IPC-02, IPC-03, DIST-01, DIST-05 + Phase 2: SESS-01..04, THR-01..02; AUD-01 partial — actual sound playback in 02-06) |
 | Phase branch | master (no branching strategy per config.json) |
 | Last plan duration | ~25 min (01-06, verifier sign-off — incl. inherited Task 1 from previous executor) |
@@ -49,6 +49,7 @@ Next: Execute 02-05 — AppleScriptHelper actor (compile-once, 1s timeout, error
 | Real Claude Stop fires captured in checkpoint | 3 (real iTerm2 session UUID `w0t0p1:79C4699F-…`) |
 | Plan 02-02 metrics | 30 min duration · 2 tasks · 5 files (2 created, 3 modified) · 4 commits (RED + Rule-1 fix + GREEN + Korean copy) |
 | Plan 02-04 metrics | ~8 min duration · 2 TDD tasks · 5 files created · 4 commits (RED + GREEN ×2) · 18/18 unit tests pass · full target 31/31 pass · 0 regressions |
+| Plan 02-05 metrics | ~7 min duration · 1 TDD task · 2 files created (App/AppleScriptHelper.swift, ClaudeAlertBotTests/AppleScriptHelperTests.swift) · 2 commits (RED + GREEN) · 9/9 unit tests pass · full target 40/40 pass · 0 regressions |
 
 ## Accumulated Context
 
@@ -75,6 +76,10 @@ Next: Execute 02-05 — AppleScriptHelper actor (compile-once, 1s timeout, error
 | AUD-01 dedupe scope = sound only (completed queue appends unconditionally; only `playSoundOnce` gated by DedupeKey) — Phase 4 may broaden by extending DedupeKey | 02-04 | Plan 02-04 (RESEARCH Pattern 2 lines 408-410) |
 | Pitfall #11 anchor: `await SessionRegistry.shared.restore()` MUST run before `await listener.start()` in Wave 6 AppDelegate boot order | 02-04 | Plan 02-04 (api surface frozen; Wave 6 02-11 enforces) |
 | NotifierProtocol declared inline in App/SessionRegistry.swift (not in a separate file) — Wave 0's MockNotifier.swift extended via fixture-only file MockNotifier+NotifierProtocol.swift | 02-04 | Plan 02-04 (file-ownership invariant preserved) |
+| AppleScriptHelper.scriptSource is a static String constant — target match performed in Swift after the script returns (T-INJECTION-01 mitigation; never interpolate target into AppleScript source) | 02-05 | Plan 02-05 |
+| AppleScript-side `with timeout of 1 second` block + Swift `withCheckedContinuation` on dedicated serial queue → main thread never blocked even on hung iTerm2 (Pitfall 3 closure) | 02-05 | Plan 02-05 |
+| AppleScriptHelper writes SettingsStore.applescriptPermission via `await MainActor.run { ... }` — actor-isolated helper never touches @Published from background (Pitfall 9 closure) | 02-05 | Plan 02-05 |
+| ScriptResult mapping LOCKED: -1743 → .denied, -1712 → .timeout, other non-nil → .otherError(code), nil → .success(value). Wave 5 banner triggers on .denied only — single contract for downstream consumers | 02-05 | Plan 02-05 |
 
 ### Open Questions (carried into planning)
 
@@ -93,28 +98,26 @@ None.
 
 ## Session Continuity
 
-- **Last action:** Completed Plan 02-04 (Phase 2 Wave 2 — SessionRegistry actor + SessionStore atomic persistence). 4 commits on master (sequential mode, TDD):
-  - `169d5a0` test(02-04): add failing SessionStoreTests (TDD RED)
-  - `74c0bf7` feat(02-04): SessionStore actor with atomic save + corrupt-file recovery
-  - `efefcf6` test(02-04): add failing SessionRegistryTests + NotifierProtocol extension (TDD RED)
-  - `35a2be1` feat(02-04): SessionRegistry actor with ingest/threshold/dedupe/GC/restore/injectTest
+- **Last action:** Completed Plan 02-05 (Phase 2 Wave 2 — AppleScriptHelper actor). 2 commits on master (sequential mode, TDD):
+  - `26c735f` test(02-05): add failing AppleScriptHelperTests (TDD RED)
+  - `09863e0` feat(02-05): AppleScriptHelper actor — compile-once, 1s timeout, error classification, state mirror
 
-  Final verifications: SessionStoreTests 5/5 pass, SessionRegistryTests 13/13 pass, full test target 31/31 pass (no regressions in Phase 1 / 02-00 / 02-02 / 02-03), `xcodebuild build` succeeds. `grep -c 'await persist()' App/SessionRegistry.swift` returns 7 (≥4 required). `git diff` confirms ClaudeAlertBotTests/Fixtures/MockNotifier.swift unchanged byte-for-byte (file-ownership invariant preserved).
+  Final verifications: AppleScriptHelperTests 9/9 pass (0.57s), full test target 40/40 pass (no regressions across Phase 1 / 02-00 / 02-02 / 02-03 / 02-04 / 02-05), `xcodebuild build` succeeds (no new warnings). Source-string anchors verified: `grep -c 'with timeout of 1 second' = 3`, `grep -c 'com\.claudealert\.bot\.applescript' = 1`, `grep -c 'subsystem: "com.claudealert.bot.hook"' = 1` (Phase 1 OSLog invariant preserved).
 
-  Public API frozen and documented in 02-04-SUMMARY.md for Wave 3+ consumers. AUD-01 dedupe scope narrowed to sound-only (Phase 4 may broaden via DedupeKey extension). Pitfall #11 anchor: SessionRegistry.restore() must precede HookListener.start() in Wave 6 AppDelegate.
+  Public API frozen for Wave 6 wiring: `frontmostMatches(itermSessionID:) -> Bool`, `triggerPermissionPrompt()`, static `classify(error:result:) -> ScriptResult`. Wave 5 SettingsView uses `triggerPermissionPrompt()` (D2-35 Path A); Wave 6 02-11 HookListener dispatch passes a closure that calls `frontmostMatches` (D2-35 Path B + D2-14 suppress).
 
-  Auto-fixed test bug (Rule 1): Tests C/D used historical 1_700_000_000 epoch which lazy GC at top of ingest() evicted (>6h old vs Date()). Plus ISO8601 default formatter strips fractional seconds → off-by-one duration. Final fix anchors fixtures at `Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))`. Documented in SUMMARY Deviations section.
+  Auto-fixed test bug (Rule 1): `test_queueLabel_isSerial_byConvention` initially used a CWD-relative path (`String(contentsOfFile: "App/AppleScriptHelper.swift")`); xcodebuild test runner CWD is the DerivedData bundle path, not the project root. Resolved with `URL(fileURLWithPath: #filePath)` walked up two dirs. Production code unchanged. Documented in SUMMARY Deviations section.
+
+  Auto-flagged planning bug (Rule 1, deferred): The plan's frontmatter listed `requirements: [WIDG-02]`, but WIDG-02 (NSPanel `.nonactivatingPanel` + `becomesKeyOnlyIfNeeded`) has zero overlap with this plan's AppleScriptHelper actor. Investigation showed REQUIREMENTS.md already had `[x] WIDG-02 Complete` as a false-complete from commit `666c3e2` (02-04's metadata commit), even though 02-04's frontmatter did NOT list WIDG-02 either. SUMMARY frontmatter corrected to `requirements: []`; pre-existing false `[x] WIDG-02` in REQUIREMENTS.md NOT reverted by 02-05 (out of scope per CLAUDE.md "No Over-Editing"). Logged to `.planning/phases/02-alert-loop/deferred-items.md` as `REQ-WIDG-02-FALSE-COMPLETE` for the future widget plan / Phase 2 verifier to close.
 
 - **Files written this plan:**
-  - `App/SessionRegistry.swift` (created — actor SessionRegistry + NotifierProtocol + Clock)
-  - `App/SessionStore.swift` (created — actor SessionStore atomic persistence + corrupt-rename)
-  - `ClaudeAlertBotTests/SessionRegistryTests.swift` (created — 13 unit tests A–M)
-  - `ClaudeAlertBotTests/SessionStoreTests.swift` (created — 5 unit tests for SESS-03)
-  - `ClaudeAlertBotTests/Fixtures/MockNotifier+NotifierProtocol.swift` (created — extension-only conformance)
-  - `ClaudeAlertBot.xcodeproj/project.pbxproj` (xcodegen-regenerated for new files)
-  - `.planning/phases/02-alert-loop/02-04-SUMMARY.md` (created)
-  - `.planning/STATE.md`, `.planning/ROADMAP.md`, `.planning/REQUIREMENTS.md` (updated — plan progress + 6 requirements satisfied + AUD-01 partial)
-- **Next action:** Execute Plan 02-05 — AppleScriptHelper actor (compile-once NSAppleScript, 1s hard timeout, error classification, state mirror). Provides the body for the `suppressIfFrontmost: @Sendable (String?) async -> Bool` closure that 02-04's ingest() exposes as a parameter (D2-14 cheap-query). Parallel companion to 02-04 in Wave 2; together they unblock Wave 3 (02-06 NotificationOrchestrator).
+  - `App/AppleScriptHelper.swift` (created — actor AppleScriptHelper + ScriptResult enum)
+  - `ClaudeAlertBotTests/AppleScriptHelperTests.swift` (created — 9 unit tests)
+  - `ClaudeAlertBot.xcodeproj/project.pbxproj` (xcodegen-regenerated)
+  - `.planning/phases/02-alert-loop/02-05-SUMMARY.md` (created — public API + script source verbatim + error mapping table + trigger path reservations)
+  - `.planning/phases/02-alert-loop/deferred-items.md` (created — REQ-WIDG-02-FALSE-COMPLETE finding)
+  - `.planning/STATE.md`, `.planning/ROADMAP.md` (updated — plan progress + 4 new locked decisions)
+- **Next action:** Execute Plan 02-06 — NotificationOrchestrator (Wave 3). Implements `NotifierProtocol` concretely (@MainActor final class) against the API surface 02-04 froze. Wave 2 fully landed (both plans complete + their public APIs locked). 02-06 unblocks 02-07 (FloatingWidgetWindowController) and 02-08 (SettingsView).
 
 ### Open follow-ups (carried into later phases)
 

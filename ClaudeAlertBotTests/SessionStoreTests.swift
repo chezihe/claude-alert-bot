@@ -38,14 +38,14 @@ final class SessionStoreTests: XCTestCase {
             completed: [
                 CompletedSession(sessionID: "c1", projectName: "alpha",
                                  stoppedAt: Date(timeIntervalSince1970: 1_700_000_200),
-                                 durationSec: 42, itermSessionID: "w0t0p1:UUID", tty: "/dev/ttys001",
+                                 durationSec: 42, itermSessionID: "UUID", tty: "/dev/ttys001",
                                  cwd: "/tmp/a"),
                 CompletedSession(sessionID: "c2", projectName: "beta",
                                  stoppedAt: Date(timeIntervalSince1970: 1_700_000_300),
                                  durationSec: nil, itermSessionID: nil, tty: nil, cwd: nil),
                 CompletedSession(sessionID: "c3", projectName: "gamma",
                                  stoppedAt: Date(timeIntervalSince1970: 1_700_000_400),
-                                 durationSec: 7, itermSessionID: "w0t1p0:OTHER", tty: "/dev/ttys002",
+                                 durationSec: 7, itermSessionID: "OTHER", tty: "/dev/ttys002",
                                  cwd: "/tmp/g")
             ]
         )

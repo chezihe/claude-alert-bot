@@ -53,12 +53,41 @@ actor SessionStore {
                 renameCorrupted()
                 return nil
             }
-            return snap
+            let (migrated, migratedCount) = Self.migrateItermIDs(in: snap)
+            if migratedCount > 0 {
+                log.notice("D3-03: migrated \(migratedCount, privacy: .public) sessions to UUID-only iterm_session_id")
+            }
+            return migrated
         } catch {
             log.error("sessions.json decode failed: \(String(describing: error), privacy: .public). Renaming.")
             renameCorrupted()
             return nil
         }
+    }
+
+    /// D3-03 — strip envelope-format `wXtYpZ:UUID` → `UUID-only`.
+    /// Idempotent: legacy UUID-only entries pass through unchanged (iTermSessionID.uuid).
+    /// In-memory only; the next save() cycle writes back normalized form.
+    /// CONTEXT D3-03: no schema bump (SessionsSnapshot.currentSchema stays at 1).
+    private static func migrateItermIDs(in snap: SessionsSnapshot) -> (SessionsSnapshot, migrated: Int) {
+        var migrationCount = 0
+        let newCompleted = snap.completed.map { c -> CompletedSession in
+            guard let raw = c.itermSessionID, raw.contains(":") else { return c }
+            guard let stripped = iTermSessionID.uuid(fromRaw: raw), stripped != raw else { return c }
+            migrationCount += 1
+            return CompletedSession(
+                sessionID: c.sessionID,
+                projectName: c.projectName,
+                stoppedAt: c.stoppedAt,
+                durationSec: c.durationSec,
+                itermSessionID: stripped,
+                tty: c.tty,
+                cwd: c.cwd
+            )
+        }
+        var result = snap
+        result.completed = newCompleted
+        return (result, migrationCount)
     }
 
     /// UI-SPEC: rename `sessions.json` → `sessions.json.corrupt-{ts}` and boot empty.

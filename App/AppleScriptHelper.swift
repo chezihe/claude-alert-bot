@@ -72,6 +72,26 @@ actor AppleScriptHelper {
     end timeout
     """
 
+    /// focus-frontmost script (D3-17 #3 + SET-05). 3-second AppleScript-side timeout.
+    /// SECURITY: fully static source — no external input. T-INJECTION-01 trivially satisfied.
+    /// Returns:
+    ///   - empty string if iTerm2 has 0 windows (mapped to .iTermNotRunning by caller)
+    ///   - frontmost session UUID otherwise (mapped to .ok)
+    /// Activates iTerm2 and brings frontmost session to focus — used by SettingsView SET-05
+    /// "iTerm2 연결 테스트" button (D3-15) as a self-test of permission + automation.
+    private static let focusFrontmostSource: String = """
+    with timeout of 3 seconds
+        tell application "iTerm2"
+            if (count of windows) is 0 then return ""
+            activate
+            tell current window to set frontmost to true
+            return id of current session of current tab of current window
+        end tell
+    end timeout
+    """
+
+    private var compiledFocusFrontmost: NSAppleScript?
+
     private init() {}
 
     private func ensureCompiled() {
@@ -79,6 +99,13 @@ actor AppleScriptHelper {
         let s = NSAppleScript(source: Self.scriptSource)
         _ = s?.compileAndReturnError(nil)
         compiled = s
+    }
+
+    private func ensureCompiledFocusFrontmost() {
+        guard compiledFocusFrontmost == nil else { return }
+        let s = NSAppleScript(source: Self.focusFrontmostSource)
+        _ = s?.compileAndReturnError(nil)
+        compiledFocusFrontmost = s
     }
 
     /// D2-14 — returns true iff frontmost iTerm2 session id matches `target`.
@@ -137,6 +164,49 @@ actor AppleScriptHelper {
             }
         }
         // State mirror — same contract as frontmostMatches (D2-35/D2-36 inheritance).
+        switch result {
+        case .ok:               await markGranted()
+        case .permissionDenied: await markDenied()
+        default: break
+        }
+        return result
+    }
+
+    /// D3-16 — SET-05 "iTerm2 연결 테스트" button dispatch.
+    /// Permission-state branching:
+    ///   .denied   → return .permissionDenied immediately (caller deep-links to Privacy & Security).
+    ///   .unknown  → trigger TCC prompt via triggerPermissionPrompt() then return .permissionDenied
+    ///               (post-prompt success will reflect on next press; this press surfaces the dialog).
+    ///   .granted  → run focus-frontmost. Empty result → .iTermNotRunning. UUID returned → .ok.
+    func testConnection() async -> JumpResult {
+        switch lastKnownPermission {
+        case .denied:
+            log.notice("testConnection: lastKnownPermission == .denied — returning early")
+            return .permissionDenied
+        case .unknown:
+            log.notice("testConnection: lastKnownPermission == .unknown — triggering TCC prompt")
+            await triggerPermissionPrompt()
+            // After the prompt, lastKnownPermission may have flipped to .granted or .denied
+            // depending on the user's choice. Return .permissionDenied here regardless;
+            // the user re-presses to actually exercise focus-frontmost.
+            return .permissionDenied
+        case .granted:
+            return await runFocusFrontmost()
+        }
+    }
+
+    private func runFocusFrontmost() async -> JumpResult {
+        ensureCompiledFocusFrontmost()
+        guard let script = compiledFocusFrontmost else { return .otherError(0) }
+        let result: JumpResult = await withCheckedContinuation { (cont: CheckedContinuation<JumpResult, Never>) in
+            queue.async {
+                var errInfo: NSDictionary?
+                let value = script.executeAndReturnError(&errInfo)
+                let s = value.stringValue ?? ""
+                let r = Self.classify(error: errInfo, result: s)
+                cont.resume(returning: Self.scriptResultToJump(r, emptyMeans: .iTermNotRunning))
+            }
+        }
         switch result {
         case .ok:               await markGranted()
         case .permissionDenied: await markDenied()

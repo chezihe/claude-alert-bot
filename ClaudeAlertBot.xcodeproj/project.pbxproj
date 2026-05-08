@@ -18,6 +18,7 @@
 		78E4C5E92665EEC7E965DACD /* SessionRecordTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8446BA9DA3DB2F6E24A02697 /* SessionRecordTests.swift */; };
 		8ECAB8E9D4C43DADEF756A7A /* HookListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D54D1C911C95F984BA6C8A1 /* HookListener.swift */; };
 		967FA8420333A8A7FC015774 /* MockNotifier+NotifierProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3FAA5B1A2670AF3E46A1D52 /* MockNotifier+NotifierProtocol.swift */; };
+		9BF0D15681380CCD6F7825FB /* AppleScriptHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C884F642E992E25E5C950B7B /* AppleScriptHelperTests.swift */; };
 		A8F29327F7881CB4C3E7D507 /* MockNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAEF869A88355CE7D6169965 /* MockNotifier.swift */; };
 		BAC90EB131673B372DBA2C88 /* SessionRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E982CB48D46A37C9DDD56AA /* SessionRegistryTests.swift */; };
 		C2373C8865C769E19E6F3B98 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85C8275D946E935468FEC149 /* main.swift */; };
@@ -69,6 +70,7 @@
 		B10C653B05E6F6D202CE920D /* ProjectName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectName.swift; sourceTree = "<group>"; };
 		B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAlertBotTests.swift; sourceTree = "<group>"; };
 		C52574E53A8FD6995A80B23B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		C884F642E992E25E5C950B7B /* AppleScriptHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleScriptHelperTests.swift; sourceTree = "<group>"; };
 		C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookEventFactory.swift; sourceTree = "<group>"; };
 		EAEF869A88355CE7D6169965 /* MockNotifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockNotifier.swift; sourceTree = "<group>"; };
 		F38BDA29F2BDA2AC0F00354C /* ProjectNameTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectNameTests.swift; sourceTree = "<group>"; };
@@ -79,6 +81,7 @@
 		26BFE5704E04E26F882FA447 /* ClaudeAlertBotTests */ = {
 			isa = PBXGroup;
 			children = (
+				C884F642E992E25E5C950B7B /* AppleScriptHelperTests.swift */,
 				B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */,
 				A2492431EE9304DB1FF24B55 /* PermissionDeepLinkTests.swift */,
 				F38BDA29F2BDA2AC0F00354C /* ProjectNameTests.swift */,
@@ -301,6 +304,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9BF0D15681380CCD6F7825FB /* AppleScriptHelperTests.swift in Sources */,
 				12B4AD96D68F218C0C6BCC1E /* ClaudeAlertBotTests.swift in Sources */,
 				E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */,
 				967FA8420333A8A7FC015774 /* MockNotifier+NotifierProtocol.swift in Sources */,

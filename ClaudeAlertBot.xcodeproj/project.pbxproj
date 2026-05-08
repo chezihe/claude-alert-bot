@@ -47,6 +47,7 @@
 		D3761DE8508B62CF82C7ACA3 /* iTermSessionID.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB92DF8ECD2021AD37F1AAC /* iTermSessionID.swift */; };
 		D4F0BAE2D982705E01F8E9CF /* ClaudeAlertBotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184BC5521D0393073C46E63A /* ClaudeAlertBotApp.swift */; };
 		DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 422669922C84673FA026FD1E /* HookEvent.swift */; };
+		E571EED85EA6293D7C70BDE2 /* ITerm2JumperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 135F84C6B3B261E51AAD624D /* ITerm2JumperTests.swift */; };
 		E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */; };
 		E6AD2F8FB235BC0F741D5F1A /* FloatingWidgetPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10A1150F9BBA13057C1B014A /* FloatingWidgetPanel.swift */; };
 		E6D06143C70520743ED73969 /* SocketPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B78D85FFDFAD8C99CF5951D /* SocketPaths.swift */; };
@@ -83,6 +84,7 @@
 		10A1150F9BBA13057C1B014A /* FloatingWidgetPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingWidgetPanel.swift; sourceTree = "<group>"; };
 		12CE8E75E63CBC95D6D3C0F3 /* SessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStoreTests.swift; sourceTree = "<group>"; };
 		12F78A117E749843C430D7FA /* NotificationOrchestrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOrchestrator.swift; sourceTree = "<group>"; };
+		135F84C6B3B261E51AAD624D /* ITerm2JumperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ITerm2JumperTests.swift; sourceTree = "<group>"; };
 		13A9A6378829C0CD87A47282 /* SoundPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundPlayer.swift; sourceTree = "<group>"; };
 		184BC5521D0393073C46E63A /* ClaudeAlertBotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAlertBotApp.swift; sourceTree = "<group>"; };
 		1CA2CABBA42E523EBB41F95E /* PopoverContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverContentTests.swift; sourceTree = "<group>"; };
@@ -138,6 +140,7 @@
 				C884F642E992E25E5C950B7B /* AppleScriptHelperTests.swift */,
 				B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */,
 				9DE80FA8FCF86DDC5881D02A /* FloatingWidgetPanelTests.swift */,
+				135F84C6B3B261E51AAD624D /* ITerm2JumperTests.swift */,
 				09884DA38C8ABC43B43A4C15 /* iTermSessionIDTests.swift */,
 				36BDD5D1C291C8C40FA6F82D /* NotificationOrchestratorTests.swift */,
 				A2492431EE9304DB1FF24B55 /* PermissionDeepLinkTests.swift */,
@@ -401,6 +404,7 @@
 				12B4AD96D68F218C0C6BCC1E /* ClaudeAlertBotTests.swift in Sources */,
 				2185CDDB44AD540DCB31275C /* FloatingWidgetPanelTests.swift in Sources */,
 				E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */,
+				E571EED85EA6293D7C70BDE2 /* ITerm2JumperTests.swift in Sources */,
 				967FA8420333A8A7FC015774 /* MockNotifier+NotifierProtocol.swift in Sources */,
 				A8F29327F7881CB4C3E7D507 /* MockNotifier.swift in Sources */,
 				C8F82E4C8E04670D6473A5D6 /* MockTerminalJumper.swift in Sources */,

@@ -117,7 +117,7 @@ actor SessionRegistry {
             projectName: ProjectName.derive(cwd: event.cwd, claudeProjectDir: event.claude_project_dir),
             stoppedAt: stoppedAt,
             durationSec: durationSec,
-            itermSessionID: event.iterm_session_id,
+            itermSessionID: iTermSessionID.uuid(fromRaw: event.iterm_session_id),   // D3-02 — UUID-only on write
             tty: event.tty,
             cwd: event.cwd
         )

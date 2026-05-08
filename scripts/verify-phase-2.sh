@@ -286,6 +286,15 @@ verify_2_08_01() {
     fi
 }
 
+# ─── PHASE 3 CONTRACT CHANGE ──────────────────────────────────────────────
+# Plan 03-07 (Phase 3) supersedes the D2-08 [would-jump session=...] log
+# literal with the D3-13 4-prefix contract: [jumped, [jump-missed, [jump-denied,
+# [jump-error. After Phase 3 ships, this row 2-08-02 is EXPECTED RED — that's
+# correct behavior, not a regression. The post-Phase-3 verifier (verify-phase-3.sh
+# row 3-07-02) asserts the new prefixes; verify-phase-3.sh row 3-09-02 tolerates
+# exactly this single failure when running the Phase 2 verifier as a regression
+# chain. Documented in .planning/phases/03-click-to-iterm2/03-VERIFICATION.md.
+# ──────────────────────────────────────────────────────────────────────────
 verify_2_08_02() {
     local id="2-08-02" name="WidgetPopoverController compiles + WidgetHoverDelegate conformance + D2-08 anchor"
     if xcodebuild build -scheme ClaudeAlertBot -destination 'platform=macOS' > /tmp/cab-test-out.log 2>&1; then

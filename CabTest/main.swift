@@ -22,6 +22,7 @@ let payload: [String: Any] = [
     "transcript_path": NSNull(),
     "cwd": FileManager.default.currentDirectoryPath,
     "iterm_session_id": ProcessInfo.processInfo.environment["ITERM_SESSION_ID"] ?? NSNull(),
+    "term_program": ProcessInfo.processInfo.environment["TERM_PROGRAM"] ?? NSNull(),
     "tty": NSNull(),
     "ppid": Int(getppid()),
     "claude_project_dir": ProcessInfo.processInfo.environment["CLAUDE_PROJECT_DIR"] ?? NSNull(),

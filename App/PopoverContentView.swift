@@ -45,6 +45,11 @@ struct PopoverContentView: View {
     /// Phase 3 D3-11 — fired after a row's `.missing` collapse animation completes.
     /// Forwarded to `SessionRegistry.shared.clearOne(sessionID:)` by the parent.
     var onRowMissingComplete: (String) -> Void = { _ in }
+    /// Phase 3 03-09 fix — hover state change for the popover surface itself.
+    /// Parent (WidgetPopoverController) cancels its widget-exit dismiss timer while
+    /// hovering=true so the user can travel from the menu-bar icon onto the popover
+    /// without the 250ms widget exit grace dismissing the popover mid-flight.
+    var onPopoverHoverChange: (Bool) -> Void = { _ in }
 
     private var dupProjects: Set<String> {
         PopoverContentRules.projectsWithDuplicates(queue)
@@ -82,5 +87,6 @@ struct PopoverContentView: View {
         }
         .frame(width: 280)
         .background(.thinMaterial)
+        .onHover { hovering in onPopoverHoverChange(hovering) }
     }
 }

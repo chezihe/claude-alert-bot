@@ -63,6 +63,20 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(250), execute: exit)
     }
 
+    /// Phase 3 03-09 fix — popover surface hover. While hovering=true, cancel the
+    /// widget-exit dismiss timer so traveling from the menu-bar icon onto the
+    /// popover does not race the 250ms grace and dismiss the popover mid-flight.
+    /// On hovering=false, restart a normal exit grace from the popover edge.
+    private func onPopoverHover(_ hovering: Bool) {
+        if hovering {
+            exitWorkItem?.cancel(); exitWorkItem = nil
+        } else {
+            let exit = DispatchWorkItem { [weak self] in self?.dismissPopover() }
+            exitWorkItem = exit
+            DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(250), execute: exit)
+        }
+    }
+
     // MARK: - present / dismiss (Pattern 8)
 
     private func showPopover() {
@@ -80,7 +94,8 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
                 Task { await SessionRegistry.shared.clearOne(sessionID: sid) }
                 self.rowStates.removeValue(forKey: sid)
                 self.reloadPopoverContent()
-            }
+            },
+            onPopoverHoverChange: { [weak self] hovering in self?.onPopoverHover(hovering) }
         )
         let pop: NSPopover
         if let existing = popover {
@@ -123,7 +138,8 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
                 Task { await SessionRegistry.shared.clearOne(sessionID: sid) }
                 self.rowStates.removeValue(forKey: sid)
                 self.reloadPopoverContent()
-            }
+            },
+            onPopoverHoverChange: { [weak self] hovering in self?.onPopoverHover(hovering) }
         )
         pop.contentViewController = NSHostingController(rootView: content)
     }

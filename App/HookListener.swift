@@ -92,6 +92,31 @@ final class HookListener {
             // NOTE (Phase 5 review): cwd/session_id logged at .public for dev visibility (D-07).
             //   Reclassify to .private once OSLog is no longer the primary verification surface.
             ingressLog.notice("ingress event=\(event.event, privacy: .public) session=\(event.session_id ?? "nil", privacy: .public) cwd=\(event.cwd ?? "nil", privacy: .public)")
+
+            // === Phase 2 dispatch (Wave 6 — 02-11 addition) ===
+            // D2-35 Path B: trigger TCC dialog on first Stop when permission == .unknown.
+            // The first Stop alert fires normally (Path B trade-off — see CONTEXT D2-35).
+            Task { @MainActor in
+                let store = SettingsStore.shared
+                let threshold = store.thresholdSeconds
+                let soundOn = store.soundEnabled
+                let perm = store.applescriptPermission
+
+                if perm == .unknown && event.event == "stop" {
+                    Task { await AppleScriptHelper.shared.triggerPermissionPrompt() }
+                }
+
+                let permGranted = (perm == .granted)
+                await SessionRegistry.shared.ingest(
+                    event,
+                    thresholdSeconds: threshold,
+                    soundEnabled: soundOn,
+                    suppressIfFrontmost: { iTermID in
+                        guard permGranted, let iTermID else { return false }
+                        return await AppleScriptHelper.shared.frontmostMatches(itermSessionID: iTermID)
+                    }
+                )
+            }
         } catch {
             log.error("decode failed: \(String(describing: error), privacy: .public)")
         }

@@ -15,7 +15,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var listener: HookListener?
     private var signalSources: [DispatchSourceSignal] = []
 
+    // Phase 2 — retained components (Wave 6 wiring per Pitfall #11)
+    private var notificationOrchestrator: NotificationOrchestrator?
+    private var widgetController: FloatingWidgetWindowController?
+    private var popoverController: WidgetPopoverController?
+    private var wakeObserver: WakeObserver?
+    private var frontmostObserver: WorkspaceFrontmostObserver?
+    private var gcTimer: SessionGCTimer?
+
+    // D2-29: previously set in main.swift; relocated here so it lands BEFORE SwiftUI
+    // realizes any scene. willFinishLaunching is the canonical Apple-blessed slot for
+    // this when using SwiftUI App lifecycle. Belt-and-suspenders alongside LSUIElement=true.
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        NSApp.setActivationPolicy(.accessory)
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // === Phase 1 steps (preserved verbatim) ===
         // 1. Validate socket path length (Pitfall #6)
         guard SocketPaths.validateSocketPathLength() else {
             log.error("socket path > 103 bytes — refusing to bind")
@@ -29,20 +45,63 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 3. Stale-socket reclaim (Pattern 6)
         reclaimSocketIfStale(at: SocketPaths.socketPath)
 
-        // 4. Start listener — failure (D-09) → terminate is wired inside HookListener.stateUpdateHandler
-        do {
-            let l = HookListener(socketPath: SocketPaths.socketPath)
-            try l.start()
-            self.listener = l
-        } catch {
-            log.error("failed to construct listener: \(String(describing: error), privacy: .public)")
-            NSApp.terminate(nil)
-            return
+        // === Phase 2 wiring (Wave 6 — Pitfall #11 ordering) ===
+        // listener.start() (Phase 1 step 4) is DEFERRED into this Task so it runs
+        // strictly AFTER SessionRegistry.restore() completes — otherwise in-flight
+        // events arriving in the boot window can be dropped.
+        Task { @MainActor in
+            // 6. Restore session state from disk BEFORE listener accepts events.
+            await SessionRegistry.shared.restore()
+
+            // 7. Construct widget + popover + notification orchestrator.
+            let widget = FloatingWidgetWindowController()
+            let popover = WidgetPopoverController(widgetController: widget)
+            widget.hoverDelegate = popover
+            let orchestrator = NotificationOrchestrator(widget: widget)
+            self.widgetController = widget
+            self.popoverController = popover
+            self.notificationOrchestrator = orchestrator
+
+            // 8. Bind orchestrator to registry — registry can now broadcast UI updates.
+            await SessionRegistry.shared.bind(notifier: orchestrator)
+
+            // 9. Restore-broadcast — registry already replayed any restored queue,
+            //    but the orchestrator was nil at that time. Re-emit current state.
+            let pending = await SessionRegistry.shared.peekPending()
+            await orchestrator.refreshQueueState(completed: pending, count: pending.count)
+
+            // 10. Lifecycle observers + GC timer (SESS-04 Pattern 6 triple-trigger).
+            self.wakeObserver = WakeObserver { Task { await SessionRegistry.shared.runGC() } }
+            self.frontmostObserver = WorkspaceFrontmostObserver()
+            let timer = SessionGCTimer { Task { await SessionRegistry.shared.runGC() } }
+            timer.start()
+            self.gcTimer = timer
+
+            // 11. AppleScriptHelper eager compile — keeps first cheap-query latency low.
+            //     No permission trigger here: D2-35 Path A lives in SettingsView.onAppear,
+            //     Path B lives in HookListener.handle on the first Stop with .unknown perm.
+            _ = AppleScriptHelper.shared
+
+            self.log.notice("Phase 2 components wired (orchestrator, widget, popover, observers, GC timer)")
+
+            // === Phase 1 step 4 (DEFERRED to here per Pitfall #11) ===
+            // 4. Start listener AFTER all Phase 2 wiring completes.
+            do {
+                let l = HookListener(socketPath: SocketPaths.socketPath)
+                try l.start()
+                self.listener = l
+                self.log.notice("listener bound (Phase 2 wiring complete)")
+            } catch {
+                self.log.error("listener.start failed: \(String(describing: error), privacy: .public)")
+                NSApp.terminate(nil)
+            }
         }
 
-        // 5. Signal handlers — clean shutdown removes socket file
+        // === Phase 1 step 5 (preserved — outside Task; signal handlers don't depend on Phase 2 wiring) ===
         installSignalHandler(SIGTERM)
         installSignalHandler(SIGINT)
+        // NOTE: D2-29 — no NSMenu / settingsWindow / NSApp.activate. The SwiftUI
+        // `Settings { … }` scene in ClaudeAlertBotApp.swift handles ⌘, automatically.
     }
 
     private func ensureDirectories() {

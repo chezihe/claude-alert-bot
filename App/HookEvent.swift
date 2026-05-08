@@ -16,4 +16,5 @@ struct HookEvent: Decodable {
     let ppid: Int?
     let claude_project_dir: String?
     let ts: String?
+    let term_program: String?              // D3-05 — $TERM_PROGRAM capture; v1 unused, v2 dispatch key (MTERM-01..04).
 }

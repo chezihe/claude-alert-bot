@@ -5,8 +5,9 @@
 // Conforms to WidgetHoverDelegate (declared in App/FloatingWidgetWindowController.swift, 02-07).
 // Hover-intent timing: 150ms entry delay before show, 250ms exit grace before dismiss
 // (UI-SPEC §"Floating Widget" hover row — owned by 02-08 per 02-07 SUMMARY).
-// D2-08: row click site emits OSLog `[would-jump session=<uuid>]` verbatim — Phase 3 ITermBridge
-// inherits this signature without reformatting.
+// Phase 3 (03-07): D2-08 placeholder superseded. onRowClick dispatches to TerminalJumper
+// (D-ADAPTER seam from 03-01) and orchestrates RowState (D3-11) + popover dismiss + clearOne.
+// OSLog [jump*] 4-prefix contract (D3-13) is emitted by ITerm2Jumper, not here.
 import AppKit
 import SwiftUI
 import os
@@ -21,9 +22,27 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
     // Pattern 8 — NSPopover. (Pattern 8a sibling-NSPanel branch retired by 02-01 spike verdict.)
     private var popover: NSPopover?
 
-    init(widgetController: FloatingWidgetWindowController) {
+    /// Phase 3 D-ADAPTER — TerminalJumper injected via init (default: ITerm2Jumper).
+    private let jumper: any TerminalJumper
+
+    /// Phase 3 D3-11 — per-session row state. Mutations trigger popover content reload.
+    private var rowStates: [String: RowState] = [:]
+
+    /// Production + tests inject the jumper explicitly. The convenience initializer below
+    /// supplies the default `ITerm2Jumper()` — both `WidgetPopoverController` and `ITerm2Jumper`
+    /// are `@MainActor`, so the default expression cannot be evaluated in a nonisolated
+    /// init parameter context (Swift 6 strict-concurrency rule; mirrors `NotificationOrchestrator`
+    /// 02-06 `convenience init(widget:)` pattern).
+    init(widgetController: FloatingWidgetWindowController,
+         jumper: any TerminalJumper) {
         self.widgetController = widgetController
+        self.jumper = jumper
         super.init()
+    }
+
+    /// Convenience for production callers — wraps the designated init with `ITerm2Jumper()`.
+    convenience init(widgetController: FloatingWidgetWindowController) {
+        self.init(widgetController: widgetController, jumper: ITerm2Jumper())
     }
 
     // MARK: - WidgetHoverDelegate
@@ -54,7 +73,14 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         let content = PopoverContentView(
             queue: queue,
             onRowClick: { [weak self] sid in self?.onRowClick(sessionID: sid) },
-            onClearAll: { [weak self] in self?.onClearAll() }
+            onClearAll: { [weak self] in self?.onClearAll() },
+            rowStates: rowStates,
+            onRowMissingComplete: { [weak self] sid in
+                guard let self else { return }
+                Task { await SessionRegistry.shared.clearOne(sessionID: sid) }
+                self.rowStates.removeValue(forKey: sid)
+                self.reloadPopoverContent()
+            }
         )
         let pop: NSPopover
         if let existing = popover {
@@ -80,6 +106,28 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         log.notice("popover dismissed")
     }
 
+    /// Re-render the popover with the current rowStates dict.
+    /// NSHostingController's contentViewController reassignment is the existing
+    /// reload primitive (Phase 2 02-08 line 67).
+    private func reloadPopoverContent() {
+        guard let pop = popover, pop.isShown else { return }
+        guard let controller = widgetController else { return }
+        let queue = controller.queueSnapshot
+        let content = PopoverContentView(
+            queue: queue,
+            onRowClick: { [weak self] sid in self?.onRowClick(sessionID: sid) },
+            onClearAll: { [weak self] in self?.onClearAll() },
+            rowStates: rowStates,
+            onRowMissingComplete: { [weak self] sid in
+                guard let self else { return }
+                Task { await SessionRegistry.shared.clearOne(sessionID: sid) }
+                self.rowStates.removeValue(forKey: sid)
+                self.reloadPopoverContent()
+            }
+        )
+        pop.contentViewController = NSHostingController(rootView: content)
+    }
+
     /// UI-SPEC: popover slides away from the widget's corner.
     /// Top-half corners → popover lives below the widget (.minY).
     /// Bottom-half corners → popover lives above the widget (.maxY).
@@ -93,10 +141,40 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
     // MARK: - actions (D2-08 + D2-07)
 
     private func onRowClick(sessionID: String) {
-        // D2-08 verbatim — Phase 3 ITermBridge inherits the [would-jump session=<uuid>] format.
-        log.notice("[would-jump session=\(sessionID, privacy: .public)]")
-        Task { await SessionRegistry.shared.clearOne(sessionID: sessionID) }
-        dismissPopover()
+        // Find the session for this click; if it disappeared (clearAll race), do nothing.
+        guard let session = widgetController?.queueSnapshot.first(where: { $0.sessionID == sessionID }) else {
+            log.notice("[jump-missed session=\(sessionID, privacy: .public)] (no longer in queue)")
+            return
+        }
+        // D3-11 + JUMP-05: short-circuit if already mid-jump for this row (defensive — row also self-debounces).
+        if let s = rowStates[sessionID], s != .normal { return }
+
+        rowStates[sessionID] = .jumping
+        reloadPopoverContent()
+
+        Task { [weak self] in
+            guard let self else { return }
+            let result = await self.jumper.jump(to: session)
+            await MainActor.run {
+                // ITerm2Jumper already emitted the [jump*] OSLog line. WPC's job is state + dismiss.
+                switch result {
+                case .ok:
+                    self.rowStates.removeValue(forKey: sessionID)
+                    Task { await SessionRegistry.shared.clearOne(sessionID: sessionID) }
+                    self.dismissPopover()
+                case .missing, .iTermNotRunning, .timeout, .otherError:
+                    self.rowStates[sessionID] = .missing
+                    self.reloadPopoverContent()
+                    // Row's missing-animation completion will fire onRowMissingComplete → SessionRegistry.clearOne.
+                case .permissionDenied:
+                    self.rowStates[sessionID] = .missing
+                    self.reloadPopoverContent()
+                    PermissionDeepLink.openAutomationPreferences()
+                    // Row's missing animation still runs → row clears from queue.
+                    // Banner in SettingsView (Phase 2 PermissionBannerView) surfaces via lastKnownPermission update from AppleScriptHelper.
+                }
+            }
+        }
     }
 
     private func onClearAll() {

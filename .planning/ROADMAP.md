@@ -64,7 +64,7 @@ Plans:
   4. Settings (threshold seconds, sound on/off, widget corner + offset) change behavior immediately, persist across app restart, and the "Test notification" button surfaces the widget and plays the sound on demand.
   5. Killing and restarting the app while a completed-but-unclicked alert is pending re-renders that alert from `sessions.json`; an in-flight session older than 6 hours does not.
   6. When a Stop event has no matching UserPromptSubmit (start lost), the configured fallback policy (default: alert with "?" duration) is applied — never silently dropped.
-**Plans:** 9/12 plans executed
+**Plans:** 10/12 plans executed
 Plans:
 **Wave 0** *(parallel — pre-implementation)*
 - [x] 02-00-PLAN.md — Test scaffold: XCTest target + verify-phase-2.sh skeleton + CabTest argv extension
@@ -84,7 +84,7 @@ Plans:
 
 **Wave 4** *(parallel)*
 - [x] 02-08-PLAN.md — PopoverContentView + PopoverRowView + WidgetPopoverController (topology per 02-01 spike verdict)
-- [ ] 02-09-PLAN.md — WakeObserver + WorkspaceFrontmostObserver + SessionGCTimer (SESS-04 Pattern 6 triple-trigger)
+- [x] 02-09-PLAN.md — WakeObserver + WorkspaceFrontmostObserver + SessionGCTimer (SESS-04 Pattern 6 triple-trigger)
 
 **Wave 5**
 - [ ] 02-10-PLAN.md — SettingsView Form + PermissionBannerView + D2-35 Path A trigger (.onAppear → triggerPermissionPrompt)
@@ -152,7 +152,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 7/7 | Complete (phase_gate: green) | 2026-05-07 |
-| 2. Alert Loop | 9/12 | In Progress|  |
+| 2. Alert Loop | 10/12 | In Progress|  |
 | 3. Click-to-iTerm2 | 0/0 | Not started | - |
 | 4. Multi-Session UX | 0/0 | Not started | - |
 | 5. Hook Installer & Onboarding | 0/0 | Not started | - |

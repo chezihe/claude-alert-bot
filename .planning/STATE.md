@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-08T08:14:00.000Z"
+last_updated: "2026-05-08T08:22:08.641Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 19
-  completed_plans: 16
-  percent: 84
+  completed_plans: 17
+  percent: 89
 ---
 
 # State: Claude Alert Bot
 
-**Last updated:** 2026-05-08 (Phase 02 Wave 4 first half complete — Plan 02-08 complete: PopoverContentRules pure namespace + PopoverContentView + PopoverRowView SwiftUI + WidgetPopoverController conforming to WidgetHoverDelegate (Pattern 8 NSPopover per 02-01 spike); D2-08 [would-jump session=<uuid>] OSLog format LOCKED; 67/67 tests pass; Wave 4/5/6 plans 02-09 / 02-10 / 02-11 next)
+**Last updated:** 2026-05-08 (Phase 02 Wave 4 second half complete — Plan 02-09 complete: WakeObserver + WorkspaceFrontmostObserver + SessionGCTimer (Pattern 6 SESS-04 triple-trigger). All three carry verbatim "CRITICAL: retain" comment + [weak self] capture + retained-token/source per PATTERNS.md. WorkspaceFrontmostObserver bundle-ID-filters to `com.googlecode.iterm2` (T-FRONTMOST-SPAM-01). 4/4 SessionGCTimerTests pass; full target 71/71 pass; Wave 5/6 plans 02-10 / 02-11 next)
 
 ## Project Reference
 
@@ -25,21 +25,21 @@ progress:
 ## Current Position
 
 Phase: 2 (alert-loop) — EXECUTING
-Plan: 9 of 12 complete (Wave 0: 02-00 + 02-01 spike; Wave 1: 02-02 + 02-03; Wave 2: 02-04 + 02-05; Wave 3: 02-06 + 02-07; Wave 4 first-half: 02-08). Next executable: 02-09 (cab-test extensions).
-Next: Execute 02-09 — cab-test helper extensions for popover/hover scenarios + 02-10 verify-phase-2.sh + 02-11 AppDelegate boot wiring (which retains a `WidgetPopoverController` as a stored property and assigns `widget.hoverDelegate = popoverController`).
+Plan: 10 of 12 complete (Wave 0: 02-00 + 02-01 spike; Wave 1: 02-02 + 02-03; Wave 2: 02-04 + 02-05; Wave 3: 02-06 + 02-07; Wave 4: 02-08 + 02-09). Next executable: 02-10 (Settings + permission banner) → 02-11 (AppDelegate wiring).
+Next: Execute 02-10 — SettingsView Form + PermissionBannerView + D2-35 Path A trigger; then 02-11 AppDelegate boot wiring (Pitfall #11 — `restore()` before `listener.start()`; retain WidgetPopoverController, WakeObserver, WorkspaceFrontmostObserver, SessionGCTimer as stored properties).
 
 - **Milestone:** v1
-- **Phase:** 02 — Alert Loop, 9/12 plans complete. 3 plans remain.
-- **Plan:** 02-08 complete (PopoverContentRules pure namespace owning 4 testable display rules + PopoverContentView SwiftUI container + PopoverRowView per-session row + WidgetPopoverController @MainActor NSObject conforming to WidgetHoverDelegate, Pattern 8 NSPopover per 02-01 spike verdict). 5/5 PopoverContentTests pass; full target 67/67 pass (was 62/62); production build SUCCEEDED. D2-08 OSLog format `[would-jump session=<uuid>]` locked — Phase 3 ITermBridge inherits the call site verbatim. WIDG-03 reinforced (icon was set 02-07; popover row UX is 02-08).
+- **Phase:** 02 — Alert Loop, 10/12 plans complete. 2 plans remain.
+- **Plan:** 02-09 complete (WakeObserver — NSWorkspace.didWakeNotification observer with retained NSObjectProtocol token, [weak self] capture, deinit cleanup; takes injected `onWake()` closure for Wave 6 wiring; WorkspaceFrontmostObserver — NSWorkspace.didActivateApplicationNotification observer filtered by bundle ID `com.googlecode.iterm2` (T-FRONTMOST-SPAM-01), iterates SessionRegistry.peekPending() and calls AppleScriptHelper.frontmostMatches → clearOne for D2-15 auto-clear; SessionGCTimer — DispatchSourceTimer wrapper, default 30 min interval, retained source). All three carry verbatim "CRITICAL: retain" comment per PATTERNS.md. 4/4 SessionGCTimerTests pass (construction, fires-at-interval, cancel-stops, retention contract); full target 71/71 pass (was 67/67 + 4 new = 71); production build SUCCEEDED. SESS-04 Pattern 6 triple-trigger now complete (lazy ingest GC + WakeObserver + SessionGCTimer); D2-15 auto-clear in place.
 - **Status:** Executing Phase 2
-- **Progress:** [████████░░] 84%
+- **Progress:** [█████████░] 89%
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
 | Phases complete | 1 / 6 |
-| Plans complete | 7 / 7 in Phase 01 + 8 / 12 in Phase 02 |
+| Plans complete | 7 / 7 in Phase 01 + 9 / 12 in Phase 02 |
 | Requirements covered | 24 / 53 (Phase 1: HOOK-01, HOOK-03, HOOK-04, HOOK-05, HOOK-06, IPC-01, IPC-02, IPC-03, DIST-01, DIST-05 + Phase 2: SESS-01..04, THR-01..02, AUD-01, AUD-02, WIDG-01, WIDG-02, WIDG-03, WIDG-04, WIDG-05, WIDG-06, WIDG-07) |
 | Phase branch | master (no branching strategy per config.json) |
 | Last plan duration | ~25 min (01-06, verifier sign-off — incl. inherited Task 1 from previous executor) |
@@ -53,6 +53,7 @@ Next: Execute 02-09 — cab-test helper extensions for popover/hover scenarios +
 | Plan 02-06 metrics | ~12 min duration · 2 TDD tasks · 4 files created (App/SoundPlayer.swift, App/NotificationOrchestrator.swift, ClaudeAlertBotTests/SoundPlayerTests.swift, ClaudeAlertBotTests/NotificationOrchestratorTests.swift) · 4 commits (RED + GREEN ×2) · 4/4 SoundPlayerTests + 6/6 NotificationOrchestratorTests · full target 50/50 pass · 0 regressions |
 | Plan 02-07 metrics | ~8 min duration · 2 tasks (Task 1 TDD, Task 2 build-only per plan carve-out) · 5 files created (App/FloatingWidgetPanel.swift, App/FloatingWidgetWindowController.swift, App/WidgetIconView.swift, ClaudeAlertBotTests/FloatingWidgetPanelTests.swift, ClaudeAlertBotTests/PositioningTests.swift) · 3 commits (RED Task1 + GREEN Task1 + GREEN Task2) · 7/7 FloatingWidgetPanelTests + 5/5 PositioningTests · full target 62/62 pass · 0 regressions |
 | Plan 02-08 metrics | ~6 min duration · 2 tasks (Task 1 TDD, Task 2 build-only per plan carve-out) · 4 files created (App/PopoverContentView.swift, App/PopoverRowView.swift, App/WidgetPopoverController.swift, ClaudeAlertBotTests/PopoverContentTests.swift) · 3 commits (RED Task1 + GREEN Task1 + GREEN Task2) · 5/5 PopoverContentTests · full target 67/67 pass · 0 regressions |
+| Plan 02-09 metrics | ~6 min duration · 2 tasks (Task 1 build-only per plan carve-out, Task 2 TDD) · 4 files created (App/WakeObserver.swift, App/WorkspaceFrontmostObserver.swift, App/SessionGCTimer.swift, ClaudeAlertBotTests/SessionGCTimerTests.swift) · 3 commits (Task 1 + RED Task 2 + GREEN Task 2) · 4/4 SessionGCTimerTests · full target 71/71 pass · 0 regressions |
 
 ## Accumulated Context
 
@@ -97,6 +98,10 @@ Next: Execute 02-09 — cab-test helper extensions for popover/hover scenarios +
 | Hover-intent timing LOCKED for popover: 150ms entry delay before show, 250ms exit grace before dismiss; both DispatchWorkItems are cancellable — re-entering during exit grace cancels pending dismiss, leaving before entry intent cancels pending show | 02-08 | Plan 02-08 |
 | PopoverContentRules pure namespace owns the 4 popover display rules (shouldShowClearAll, projectsWithDuplicates, timeSuffix, showsOrphanIndicator) — Phase 4 multi-session UX plan reuses these helpers rather than re-deriving | 02-08 | Plan 02-08 |
 | 02-11 AppDelegate boot order extended: instantiate `WidgetPopoverController(widgetController: widget)` immediately after FloatingWidgetWindowController, retain as a stored property (hoverDelegate is `weak`), and assign `widget.hoverDelegate = popoverController` BEFORE `await SessionRegistry.shared.restore()` and `await listener.start()` | 02-08 | Plan 02-08 |
+| SESS-04 Pattern 6 triple-trigger LOCKED: lazy ingest GC at top of SessionRegistry.ingest() (Wave 2) + WakeObserver.didWakeNotification firing onWake() (02-09) + SessionGCTimer DispatchSourceTimer 30-min repeating (02-09). All three call SessionRegistry.shared.runGC() — wake observer + timer via injected closure wired by 02-11 AppDelegate | 02-09 | Plan 02-09 |
+| 02-09 retention contract LOCKED for all observers/timers: `[weak self]` capture in handlers + retained `private var token`/`private var source` on the class instance + verbatim `// CRITICAL: retain` comment per file (PATTERNS.md institutional anchor inherited from Phase 1 AppDelegate.signalSources). Wave 6 02-11 mirrors this by retaining WakeObserver / WorkspaceFrontmostObserver / SessionGCTimer as stored properties on AppDelegate | 02-09 | Plan 02-09 |
+| WorkspaceFrontmostObserver gates on `app?.bundleIdentifier == "com.googlecode.iterm2"` BEFORE invoking AppleScriptHelper (T-FRONTMOST-SPAM-01) — prevents AppleScript spam on every Cmd-Tab. `grep -c 'com.googlecode.iterm2' App/WorkspaceFrontmostObserver.swift` MUST stay ≥1 | 02-09 | Plan 02-09 |
+| 02-11 AppDelegate boot order extended (Wave 4 lifecycle additions): retain `WakeObserver`, `WorkspaceFrontmostObserver`, `SessionGCTimer` as stored properties on AppDelegate. WakeObserver and SessionGCTimer take `{ Task { await SessionRegistry.shared.runGC() } }` as their callback. WorkspaceFrontmostObserver is self-contained (no callback). All three may be created before or after `restore()` — they only fire on async events | 02-09 | Plan 02-09 |
 
 ### Open Questions (carried into planning)
 
@@ -115,26 +120,26 @@ None.
 
 ## Session Continuity
 
-- **Last action:** Completed Plan 02-08 (Phase 2 Wave 4 first half — Hover Popover). 3 commits on master (sequential mode):
-  - `fc27708` test(02-08): add failing PopoverContentRules tests (TDD RED)
-  - `80e8c76` feat(02-08): PopoverContentView + PopoverRowView + display rules
-  - `37bd072` feat(02-08): WidgetPopoverController (Pattern 8 NSPopover, WIDG-03)
+- **Last action:** Completed Plan 02-09 (Phase 2 Wave 4 second half — Wake / Frontmost observers + GC timer). 3 commits on master (sequential mode):
+  - `116cdb9` feat(02-09): WakeObserver + WorkspaceFrontmostObserver (SESS-04 + D2-15)
+  - `d53931c` test(02-09): add failing SessionGCTimerTests (TDD RED)
+  - `bd7bdc0` feat(02-09): SessionGCTimer DispatchSourceTimer wrapper (SESS-04)
 
-  Final verifications: PopoverContentTests 5/5 pass (0.004s), full test target 67/67 pass (no regressions across Phase 1 / 02-00 / 02-02..08; was 62/62 before this plan, +5 new tests, 0 regressions), `xcodebuild build -scheme ClaudeAlertBot` succeeds. Source-string anchors verified: `grep -c '\[would-jump session=' App/WidgetPopoverController.swift = 3` (D2-08 format anchor), `grep -c 'NSPopover' = 6` (Pattern 8 verdict), `grep -c 'popoverPanel' = 0` (Pattern 8a retired), `grep -c 'WidgetHoverDelegate' = 3`, `grep -c 'NSApp.activate' across 3 new App files = 0/0/0` (LSUIElement regression guard intact).
+  Final verifications: SessionGCTimerTests 4/4 pass (1.384s incl. real-time timer waits), full test target 71/71 pass (was 67/67 + 4 new = 71; zero regressions across Phase 1 / 02-00 / 02-02..09), `xcodebuild build -scheme ClaudeAlertBot` succeeds. Pattern anchors verified: `grep -c 'CRITICAL: retain' App/{WakeObserver,WorkspaceFrontmostObserver,SessionGCTimer}.swift` → 1/1/1 (PATTERNS.md institutional retention pattern), `grep -c '\[weak self\]' …` → 1/1/1, `grep -c 'com.googlecode.iterm2' App/WorkspaceFrontmostObserver.swift` → 1 (T-FRONTMOST-SPAM-01 mitigation).
 
-  Public API frozen for Wave 6 wiring: **WidgetPopoverController(widgetController:)** initializer + WidgetHoverDelegate conformance — 02-11 AppDelegate must construct this AFTER FloatingWidgetWindowController, retain as a stored property (hoverDelegate is weak), and assign `widget.hoverDelegate = popoverController` before `await SessionRegistry.shared.restore() / await listener.start()`. **PopoverContentRules** pure namespace (4 static rules) is the Phase 4 reuse surface. **D2-08 OSLog format LOCKED**: `[would-jump session=<uuid>]` with `privacy: .public` — Phase 3 ITermBridge inherits this call site verbatim.
+  Public API frozen for Wave 6 wiring: **WakeObserver(onWake:)** — Wave 6 passes `{ Task { await SessionRegistry.shared.runGC() } }`. **WorkspaceFrontmostObserver()** — self-contained, reads SessionRegistry.peekPending() + AppleScriptHelper.shared. **SessionGCTimer(interval: 30*60, onTick:)** — must call `.start()` after construction; first fire is at `.now() + interval`, NOT immediate. All three MUST be retained as stored properties on AppDelegate (mirrors `signalSources` lineage). SESS-04 Pattern 6 triple-trigger now complete.
 
-  Deviations: None. Plan executed verbatim. Swift 5 toolchain (per project.yml SWIFT_VERSION: "5") doesn't accept the regex-literal example in test_timeSuffix_format_hhmm; used NSRegularExpression with the same assertion semantics — faithful translation, not a deviation from the test contract.
+  Deviations: None. Plan executed verbatim across both tasks. The plan's must_haves stated WakeObserver "fires `Task { await SessionRegistry.shared.runGC() }`"; the action template (executable contract) shipped that behavior via an injected `onWake` closure that Wave 6 wires to that exact expression — preserves testability and matches AppDelegate's `signalSources` injection style.
 
 - **Files written this plan:**
-  - `App/PopoverContentView.swift` (created — enum PopoverContentRules pure rules + struct PopoverContentView SwiftUI container)
-  - `App/PopoverRowView.swift` (created — per-session row with hover bg + accessibility labels)
-  - `App/WidgetPopoverController.swift` (created — @MainActor final class WidgetPopoverController: NSObject, WidgetHoverDelegate; Pattern 8 NSPopover host with 150ms/250ms hover-intent)
-  - `ClaudeAlertBotTests/PopoverContentTests.swift` (created — 5 unit tests for PopoverContentRules)
+  - `App/WakeObserver.swift` (created — @MainActor final class; didWakeNotification observer with retained NSObjectProtocol token; injected onWake closure)
+  - `App/WorkspaceFrontmostObserver.swift` (created — @MainActor final class; didActivateApplicationNotification observer; bundle-ID iTerm2 filter; D2-15 auto-clear via peekPending + frontmostMatches + clearOne)
+  - `App/SessionGCTimer.swift` (created — @MainActor final class; DispatchSourceTimer wrapper; default 30-min repeating; retained source; cancel + deinit symmetric)
+  - `ClaudeAlertBotTests/SessionGCTimerTests.swift` (created — 4 unit tests: construction, fires-at-interval, cancel-stops, retention contract)
   - `ClaudeAlertBot.xcodeproj/project.pbxproj` (xcodegen-regenerated)
-  - `.planning/phases/02-alert-loop/02-08-SUMMARY.md` (created — Pattern 8 verdict closure + D2-08 OSLog format anchor + 02-11 wiring + verifier row bodies)
-  - `.planning/STATE.md`, `.planning/ROADMAP.md` (updated — plan progress 8→9 of 12 in Phase 2)
-- **Next action:** Execute Plan 02-09 — cab-test helper extensions for hover/popover scenarios (Wave 4 second half). Then Plan 02-10 (verify-phase-2.sh script grafting the verifier row bodies recorded by 02-04 / 02-05 / 02-06 / 02-07 / 02-08), then Plan 02-11 (Wave 6 AppDelegate boot wiring — retain WidgetPopoverController as a stored property, assign widget.hoverDelegate, preserve Pitfall #11 boot order).
+  - `.planning/phases/02-alert-loop/02-09-SUMMARY.md` (created — Wave 4 closure + Wave 6 wiring template + verifier row bodies + threat dispositions)
+  - `.planning/STATE.md`, `.planning/ROADMAP.md` (updated — plan progress 9→10 of 12 in Phase 2; 84% → 89%)
+- **Next action:** Execute Plan 02-10 — SettingsView Form + PermissionBannerView + D2-35 Path A trigger (.onAppear → triggerPermissionPrompt). Then Plan 02-11 (Wave 6 AppDelegate boot wiring — retain WidgetPopoverController + WakeObserver + WorkspaceFrontmostObserver + SessionGCTimer as stored properties; HookListener.ingest dispatch; verify-phase-2.sh; Pitfall #11 boot order — `restore()` before `listener.start()`).
 
 ### Open follow-ups (carried into later phases)
 

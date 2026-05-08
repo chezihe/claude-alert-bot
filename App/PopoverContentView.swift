@@ -77,10 +77,6 @@ struct PopoverContentView: View {
                         PopoverRowView(
                             session: session,
                             showTimeSuffix: dupProjects.contains(session.projectName),
-                            isAvailable: !PopoverContentRules.isUnavailable(
-                                sessionID: session.sessionID,
-                                in: unavailableSessionIDs
-                            ),
                             onClick: { onRowClick(session.sessionID) }
                         )
                     }

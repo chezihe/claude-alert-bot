@@ -97,6 +97,80 @@ final class SessionStoreTests: XCTestCase {
                        "sessions.json must be 0600; got \(String(describing: perms))")
     }
 
+    // MARK: - D3-03 / D3-04 migration regression (Phase 3 03-03)
+
+    /// D3-03 — load() must strip the wXtYpZ: prefix in-memory.
+    func test_load_migratesEnvelopeFormatItermID() async throws {
+        let snap = SessionsSnapshot(
+            schema: 1,
+            inFlight: [:],
+            completed: [
+                CompletedSession(
+                    sessionID: "test-1",
+                    projectName: "MigrateMe",
+                    stoppedAt: Date(timeIntervalSince1970: 1_700_000_000),
+                    durationSec: 31,
+                    itermSessionID: "w0t0p1:79C4699F-1234-5678-9ABC-DEF012345678",
+                    tty: "/dev/ttys001",
+                    cwd: "/tmp"
+                )
+            ]
+        )
+        let store = SessionStore(url: tempURL)
+        await store.save(snap)
+        let loaded = await store.load()
+        XCTAssertEqual(loaded?.completed.first?.itermSessionID, "79C4699F-1234-5678-9ABC-DEF012345678",
+                       "D3-03: load() must strip the wXtYpZ: prefix in-memory")
+    }
+
+    /// D3-04 idempotency — already-normalized value passes through unchanged.
+    func test_load_idempotentWhenAlreadyNormalized() async throws {
+        let snap = SessionsSnapshot(
+            schema: 1,
+            inFlight: [:],
+            completed: [
+                CompletedSession(
+                    sessionID: "test-2",
+                    projectName: "AlreadyClean",
+                    stoppedAt: Date(timeIntervalSince1970: 1_700_000_000),
+                    durationSec: 31,
+                    itermSessionID: "79C4699F-1234-5678-9ABC-DEF012345678",
+                    tty: "/dev/ttys001",
+                    cwd: "/tmp"
+                )
+            ]
+        )
+        let store = SessionStore(url: tempURL)
+        await store.save(snap)
+        let loaded = await store.load()
+        XCTAssertEqual(loaded?.completed.first?.itermSessionID, "79C4699F-1234-5678-9ABC-DEF012345678",
+                       "D3-04 idempotency: already-normalized value must pass through unchanged")
+    }
+
+    /// THR-02 orphan path — nil itermSessionID must survive migration unchanged.
+    func test_load_handlesNilItermSessionIDDuringMigration() async throws {
+        let snap = SessionsSnapshot(
+            schema: 1,
+            inFlight: [:],
+            completed: [
+                CompletedSession(
+                    sessionID: "test-3",
+                    projectName: "NoITermID",
+                    stoppedAt: Date(timeIntervalSince1970: 1_700_000_000),
+                    durationSec: nil,   // THR-02 orphan path
+                    itermSessionID: nil,
+                    tty: nil,
+                    cwd: nil
+                )
+            ]
+        )
+        let store = SessionStore(url: tempURL)
+        await store.save(snap)
+        let loaded = await store.load()
+        XCTAssertNil(loaded?.completed.first?.itermSessionID,
+                     "Migration must preserve nil itermSessionID (orphan path).")
+    }
+
     /// Test 5: schema-mismatched JSON → load renames + returns nil (forward-compat guard).
     func test_load_schemaMismatch_renamesAndReturnsNil() async {
         let mismatched = """

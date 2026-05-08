@@ -152,7 +152,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 7/7 | Complete (phase_gate: green) | 2026-05-07 |
-| 2. Alert Loop | 12/12 | Complete (phase_gate: green) | 2026-05-08 |
+| 2. Alert Loop | 12/12 | Complete    | 2026-05-08 |
 | 3. Click-to-iTerm2 | 0/0 | Not started | - |
 | 4. Multi-Session UX | 0/0 | Not started | - |
 | 5. Hook Installer & Onboarding | 0/0 | Not started | - |

@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-05-08T09:30:00.000Z"
+status: planning
+last_updated: "2026-05-08T09:19:08.764Z"
 progress:
   total_phases: 6
   completed_phases: 2
@@ -29,9 +29,9 @@ Plan: 12 of 12 complete (Wave 0: 02-00 + 02-01 spike; Wave 1: 02-02 + 02-03; Wav
 Next: `/gsd-progress` to report, or `/gsd-context-phase 3` to begin Phase 3 (Click-to-iTerm2). Phase 3 prerequisites in ROADMAP §"Research Flags": (a) `ITERM_SESSION_ID` reliability under tmux/screen/nix-shell/zellij/containerized shells; (b) AppleScript `unique ID` lookup latency probe under typical pane counts; (c) `errAEEventNotPermitted (-1743)` deep-link reliability across macOS 14/15/26.
 
 - **Milestone:** v1
-- **Phase:** 02 — Alert Loop, **12/12 plans complete; phase_gate: green** (verified 2026-05-08).
-- **Plan:** 02-11 complete (AppDelegate boot wiring per Pitfall #11 + HookListener.ingest dispatch + @main SwiftUI App per D2-29 + verify-phase-2.sh fully populated + 02-VERIFICATION.md sign-off). SC#3 manual checkpoint APPROVED (11/11 sub-checks); verifier 23 PASS / 1 FAIL (verifier-tooling artifact V-7) / 2 SKIP from clean state; Phase 1 regression PASS. Pitfall #11 boot order locked: `await SessionRegistry.shared.restore()` precedes `listener.start()`; closes Phase 1 V-2 race in steady state.
-- **Status:** Phase 2 complete; Phase 3 unblocked.
+- **Phase:** 3
+- **Plan:** Not started
+- **Status:** Ready to plan
 - **Progress:** [██████████] 100%
 
 ## Performance Metrics
@@ -131,6 +131,7 @@ None.
   - (this session) docs(02-11): close Phase 2 — phase_gate green (SC#3 approved)
 
   Final verifications (clean state, no live ClaudeAlertBot, fresh socket + sessions.json):
+
   - `VERIFY_NONINTERACTIVE=1 bash scripts/verify-phase-2.sh` → 23 PASS / 1 FAIL\* / 2 SKIP. \*Single FAIL is `2-11-02` (cab-test UUID-per-invocation tooling artifact — V-7 follow-up logged). Underlying THR-01 logic locked by `SessionRegistryTests` (row 2-04-01 PASS).
   - Phase 1 regression `2-11-99` PASS (`VERIFY_NONINTERACTIVE=1 bash scripts/verify-phase-1.sh` exits 0).
   - SC#3 manual checkpoint Task 3 APPROVED with all 11 sub-checks observed (multi-Space, full-screen, Stage Manager, sleep/wake, lid, no focus steal, click-dismiss, hover popover, ⌘, Settings, idle invisibility).

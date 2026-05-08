@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-08T08:30:00.000Z"
+last_updated: "2026-05-08T09:30:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 19
-  completed_plans: 18
-  percent: 95
+  completed_plans: 19
+  percent: 100
 ---
 
 # State: Claude Alert Bot
 
-**Last updated:** 2026-05-08 (Phase 02 Wave 5 complete — Plan 02-10 complete: SettingsView Form + PermissionBannerView denied-state banner + D2-35 Path A `.onAppear → triggerPermissionPrompt` trigger + D2-21 Test button → SessionRegistry.injectTest. 13 static-let Korean copy constants locked by 8 SettingsViewTests; full target 79/79 pass; xcodebuild build SUCCEEDED. Wave 6 plan 02-11 (AppDelegate boot wiring + `Settings { SettingsView() }` scene mount) next.)
+**Last updated:** 2026-05-08 (Phase 02 Wave 6 complete — Plan 02-11 complete: AppDelegate Pitfall #11 boot wiring + HookListener.ingest dispatch + @main SwiftUI App per D2-29 + scripts/verify-phase-2.sh fully populated. SC#3 manual checkpoint APPROVED with all 11 sub-checks. Verifier from clean state: 23 PASS / 1 FAIL\* / 2 SKIP (\*2-11-02 cab-test UUID-per-invocation tooling artifact, not regression — V-7 logged). Phase 1 regression PASS. **Phase 2 closed: phase_gate: green** — see `.planning/phases/02-alert-loop/02-VERIFICATION.md`. Phase 3 unblocked.)
 
 ## Project Reference
 
@@ -24,23 +24,24 @@ progress:
 
 ## Current Position
 
-Phase: 2 (alert-loop) — EXECUTING
-Plan: 11 of 12 complete (Wave 0: 02-00 + 02-01 spike; Wave 1: 02-02 + 02-03; Wave 2: 02-04 + 02-05; Wave 3: 02-06 + 02-07; Wave 4: 02-08 + 02-09; Wave 5: 02-10). Next executable: 02-11 (Wave 6 AppDelegate boot wiring + scene mount).
-Next: Execute 02-11 — AppDelegate boot order (Pitfall #11 — `restore()` before `listener.start()`); retain WidgetPopoverController, WakeObserver, WorkspaceFrontmostObserver, SessionGCTimer as stored properties; mount `Settings { SettingsView() }` scene in main.swift; HookListener.ingest dispatch into SessionRegistry; verify-phase-2.sh.
+Phase: 2 (alert-loop) — **COMPLETE (phase_gate: green)**
+Plan: 12 of 12 complete (Wave 0: 02-00 + 02-01 spike; Wave 1: 02-02 + 02-03; Wave 2: 02-04 + 02-05; Wave 3: 02-06 + 02-07; Wave 4: 02-08 + 02-09; Wave 5: 02-10; Wave 6: 02-11). Phase 2 closed by 02-11 sign-off — see `.planning/phases/02-alert-loop/02-VERIFICATION.md`.
+Next: `/gsd-progress` to report, or `/gsd-context-phase 3` to begin Phase 3 (Click-to-iTerm2). Phase 3 prerequisites in ROADMAP §"Research Flags": (a) `ITERM_SESSION_ID` reliability under tmux/screen/nix-shell/zellij/containerized shells; (b) AppleScript `unique ID` lookup latency probe under typical pane counts; (c) `errAEEventNotPermitted (-1743)` deep-link reliability across macOS 14/15/26.
 
 - **Milestone:** v1
-- **Phase:** 02 — Alert Loop, 11/12 plans complete. 1 plan remains.
-- **Plan:** 02-10 complete (SettingsView SwiftUI Form with 4 sections [임계값/사운드/위젯 위치/테스트] + conditional PermissionBannerView; D2-35 Path A wired via `.onAppear → if applescriptPermission == .unknown { triggerPermissionPrompt() }`; D2-21 Test button → `SessionRegistry.shared.injectTest(soundEnabled:)`; D2-36 banner CTA → `PermissionDeepLink.openAutomationPreferences()`). 13 static-let Korean copy constants (3 PermissionBannerView + 10 SettingsView) locked by 8 SettingsViewTests; full target 79/79 pass (was 71 + 8 new); xcodebuild build SUCCEEDED. Zero external dependencies (D2-29 invariant preserved). The `Settings { SettingsView() }` scene wiring itself is owned by 02-11.
-- **Status:** Executing Phase 2
-- **Progress:** [█████████▌] 95%
+- **Phase:** 02 — Alert Loop, **12/12 plans complete; phase_gate: green** (verified 2026-05-08).
+- **Plan:** 02-11 complete (AppDelegate boot wiring per Pitfall #11 + HookListener.ingest dispatch + @main SwiftUI App per D2-29 + verify-phase-2.sh fully populated + 02-VERIFICATION.md sign-off). SC#3 manual checkpoint APPROVED (11/11 sub-checks); verifier 23 PASS / 1 FAIL (verifier-tooling artifact V-7) / 2 SKIP from clean state; Phase 1 regression PASS. Pitfall #11 boot order locked: `await SessionRegistry.shared.restore()` precedes `listener.start()`; closes Phase 1 V-2 race in steady state.
+- **Status:** Phase 2 complete; Phase 3 unblocked.
+- **Progress:** [██████████] 100%
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
-| Phases complete | 1 / 6 |
-| Plans complete | 7 / 7 in Phase 01 + 10 / 12 in Phase 02 |
-| Requirements covered | 28 / 53 (Phase 1: HOOK-01, HOOK-03, HOOK-04, HOOK-05, HOOK-06, IPC-01, IPC-02, IPC-03, DIST-01, DIST-05 + Phase 2: SESS-01..04, THR-01..02, AUD-01, AUD-02, WIDG-01..07, SET-01..04) |
+| Phases complete | 2 / 6 |
+| Plans complete | 7 / 7 in Phase 01 + 12 / 12 in Phase 02 |
+| Requirements covered | 30 / 53 (Phase 1: HOOK-01, HOOK-03, HOOK-04, HOOK-05, HOOK-06, IPC-01, IPC-02, IPC-03, DIST-01, DIST-05 + Phase 2: HOOK-02, SESS-01..04, THR-01..02, AUD-01, AUD-02, WIDG-01..07, SET-01..04) |
+| Plan 02-11 metrics | ~45 min duration (across 2 executor sessions) · 4 tasks (Tasks 1+2 auto, Task 3 human-verify, Task 4 auto) · 4 files modified (AppDelegate.swift, HookListener.swift, ClaudeAlertBotApp.swift renamed, verify-phase-2.sh) + 1 file created (02-VERIFICATION.md) · 3 commits (Tasks 1+2+4) · verifier 23 PASS/1 FAIL/2 SKIP from clean state · Phase 1 regression PASS · phase_gate: green |
 | Phase branch | master (no branching strategy per config.json) |
 | Last plan duration | ~25 min (01-06, verifier sign-off — incl. inherited Task 1 from previous executor) |
 | Phase 1 verifier runtime | ~35s end-to-end (incl. 16s build) |
@@ -124,7 +125,36 @@ None.
 
 ## Session Continuity
 
-- **Last action:** Completed Plan 02-10 (Phase 2 Wave 5 — Settings UI + Permission Banner). 4 commits on master (sequential mode):
+- **Last action:** Completed Plan 02-11 (Phase 2 Wave 6 — AppDelegate boot wiring + HookListener dispatch + @main SwiftUI App + Phase 2 sign-off). 2 commits on master from previous executor session + 1 docs commit this session:
+  - `46ed6c9` feat(02-11): wire Phase 2 boot order + HookListener dispatch + @main SwiftUI App
+  - `02fb8ed` feat(02-11): populate verify-phase-2.sh with all Wave 0-6 rows
+  - (this session) docs(02-11): close Phase 2 — phase_gate green (SC#3 approved)
+
+  Final verifications (clean state, no live ClaudeAlertBot, fresh socket + sessions.json):
+  - `VERIFY_NONINTERACTIVE=1 bash scripts/verify-phase-2.sh` → 23 PASS / 1 FAIL\* / 2 SKIP. \*Single FAIL is `2-11-02` (cab-test UUID-per-invocation tooling artifact — V-7 follow-up logged). Underlying THR-01 logic locked by `SessionRegistryTests` (row 2-04-01 PASS).
+  - Phase 1 regression `2-11-99` PASS (`VERIFY_NONINTERACTIVE=1 bash scripts/verify-phase-1.sh` exits 0).
+  - SC#3 manual checkpoint Task 3 APPROVED with all 11 sub-checks observed (multi-Space, full-screen, Stage Manager, sleep/wake, lid, no focus steal, click-dismiss, hover popover, ⌘, Settings, idle invisibility).
+  - OSLog confirmed Pitfall #11 boot ordering live: `Phase 2 components wired (orchestrator, widget, popover, observers, GC timer)` precedes `listener bound (Phase 2 wiring complete)` in every boot.
+  - D2-29 compliance: `@main` + `Settings { SettingsView() }` + `@NSApplicationDelegateAdaptor` + zero external deps + zero `NSApp.activate(...)` in UI/lifecycle code, all confirmed.
+
+  **phase_gate: green** — recorded in `.planning/phases/02-alert-loop/02-VERIFICATION.md`. Phase 3 unblocked.
+
+  Deviations: None — Tasks 1, 2, 4 executed verbatim per plan; Task 3 returned a clean `approved` signal with no observations beyond the carry-overs already captured (V-2, V-7, V-8).
+
+- **Files written this plan (02-11):**
+  - `App/AppDelegate.swift` (modified — Pitfall #11 boot steps 6-12 wiring + applicationWillFinishLaunching `.accessory` policy)
+  - `App/HookListener.swift` (modified — `handle(buffer:)` dispatches to SessionRegistry.ingest with MainActor wrapper)
+  - `App/ClaudeAlertBotApp.swift` (renamed from `App/main.swift` — `@main struct ClaudeAlertBotApp: App` per D2-29)
+  - `scripts/verify-phase-2.sh` (modified — all upstream verifier rows + SC#1..6 + Phase 1 regression with `VERIFY_NONINTERACTIVE=1`)
+  - `.planning/phases/02-alert-loop/02-VERIFICATION.md` (created — phase_gate: green sign-off + all 6 SC verdicts + manual checkpoint record + D2-29 compliance trace + V-7/V-8 follow-ups)
+  - `.planning/phases/02-alert-loop/02-11-SUMMARY.md` (created — full plan summary with Pitfall #11 boot order documented for Phase 3 inheritance)
+  - `.planning/STATE.md`, `.planning/ROADMAP.md` (updated — Phase 2 closure)
+
+- **Next action:** `/gsd-progress` to report Phase 2 closure, or `/gsd-context-phase 3` to begin Phase 3 (Click-to-iTerm2). Phase 3 prerequisites in ROADMAP §"Research Flags".
+
+### Previous action (02-10 — superseded above):
+
+- Completed Plan 02-10 (Phase 2 Wave 5 — Settings UI + Permission Banner). 4 commits on master (sequential mode):
   - `6b7a716` test(02-10): add failing PermissionBannerView copy tests (TDD RED)
   - `99b64e7` feat(02-10): PermissionBannerView SwiftUI denied-state banner (D2-36)
   - `40aa803` test(02-10): add failing SettingsView copy + corner-label tests (TDD RED)
@@ -167,3 +197,4 @@ None.
 ---
 *State initialized: 2026-05-07*
 *Phase 01 closed: 2026-05-07 (phase_gate: green)*
+*Phase 02 closed: 2026-05-08 (phase_gate: green) — see `.planning/phases/02-alert-loop/02-VERIFICATION.md`*

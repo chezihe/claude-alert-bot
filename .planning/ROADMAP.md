@@ -20,7 +20,7 @@ Claude Code 사용자가 자리를 비웠을 때, 길게 걸린 작업의 완료
 ## Phases
 
 - [x] **Phase 1: Foundation** — Hook script + AF_UNIX IPC + headless app skeleton + ad-hoc-sign build pipeline; a Stop event lands as a structured log line in the running app. **(complete 2026-05-07; phase_gate: green; see `.planning/phases/01-foundation/01-VERIFICATION.md`)**
-- [ ] **Phase 2: Alert Loop** — UserPromptSubmit/Stop correlation, threshold filter, persistent floating NSPanel widget, sound, Settings window. A 31-second Claude turn produces a clickable widget showing the project name (no jump yet).
+- [x] **Phase 2: Alert Loop** — UserPromptSubmit/Stop correlation, threshold filter, persistent floating NSPanel widget, sound, Settings window. A 31-second Claude turn produces a clickable widget showing the project name (no jump yet). (completed 2026-05-08)
 - [ ] **Phase 3: Click-to-iTerm2** — UUID-based AppleScript jump, TTY fallback, Automation permission flow, click debounce, 3-second hard timeout. Clicking the widget lands on the exact originating tab.
 - [ ] **Phase 4: Multi-Session UX** — Counter-badge widget, expandable session list popover, batching window, sound dedupe, concurrency stress hardening. Five near-simultaneous completions produce one badge that opens a list and jumps each to its correct tab.
 - [ ] **Phase 5: Hook Installer & Onboarding** — Idempotent JSON5-tolerant patch of `~/.claude/settings.json` with manual fallback, 3-screen first-run wizard, clean uninstall. A new user reaches a working notifier without touching their terminal.
@@ -64,7 +64,7 @@ Plans:
   4. Settings (threshold seconds, sound on/off, widget corner + offset) change behavior immediately, persist across app restart, and the "Test notification" button surfaces the widget and plays the sound on demand.
   5. Killing and restarting the app while a completed-but-unclicked alert is pending re-renders that alert from `sessions.json`; an in-flight session older than 6 hours does not.
   6. When a Stop event has no matching UserPromptSubmit (start lost), the configured fallback policy (default: alert with "?" duration) is applied — never silently dropped.
-**Plans:** 11/12 plans executed
+**Plans:** 12/12 plans complete
 Plans:
 **Wave 0** *(parallel — pre-implementation)*
 - [x] 02-00-PLAN.md — Test scaffold: XCTest target + verify-phase-2.sh skeleton + CabTest argv extension
@@ -90,7 +90,7 @@ Plans:
 - [x] 02-10-PLAN.md — SettingsView Form + PermissionBannerView + D2-35 Path A trigger (.onAppear → triggerPermissionPrompt)
 
 **Wave 6** *(integration + e2e — blocked on all)*
-- [ ] 02-11-PLAN.md — AppDelegate boot order (Pitfall #11) + HookListener.ingest dispatch + SC#1..6 verifier rows + manual checkpoint + 02-VERIFICATION.md
+- [x] 02-11-PLAN.md — AppDelegate boot order (Pitfall #11) + HookListener.ingest dispatch + SC#1..6 verifier rows + manual checkpoint + 02-VERIFICATION.md
 
 **UI hint:** yes
 
@@ -152,7 +152,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 7/7 | Complete (phase_gate: green) | 2026-05-07 |
-| 2. Alert Loop | 11/12 | In Progress|  |
+| 2. Alert Loop | 12/12 | Complete (phase_gate: green) | 2026-05-08 |
 | 3. Click-to-iTerm2 | 0/0 | Not started | - |
 | 4. Multi-Session UX | 0/0 | Not started | - |
 | 5. Hook Installer & Onboarding | 0/0 | Not started | - |

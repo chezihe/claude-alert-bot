@@ -10,6 +10,7 @@
 		003B98084B11309FF52AFBE3 /* SessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12CE8E75E63CBC95D6D3C0F3 /* SessionStoreTests.swift */; };
 		05594CE07D57F8773968D7F1 /* AppleScriptHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A672A85EF635E98BBCBD52 /* AppleScriptHelper.swift */; };
 		061BE16CB87556492A84EC67 /* PopoverContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD87652FF46DACEA294E54A6 /* PopoverContentView.swift */; };
+		0FD47850BE7EA040C6B323E9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3AD080323016E4B964B92C69 /* Assets.xcassets */; };
 		12B4AD96D68F218C0C6BCC1E /* ClaudeAlertBotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */; };
 		130828703258F88DC24A971F /* ProjectName.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10C653B05E6F6D202CE920D /* ProjectName.swift */; };
 		208C4F34607652159DBF7783 /* PermissionBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 061CE1E19FDE7AD807A94BD1 /* PermissionBannerView.swift */; };
@@ -82,6 +83,7 @@
 		1D54D1C911C95F984BA6C8A1 /* HookListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookListener.swift; sourceTree = "<group>"; };
 		2F0532EA5559479069D65C1F /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		36BDD5D1C291C8C40FA6F82D /* NotificationOrchestratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOrchestratorTests.swift; sourceTree = "<group>"; };
+		3AD080323016E4B964B92C69 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		422669922C84673FA026FD1E /* HookEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookEvent.swift; sourceTree = "<group>"; };
 		4727020E044B4D9690900BC4 /* PermissionDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionDeepLink.swift; sourceTree = "<group>"; };
 		4BCACF080D2BE209AC3408BB /* PopoverRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverRowView.swift; sourceTree = "<group>"; };
@@ -158,6 +160,7 @@
 			children = (
 				8A714300C48D443F40C0A625 /* AppDelegate.swift */,
 				05A672A85EF635E98BBCBD52 /* AppleScriptHelper.swift */,
+				3AD080323016E4B964B92C69 /* Assets.xcassets */,
 				184BC5521D0393073C46E63A /* ClaudeAlertBotApp.swift */,
 				10A1150F9BBA13057C1B014A /* FloatingWidgetPanel.swift */,
 				F3804D51921660FB395D4326 /* FloatingWidgetWindowController.swift */,
@@ -259,6 +262,7 @@
 			buildConfigurationList = ED6171406D1BF8AB9FDBB0B2 /* Build configuration list for PBXNativeTarget "ClaudeAlertBot" */;
 			buildPhases = (
 				B37F43BA76B7FF38C73C91D7 /* Sources */,
+				E91A92EBBEF2F146AF2DE9BA /* Resources */,
 				64AA2AC3ADACB0F5DCB01F42 /* Embed cab-test helper into Contents/MacOS */,
 				D838B4AB29EFC4F6F0B17286 /* Embed Reporter shell script */,
 			);
@@ -314,6 +318,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E91A92EBBEF2F146AF2DE9BA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FD47850BE7EA040C6B323E9 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		64AA2AC3ADACB0F5DCB01F42 /* Embed cab-test helper into Contents/MacOS */ = {

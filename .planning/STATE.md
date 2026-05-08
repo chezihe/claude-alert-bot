@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-08T08:00:12.785Z"
+last_updated: "2026-05-08T08:08:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 19
-  completed_plans: 14
-  percent: 74
+  completed_plans: 15
+  percent: 79
 ---
 
 # State: Claude Alert Bot
 
-**Last updated:** 2026-05-08 (Phase 02 Wave 3 first half — Plan 02-06 complete: NotificationOrchestrator @MainActor + SoundPlayer + WidgetControllerProtocol + SoundPlaying; AUD-01 / AUD-02 / WIDG-05 satisfied; Wave 3 parallel companion 02-07 next)
+**Last updated:** 2026-05-08 (Phase 02 Wave 3 complete — Plan 02-07 complete: FloatingWidgetPanel NSPanel subclass + WidgetPositioning pure function + WidgetIconView SwiftUI + FloatingWidgetWindowController conforming to WidgetControllerProtocol; WIDG-01/03/04/06/07 satisfied; Wave 4 02-08 next)
 
 ## Project Reference
 
@@ -25,22 +25,22 @@ progress:
 ## Current Position
 
 Phase: 2 (alert-loop) — EXECUTING
-Plan: 7 of 12 complete (Wave 0: 02-00 + 02-01 spike; Wave 1: 02-02 + 02-03; Wave 2: 02-04 + 02-05; Wave 3 first half: 02-06). Next executable: 02-07 (Wave 3 FloatingWidgetWindowController — parallel companion).
-Next: Execute 02-07 — FloatingWidgetPanel + WindowController. Implements the `WidgetControllerProtocol` shape that 02-06 just locked. After 02-07 lands, Wave 4 (02-08 SettingsView + popover) unblocks; Wave 6 02-11 performs the AppDelegate boot wiring per the order documented in 02-04 / 02-06.
+Plan: 8 of 12 complete (Wave 0: 02-00 + 02-01 spike; Wave 1: 02-02 + 02-03; Wave 2: 02-04 + 02-05; Wave 3 complete: 02-06 + 02-07). Next executable: 02-08 (Wave 4 SettingsView + popover).
+Next: Execute 02-08 — SettingsView + NSPopover hover content. Implements `WidgetHoverDelegate` declared by 02-07 and reads `controller.queueSnapshot` to render the popover row list. After 02-08 lands, Wave 5 + 6 (02-09 cab-test extensions, 02-10 verify-phase script, 02-11 AppDelegate boot wiring) follow.
 
 - **Milestone:** v1
-- **Phase:** 02 — Alert Loop, 7/12 plans complete. 5 plans remain.
-- **Plan:** 02-06 complete (NotificationOrchestrator @MainActor implementing NotifierProtocol + SoundPlayer wrapping AVAudioPlayer + WidgetControllerProtocol + SoundPlaying protocols). 4/4 SoundPlayerTests + 6/6 NotificationOrchestratorTests pass; full target 50/50 pass (was 40/40); production build SUCCEEDED. AUD-01 (sound playback path) + AUD-02 (sound toggle gating) + WIDG-05 (count==0 → hideWidget) all satisfied; orchestrator forwards AUD-01 dedupe verbatim from registry actor (single enforcement site).
+- **Phase:** 02 — Alert Loop, 8/12 plans complete. 4 plans remain.
+- **Plan:** 02-07 complete (FloatingWidgetPanel NSPanel subclass + WidgetPositioning pure function + WidgetIconView SwiftUI + FloatingWidgetWindowController @MainActor NSWindowController conforming to WidgetControllerProtocol + WidgetHoverDelegate seam for 02-08). 7/7 FloatingWidgetPanelTests + 5/5 PositioningTests pass; full target 62/62 pass (was 50/50); production build SUCCEEDED. WIDG-01 / WIDG-03 / WIDG-04 / WIDG-06 / WIDG-07 satisfied (WIDG-02 + WIDG-05 already from 02-06). NSPanel topology locked per Pattern 7 + Pattern 8 spike verdict.
 - **Status:** Executing Phase 2
-- **Progress:** [███████░░░] 74%
+- **Progress:** [████████░░] 79%
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
 | Phases complete | 1 / 6 |
-| Plans complete | 7 / 7 in Phase 01 + 7 / 12 in Phase 02 |
-| Requirements covered | 19 / 53 (Phase 1: HOOK-01, HOOK-03, HOOK-04, HOOK-05, HOOK-06, IPC-01, IPC-02, IPC-03, DIST-01, DIST-05 + Phase 2: SESS-01..04, THR-01..02, AUD-01, AUD-02, WIDG-05) |
+| Plans complete | 7 / 7 in Phase 01 + 8 / 12 in Phase 02 |
+| Requirements covered | 24 / 53 (Phase 1: HOOK-01, HOOK-03, HOOK-04, HOOK-05, HOOK-06, IPC-01, IPC-02, IPC-03, DIST-01, DIST-05 + Phase 2: SESS-01..04, THR-01..02, AUD-01, AUD-02, WIDG-01, WIDG-02, WIDG-03, WIDG-04, WIDG-05, WIDG-06, WIDG-07) |
 | Phase branch | master (no branching strategy per config.json) |
 | Last plan duration | ~25 min (01-06, verifier sign-off — incl. inherited Task 1 from previous executor) |
 | Phase 1 verifier runtime | ~35s end-to-end (incl. 16s build) |
@@ -51,6 +51,7 @@ Next: Execute 02-07 — FloatingWidgetPanel + WindowController. Implements the `
 | Plan 02-04 metrics | ~8 min duration · 2 TDD tasks · 5 files created · 4 commits (RED + GREEN ×2) · 18/18 unit tests pass · full target 31/31 pass · 0 regressions |
 | Plan 02-05 metrics | ~7 min duration · 1 TDD task · 2 files created (App/AppleScriptHelper.swift, ClaudeAlertBotTests/AppleScriptHelperTests.swift) · 2 commits (RED + GREEN) · 9/9 unit tests pass · full target 40/40 pass · 0 regressions |
 | Plan 02-06 metrics | ~12 min duration · 2 TDD tasks · 4 files created (App/SoundPlayer.swift, App/NotificationOrchestrator.swift, ClaudeAlertBotTests/SoundPlayerTests.swift, ClaudeAlertBotTests/NotificationOrchestratorTests.swift) · 4 commits (RED + GREEN ×2) · 4/4 SoundPlayerTests + 6/6 NotificationOrchestratorTests · full target 50/50 pass · 0 regressions |
+| Plan 02-07 metrics | ~8 min duration · 2 tasks (Task 1 TDD, Task 2 build-only per plan carve-out) · 5 files created (App/FloatingWidgetPanel.swift, App/FloatingWidgetWindowController.swift, App/WidgetIconView.swift, ClaudeAlertBotTests/FloatingWidgetPanelTests.swift, ClaudeAlertBotTests/PositioningTests.swift) · 3 commits (RED Task1 + GREEN Task1 + GREEN Task2) · 7/7 FloatingWidgetPanelTests + 5/5 PositioningTests · full target 62/62 pass · 0 regressions |
 
 ## Accumulated Context
 
@@ -85,6 +86,11 @@ Next: Execute 02-07 — FloatingWidgetPanel + WindowController. Implements the `
 | AUD-01 dedupe enforcement = SessionRegistry actor only. NotificationOrchestrator forwards playSoundOnce verbatim and AND-gates with SettingsStore.soundEnabled (AUD-02). No double-gating | 02-06 | Plan 02-06 |
 | NotificationOrchestrator constructor uses non-defaulted `sound: any SoundPlaying` + `convenience init(widget:)` — strict-concurrency-safe pattern (default `SoundPlayer()` expression cannot be evaluated in nonisolated default-expression context) | 02-06 | Plan 02-06 (Rule 1 fix during Task 2 GREEN) |
 | SoundPlaying protocol exists solely as @MainActor test seam; production path uses `SoundPlayer` directly via `convenience init(widget:)` — Settings "Test notification" walks the standard alert path via `SessionRegistry.injectTest()` per 02-04 contract | 02-06 | Plan 02-06 |
+| FloatingWidgetPanel locked: `.borderless | .nonactivatingPanel` styleMask + `level=.floating` + `collectionBehavior=[canJoinAllSpaces, fullScreenAuxiliary, stationary]` + canBecomeKey/Main false — 7 panel tests prevent regression | 02-07 | Plan 02-07 |
+| WidgetPositioning.origin pure free function in App/FloatingWidgetPanel.swift owns WIDG-06/07 contract — controller's reposition() is a thin caller passing NSScreen.main.visibleFrame + safeAreaInsets; SettingsStore read at call time (SET-03) | 02-07 | Plan 02-07 |
+| Pattern 8 verdict from 02-01-SPIKE-RESULT honored: 02-07 ships panel + icon view + WidgetHoverDelegate stub only; NSPopover lives with controller in 02-08. No second sibling NSPanel | 02-07 | Plan 02-07 |
+| WidgetHoverDelegate protocol shape locked: `widgetMouseEntered()` / `widgetMouseExited()` (both @MainActor); 02-08 owns hover-intent timing (150ms open / 250ms close grace) | 02-07 | Plan 02-07 |
+| LSUIElement regression guard: `grep -c 'NSApp.activate' App/FloatingWidget*.swift App/WidgetIconView.swift` MUST be 0 at all times — comment text intentionally avoids the literal symbol so the guard stays clean | 02-07 | Plan 02-07 |
 
 ### Open Questions (carried into planning)
 
@@ -103,27 +109,27 @@ None.
 
 ## Session Continuity
 
-- **Last action:** Completed Plan 02-06 (Phase 2 Wave 3 first half — NotificationOrchestrator + SoundPlayer). 4 commits on master (sequential mode, TDD ×2):
-  - `aa45848` test(02-06): add failing SoundPlayerTests (TDD RED)
-  - `154b46e` feat(02-06): SoundPlayer wrapping AVAudioPlayer (AUD-01)
-  - `af40594` test(02-06): add failing NotificationOrchestratorTests (TDD RED)
-  - `4bf184d` feat(02-06): NotificationOrchestrator @MainActor — NotifierProtocol impl
+- **Last action:** Completed Plan 02-07 (Phase 2 Wave 3 second half — FloatingWidgetPanel + WindowController). 3 commits on master (sequential mode):
+  - `43628a2` test(02-07): add failing FloatingWidgetPanel + Positioning tests (TDD RED)
+  - `ef11889` feat(02-07): FloatingWidgetPanel + WidgetPositioning (WIDG-01,02,06,07)
+  - `3768035` feat(02-07): WidgetIconView + FloatingWidgetWindowController (WIDG-03,04,05)
 
-  Final verifications: SoundPlayerTests 4/4 pass (0.54s), NotificationOrchestratorTests 6/6 pass (0.85s), full test target 50/50 pass (no regressions across Phase 1 / 02-00 / 02-02..06), `xcodebuild build` succeeds (no new warnings). Source-string anchors verified: `grep -c 'final class NotificationOrchestrator: NotifierProtocol' = 1`, `grep -c 'WidgetControllerProtocol' = 6`, `grep -c 'soundEnabled' = 4`, `grep -c 'protocol SoundPlaying' = 1`, `grep -c 'extension SoundPlayer: SoundPlaying' = 1`.
+  Final verifications: FloatingWidgetPanelTests 7/7 pass + PositioningTests 5/5 pass (combined 0.041s), full test target 62/62 pass (no regressions across Phase 1 / 02-00 / 02-02..07; was 50/50 before this plan, +12 new tests, 0 regressions), `xcodebuild build -scheme ClaudeAlertBot` succeeds. Source-string anchors verified: `grep -c 'class FloatingWidgetWindowController.*WidgetControllerProtocol' = 1`, `grep -c 'NSApp.activate' across plan files = 0/0/0` (LSUIElement regression guard intact), `grep -c 'NSWorkspace.shared.accessibilityDisplayShouldReduceMotion' = 1`.
 
-  Public API frozen for Wave 3+ wiring: **WidgetControllerProtocol** (showWidget / hideWidget / updatePendingCount / setQueue) — implemented by 02-07 concretely; consumed by 02-08 popover and 02-11 AppDelegate. **SoundPlaying** is internal test seam only — production callers use `NotificationOrchestrator.init(widget:)` convenience init that allocates `SoundPlayer()` automatically. **AUD-01 dedupe is enforced solely by SessionRegistry actor** (Wave 2); orchestrator forwards `playSoundOnce` and AND-gates with `SettingsStore.soundEnabled` only.
+  Public API frozen for Wave 4+ wiring: **WidgetHoverDelegate** (widgetMouseEntered / widgetMouseExited @MainActor) — declared in App/FloatingWidgetWindowController.swift; consumed by 02-08 popover (owns 150ms open / 250ms close hover-intent timing). **`controller.queueSnapshot`** read-only getter exposes the latest `setQueue` array for the popover row list (pull-on-hover, no push subscription). **NSPanel topology locked**: panel's contentView is NSHostingView<WidgetIconView>; popover lives with the controller in 02-08 (Pattern 8 from spike — no second sibling NSPanel needed).
 
-  Auto-fixed (Rule 1): Strict-concurrency rejected `sound: any SoundPlaying = SoundPlayer()` default expression ("main actor-isolated initializer in synchronous nonisolated context"). Resolved by removing default and adding `convenience init(widget:)` that constructs `SoundPlayer()` from inside @MainActor body. Public surface preserved for AppDelegate. Documented in SUMMARY Deviations section.
+  Auto-fixed (Rule 1): comment text initially contained literal `NSApp.activate` symbol which would have tripped the plan's grep regression guard ("must be 0"). Rephrased to `activate(ignoringOtherApps:) on NSApp` so the literal token doesn't appear in the file.
 
 - **Files written this plan:**
-  - `App/SoundPlayer.swift` (created — @MainActor final class wrapping AVAudioPlayer)
-  - `App/NotificationOrchestrator.swift` (created — @MainActor final class implementing NotifierProtocol + WidgetControllerProtocol declaration + SoundPlaying protocol + extension SoundPlayer)
-  - `ClaudeAlertBotTests/SoundPlayerTests.swift` (created — 4 unit tests)
-  - `ClaudeAlertBotTests/NotificationOrchestratorTests.swift` (created — 6 unit tests + SpyWidget + SpySoundPlayer fixtures)
+  - `App/FloatingWidgetPanel.swift` (created — final class FloatingWidgetPanel: NSPanel + enum WidgetPositioning)
+  - `App/FloatingWidgetWindowController.swift` (created — @MainActor final class FloatingWidgetWindowController: NSWindowController, WidgetControllerProtocol + WidgetHoverDelegate protocol)
+  - `App/WidgetIconView.swift` (created — SwiftUI WidgetIconView ZStack with bell.badge.fill 36pt + conditional +N badge)
+  - `ClaudeAlertBotTests/FloatingWidgetPanelTests.swift` (created — 7 unit tests)
+  - `ClaudeAlertBotTests/PositioningTests.swift` (created — 5 unit tests for WidgetPositioning.origin)
   - `ClaudeAlertBot.xcodeproj/project.pbxproj` (xcodegen-regenerated)
-  - `.planning/phases/02-alert-loop/02-06-SUMMARY.md` (created — public API + WidgetControllerProtocol contract for 02-07/02-08/02-11 + verifier row bodies)
-  - `.planning/STATE.md`, `.planning/ROADMAP.md`, `.planning/REQUIREMENTS.md` (updated — plan progress + 3 new requirements complete: AUD-01, AUD-02, WIDG-05)
-- **Next action:** Execute Plan 02-07 — FloatingWidgetPanel + WindowController (Wave 3 parallel companion). Implements concrete `WidgetControllerProtocol` against the shape 02-06 just locked. Pattern: `NSPanel` subclass with `.nonactivatingPanel` + `becomesKeyOnlyIfNeeded` + `level=.floating` + `collectionBehavior=[.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]` per RESEARCH Pitfall #1 / WIDG-02. After 02-07 lands, Wave 4 unblocks (02-08 SettingsView + popover).
+  - `.planning/phases/02-alert-loop/02-07-SUMMARY.md` (created — locked NSPanel config + WidgetHoverDelegate contract for 02-08 + verifier row bodies)
+  - `.planning/STATE.md`, `.planning/ROADMAP.md`, `.planning/REQUIREMENTS.md` (updated — plan progress + 5 new requirements complete: WIDG-01, WIDG-03, WIDG-04, WIDG-06, WIDG-07)
+- **Next action:** Execute Plan 02-08 — SettingsView + NSPopover hover content (Wave 4). Implements `WidgetHoverDelegate` declared in 02-07 against an NSPopover with `.transient` behavior. Reads `controller.queueSnapshot` at popover open time. Settings "Test notification" button calls `await SessionRegistry.shared.injectTest(soundEnabled: ...)` per 02-04 contract. After 02-08 lands, Waves 5+6 (02-09 cab-test extensions, 02-10 verify script, 02-11 AppDelegate boot wiring) follow.
 
 ### Open follow-ups (carried into later phases)
 

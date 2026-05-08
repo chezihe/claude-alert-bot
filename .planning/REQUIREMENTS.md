@@ -36,13 +36,13 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Widget (플로팅 위젯)
 
-- [ ] **WIDG-01**: `NSPanel` 기반 플로팅 위젯이 모든 Spaces / 풀스크린 / Stage Manager 위에 표시된다 (`canJoinAllSpaces`, `fullScreenAuxiliary`, `stationary`, `level=.floating`)
+- [x] **WIDG-01**: `NSPanel` 기반 플로팅 위젯이 모든 Spaces / 풀스크린 / Stage Manager 위에 표시된다 (`canJoinAllSpaces`, `fullScreenAuxiliary`, `stationary`, `level=.floating`)
 - [x] **WIDG-02**: 위젯이 등장할 때 현재 앱의 포커스를 빼앗지 않는다 (`.nonactivatingPanel`, `becomesKeyOnlyIfNeeded`)
-- [ ] **WIDG-03**: 위젯에 클로드 아이콘과 작업 폴더(프로젝트)명이 표시된다
-- [ ] **WIDG-04**: 위젯은 사용자가 클릭할 때까지 화면에 잔존한다 (자동 사라짐 없음)
+- [x] **WIDG-03**: 위젯에 클로드 아이콘과 작업 폴더(프로젝트)명이 표시된다
+- [x] **WIDG-04**: 위젯은 사용자가 클릭할 때까지 화면에 잔존한다 (자동 사라짐 없음)
 - [x] **WIDG-05**: 평소(이벤트 없을 때)에는 위젯이 화면에 보이지 않는다
-- [ ] **WIDG-06**: 위젯 화면 위치 (네 모서리 중 하나 + 오프셋) 를 사용자가 설정할 수 있다
-- [ ] **WIDG-07**: 위젯 위치가 노치/멀티 디스플레이 환경에서도 안전 영역을 침범하지 않는다 (`NSScreen.safeAreaInsets`)
+- [x] **WIDG-06**: 위젯 화면 위치 (네 모서리 중 하나 + 오프셋) 를 사용자가 설정할 수 있다
+- [x] **WIDG-07**: 위젯 위치가 노치/멀티 디스플레이 환경에서도 안전 영역을 침범하지 않는다 (`NSScreen.safeAreaInsets`)
 
 ### Aggregate (다중 세션 집계)
 
@@ -169,13 +169,13 @@ Explicitly excluded. Documented to prevent scope creep.
 | SESS-04 | Phase 2 | Satisfied (Plan 02-04 commit `35a2be1` — runGC(now:) 6h sweep; lazy trigger at top of ingest()) |
 | THR-01 | Phase 2 | Satisfied (Plan 02-04 commit `35a2be1` — handleStop threshold guard via SettingsStore.thresholdSeconds parameter; below-threshold drops silently) |
 | THR-02 | Phase 2 | Satisfied (Plan 02-04 commit `35a2be1` — orphan-Stop fallback emits with durationSec=nil; threshold bypassed; never silently drops) |
-| WIDG-01 | Phase 2 | Pending |
+| WIDG-01 | Phase 2 | Complete |
 | WIDG-02 | Phase 2 | Complete |
-| WIDG-03 | Phase 2 | Pending |
-| WIDG-04 | Phase 2 | Pending |
+| WIDG-03 | Phase 2 | Complete |
+| WIDG-04 | Phase 2 | Complete |
 | WIDG-05 | Phase 2 | Complete |
-| WIDG-06 | Phase 2 | Pending |
-| WIDG-07 | Phase 2 | Pending |
+| WIDG-06 | Phase 2 | Complete |
+| WIDG-07 | Phase 2 | Complete |
 | AGG-01 | Phase 4 | Pending |
 | AGG-02 | Phase 4 | Pending |
 | AGG-03 | Phase 4 | Pending |

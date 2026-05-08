@@ -68,10 +68,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Settings (사용자 설정)
 
-- [ ] **SET-01**: SwiftUI `Settings` scene + `@AppStorage`로 설정 윈도우 제공
-- [ ] **SET-02**: 설정 가능 항목: 시간 임계값, 사운드 on/off, 위젯 위치
-- [ ] **SET-03**: 설정 변경은 즉시 반영되며 App 재시작 후에도 유지된다
-- [ ] **SET-04**: "테스트 알림" 버튼이 존재하여 위젯·사운드를 즉시 검증할 수 있다
+- [x] **SET-01**: SwiftUI `Settings` scene + `@AppStorage`로 설정 윈도우 제공
+- [x] **SET-02**: 설정 가능 항목: 시간 임계값, 사운드 on/off, 위젯 위치
+- [x] **SET-03**: 설정 변경은 즉시 반영되며 App 재시작 후에도 유지된다
+- [x] **SET-04**: "테스트 알림" 버튼이 존재하여 위젯·사운드를 즉시 검증할 수 있다
 - [ ] **SET-05**: "iTerm2 연결 테스트" 버튼이 존재하여 AppleScript 권한 프롬프트를 의도적으로 트리거할 수 있다
 
 ### Install (Hook 설치)
@@ -189,10 +189,10 @@ Explicitly excluded. Documented to prevent scope creep.
 | AUD-01 | Phase 2 | Partial (Plan 02-04 commit `35a2be1` — DedupeKey.from sound-only dedupe + playSoundOnce gating; actual AVAudioPlayer playback lands in 02-06) |
 | AUD-02 | Phase 2 | Complete |
 | AUD-03 | Phase 4 | Pending |
-| SET-01 | Phase 2 | Pending |
-| SET-02 | Phase 2 | Pending |
-| SET-03 | Phase 2 | Pending |
-| SET-04 | Phase 2 | Pending |
+| SET-01 | Phase 2 | Complete |
+| SET-02 | Phase 2 | Complete |
+| SET-03 | Phase 2 | Complete |
+| SET-04 | Phase 2 | Complete |
 | SET-05 | Phase 3 | Pending |
 | INST-01 | Phase 5 | Pending |
 | INST-02 | Phase 5 | Pending |

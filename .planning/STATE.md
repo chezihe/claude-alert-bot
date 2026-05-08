@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-08T08:22:08.641Z"
+last_updated: "2026-05-08T08:30:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 19
-  completed_plans: 17
-  percent: 89
+  completed_plans: 18
+  percent: 95
 ---
 
 # State: Claude Alert Bot
 
-**Last updated:** 2026-05-08 (Phase 02 Wave 4 second half complete — Plan 02-09 complete: WakeObserver + WorkspaceFrontmostObserver + SessionGCTimer (Pattern 6 SESS-04 triple-trigger). All three carry verbatim "CRITICAL: retain" comment + [weak self] capture + retained-token/source per PATTERNS.md. WorkspaceFrontmostObserver bundle-ID-filters to `com.googlecode.iterm2` (T-FRONTMOST-SPAM-01). 4/4 SessionGCTimerTests pass; full target 71/71 pass; Wave 5/6 plans 02-10 / 02-11 next)
+**Last updated:** 2026-05-08 (Phase 02 Wave 5 complete — Plan 02-10 complete: SettingsView Form + PermissionBannerView denied-state banner + D2-35 Path A `.onAppear → triggerPermissionPrompt` trigger + D2-21 Test button → SessionRegistry.injectTest. 13 static-let Korean copy constants locked by 8 SettingsViewTests; full target 79/79 pass; xcodebuild build SUCCEEDED. Wave 6 plan 02-11 (AppDelegate boot wiring + `Settings { SettingsView() }` scene mount) next.)
 
 ## Project Reference
 
@@ -25,22 +25,22 @@ progress:
 ## Current Position
 
 Phase: 2 (alert-loop) — EXECUTING
-Plan: 10 of 12 complete (Wave 0: 02-00 + 02-01 spike; Wave 1: 02-02 + 02-03; Wave 2: 02-04 + 02-05; Wave 3: 02-06 + 02-07; Wave 4: 02-08 + 02-09). Next executable: 02-10 (Settings + permission banner) → 02-11 (AppDelegate wiring).
-Next: Execute 02-10 — SettingsView Form + PermissionBannerView + D2-35 Path A trigger; then 02-11 AppDelegate boot wiring (Pitfall #11 — `restore()` before `listener.start()`; retain WidgetPopoverController, WakeObserver, WorkspaceFrontmostObserver, SessionGCTimer as stored properties).
+Plan: 11 of 12 complete (Wave 0: 02-00 + 02-01 spike; Wave 1: 02-02 + 02-03; Wave 2: 02-04 + 02-05; Wave 3: 02-06 + 02-07; Wave 4: 02-08 + 02-09; Wave 5: 02-10). Next executable: 02-11 (Wave 6 AppDelegate boot wiring + scene mount).
+Next: Execute 02-11 — AppDelegate boot order (Pitfall #11 — `restore()` before `listener.start()`); retain WidgetPopoverController, WakeObserver, WorkspaceFrontmostObserver, SessionGCTimer as stored properties; mount `Settings { SettingsView() }` scene in main.swift; HookListener.ingest dispatch into SessionRegistry; verify-phase-2.sh.
 
 - **Milestone:** v1
-- **Phase:** 02 — Alert Loop, 10/12 plans complete. 2 plans remain.
-- **Plan:** 02-09 complete (WakeObserver — NSWorkspace.didWakeNotification observer with retained NSObjectProtocol token, [weak self] capture, deinit cleanup; takes injected `onWake()` closure for Wave 6 wiring; WorkspaceFrontmostObserver — NSWorkspace.didActivateApplicationNotification observer filtered by bundle ID `com.googlecode.iterm2` (T-FRONTMOST-SPAM-01), iterates SessionRegistry.peekPending() and calls AppleScriptHelper.frontmostMatches → clearOne for D2-15 auto-clear; SessionGCTimer — DispatchSourceTimer wrapper, default 30 min interval, retained source). All three carry verbatim "CRITICAL: retain" comment per PATTERNS.md. 4/4 SessionGCTimerTests pass (construction, fires-at-interval, cancel-stops, retention contract); full target 71/71 pass (was 67/67 + 4 new = 71); production build SUCCEEDED. SESS-04 Pattern 6 triple-trigger now complete (lazy ingest GC + WakeObserver + SessionGCTimer); D2-15 auto-clear in place.
+- **Phase:** 02 — Alert Loop, 11/12 plans complete. 1 plan remains.
+- **Plan:** 02-10 complete (SettingsView SwiftUI Form with 4 sections [임계값/사운드/위젯 위치/테스트] + conditional PermissionBannerView; D2-35 Path A wired via `.onAppear → if applescriptPermission == .unknown { triggerPermissionPrompt() }`; D2-21 Test button → `SessionRegistry.shared.injectTest(soundEnabled:)`; D2-36 banner CTA → `PermissionDeepLink.openAutomationPreferences()`). 13 static-let Korean copy constants (3 PermissionBannerView + 10 SettingsView) locked by 8 SettingsViewTests; full target 79/79 pass (was 71 + 8 new); xcodebuild build SUCCEEDED. Zero external dependencies (D2-29 invariant preserved). The `Settings { SettingsView() }` scene wiring itself is owned by 02-11.
 - **Status:** Executing Phase 2
-- **Progress:** [█████████░] 89%
+- **Progress:** [█████████▌] 95%
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
 | Phases complete | 1 / 6 |
-| Plans complete | 7 / 7 in Phase 01 + 9 / 12 in Phase 02 |
-| Requirements covered | 24 / 53 (Phase 1: HOOK-01, HOOK-03, HOOK-04, HOOK-05, HOOK-06, IPC-01, IPC-02, IPC-03, DIST-01, DIST-05 + Phase 2: SESS-01..04, THR-01..02, AUD-01, AUD-02, WIDG-01, WIDG-02, WIDG-03, WIDG-04, WIDG-05, WIDG-06, WIDG-07) |
+| Plans complete | 7 / 7 in Phase 01 + 10 / 12 in Phase 02 |
+| Requirements covered | 28 / 53 (Phase 1: HOOK-01, HOOK-03, HOOK-04, HOOK-05, HOOK-06, IPC-01, IPC-02, IPC-03, DIST-01, DIST-05 + Phase 2: SESS-01..04, THR-01..02, AUD-01, AUD-02, WIDG-01..07, SET-01..04) |
 | Phase branch | master (no branching strategy per config.json) |
 | Last plan duration | ~25 min (01-06, verifier sign-off — incl. inherited Task 1 from previous executor) |
 | Phase 1 verifier runtime | ~35s end-to-end (incl. 16s build) |
@@ -54,6 +54,7 @@ Next: Execute 02-10 — SettingsView Form + PermissionBannerView + D2-35 Path A 
 | Plan 02-07 metrics | ~8 min duration · 2 tasks (Task 1 TDD, Task 2 build-only per plan carve-out) · 5 files created (App/FloatingWidgetPanel.swift, App/FloatingWidgetWindowController.swift, App/WidgetIconView.swift, ClaudeAlertBotTests/FloatingWidgetPanelTests.swift, ClaudeAlertBotTests/PositioningTests.swift) · 3 commits (RED Task1 + GREEN Task1 + GREEN Task2) · 7/7 FloatingWidgetPanelTests + 5/5 PositioningTests · full target 62/62 pass · 0 regressions |
 | Plan 02-08 metrics | ~6 min duration · 2 tasks (Task 1 TDD, Task 2 build-only per plan carve-out) · 4 files created (App/PopoverContentView.swift, App/PopoverRowView.swift, App/WidgetPopoverController.swift, ClaudeAlertBotTests/PopoverContentTests.swift) · 3 commits (RED Task1 + GREEN Task1 + GREEN Task2) · 5/5 PopoverContentTests · full target 67/67 pass · 0 regressions |
 | Plan 02-09 metrics | ~6 min duration · 2 tasks (Task 1 build-only per plan carve-out, Task 2 TDD) · 4 files created (App/WakeObserver.swift, App/WorkspaceFrontmostObserver.swift, App/SessionGCTimer.swift, ClaudeAlertBotTests/SessionGCTimerTests.swift) · 3 commits (Task 1 + RED Task 2 + GREEN Task 2) · 4/4 SessionGCTimerTests · full target 71/71 pass · 0 regressions |
+| Plan 02-10 metrics | ~3 min duration · 2 TDD tasks · 3 files created (App/PermissionBannerView.swift, App/SettingsView.swift, ClaudeAlertBotTests/SettingsViewTests.swift) · 4 commits (RED + GREEN ×2) · 8/8 SettingsViewTests pass (3 banner-copy + 5 settings-copy/corner) · full target 79/79 pass (was 71 + 8 new) · 0 regressions · zero new external dependencies (D2-29 preserved) |
 
 ## Accumulated Context
 
@@ -102,6 +103,9 @@ Next: Execute 02-10 — SettingsView Form + PermissionBannerView + D2-35 Path A 
 | 02-09 retention contract LOCKED for all observers/timers: `[weak self]` capture in handlers + retained `private var token`/`private var source` on the class instance + verbatim `// CRITICAL: retain` comment per file (PATTERNS.md institutional anchor inherited from Phase 1 AppDelegate.signalSources). Wave 6 02-11 mirrors this by retaining WakeObserver / WorkspaceFrontmostObserver / SessionGCTimer as stored properties on AppDelegate | 02-09 | Plan 02-09 |
 | WorkspaceFrontmostObserver gates on `app?.bundleIdentifier == "com.googlecode.iterm2"` BEFORE invoking AppleScriptHelper (T-FRONTMOST-SPAM-01) — prevents AppleScript spam on every Cmd-Tab. `grep -c 'com.googlecode.iterm2' App/WorkspaceFrontmostObserver.swift` MUST stay ≥1 | 02-09 | Plan 02-09 |
 | 02-11 AppDelegate boot order extended (Wave 4 lifecycle additions): retain `WakeObserver`, `WorkspaceFrontmostObserver`, `SessionGCTimer` as stored properties on AppDelegate. WakeObserver and SessionGCTimer take `{ Task { await SessionRegistry.shared.runGC() } }` as their callback. WorkspaceFrontmostObserver is self-contained (no callback). All three may be created before or after `restore()` — they only fire on async events | 02-09 | Plan 02-09 |
+| Settings UI copy lockdown contract: 13 static-let Korean copy constants (3 on PermissionBannerView + 10 on SettingsView) + WidgetCorner.localizedLabel order are asserted verbatim by 8 SettingsViewTests. Future translation pass MUST update both the constant and the matching test assertion in lockstep — drift = test fails on next CI run (T-COPY-DRIFT-01 mitigation) | 02-10 | Plan 02-10 |
+| D2-35 Path A trigger anchor LOCKED in `App/SettingsView.swift` `.onAppear`: `if store.applescriptPermission == .unknown { Task { await AppleScriptHelper.shared.triggerPermissionPrompt() } }`. `grep -c 'triggerPermissionPrompt' App/SettingsView.swift` MUST stay = 1. Path B (first Stop) lives in SessionRegistry — both paths converge on the same dialog (macOS shows once per (app, target) pair) | 02-10 | Plan 02-10 |
+| Settings { SettingsView() } scene mounting is owned by 02-11 (Wave 6) — 02-10 ships only the view itself. The view wires its own dependencies via singletons (SettingsStore.shared, SessionRegistry.shared, AppleScriptHelper.shared, PermissionDeepLink). The standard ⌘, shortcut is automatic via SwiftUI's Settings scene; zero `KeyboardShortcuts` dep (D2-29 invariant preserved) | 02-10 | Plan 02-10 |
 
 ### Open Questions (carried into planning)
 
@@ -120,26 +124,28 @@ None.
 
 ## Session Continuity
 
-- **Last action:** Completed Plan 02-09 (Phase 2 Wave 4 second half — Wake / Frontmost observers + GC timer). 3 commits on master (sequential mode):
-  - `116cdb9` feat(02-09): WakeObserver + WorkspaceFrontmostObserver (SESS-04 + D2-15)
-  - `d53931c` test(02-09): add failing SessionGCTimerTests (TDD RED)
-  - `bd7bdc0` feat(02-09): SessionGCTimer DispatchSourceTimer wrapper (SESS-04)
+- **Last action:** Completed Plan 02-10 (Phase 2 Wave 5 — Settings UI + Permission Banner). 4 commits on master (sequential mode):
+  - `6b7a716` test(02-10): add failing PermissionBannerView copy tests (TDD RED)
+  - `99b64e7` feat(02-10): PermissionBannerView SwiftUI denied-state banner (D2-36)
+  - `40aa803` test(02-10): add failing SettingsView copy + corner-label tests (TDD RED)
+  - `f44a27b` feat(02-10): SettingsView Form + D2-35 Path A trigger + Test button (SET-01..04)
 
-  Final verifications: SessionGCTimerTests 4/4 pass (1.384s incl. real-time timer waits), full test target 71/71 pass (was 67/67 + 4 new = 71; zero regressions across Phase 1 / 02-00 / 02-02..09), `xcodebuild build -scheme ClaudeAlertBot` succeeds. Pattern anchors verified: `grep -c 'CRITICAL: retain' App/{WakeObserver,WorkspaceFrontmostObserver,SessionGCTimer}.swift` → 1/1/1 (PATTERNS.md institutional retention pattern), `grep -c '\[weak self\]' …` → 1/1/1, `grep -c 'com.googlecode.iterm2' App/WorkspaceFrontmostObserver.swift` → 1 (T-FRONTMOST-SPAM-01 mitigation).
+  Final verifications: SettingsViewTests 8/8 pass (3 banner-copy + 5 settings-copy/corner; ~0.004s), full test target 79/79 pass (was 71 + 8 new = 79; zero regressions across Phase 1 / 02-00 / 02-02..09), `xcodebuild build -scheme ClaudeAlertBot` SUCCEEDED. Verification grep guards: `grep -c '자동화 권한이 꺼져 있어요' App/PermissionBannerView.swift` → 1, `grep -c '테스트 알림 보내기' App/SettingsView.swift` → 1, `grep -c 'triggerPermissionPrompt' App/SettingsView.swift` → 1 (D2-35 Path A anchor), `grep -c 'SessionRegistry.shared.injectTest' App/SettingsView.swift` → 2 (doc comment + call site). All ≥ 1 per plan §verification.
 
-  Public API frozen for Wave 6 wiring: **WakeObserver(onWake:)** — Wave 6 passes `{ Task { await SessionRegistry.shared.runGC() } }`. **WorkspaceFrontmostObserver()** — self-contained, reads SessionRegistry.peekPending() + AppleScriptHelper.shared. **SessionGCTimer(interval: 30*60, onTick:)** — must call `.start()` after construction; first fire is at `.now() + interval`, NOT immediate. All three MUST be retained as stored properties on AppDelegate (mirrors `signalSources` lineage). SESS-04 Pattern 6 triple-trigger now complete.
+  Public surface frozen for Wave 6 wiring: **SettingsView** is a parameterless SwiftUI View; reads `SettingsStore.shared` via `@StateObject`, calls `SessionRegistry.shared.injectTest`, `AppleScriptHelper.shared.triggerPermissionPrompt`, `PermissionDeepLink.openAutomationPreferences` directly via singletons. 02-11 mounts it via `Settings { SettingsView() }` (zero arguments needed). **PermissionBannerView** is also parameterless — composes inside `SettingsView` only when `store.applescriptPermission == .denied`. The `⌘,` keyboard shortcut is automatic via SwiftUI's `Settings` scene — no `KeyboardShortcuts` import needed (D2-29 zero-deps invariant preserved).
 
-  Deviations: None. Plan executed verbatim across both tasks. The plan's must_haves stated WakeObserver "fires `Task { await SessionRegistry.shared.runGC() }`"; the action template (executable contract) shipped that behavior via an injected `onWake` closure that Wave 6 wires to that exact expression — preserves testability and matches AppDelegate's `signalSources` injection style.
+  Locked-copy contract: 13 static-let Korean strings (3 on PermissionBannerView + 10 on SettingsView) + WidgetCorner.localizedLabel order are asserted verbatim by 8 SettingsViewTests (T-COPY-DRIFT-01 mitigation). Future translation passes MUST update constant + test in lockstep.
+
+  Deviations: None. Plan executed verbatim across both tasks. Action templates copy-pasted into the corresponding files with zero structural edits.
 
 - **Files written this plan:**
-  - `App/WakeObserver.swift` (created — @MainActor final class; didWakeNotification observer with retained NSObjectProtocol token; injected onWake closure)
-  - `App/WorkspaceFrontmostObserver.swift` (created — @MainActor final class; didActivateApplicationNotification observer; bundle-ID iTerm2 filter; D2-15 auto-clear via peekPending + frontmostMatches + clearOne)
-  - `App/SessionGCTimer.swift` (created — @MainActor final class; DispatchSourceTimer wrapper; default 30-min repeating; retained source; cancel + deinit symmetric)
-  - `ClaudeAlertBotTests/SessionGCTimerTests.swift` (created — 4 unit tests: construction, fires-at-interval, cancel-stops, retention contract)
+  - `App/PermissionBannerView.swift` (created — SwiftUI yellow-tint banner; 3 static-let copy strings; CTA → PermissionDeepLink.openAutomationPreferences)
+  - `App/SettingsView.swift` (created — SwiftUI Form { Section ×4 + conditional Permission Section }; @StateObject SettingsStore.shared; D2-35 Path A `.onAppear` trigger; D2-21 Test button → SessionRegistry.injectTest; 10 static-let copy strings)
+  - `ClaudeAlertBotTests/SettingsViewTests.swift` (created — 8 unit tests: 3 banner-copy + 4 settings-copy + 1 corner-label-Korean-order)
   - `ClaudeAlertBot.xcodeproj/project.pbxproj` (xcodegen-regenerated)
-  - `.planning/phases/02-alert-loop/02-09-SUMMARY.md` (created — Wave 4 closure + Wave 6 wiring template + verifier row bodies + threat dispositions)
-  - `.planning/STATE.md`, `.planning/ROADMAP.md` (updated — plan progress 9→10 of 12 in Phase 2; 84% → 89%)
-- **Next action:** Execute Plan 02-10 — SettingsView Form + PermissionBannerView + D2-35 Path A trigger (.onAppear → triggerPermissionPrompt). Then Plan 02-11 (Wave 6 AppDelegate boot wiring — retain WidgetPopoverController + WakeObserver + WorkspaceFrontmostObserver + SessionGCTimer as stored properties; HookListener.ingest dispatch; verify-phase-2.sh; Pitfall #11 boot order — `restore()` before `listener.start()`).
+  - `.planning/phases/02-alert-loop/02-10-SUMMARY.md` (created — locked-copy contract + Wave 6 wiring requirement + verifier row body + threat mitigations)
+  - `.planning/STATE.md`, `.planning/ROADMAP.md`, `.planning/REQUIREMENTS.md` (updated — plan progress 10→11 of 12 in Phase 2; 89% → 95%; SET-01..04 marked complete)
+- **Next action:** Execute Plan 02-11 — Wave 6 AppDelegate boot wiring. Mount `Settings { SettingsView() }` scene in main.swift (or App body); retain WidgetPopoverController + WakeObserver + WorkspaceFrontmostObserver + SessionGCTimer as stored properties on AppDelegate; HookListener.ingest dispatch into SessionRegistry.shared.ingest; Pitfall #11 boot order — `await SessionRegistry.shared.restore()` MUST run before `await listener.start()`; assign WidgetPopoverController as widget.hoverDelegate before listener.start; ship `scripts/verify-phase-2.sh` with all per-plan verifier rows grafted (incl. `verify_2_10_01` covering all SettingsViewTests). After 02-11, Phase 2 closes.
 
 ### Open follow-ups (carried into later phases)
 

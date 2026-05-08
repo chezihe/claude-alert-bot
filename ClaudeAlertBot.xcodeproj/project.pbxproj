@@ -32,6 +32,7 @@
 		E80832057B78D1BCC2CB7848 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7151E148769D039124B77B2F /* main.swift */; };
 		F36E031107E8C11211C37A2A /* SoundPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA926DA96B54584A4A0B2E2 /* SoundPlayerTests.swift */; };
 		F5E04AAFC38DE8839E8D8DC4 /* PermissionDeepLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2492431EE9304DB1FF24B55 /* PermissionDeepLinkTests.swift */; };
+		F668B43833BA6E3356C2A326 /* NotificationOrchestratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36BDD5D1C291C8C40FA6F82D /* NotificationOrchestratorTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,7 @@
 		13A9A6378829C0CD87A47282 /* SoundPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundPlayer.swift; sourceTree = "<group>"; };
 		1D54D1C911C95F984BA6C8A1 /* HookListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookListener.swift; sourceTree = "<group>"; };
 		2F0532EA5559479069D65C1F /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		36BDD5D1C291C8C40FA6F82D /* NotificationOrchestratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOrchestratorTests.swift; sourceTree = "<group>"; };
 		422669922C84673FA026FD1E /* HookEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookEvent.swift; sourceTree = "<group>"; };
 		4727020E044B4D9690900BC4 /* PermissionDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionDeepLink.swift; sourceTree = "<group>"; };
 		4EFE56B7A8F24FC8FDBB7726 /* ClaudeAlertBot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeAlertBot.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -89,6 +91,7 @@
 			children = (
 				C884F642E992E25E5C950B7B /* AppleScriptHelperTests.swift */,
 				B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */,
+				36BDD5D1C291C8C40FA6F82D /* NotificationOrchestratorTests.swift */,
 				A2492431EE9304DB1FF24B55 /* PermissionDeepLinkTests.swift */,
 				F38BDA29F2BDA2AC0F00354C /* ProjectNameTests.swift */,
 				8446BA9DA3DB2F6E24A02697 /* SessionRecordTests.swift */,
@@ -318,6 +321,7 @@
 				E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */,
 				967FA8420333A8A7FC015774 /* MockNotifier+NotifierProtocol.swift in Sources */,
 				A8F29327F7881CB4C3E7D507 /* MockNotifier.swift in Sources */,
+				F668B43833BA6E3356C2A326 /* NotificationOrchestratorTests.swift in Sources */,
 				F5E04AAFC38DE8839E8D8DC4 /* PermissionDeepLinkTests.swift in Sources */,
 				77EE33694EF9AC81705A3746 /* ProjectNameTests.swift in Sources */,
 				78E4C5E92665EEC7E965DACD /* SessionRecordTests.swift in Sources */,

@@ -105,7 +105,15 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             pop.behavior = .transient
             popover = pop
         }
-        pop.contentViewController = NSHostingController(rootView: content)
+        // Phase 3 03-09 fix — reuse the NSHostingController so SwiftUI sees a rootView
+        // update instead of a brand-new view tree. Otherwise PopoverRowView's @State
+        // (rotation/collapsed/faded) resets on every reload, and `.onChange(of: state)`
+        // never fires for rows that mount with state: .missing — breaking SC#2 도리도리.
+        if let host = pop.contentViewController as? NSHostingController<PopoverContentView> {
+            host.rootView = content
+        } else {
+            pop.contentViewController = NSHostingController(rootView: content)
+        }
         // Width fixed at 280pt (UI-SPEC); height grows with row count up to 8 rows
         // plus an extra 32pt strip when the Clear-all chrome is visible.
         let rows = max(1, queue.count)
@@ -141,7 +149,14 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             },
             onPopoverHoverChange: { [weak self] hovering in self?.onPopoverHover(hovering) }
         )
-        pop.contentViewController = NSHostingController(rootView: content)
+        // Phase 3 03-09 fix — same pattern as showPopover. Update rootView in place
+        // so SwiftUI sees a diff (rowStates change) instead of a new tree, preserving
+        // PopoverRowView @State and letting `.onChange(of: state)` fire SC#2 도리도리.
+        if let host = pop.contentViewController as? NSHostingController<PopoverContentView> {
+            host.rootView = content
+        } else {
+            pop.contentViewController = NSHostingController(rootView: content)
+        }
     }
 
     /// UI-SPEC: popover slides away from the widget's corner.

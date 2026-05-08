@@ -2,7 +2,8 @@
 phase: 2
 status: warnings
 critical: 0
-warnings: 6
+warnings: 5
+warnings_resolved_on_investigation: 1
 info: 7
 reviewed: 2026-05-08
 depth: standard
@@ -38,21 +39,22 @@ func runGC(now: Date? = nil) async {
 }
 ```
 
-### WR-02: Sound is double-gated against `SettingsStore.soundEnabled` — diverges from D2-20 contract
+### WR-02: ~~Sound is double-gated against `SettingsStore.soundEnabled` — diverges from D2-20 contract~~ (RESOLVED-ON-INVESTIGATION)
 
 **File:** `App/NotificationOrchestrator.swift:71`, `App/SessionRegistry.swift:127`
-**Issue:** `SessionRegistry.handleStop` already computes `playSoundOnce: soundEnabled && !isDup` (line 127) using the `soundEnabled` flag passed via `ingest`. Then `NotificationOrchestrator.present` re-reads `SettingsStore.shared.soundEnabled` and AND-gates it again (line 71). If the user toggles `soundEnabled` between registry-side decision and orchestrator-side present, the second gate wins — but more importantly, this hides the "registry already dedupe-decided" intent and means the AUD-01 dedupe (sound-only scope per D2-20) will be silently overridden if the toggle goes from off→on between the two points. The unit tests pass because they set `SettingsStore.shared.soundEnabled` once at the top of each test, masking the inconsistency.
-**Fix:** Pick one authoritative gate. Recommended: registry computes the final boolean and orchestrator just obeys, removing the second `SettingsStore` read at present-time:
-```swift
-// NotificationOrchestrator.present
-if playSoundOnce {
-    sound.playOnce()
-    log.notice("present session=\(session.sessionID, privacy: .public) sound=on")
-} else {
-    log.notice("present session=\(session.sessionID, privacy: .public) sound=off")
-}
-```
-…and delete the `settings: () -> SettingsStore` injection (it has no other use). Update `test_present_skipsSound_whenSoundDisabled_AUD_02` to assert that `SessionRegistry` is the gating layer — pass `soundEnabled: false` through `ingest` and assert no `present` sound call.
+**Original framing was incorrect.** D2-20 governs **dedupe scope** (sound-only dedupe), not sound gating. The orchestrator's present-time `&& store.soundEnabled` is the **AUD-02 implementation**, not a divergence — the orchestrator file's own comment (lines 9-13) makes this explicit:
+
+> AUD-02 — when SettingsStore.soundEnabled=false, present() does NOT play sound regardless of the playSoundOnce parameter forwarded by the registry's dedupe path. D2-18 RETRACTED — no Focus/DnD detection. Sound is gated solely by SettingsStore.soundEnabled.
+
+Behavior under the four toggle×ingest×present matrix is correct:
+- Sound ON at ingest, ON at present → plays (correct)
+- Sound ON at ingest, OFF at present → silent (correct — user just disabled sound)
+- Sound OFF at ingest, ON at present → silent (correct — alert was sound-suppressed at ingest; not retroactive)
+- Sound OFF at ingest, OFF at present → silent (correct)
+
+The "asymmetry" between ingest-time AND present-time reads is **intentional**: ingest-time captures the dedupe decision (AUD-01), present-time captures the user's current preference (AUD-02). Both gates serve different requirements. Reviewer's framing as "divergence" was a mis-read.
+
+**No fix required.** This finding is closed; no follow-up carried into Phase 3+.
 
 ### WR-03: `injectTest` auto-dismiss `Task` accumulates on rapid retries; no cancellation
 

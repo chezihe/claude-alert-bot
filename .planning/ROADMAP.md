@@ -64,7 +64,7 @@ Plans:
   4. Settings (threshold seconds, sound on/off, widget corner + offset) change behavior immediately, persist across app restart, and the "Test notification" button surfaces the widget and plays the sound on demand.
   5. Killing and restarting the app while a completed-but-unclicked alert is pending re-renders that alert from `sessions.json`; an in-flight session older than 6 hours does not.
   6. When a Stop event has no matching UserPromptSubmit (start lost), the configured fallback policy (default: alert with "?" duration) is applied — never silently dropped.
-**Plans:** 2/12 plans executed
+**Plans:** 3/12 plans executed
 Plans:
 **Wave 0** *(parallel — pre-implementation)*
 - [x] 02-00-PLAN.md — Test scaffold: XCTest target + verify-phase-2.sh skeleton + CabTest argv extension
@@ -72,7 +72,7 @@ Plans:
 
 **Wave 1** *(parallel; blocked on 02-00 only for verifier scaffold)*
 - [x] 02-02-PLAN.md — D2-33 Korean NSAppleEventsUsageDescription + D2-36 PermissionDeepLink helper
-- [ ] 02-03-PLAN.md — Domain models: SessionRecord (Codable), SettingsStore (@AppStorage), ProjectName, SocketPaths.sessionsJSONPath
+- [x] 02-03-PLAN.md — Domain models: SessionRecord (Codable), SettingsStore (@AppStorage), ProjectName, SocketPaths.sessionsJSONPath
 
 **Wave 2** *(parallel)*
 - [ ] 02-04-PLAN.md — SessionRegistry actor + SessionStore atomic persistence (SESS-01..04, THR-01/02, AUD-01)
@@ -152,7 +152,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 7/7 | Complete (phase_gate: green) | 2026-05-07 |
-| 2. Alert Loop | 2/12 | In Progress|  |
+| 2. Alert Loop | 3/12 | In Progress|  |
 | 3. Click-to-iTerm2 | 0/0 | Not started | - |
 | 4. Multi-Session UX | 0/0 | Not started | - |
 | 5. Hook Installer & Onboarding | 0/0 | Not started | - |

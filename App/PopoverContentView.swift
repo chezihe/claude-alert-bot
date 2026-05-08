@@ -31,6 +31,17 @@ enum PopoverContentRules {
     static func showsOrphanIndicator(session: CompletedSession) -> Bool {
         session.durationSec == nil
     }
+
+    /// Phase 3 ITermBridge marks a session unavailable when its iTerm2 session UUID
+    /// no longer resolves (closed window/tab). The popover surface stays mounted —
+    /// we do not auto-clear, since the alert itself is still informational.
+    static func isUnavailable(sessionID: String, in set: Set<String>) -> Bool {
+        set.contains(sessionID)
+    }
+
+    /// Locked copy for the unavailable trailing label. Asserted by PopoverContentTests.
+    /// Minimal English + "session" terminology per project UI tone.
+    static let unavailableLabelText = "Session unavailable"
 }
 
 // MARK: - SwiftUI container
@@ -39,6 +50,8 @@ struct PopoverContentView: View {
     let queue: [CompletedSession]
     let onRowClick: (String) -> Void   // sessionID
     let onClearAll: () -> Void
+    /// Phase 3 ITermBridge populates this on jump failure; defaulted empty until then.
+    var unavailableSessionIDs: Set<String> = []
 
     private var dupProjects: Set<String> {
         PopoverContentRules.projectsWithDuplicates(queue)
@@ -64,6 +77,10 @@ struct PopoverContentView: View {
                         PopoverRowView(
                             session: session,
                             showTimeSuffix: dupProjects.contains(session.projectName),
+                            isAvailable: !PopoverContentRules.isUnavailable(
+                                sessionID: session.sessionID,
+                                in: unavailableSessionIDs
+                            ),
                             onClick: { onRowClick(session.sessionID) }
                         )
                     }

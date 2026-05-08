@@ -8,6 +8,10 @@ import AppKit
 struct PopoverRowView: View {
     let session: CompletedSession
     let showTimeSuffix: Bool
+    /// Phase 3: false when iTerm2 session UUID no longer resolves; row stays clickable
+    /// (click clears the alert) but trailing area swaps to "Session unavailable" and
+    /// content dims to 0.5 opacity. Defaulted true so existing call sites compile.
+    var isAvailable: Bool = true
     let onClick: () -> Void
 
     @State private var isHovered: Bool = false
@@ -21,18 +25,25 @@ struct PopoverRowView: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                 Spacer()
-                if showTimeSuffix {
-                    Text("· \(PopoverContentRules.timeSuffix(for: session.stoppedAt))")
+                if !isAvailable {
+                    Text(PopoverContentRules.unavailableLabelText)
                         .font(.system(size: 11))
                         .foregroundStyle(Color(NSColor.secondaryLabelColor))
-                }
-                if PopoverContentRules.showsOrphanIndicator(session: session) {
-                    Text("?")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Color(NSColor.secondaryLabelColor))
-                        .accessibilityLabel("경과 시간 알 수 없음")
+                } else {
+                    if showTimeSuffix {
+                        Text("· \(PopoverContentRules.timeSuffix(for: session.stoppedAt))")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color(NSColor.secondaryLabelColor))
+                    }
+                    if PopoverContentRules.showsOrphanIndicator(session: session) {
+                        Text("?")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color(NSColor.secondaryLabelColor))
+                            .accessibilityLabel("경과 시간 알 수 없음")
+                    }
                 }
             }
+            .opacity(isAvailable ? 1.0 : 0.5)
             .padding(.vertical, 8)
             .padding(.horizontal, 12)
             .frame(minHeight: 36)
@@ -47,6 +58,10 @@ struct PopoverRowView: View {
         .onHover { hovering in
             isHovered = hovering
         }
-        .accessibilityLabel("\(session.projectName) 작업 완료, 클릭하여 정리")
+        .accessibilityLabel(
+            isAvailable
+            ? "\(session.projectName) 작업 완료, 클릭하여 정리"
+            : "\(session.projectName), Session unavailable, 클릭하여 정리"
+        )
     }
 }

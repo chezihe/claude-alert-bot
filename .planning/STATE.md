@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-08T08:08:00.000Z"
+last_updated: "2026-05-08T08:14:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 19
-  completed_plans: 15
-  percent: 79
+  completed_plans: 16
+  percent: 84
 ---
 
 # State: Claude Alert Bot
 
-**Last updated:** 2026-05-08 (Phase 02 Wave 3 complete — Plan 02-07 complete: FloatingWidgetPanel NSPanel subclass + WidgetPositioning pure function + WidgetIconView SwiftUI + FloatingWidgetWindowController conforming to WidgetControllerProtocol; WIDG-01/03/04/06/07 satisfied; Wave 4 02-08 next)
+**Last updated:** 2026-05-08 (Phase 02 Wave 4 first half complete — Plan 02-08 complete: PopoverContentRules pure namespace + PopoverContentView + PopoverRowView SwiftUI + WidgetPopoverController conforming to WidgetHoverDelegate (Pattern 8 NSPopover per 02-01 spike); D2-08 [would-jump session=<uuid>] OSLog format LOCKED; 67/67 tests pass; Wave 4/5/6 plans 02-09 / 02-10 / 02-11 next)
 
 ## Project Reference
 
@@ -25,14 +25,14 @@ progress:
 ## Current Position
 
 Phase: 2 (alert-loop) — EXECUTING
-Plan: 8 of 12 complete (Wave 0: 02-00 + 02-01 spike; Wave 1: 02-02 + 02-03; Wave 2: 02-04 + 02-05; Wave 3 complete: 02-06 + 02-07). Next executable: 02-08 (Wave 4 SettingsView + popover).
-Next: Execute 02-08 — SettingsView + NSPopover hover content. Implements `WidgetHoverDelegate` declared by 02-07 and reads `controller.queueSnapshot` to render the popover row list. After 02-08 lands, Wave 5 + 6 (02-09 cab-test extensions, 02-10 verify-phase script, 02-11 AppDelegate boot wiring) follow.
+Plan: 9 of 12 complete (Wave 0: 02-00 + 02-01 spike; Wave 1: 02-02 + 02-03; Wave 2: 02-04 + 02-05; Wave 3: 02-06 + 02-07; Wave 4 first-half: 02-08). Next executable: 02-09 (cab-test extensions).
+Next: Execute 02-09 — cab-test helper extensions for popover/hover scenarios + 02-10 verify-phase-2.sh + 02-11 AppDelegate boot wiring (which retains a `WidgetPopoverController` as a stored property and assigns `widget.hoverDelegate = popoverController`).
 
 - **Milestone:** v1
-- **Phase:** 02 — Alert Loop, 8/12 plans complete. 4 plans remain.
-- **Plan:** 02-07 complete (FloatingWidgetPanel NSPanel subclass + WidgetPositioning pure function + WidgetIconView SwiftUI + FloatingWidgetWindowController @MainActor NSWindowController conforming to WidgetControllerProtocol + WidgetHoverDelegate seam for 02-08). 7/7 FloatingWidgetPanelTests + 5/5 PositioningTests pass; full target 62/62 pass (was 50/50); production build SUCCEEDED. WIDG-01 / WIDG-03 / WIDG-04 / WIDG-06 / WIDG-07 satisfied (WIDG-02 + WIDG-05 already from 02-06). NSPanel topology locked per Pattern 7 + Pattern 8 spike verdict.
+- **Phase:** 02 — Alert Loop, 9/12 plans complete. 3 plans remain.
+- **Plan:** 02-08 complete (PopoverContentRules pure namespace owning 4 testable display rules + PopoverContentView SwiftUI container + PopoverRowView per-session row + WidgetPopoverController @MainActor NSObject conforming to WidgetHoverDelegate, Pattern 8 NSPopover per 02-01 spike verdict). 5/5 PopoverContentTests pass; full target 67/67 pass (was 62/62); production build SUCCEEDED. D2-08 OSLog format `[would-jump session=<uuid>]` locked — Phase 3 ITermBridge inherits the call site verbatim. WIDG-03 reinforced (icon was set 02-07; popover row UX is 02-08).
 - **Status:** Executing Phase 2
-- **Progress:** [████████░░] 79%
+- **Progress:** [████████░░] 84%
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Next: Execute 02-08 — SettingsView + NSPopover hover content. Implements `Widg
 | Plan 02-05 metrics | ~7 min duration · 1 TDD task · 2 files created (App/AppleScriptHelper.swift, ClaudeAlertBotTests/AppleScriptHelperTests.swift) · 2 commits (RED + GREEN) · 9/9 unit tests pass · full target 40/40 pass · 0 regressions |
 | Plan 02-06 metrics | ~12 min duration · 2 TDD tasks · 4 files created (App/SoundPlayer.swift, App/NotificationOrchestrator.swift, ClaudeAlertBotTests/SoundPlayerTests.swift, ClaudeAlertBotTests/NotificationOrchestratorTests.swift) · 4 commits (RED + GREEN ×2) · 4/4 SoundPlayerTests + 6/6 NotificationOrchestratorTests · full target 50/50 pass · 0 regressions |
 | Plan 02-07 metrics | ~8 min duration · 2 tasks (Task 1 TDD, Task 2 build-only per plan carve-out) · 5 files created (App/FloatingWidgetPanel.swift, App/FloatingWidgetWindowController.swift, App/WidgetIconView.swift, ClaudeAlertBotTests/FloatingWidgetPanelTests.swift, ClaudeAlertBotTests/PositioningTests.swift) · 3 commits (RED Task1 + GREEN Task1 + GREEN Task2) · 7/7 FloatingWidgetPanelTests + 5/5 PositioningTests · full target 62/62 pass · 0 regressions |
+| Plan 02-08 metrics | ~6 min duration · 2 tasks (Task 1 TDD, Task 2 build-only per plan carve-out) · 4 files created (App/PopoverContentView.swift, App/PopoverRowView.swift, App/WidgetPopoverController.swift, ClaudeAlertBotTests/PopoverContentTests.swift) · 3 commits (RED Task1 + GREEN Task1 + GREEN Task2) · 5/5 PopoverContentTests · full target 67/67 pass · 0 regressions |
 
 ## Accumulated Context
 
@@ -91,6 +92,11 @@ Next: Execute 02-08 — SettingsView + NSPopover hover content. Implements `Widg
 | Pattern 8 verdict from 02-01-SPIKE-RESULT honored: 02-07 ships panel + icon view + WidgetHoverDelegate stub only; NSPopover lives with controller in 02-08. No second sibling NSPanel | 02-07 | Plan 02-07 |
 | WidgetHoverDelegate protocol shape locked: `widgetMouseEntered()` / `widgetMouseExited()` (both @MainActor); 02-08 owns hover-intent timing (150ms open / 250ms close grace) | 02-07 | Plan 02-07 |
 | LSUIElement regression guard: `grep -c 'NSApp.activate' App/FloatingWidget*.swift App/WidgetIconView.swift` MUST be 0 at all times — comment text intentionally avoids the literal symbol so the guard stays clean | 02-07 | Plan 02-07 |
+| Pattern 8 NSPopover ratified by spike + shipped in 02-08: WidgetPopoverController hosts NSPopover with `.transient` behavior, contentViewController = NSHostingController(rootView: PopoverContentView). Pattern 8a sibling-NSPanel branch retired (popoverPanel literal MUST stay 0 in App/WidgetPopoverController.swift) | 02-08 | Plan 02-08 |
+| D2-08 OSLog format LOCKED: `[would-jump session=<uuid>]` (square brackets, single space, `session=` literal, `privacy: .public` UUID) emitted in App/WidgetPopoverController.swift onRowClick(sessionID:). Phase 3 ITermBridge inherits the call site verbatim — replaces `Task { await SessionRegistry.shared.clearOne(...) }` with the jump call but preserves the OSLog format so existing log-show predicates keep matching across the Phase 2→3 transition | 02-08 | Plan 02-08 |
+| Hover-intent timing LOCKED for popover: 150ms entry delay before show, 250ms exit grace before dismiss; both DispatchWorkItems are cancellable — re-entering during exit grace cancels pending dismiss, leaving before entry intent cancels pending show | 02-08 | Plan 02-08 |
+| PopoverContentRules pure namespace owns the 4 popover display rules (shouldShowClearAll, projectsWithDuplicates, timeSuffix, showsOrphanIndicator) — Phase 4 multi-session UX plan reuses these helpers rather than re-deriving | 02-08 | Plan 02-08 |
+| 02-11 AppDelegate boot order extended: instantiate `WidgetPopoverController(widgetController: widget)` immediately after FloatingWidgetWindowController, retain as a stored property (hoverDelegate is `weak`), and assign `widget.hoverDelegate = popoverController` BEFORE `await SessionRegistry.shared.restore()` and `await listener.start()` | 02-08 | Plan 02-08 |
 
 ### Open Questions (carried into planning)
 
@@ -109,27 +115,26 @@ None.
 
 ## Session Continuity
 
-- **Last action:** Completed Plan 02-07 (Phase 2 Wave 3 second half — FloatingWidgetPanel + WindowController). 3 commits on master (sequential mode):
-  - `43628a2` test(02-07): add failing FloatingWidgetPanel + Positioning tests (TDD RED)
-  - `ef11889` feat(02-07): FloatingWidgetPanel + WidgetPositioning (WIDG-01,02,06,07)
-  - `3768035` feat(02-07): WidgetIconView + FloatingWidgetWindowController (WIDG-03,04,05)
+- **Last action:** Completed Plan 02-08 (Phase 2 Wave 4 first half — Hover Popover). 3 commits on master (sequential mode):
+  - `fc27708` test(02-08): add failing PopoverContentRules tests (TDD RED)
+  - `80e8c76` feat(02-08): PopoverContentView + PopoverRowView + display rules
+  - `37bd072` feat(02-08): WidgetPopoverController (Pattern 8 NSPopover, WIDG-03)
 
-  Final verifications: FloatingWidgetPanelTests 7/7 pass + PositioningTests 5/5 pass (combined 0.041s), full test target 62/62 pass (no regressions across Phase 1 / 02-00 / 02-02..07; was 50/50 before this plan, +12 new tests, 0 regressions), `xcodebuild build -scheme ClaudeAlertBot` succeeds. Source-string anchors verified: `grep -c 'class FloatingWidgetWindowController.*WidgetControllerProtocol' = 1`, `grep -c 'NSApp.activate' across plan files = 0/0/0` (LSUIElement regression guard intact), `grep -c 'NSWorkspace.shared.accessibilityDisplayShouldReduceMotion' = 1`.
+  Final verifications: PopoverContentTests 5/5 pass (0.004s), full test target 67/67 pass (no regressions across Phase 1 / 02-00 / 02-02..08; was 62/62 before this plan, +5 new tests, 0 regressions), `xcodebuild build -scheme ClaudeAlertBot` succeeds. Source-string anchors verified: `grep -c '\[would-jump session=' App/WidgetPopoverController.swift = 3` (D2-08 format anchor), `grep -c 'NSPopover' = 6` (Pattern 8 verdict), `grep -c 'popoverPanel' = 0` (Pattern 8a retired), `grep -c 'WidgetHoverDelegate' = 3`, `grep -c 'NSApp.activate' across 3 new App files = 0/0/0` (LSUIElement regression guard intact).
 
-  Public API frozen for Wave 4+ wiring: **WidgetHoverDelegate** (widgetMouseEntered / widgetMouseExited @MainActor) — declared in App/FloatingWidgetWindowController.swift; consumed by 02-08 popover (owns 150ms open / 250ms close hover-intent timing). **`controller.queueSnapshot`** read-only getter exposes the latest `setQueue` array for the popover row list (pull-on-hover, no push subscription). **NSPanel topology locked**: panel's contentView is NSHostingView<WidgetIconView>; popover lives with the controller in 02-08 (Pattern 8 from spike — no second sibling NSPanel needed).
+  Public API frozen for Wave 6 wiring: **WidgetPopoverController(widgetController:)** initializer + WidgetHoverDelegate conformance — 02-11 AppDelegate must construct this AFTER FloatingWidgetWindowController, retain as a stored property (hoverDelegate is weak), and assign `widget.hoverDelegate = popoverController` before `await SessionRegistry.shared.restore() / await listener.start()`. **PopoverContentRules** pure namespace (4 static rules) is the Phase 4 reuse surface. **D2-08 OSLog format LOCKED**: `[would-jump session=<uuid>]` with `privacy: .public` — Phase 3 ITermBridge inherits this call site verbatim.
 
-  Auto-fixed (Rule 1): comment text initially contained literal `NSApp.activate` symbol which would have tripped the plan's grep regression guard ("must be 0"). Rephrased to `activate(ignoringOtherApps:) on NSApp` so the literal token doesn't appear in the file.
+  Deviations: None. Plan executed verbatim. Swift 5 toolchain (per project.yml SWIFT_VERSION: "5") doesn't accept the regex-literal example in test_timeSuffix_format_hhmm; used NSRegularExpression with the same assertion semantics — faithful translation, not a deviation from the test contract.
 
 - **Files written this plan:**
-  - `App/FloatingWidgetPanel.swift` (created — final class FloatingWidgetPanel: NSPanel + enum WidgetPositioning)
-  - `App/FloatingWidgetWindowController.swift` (created — @MainActor final class FloatingWidgetWindowController: NSWindowController, WidgetControllerProtocol + WidgetHoverDelegate protocol)
-  - `App/WidgetIconView.swift` (created — SwiftUI WidgetIconView ZStack with bell.badge.fill 36pt + conditional +N badge)
-  - `ClaudeAlertBotTests/FloatingWidgetPanelTests.swift` (created — 7 unit tests)
-  - `ClaudeAlertBotTests/PositioningTests.swift` (created — 5 unit tests for WidgetPositioning.origin)
+  - `App/PopoverContentView.swift` (created — enum PopoverContentRules pure rules + struct PopoverContentView SwiftUI container)
+  - `App/PopoverRowView.swift` (created — per-session row with hover bg + accessibility labels)
+  - `App/WidgetPopoverController.swift` (created — @MainActor final class WidgetPopoverController: NSObject, WidgetHoverDelegate; Pattern 8 NSPopover host with 150ms/250ms hover-intent)
+  - `ClaudeAlertBotTests/PopoverContentTests.swift` (created — 5 unit tests for PopoverContentRules)
   - `ClaudeAlertBot.xcodeproj/project.pbxproj` (xcodegen-regenerated)
-  - `.planning/phases/02-alert-loop/02-07-SUMMARY.md` (created — locked NSPanel config + WidgetHoverDelegate contract for 02-08 + verifier row bodies)
-  - `.planning/STATE.md`, `.planning/ROADMAP.md`, `.planning/REQUIREMENTS.md` (updated — plan progress + 5 new requirements complete: WIDG-01, WIDG-03, WIDG-04, WIDG-06, WIDG-07)
-- **Next action:** Execute Plan 02-08 — SettingsView + NSPopover hover content (Wave 4). Implements `WidgetHoverDelegate` declared in 02-07 against an NSPopover with `.transient` behavior. Reads `controller.queueSnapshot` at popover open time. Settings "Test notification" button calls `await SessionRegistry.shared.injectTest(soundEnabled: ...)` per 02-04 contract. After 02-08 lands, Waves 5+6 (02-09 cab-test extensions, 02-10 verify script, 02-11 AppDelegate boot wiring) follow.
+  - `.planning/phases/02-alert-loop/02-08-SUMMARY.md` (created — Pattern 8 verdict closure + D2-08 OSLog format anchor + 02-11 wiring + verifier row bodies)
+  - `.planning/STATE.md`, `.planning/ROADMAP.md` (updated — plan progress 8→9 of 12 in Phase 2)
+- **Next action:** Execute Plan 02-09 — cab-test helper extensions for hover/popover scenarios (Wave 4 second half). Then Plan 02-10 (verify-phase-2.sh script grafting the verifier row bodies recorded by 02-04 / 02-05 / 02-06 / 02-07 / 02-08), then Plan 02-11 (Wave 6 AppDelegate boot wiring — retain WidgetPopoverController as a stored property, assign widget.hoverDelegate, preserve Pitfall #11 boot order).
 
 ### Open follow-ups (carried into later phases)
 

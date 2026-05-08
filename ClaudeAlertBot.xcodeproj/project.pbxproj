@@ -16,6 +16,7 @@
 		E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */; };
 		E6D06143C70520743ED73969 /* SocketPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B78D85FFDFAD8C99CF5951D /* SocketPaths.swift */; };
 		E80832057B78D1BCC2CB7848 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7151E148769D039124B77B2F /* main.swift */; };
+		F5E04AAFC38DE8839E8D8DC4 /* PermissionDeepLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2492431EE9304DB1FF24B55 /* PermissionDeepLinkTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,6 +46,7 @@
 		85C8275D946E935468FEC149 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		8A714300C48D443F40C0A625 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		9A4CF07859800DE5173D901A /* cab-test */ = {isa = PBXFileReference; includeInIndex = 0; path = "cab-test"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2492431EE9304DB1FF24B55 /* PermissionDeepLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionDeepLinkTests.swift; sourceTree = "<group>"; };
 		B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAlertBotTests.swift; sourceTree = "<group>"; };
 		C52574E53A8FD6995A80B23B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookEventFactory.swift; sourceTree = "<group>"; };
@@ -56,6 +58,7 @@
 			isa = PBXGroup;
 			children = (
 				B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */,
+				A2492431EE9304DB1FF24B55 /* PermissionDeepLinkTests.swift */,
 				888C9D5A15931A09DD01E8B4 /* Fixtures */,
 			);
 			name = ClaudeAlertBotTests;
@@ -268,6 +271,7 @@
 				12B4AD96D68F218C0C6BCC1E /* ClaudeAlertBotTests.swift in Sources */,
 				E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */,
 				A8F29327F7881CB4C3E7D507 /* MockNotifier.swift in Sources */,
+				F5E04AAFC38DE8839E8D8DC4 /* PermissionDeepLinkTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

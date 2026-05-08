@@ -123,6 +123,12 @@ Next: `/gsd-progress` to report, or `/gsd-context-phase 3` to begin Phase 3 (Cli
 
 None.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260508-001 | Replace bell.badge.fill placeholder with Claude Code SVG icon + vertical bounce animation in floating widget | 2026-05-08 | c735ff7 | [260508-001-claude-icon-bounce](./quick/260508-001-claude-icon-bounce/) |
+
 ## Session Continuity
 
 - **Last action:** Completed Plan 02-11 (Phase 2 Wave 6 — AppDelegate boot wiring + HookListener dispatch + @main SwiftUI App + Phase 2 sign-off). 2 commits on master from previous executor session + 1 docs commit this session:

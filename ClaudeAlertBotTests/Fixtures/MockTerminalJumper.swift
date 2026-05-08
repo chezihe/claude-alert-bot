@@ -1,15 +1,10 @@
-// MockTerminalJumper.swift — Phase 3 Wave 0 (03-00).
+// MockTerminalJumper.swift — Phase 3 Wave 0 (03-00) → activated by Wave 1 (03-01).
 // Test double that records jump calls and replays a configurable JumpResult queue.
 //
-// Wave 0 ships this file as a *compile-gated* stub. The class body is wrapped in
-// `#if false` because the types it depends on (`TerminalJumper` protocol,
-// `JumpResult` enum, `CompletedSession` model) do not yet exist — plan 03-01
-// (Wave 1) creates them in App/TerminalJumper.swift. After 03-01 lands, the
-// executor of Task 1 (final step) removes the `#if false` / `#endif` lines and
-// adds the `: TerminalJumper` conformance — a one-line edit.
-//
-// This is the same Wave-0 / Wave-1 sequencing pattern Phase 2 02-00 used for
-// MockNotifier+NotifierProtocol.swift (which 02-06 later wired up).
+// History: Wave 0 shipped this file as a compile-gated stub because TerminalJumper
+// and JumpResult did not yet exist. Plan 03-01 (Wave 1) created App/TerminalJumper.swift
+// and removed the gate, enabling : TerminalJumper conformance — a one-line edit
+// matching the same Wave-0/Wave-1 pattern Phase 2 02-00 used for MockNotifier.
 //
 // Downstream consumers (planned):
 //   - 03-05 ITerm2Jumper unit tests (substitute for the real jumper)
@@ -18,13 +13,11 @@
 import Foundation
 @testable import ClaudeAlertBot
 
-// COMPILE GATE — flip to `#if true` (or delete the gate) after 03-01 lands
-// `App/TerminalJumper.swift` (declares `TerminalJumper`, `JumpResult`, and
-// confirms `CompletedSession` shape).
-#if false
-
+// 03-01 landed `App/TerminalJumper.swift` (TerminalJumper protocol +
+// JumpResult enum). Compile gate removed; `: TerminalJumper` conformance
+// enabled. The signature already matches the protocol — no further edits.
 @MainActor
-final class MockTerminalJumper {
+final class MockTerminalJumper: TerminalJumper {
     /// FIFO of pre-loaded results. Each call dequeues the head; if empty, returns `defaultResult`.
     var resultQueue: [JumpResult] = []
 
@@ -53,5 +46,3 @@ final class MockTerminalJumper {
         jumpCalls.removeAll()
     }
 }
-
-#endif

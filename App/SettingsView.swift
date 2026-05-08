@@ -20,7 +20,24 @@ struct SettingsView: View {
     static let testHeading = "테스트"
     static let testButtonLabel = "테스트 알림 보내기"
 
+    // D3-15 — Korean section header + button label (T-COPY-DRIFT-01;
+    // matches Phase 2 settings tone for buttons like testButtonLabel).
+    static let connectionTestHeading = "iTerm2 연결"
+    static let connectionTestLabel = "iTerm2 연결 테스트"
+
+    // D3-19 — minimal English status labels (T-COPY-DRIFT-01;
+    // Korean→English split for status only per minimal-UI-copy memory rule).
+    static let connectionTestSuccessFmt = "Connected at %@"           // %@ = HH:mm
+    static let iTermNotRunningLabel = "iTerm2 is not running"
+    static let connectionDeniedLabel = "Automation permission denied"
+
     @StateObject private var store = SettingsStore.shared
+
+    // D3-18 — transient SET-05 result (auto-hides after 5s; persisted last-success
+    // time lives in store.lastConnectionTestAt).
+    @State private var connectionTestResult: JumpResult? = nil
+    @State private var connectionTestResultAt: Date = Date()
+    @State private var hideResultTask: Task<Void, Never>? = nil
 
     var body: some View {
         Form {
@@ -62,6 +79,35 @@ struct SettingsView: View {
                 .buttonStyle(.borderedProminent)
                 .frame(maxWidth: .infinity)
             }
+
+            // D3-15..20 SET-05 — iTerm2 connection self-test (Apple Events permission + reachability).
+            Section(Self.connectionTestHeading) {
+                Button(Self.connectionTestLabel) {
+                    Task { await runConnectionTest() }
+                }
+                .buttonStyle(.bordered)
+                .frame(maxWidth: .infinity)
+
+                // Transient result (5s) takes precedence; otherwise show persisted last-success.
+                if let result = connectionTestResult {
+                    switch result {
+                    case .ok:
+                        Text(String(format: Self.connectionTestSuccessFmt, hhmm(connectionTestResultAt)))
+                            .font(.caption).foregroundStyle(.secondary)
+                    case .iTermNotRunning:
+                        Text(Self.iTermNotRunningLabel).font(.caption).foregroundStyle(.secondary)
+                    case .permissionDenied:
+                        Text(Self.connectionDeniedLabel).font(.caption).foregroundStyle(.red)
+                    case .missing, .timeout, .otherError:
+                        // testConnection should never return these — they belong to the jump path.
+                        // Defensive fallback: show "not running" since the connection isn't actionable.
+                        Text(Self.iTermNotRunningLabel).font(.caption).foregroundStyle(.secondary)
+                    }
+                } else if let last = store.lastConnectionTestAt {
+                    Text(String(format: Self.connectionTestSuccessFmt, hhmm(last)))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
         }
         .formStyle(.grouped)
         .frame(width: 440)
@@ -74,5 +120,42 @@ struct SettingsView: View {
                 Task { await AppleScriptHelper.shared.triggerPermissionPrompt() }
             }
         }
+    }
+
+    // MARK: - SET-05 helpers (D3-15..20)
+
+    /// D3-16 — SET-05 button handler. Calls AppleScriptHelper.testConnection() and
+    /// branches on the result: .ok persists lastConnectionTestAt; .permissionDenied
+    /// also opens the System Settings deep-link (D3-16 deny path: button + banner +
+    /// deep-link all surface together so the user has every recovery affordance visible).
+    private func runConnectionTest() async {
+        let result = await AppleScriptHelper.shared.testConnection()
+        await MainActor.run {
+            connectionTestResult = result
+            connectionTestResultAt = Date()
+
+            if case .ok = result {
+                store.lastConnectionTestAt = Date()
+            }
+
+            if case .permissionDenied = result {
+                PermissionDeepLink.openAutomationPreferences()
+            }
+
+            // 5s auto-hide. Cancel any prior pending hide so the latest press wins.
+            hideResultTask?.cancel()
+            hideResultTask = Task {
+                try? await Task.sleep(nanoseconds: 5 * 1_000_000_000)
+                if Task.isCancelled { return }
+                await MainActor.run { connectionTestResult = nil }
+            }
+        }
+    }
+
+    /// D3-19 — HH:mm formatter for the "Connected at %@" status label.
+    private func hhmm(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm"
+        return f.string(from: date)
     }
 }

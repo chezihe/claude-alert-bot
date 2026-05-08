@@ -6,6 +6,7 @@
 // File deliberately NOT named main.swift — `@main` cannot coexist with a file named
 // main.swift in the same module (Swift treats main.swift as an implicit script entry).
 import SwiftUI
+import AppKit
 
 @main
 struct ClaudeAlertBotApp: App {
@@ -15,5 +16,22 @@ struct ClaudeAlertBotApp: App {
         Settings {
             SettingsView()
         }
+        // Phase 3 03-09 fix — accessory apps (LSUIElement=true) have no Dock icon
+        // and no automatic Settings entry. MenuBarExtra is the canonical macOS-native
+        // way to give the user a visible handle to Settings + Quit.
+        MenuBarExtra {
+            MenuBarMenuContent()
+        } label: {
+            Image(systemName: "bell.badge")
+        }
+    }
+}
+
+private struct MenuBarMenuContent: View {
+    @Environment(\.openSettings) private var openSettings
+    var body: some View {
+        Button("Settings…") { openSettings() }
+        Divider()
+        Button("Quit") { NSApp.terminate(nil) }
     }
 }

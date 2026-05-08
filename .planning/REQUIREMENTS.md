@@ -55,7 +55,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Jump (iTerm2 세션 점프)
 
 - [ ] **JUMP-01**: 위젯(또는 목록 항목) 클릭 시 작업이 실행된 정확한 iTerm2 탭/창에 포커스가 이동한다
-- [ ] **JUMP-02**: 세션 매칭은 다단계 fallback으로 동작한다: ① `ITERM_SESSION_ID` UUID, ② `tty` 경로, ③ "세션이 더 이상 존재하지 않습니다" 친절한 에러 (잘못된 탭으로 이동하지 않음)
+- [ ] **JUMP-02**: 세션 매칭은 `ITERM_SESSION_ID` UUID 단일 전략으로 동작한다 — 매치 실패 시 친절한 비차단 UX(도리도리 + collapse 애니메이션, 텍스트/사운드 없음)로 row를 큐에서 제거하고, 잘못된 탭으로 이동하지 않는다. *(amended 2026-05-08 by 03-CONTEXT.md D3-06~10; ITERM_SESSION_ID 누락+탭 alive 케이스 — env-stripped shell — 는 v2 `JUMP-FALLBACK-01`로 이동)*
 - [ ] **JUMP-03**: AppleScript는 컴파일 1회 + 다회 실행(`NSAppleScript`)으로 백그라운드 큐에서 호출된다
 - [ ] **JUMP-04**: AppleScript 호출에 3초 하드 타임아웃을 둔다
 - [ ] **JUMP-05**: 클릭 이벤트가 디바운스되어 동일 세션을 중복 호출하지 않는다
@@ -107,6 +107,10 @@ Deferred to future release. Tracked but not in current roadmap.
 - **MTERM-02**: Warp 지원
 - **MTERM-03**: Ghostty 지원
 - **MTERM-04**: Alacritty / kitty 지원
+
+### Jump Fallback (v1에서 단일 전략으로 단순화하면서 deferred)
+
+- **JUMP-FALLBACK-01**: env-stripped shell 환경(nix-shell, devbox, 컨테이너 등)에서 `ITERM_SESSION_ID`가 hook 시점에 누락되었지만 iTerm2 탭은 살아있는 케이스 — hook envelope의 `tty` 필드로 sessions walk 매칭 폴백. *(03-CONTEXT.md D3-06~10에서 v1 제외, v2로 이동.)*
 
 ### Per-Project Customization
 

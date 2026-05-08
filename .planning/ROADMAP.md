@@ -104,9 +104,9 @@ Plans:
   3. The "iTerm2 connection test" Settings button triggers the macOS Automation permission dialog the first time it is pressed (with a specific, user-trustworthy `NSAppleEventsUsageDescription`); subsequent presses execute a real focus operation against a chosen tab.
   4. When Automation permission is denied, the next click surfaces a recovery banner with a button that deep-links to System Settings → Privacy & Security → Automation; the app does not silently no-op.
   5. AppleScript calls run on a background queue with a 3-second hard timeout and a 500ms click debounce; the main thread never beachballs even when iTerm2 is busy.
-  6. When `ITERM_SESSION_ID` was unavailable at hook time (e.g., shell-integration-disabled environment), TTY-based fallback lookup still focuses the correct pane.
+  6. ~~When `ITERM_SESSION_ID` was unavailable at hook time (e.g., shell-integration-disabled environment), TTY-based fallback lookup still focuses the correct pane.~~ **(Moved to v2 by 03-CONTEXT.md D3-06~10.)** Rationale: a dead iTerm2 session means the Claude process inside it died, so no Stop hook fires for that work; the widget queue cannot point at a dead-tab. Env-stripped shells (nix-shell, containers) where `ITERM_SESSION_ID` is missing at hook time but the tab is still alive are deferred as `JUMP-FALLBACK-01` in v2.
 **Plans:** TBD
-**Reference:** TokenEater (`AThevon/TokenEater`, MIT) — `Shared/Helpers/ProcessResolver.swift`의 TTY 기반 iTerm2 AppleScript 점프 (`focusITerm2Tab`, `getProcessTTY` via `kp_eproc.e_tdev`, `resolveHostApp` with Electron-helper / iTermServer skip, TCC -1743 osascript 폴백)을 차용 검토. Phase 3 plan 시 정식 평가.
+**Reference:** TokenEater (`AThevon/TokenEater`, MIT) — referenced for v2 (env-stripped shell fallback). v1 does not borrow code; README CREDIT entry tracked for Phase 6.
 **UI hint:** yes
 
 ### Phase 4: Multi-Session UX
@@ -162,7 +162,7 @@ Plans:
 
 Phases that should run `/gsd-research-phase` before planning:
 
-- **Phase 3 (Click-to-iTerm2):** Open questions — (a) `ITERM_SESSION_ID` reliability under tmux/screen/nix-shell/zellij/containerized shells; (b) AppleScript `unique ID` lookup latency under typical pane counts (Phase 1's hook log will provide the test data); (c) recovery UX for `errAEEventNotPermitted (-1743)` deep-link reliability across macOS 14/15/26.
+- **Phase 3 (Click-to-iTerm2):** Open questions — (a) ~~`ITERM_SESSION_ID` reliability under tmux/screen/nix-shell/zellij/containerized shells~~ **(closed by 03-CONTEXT.md D3-06~10: UUID-only matching, env-stripped-shell fallback deferred to v2 `JUMP-FALLBACK-01`);** (b) AppleScript `unique ID` lookup latency under typical pane counts (Phase 1's hook log will provide the test data); (c) recovery UX for `errAEEventNotPermitted (-1743)` deep-link reliability across macOS 14/15/26.
 - **Phase 6 (Distribution):** Validate — (a) exact dialog text on macOS 14/15/26 when launching an ad-hoc-signed-but-quarantined app; (b) whether shipping `bypass-gatekeeper.command` itself triggers extra Gatekeeper friction.
 
 Phases with standard patterns (no research-phase recommended):
@@ -176,7 +176,7 @@ These decisions are locked by the research and must hold across all phases:
 - **Two hooks installed, not one.** Both `Stop` and `UserPromptSubmit` are required for elapsed-time correlation. Affects HOOK-01/02 and INST-01.
 - **Ad-hoc signing in build pipeline from Phase 1** (DIST-01). Apple Silicon will not launch unsigned binaries; this is a load-time block, not a Gatekeeper block.
 - **AppleScript by UUID, never by tab/window/pane index** (Pitfall #4 / JUMP-02). Indices shift on tab reorder; UUIDs are stable for the life of a pane.
-- **Session matching multi-strategy with explicit failure** (Pitfall #4 / JUMP-02). UUID first, TTY fallback, friendly "session no longer exists" last — never wrong-jump.
+- **Session matching: UUID-only + friendly failure** (Pitfall #4 / JUMP-02; **amended 2026-05-08 by 03-CONTEXT.md D3-06~10**). UUID match → on miss, surface a non-blocking "session no longer exists" UX (head-shake + collapse animation, no text/sound) and clear the row from the queue. Never wrong-jump. ~~TTY fallback~~ deferred to v2 (`JUMP-FALLBACK-01`) — rationale: live-iTerm2-with-missing-UUID is restricted to env-stripped shells (nix-shell, containers); typical workflows are covered by UUID alone.
 - **Swift `actor` for SessionRegistry** (Pitfall #9 / SESS-01). Established Phase 2 in single-session form; stress-test gate at Phase 4.
 - **`NSPanel` with `.nonactivatingPanel` + `becomesKeyOnlyIfNeeded` + `.canJoinAllSpaces` + `.fullScreenAuxiliary` + `.stationary`** (Pitfall #1 / WIDG-01, WIDG-02). SwiftUI `Window` cannot pin above all Spaces.
 - **`NSAppleEventsUsageDescription` with specific user-trustworthy text** (Pitfall #3 / ONB-02). Generic strings make users decline; missing key = silent denial.

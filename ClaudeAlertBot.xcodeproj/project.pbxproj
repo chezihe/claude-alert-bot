@@ -31,6 +31,7 @@
 		C7419C65428643DFBE1C1607 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F0532EA5559479069D65C1F /* SettingsStore.swift */; };
 		DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 422669922C84673FA026FD1E /* HookEvent.swift */; };
 		E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */; };
+		E6AD2F8FB235BC0F741D5F1A /* FloatingWidgetPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10A1150F9BBA13057C1B014A /* FloatingWidgetPanel.swift */; };
 		E6D06143C70520743ED73969 /* SocketPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B78D85FFDFAD8C99CF5951D /* SocketPaths.swift */; };
 		E80832057B78D1BCC2CB7848 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7151E148769D039124B77B2F /* main.swift */; };
 		F36E031107E8C11211C37A2A /* SoundPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA926DA96B54584A4A0B2E2 /* SoundPlayerTests.swift */; };
@@ -57,6 +58,7 @@
 
 /* Begin PBXFileReference section */
 		05A672A85EF635E98BBCBD52 /* AppleScriptHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleScriptHelper.swift; sourceTree = "<group>"; };
+		10A1150F9BBA13057C1B014A /* FloatingWidgetPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingWidgetPanel.swift; sourceTree = "<group>"; };
 		12CE8E75E63CBC95D6D3C0F3 /* SessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStoreTests.swift; sourceTree = "<group>"; };
 		12F78A117E749843C430D7FA /* NotificationOrchestrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOrchestrator.swift; sourceTree = "<group>"; };
 		13A9A6378829C0CD87A47282 /* SoundPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundPlayer.swift; sourceTree = "<group>"; };
@@ -127,6 +129,7 @@
 			children = (
 				8A714300C48D443F40C0A625 /* AppDelegate.swift */,
 				05A672A85EF635E98BBCBD52 /* AppleScriptHelper.swift */,
+				10A1150F9BBA13057C1B014A /* FloatingWidgetPanel.swift */,
 				422669922C84673FA026FD1E /* HookEvent.swift */,
 				1D54D1C911C95F984BA6C8A1 /* HookListener.swift */,
 				C52574E53A8FD6995A80B23B /* Info.plist */,
@@ -348,6 +351,7 @@
 			files = (
 				25A5F43CD41AC83F13E587D9 /* AppDelegate.swift in Sources */,
 				05594CE07D57F8773968D7F1 /* AppleScriptHelper.swift in Sources */,
+				E6AD2F8FB235BC0F741D5F1A /* FloatingWidgetPanel.swift in Sources */,
 				DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */,
 				8ECAB8E9D4C43DADEF756A7A /* HookListener.swift in Sources */,
 				36C9FE5D269DBAA20CEADDB3 /* NotificationOrchestrator.swift in Sources */,

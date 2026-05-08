@@ -54,7 +54,7 @@ Every locked decision in `03-CONTEXT.md` maps to at least one plan task:
 | **D3-01** (`iTermSessionID.uuid(fromRaw:)`) | 03-01 | full |
 | **D3-02** (UUID-only semantic re-definition) | 03-01 (validator), 03-03 (apply at decode), 03-04 (compare in scripts) | full |
 | **D3-03** (`sessions.json` migration) | 03-03 | full |
-| **D3-04** (Phase 2 silent-failure auto-fix + regression guard) | 03-03 (apply), 03-04 (regression test in `AppleScriptHelperTests`) | full |
+| **D3-04** (Phase 2 silent-failure auto-fix + regression guard) | 03-03 (auto-fix via D3-01..03 normalization at HookListener), 03-04 Task 3 (`test_d3_04_phase2SilentFailureRegression_postNormalizationContract` regression guard — relocated from 03-03 stub per plan-check B2) | full |
 | **D3-05** (Reporter `TERM_PROGRAM`) | 03-02 | full |
 | **D3-06** (UUID single-strategy match) | 03-04 (script), 03-05 (caller) | full |
 | **D3-07** (no TTY fallback) | 03-05 (early-return on `.missing`) | full |
@@ -96,6 +96,19 @@ ROADMAP §"Phase 3" SC#1..5 (SC#6 struck through):
 | SC#3 (SET-05 button: 1st press triggers TCC; subsequent press focuses tab) | 03-04, 03-08 | `verify_3_08_01` (test-connection branch unit) + `verify_3_08_02` (manual checkpoint) |
 | SC#4 (denied → recovery banner with deep-link) | 03-07, 03-08 | `verify_3_07_03` (denied unit) + manual checkpoint reusing Phase 2 PermissionBannerView verifier |
 | SC#5 (3s timeout, background queue, 500ms debounce, no beachball) | 03-04, 03-06, 03-07 | `verify_3_04_01` (timeout in source), `verify_3_06_02` (state self-debounce), `verify_3_05_01` (Pitfall #1 grep gate) |
+
+## TDD Discipline (Phase 2 invariant — reinstated per plan-check B1)
+
+Phase 3 honors Phase 2's RED/GREEN commit-split convention. Each plan that touches Swift production code commits in two steps:
+
+1. **TDD-RED:** failing test task first → `test(03-XX): add failing X tests (TDD RED)`
+2. **TDD-GREEN:** implementation task next → `feat(03-XX): X`
+
+**Build-only carve-outs are permitted** (precedent: Phase 2 plans 02-07 Task 2 / 02-08 Task 2 / 02-09 Task 1 — wiring/topology tasks committed as `feat` directly without a paired RED). Each plan's tasks are listed in the order the executor must commit them; tests come first wherever an assertion can fail before the impl is in place.
+
+**Plans subject to TDD split:** 03-01, 03-03, 03-04, 03-05, 03-06, 03-07, 03-08 (every plan that ships Swift behavior). **Exempt:** 03-00 (test scaffold itself), 03-02 (Reporter shell + Codable optional addition — tests are static fixture extension, not RED/GREEN), 03-09 (verifier shell + manual checkpoint, no Swift production code).
+
+If an executor finds a task's test naturally arrives mid-impl (e.g., type doesn't compile until impl lands), the plan documents that exception explicitly per the Phase 2 02-07 Task 2 precedent.
 
 ## Cross-Cutting Invariants
 

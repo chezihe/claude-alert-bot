@@ -29,6 +29,9 @@ targets:
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGN_STYLE: Manual
         CODE_SIGNING_ALLOWED: YES
+      configs:
+        Debug:
+          ENABLE_TESTABILITY: YES
     dependencies:
       - target: cab-test
         embed: false
@@ -69,13 +72,36 @@ targets:
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGN_STYLE: Manual
         CODE_SIGNING_ALLOWED: YES
+  ClaudeAlertBotTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: ClaudeAlertBotTests
+        name: ClaudeAlertBotTests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        SWIFT_VERSION: "5"
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGNING_ALLOWED: YES
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/ClaudeAlertBot.app/Contents/MacOS/ClaudeAlertBot"
+    dependencies:
+      - target: ClaudeAlertBot
 schemes:
   ClaudeAlertBot:
     build:
       targets:
         ClaudeAlertBot: all
         cab-test: all
+        ClaudeAlertBotTests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - ClaudeAlertBotTests
     archive:
       config: Release

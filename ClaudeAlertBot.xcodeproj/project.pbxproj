@@ -7,15 +7,25 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		12B4AD96D68F218C0C6BCC1E /* ClaudeAlertBotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */; };
 		25A5F43CD41AC83F13E587D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A714300C48D443F40C0A625 /* AppDelegate.swift */; };
 		8ECAB8E9D4C43DADEF756A7A /* HookListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D54D1C911C95F984BA6C8A1 /* HookListener.swift */; };
+		A8F29327F7881CB4C3E7D507 /* MockNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAEF869A88355CE7D6169965 /* MockNotifier.swift */; };
 		C2373C8865C769E19E6F3B98 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85C8275D946E935468FEC149 /* main.swift */; };
 		DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 422669922C84673FA026FD1E /* HookEvent.swift */; };
+		E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */; };
 		E6D06143C70520743ED73969 /* SocketPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B78D85FFDFAD8C99CF5951D /* SocketPaths.swift */; };
 		E80832057B78D1BCC2CB7848 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7151E148769D039124B77B2F /* main.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		3BC07237C511F9B9F5C792A5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 84897E797E6747BEE564B262 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 823DB98E11E4259B1256DB07;
+			remoteInfo = ClaudeAlertBot;
+		};
 		432A4AA980FA1A622F745884 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 84897E797E6747BEE564B262 /* Project object */;
@@ -29,20 +39,35 @@
 		1D54D1C911C95F984BA6C8A1 /* HookListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookListener.swift; sourceTree = "<group>"; };
 		422669922C84673FA026FD1E /* HookEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookEvent.swift; sourceTree = "<group>"; };
 		4EFE56B7A8F24FC8FDBB7726 /* ClaudeAlertBot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeAlertBot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		62D8CC37BBF74C6D6DCAEADF /* ClaudeAlertBotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClaudeAlertBotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6B78D85FFDFAD8C99CF5951D /* SocketPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocketPaths.swift; sourceTree = "<group>"; };
 		7151E148769D039124B77B2F /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		85C8275D946E935468FEC149 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		8A714300C48D443F40C0A625 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		9A4CF07859800DE5173D901A /* cab-test */ = {isa = PBXFileReference; includeInIndex = 0; path = "cab-test"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAlertBotTests.swift; sourceTree = "<group>"; };
 		C52574E53A8FD6995A80B23B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookEventFactory.swift; sourceTree = "<group>"; };
+		EAEF869A88355CE7D6169965 /* MockNotifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockNotifier.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		26BFE5704E04E26F882FA447 /* ClaudeAlertBotTests */ = {
+			isa = PBXGroup;
+			children = (
+				B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */,
+				888C9D5A15931A09DD01E8B4 /* Fixtures */,
+			);
+			name = ClaudeAlertBotTests;
+			path = ClaudeAlertBotTests;
+			sourceTree = "<group>";
+		};
 		2FF86C80DC2097FBD1F455D3 = {
 			isa = PBXGroup;
 			children = (
 				3B63D51CE34619A76B883906 /* App */,
 				D5C7AB92EAD16F65A91511C8 /* CabTest */,
+				26BFE5704E04E26F882FA447 /* ClaudeAlertBotTests */,
 				4423C7D43C199FFDFEBE574E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -66,8 +91,18 @@
 			children = (
 				9A4CF07859800DE5173D901A /* cab-test */,
 				4EFE56B7A8F24FC8FDBB7726 /* ClaudeAlertBot.app */,
+				62D8CC37BBF74C6D6DCAEADF /* ClaudeAlertBotTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		888C9D5A15931A09DD01E8B4 /* Fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */,
+				EAEF869A88355CE7D6169965 /* MockNotifier.swift */,
+			);
+			path = Fixtures;
 			sourceTree = "<group>";
 		};
 		D5C7AB92EAD16F65A91511C8 /* CabTest */ = {
@@ -82,6 +117,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		4AECCF09EEDC2BE89E5F9C13 /* ClaudeAlertBotTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4DCF119ED0690AD4F8D19993 /* Build configuration list for PBXNativeTarget "ClaudeAlertBotTests" */;
+			buildPhases = (
+				3BCF1C45A742D746B06C5E62 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8A373EC483D5DE742C92779D /* PBXTargetDependency */,
+			);
+			name = ClaudeAlertBotTests;
+			packageProductDependencies = (
+			);
+			productName = ClaudeAlertBotTests;
+			productReference = 62D8CC37BBF74C6D6DCAEADF /* ClaudeAlertBotTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		56E080BC3FA9D36D01D8287A /* cab-test */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A7FE7BDC3EA623100F7BCFDD /* Build configuration list for PBXNativeTarget "cab-test" */;
@@ -128,6 +181,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					4AECCF09EEDC2BE89E5F9C13 = {
+						ProvisioningStyle = Manual;
+					};
 					56E080BC3FA9D36D01D8287A = {
 						ProvisioningStyle = Manual;
 					};
@@ -151,6 +207,7 @@
 			projectRoot = "";
 			targets = (
 				823DB98E11E4259B1256DB07 /* ClaudeAlertBot */,
+				4AECCF09EEDC2BE89E5F9C13 /* ClaudeAlertBotTests */,
 				56E080BC3FA9D36D01D8287A /* cab-test */,
 			);
 		};
@@ -204,6 +261,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		3BCF1C45A742D746B06C5E62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				12B4AD96D68F218C0C6BCC1E /* ClaudeAlertBotTests.swift in Sources */,
+				E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */,
+				A8F29327F7881CB4C3E7D507 /* MockNotifier.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B37F43BA76B7FF38C73C91D7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -224,9 +291,35 @@
 			target = 56E080BC3FA9D36D01D8287A /* cab-test */;
 			targetProxy = 432A4AA980FA1A622F745884 /* PBXContainerItemProxy */;
 		};
+		8A373EC483D5DE742C92779D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 823DB98E11E4259B1256DB07 /* ClaudeAlertBot */;
+			targetProxy = 3BC07237C511F9B9F5C792A5 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		37D924460EDE1F5698BCC340 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ClaudeAlertBot.app/Contents/MacOS/ClaudeAlertBot";
+			};
+			name = Release;
+		};
 		3B0DBF0C08ACC99AE3B6A262 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -310,6 +403,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_TESTABILITY = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -426,6 +520,27 @@
 			};
 			name = Release;
 		};
+		F4F986C94B8C15507A8C9F09 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ClaudeAlertBot.app/Contents/MacOS/ClaudeAlertBot";
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -434,6 +549,15 @@
 			buildConfigurations = (
 				91479FB51A50145311F534D9 /* Debug */,
 				3B0DBF0C08ACC99AE3B6A262 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4DCF119ED0690AD4F8D19993 /* Build configuration list for PBXNativeTarget "ClaudeAlertBotTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F4F986C94B8C15507A8C9F09 /* Debug */,
+				37D924460EDE1F5698BCC340 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

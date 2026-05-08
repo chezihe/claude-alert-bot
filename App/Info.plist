@@ -23,6 +23,6 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Claude Alert Bot needs to switch focus to your iTerm2 tab when a Claude Code task completes.</string>
+	<string>Claude Alert Bot이 iTerm2의 현재 탭을 확인해서 이미 보고 있는 작업의 알림을 끄고, 클릭 시 정확한 탭으로 이동하기 위해 사용합니다.</string>
 </dict>
 </plist>

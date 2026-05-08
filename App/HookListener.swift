@@ -112,8 +112,8 @@ final class HookListener {
                     thresholdSeconds: threshold,
                     soundEnabled: soundOn,
                     suppressIfFrontmost: { iTermID in
-                        guard permGranted, let iTermID else { return false }
-                        return await AppleScriptHelper.shared.frontmostMatches(itermSessionID: iTermID)
+                        guard permGranted, let normalized = iTermSessionID.uuid(fromRaw: iTermID) else { return false }
+                        return await AppleScriptHelper.shared.frontmostMatches(itermSessionID: normalized)
                     }
                 )
             }

@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-last_updated: "2026-05-08T09:19:08.764Z"
+status: executing
+last_updated: "2026-05-08T14:52:48.687Z"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 19
+  total_plans: 29
   completed_plans: 19
-  percent: 100
+  percent: 66
 ---
 
 # State: Claude Alert Bot
@@ -20,18 +20,18 @@ progress:
 
 - **What this is:** Native macOS app that turns Claude Code's `Stop` hook into a persistent floating widget that lands the user back on the exact iTerm2 tab where the work happened.
 - **Core value:** "Claude Code 사용자가 자리를 비웠을 때, 길게 걸린 작업의 완료를 놓치지 않고 정확한 그 iTerm2 세션으로 즉시 복귀할 수 있다." — alert + correct-tab jump are the inseparable core; either failing destroys the value.
-- **Current focus:** Phase 2 — alert-loop
+- **Current focus:** Phase 03 — click-to-iterm2
 
 ## Current Position
 
-Phase: 2 (alert-loop) — **COMPLETE (phase_gate: green)**
-Plan: 12 of 12 complete (Wave 0: 02-00 + 02-01 spike; Wave 1: 02-02 + 02-03; Wave 2: 02-04 + 02-05; Wave 3: 02-06 + 02-07; Wave 4: 02-08 + 02-09; Wave 5: 02-10; Wave 6: 02-11). Phase 2 closed by 02-11 sign-off — see `.planning/phases/02-alert-loop/02-VERIFICATION.md`.
+Phase: 03 (click-to-iterm2) — EXECUTING
+Plan: 1 of 10
 Next: `/gsd-progress` to report, or `/gsd-context-phase 3` to begin Phase 3 (Click-to-iTerm2). Phase 3 prerequisites in ROADMAP §"Research Flags": (a) `ITERM_SESSION_ID` reliability under tmux/screen/nix-shell/zellij/containerized shells; (b) AppleScript `unique ID` lookup latency probe under typical pane counts; (c) `errAEEventNotPermitted (-1743)` deep-link reliability across macOS 14/15/26.
 
 - **Milestone:** v1
 - **Phase:** 3
 - **Plan:** Not started
-- **Status:** Ready to plan
+- **Status:** Executing Phase 03
 - **Progress:** [██████████] 100%
 
 ## Performance Metrics

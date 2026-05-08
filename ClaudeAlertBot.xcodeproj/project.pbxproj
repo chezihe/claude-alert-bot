@@ -40,6 +40,7 @@
 		BAC90EB131673B372DBA2C88 /* SessionRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E982CB48D46A37C9DDD56AA /* SessionRegistryTests.swift */; };
 		C2E97DBA3A369EDCD3C83066 /* PermissionDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4727020E044B4D9690900BC4 /* PermissionDeepLink.swift */; };
 		C7419C65428643DFBE1C1607 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F0532EA5559479069D65C1F /* SettingsStore.swift */; };
+		C8F82E4C8E04670D6473A5D6 /* MockTerminalJumper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76DCB8BF2B9B7D78E4D3BD9B /* MockTerminalJumper.swift */; };
 		D4F0BAE2D982705E01F8E9CF /* ClaudeAlertBotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184BC5521D0393073C46E63A /* ClaudeAlertBotApp.swift */; };
 		DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 422669922C84673FA026FD1E /* HookEvent.swift */; };
 		E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */; };
@@ -97,6 +98,7 @@
 		6B78D85FFDFAD8C99CF5951D /* SocketPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocketPaths.swift; sourceTree = "<group>"; };
 		6BBA9501E7D277F63F6ECCC3 /* SessionRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRegistry.swift; sourceTree = "<group>"; };
 		7151E148769D039124B77B2F /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		76DCB8BF2B9B7D78E4D3BD9B /* MockTerminalJumper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockTerminalJumper.swift; sourceTree = "<group>"; };
 		800FA652B76F41855EDB0DEA /* SessionGCTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionGCTimer.swift; sourceTree = "<group>"; };
 		8446BA9DA3DB2F6E24A02697 /* SessionRecordTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRecordTests.swift; sourceTree = "<group>"; };
 		8A714300C48D443F40C0A625 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -206,6 +208,7 @@
 				C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */,
 				EAEF869A88355CE7D6169965 /* MockNotifier.swift */,
 				F3FAA5B1A2670AF3E46A1D52 /* MockNotifier+NotifierProtocol.swift */,
+				76DCB8BF2B9B7D78E4D3BD9B /* MockTerminalJumper.swift */,
 			);
 			path = Fixtures;
 			sourceTree = "<group>";
@@ -388,6 +391,7 @@
 				E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */,
 				967FA8420333A8A7FC015774 /* MockNotifier+NotifierProtocol.swift in Sources */,
 				A8F29327F7881CB4C3E7D507 /* MockNotifier.swift in Sources */,
+				C8F82E4C8E04670D6473A5D6 /* MockTerminalJumper.swift in Sources */,
 				F668B43833BA6E3356C2A326 /* NotificationOrchestratorTests.swift in Sources */,
 				F5E04AAFC38DE8839E8D8DC4 /* PermissionDeepLinkTests.swift in Sources */,
 				EA53805587F6CDC63C612B50 /* PopoverContentTests.swift in Sources */,

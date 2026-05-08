@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		003B98084B11309FF52AFBE3 /* SessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12CE8E75E63CBC95D6D3C0F3 /* SessionStoreTests.swift */; };
+		05594CE07D57F8773968D7F1 /* AppleScriptHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A672A85EF635E98BBCBD52 /* AppleScriptHelper.swift */; };
 		12B4AD96D68F218C0C6BCC1E /* ClaudeAlertBotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */; };
 		130828703258F88DC24A971F /* ProjectName.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10C653B05E6F6D202CE920D /* ProjectName.swift */; };
 		20E904D935A6A682964658C4 /* SessionRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBA9501E7D277F63F6ECCC3 /* SessionRegistry.swift */; };
@@ -49,6 +50,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		05A672A85EF635E98BBCBD52 /* AppleScriptHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleScriptHelper.swift; sourceTree = "<group>"; };
 		12CE8E75E63CBC95D6D3C0F3 /* SessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStoreTests.swift; sourceTree = "<group>"; };
 		1D54D1C911C95F984BA6C8A1 /* HookListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookListener.swift; sourceTree = "<group>"; };
 		2F0532EA5559479069D65C1F /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
@@ -108,6 +110,7 @@
 			isa = PBXGroup;
 			children = (
 				8A714300C48D443F40C0A625 /* AppDelegate.swift */,
+				05A672A85EF635E98BBCBD52 /* AppleScriptHelper.swift */,
 				422669922C84673FA026FD1E /* HookEvent.swift */,
 				1D54D1C911C95F984BA6C8A1 /* HookListener.swift */,
 				C52574E53A8FD6995A80B23B /* Info.plist */,
@@ -322,6 +325,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				25A5F43CD41AC83F13E587D9 /* AppDelegate.swift in Sources */,
+				05594CE07D57F8773968D7F1 /* AppleScriptHelper.swift in Sources */,
 				DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */,
 				8ECAB8E9D4C43DADEF756A7A /* HookListener.swift in Sources */,
 				C2E97DBA3A369EDCD3C83066 /* PermissionDeepLink.swift in Sources */,

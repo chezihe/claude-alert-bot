@@ -69,8 +69,17 @@ final class AppleScriptHelperTests: XCTestCase {
     func test_queueLabel_isSerial_byConvention() {
         // Indirect: source-level grep on the helper file ensures the label is correct.
         // Prevents accidental rename to a generic name.
-        let path = "App/AppleScriptHelper.swift"
-        let src = (try? String(contentsOfFile: path)) ?? ""
+        // Resolve helper path relative to this test's #filePath so the test does not
+        // depend on xcodebuild's working directory (Rule 1 fix during 02-05 GREEN).
+        let testFile = URL(fileURLWithPath: #filePath)        // .../ClaudeAlertBotTests/AppleScriptHelperTests.swift
+        let projectRoot = testFile
+            .deletingLastPathComponent()                       // .../ClaudeAlertBotTests
+            .deletingLastPathComponent()                       // .../<repo>
+        let helperURL = projectRoot
+            .appendingPathComponent("App")
+            .appendingPathComponent("AppleScriptHelper.swift")
+        let src = (try? String(contentsOf: helperURL, encoding: .utf8)) ?? ""
+        XCTAssertFalse(src.isEmpty, "Could not read App/AppleScriptHelper.swift at \(helperURL.path)")
         XCTAssertTrue(
             src.contains("com.claudealert.bot.applescript"),
             "Queue label must be com.claudealert.bot.applescript — RESEARCH Pattern 3 / Pitfall 3"

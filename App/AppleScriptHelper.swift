@@ -60,7 +60,7 @@ actor AppleScriptHelper {
                         if id of s is targetUUID then
                             tell s to select
                             tell t to select
-                            set frontmost of w to true
+                            tell w to set index to 1
                             activate
                             return "ok"
                         end if
@@ -84,7 +84,7 @@ actor AppleScriptHelper {
         tell application "iTerm2"
             if (count of windows) is 0 then return ""
             activate
-            tell current window to set frontmost to true
+            tell current window to set index to 1
             return id of current session of current tab of current window
         end tell
     end timeout

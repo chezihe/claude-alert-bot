@@ -42,6 +42,7 @@
 		C2E97DBA3A369EDCD3C83066 /* PermissionDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4727020E044B4D9690900BC4 /* PermissionDeepLink.swift */; };
 		C7419C65428643DFBE1C1607 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F0532EA5559479069D65C1F /* SettingsStore.swift */; };
 		C8F82E4C8E04670D6473A5D6 /* MockTerminalJumper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76DCB8BF2B9B7D78E4D3BD9B /* MockTerminalJumper.swift */; };
+		D3761DE8508B62CF82C7ACA3 /* iTermSessionID.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB92DF8ECD2021AD37F1AAC /* iTermSessionID.swift */; };
 		D4F0BAE2D982705E01F8E9CF /* ClaudeAlertBotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184BC5521D0393073C46E63A /* ClaudeAlertBotApp.swift */; };
 		DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 422669922C84673FA026FD1E /* HookEvent.swift */; };
 		E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */; };
@@ -115,6 +116,7 @@
 		C52574E53A8FD6995A80B23B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C884F642E992E25E5C950B7B /* AppleScriptHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleScriptHelperTests.swift; sourceTree = "<group>"; };
 		C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookEventFactory.swift; sourceTree = "<group>"; };
+		DBB92DF8ECD2021AD37F1AAC /* iTermSessionID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermSessionID.swift; sourceTree = "<group>"; };
 		DD87652FF46DACEA294E54A6 /* PopoverContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverContentView.swift; sourceTree = "<group>"; };
 		EAEF869A88355CE7D6169965 /* MockNotifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockNotifier.swift; sourceTree = "<group>"; };
 		EDF449A89D43D22903D8CDE8 /* WorkspaceFrontmostObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceFrontmostObserver.swift; sourceTree = "<group>"; };
@@ -171,6 +173,7 @@
 				422669922C84673FA026FD1E /* HookEvent.swift */,
 				1D54D1C911C95F984BA6C8A1 /* HookListener.swift */,
 				C52574E53A8FD6995A80B23B /* Info.plist */,
+				DBB92DF8ECD2021AD37F1AAC /* iTermSessionID.swift */,
 				12F78A117E749843C430D7FA /* NotificationOrchestrator.swift */,
 				061CE1E19FDE7AD807A94BD1 /* PermissionBannerView.swift */,
 				4727020E044B4D9690900BC4 /* PermissionDeepLink.swift */,
@@ -439,6 +442,7 @@
 				7FB4A5BE37BDC1B0C0CA18AD /* WidgetIconView.swift in Sources */,
 				6D860F2F4A5F204144F1FC3E /* WidgetPopoverController.swift in Sources */,
 				97C580169F97615A0622C3B4 /* WorkspaceFrontmostObserver.swift in Sources */,
+				D3761DE8508B62CF82C7ACA3 /* iTermSessionID.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

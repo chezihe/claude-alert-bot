@@ -63,12 +63,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let group = DispatchGroup()
         group.enter()
         var alive = false
+        // NWConnection states are not single-shot — `.failed`/`.cancelled`/`.waiting`
+        // can fire repeatedly (e.g. after our own probe.cancel()). Multiple group.leave()
+        // calls crash libdispatch ("Unbalanced call to dispatch_group_leave()"), which
+        // surfaced as test-runner crashes when the TEST_HOST app boots.
+        var leftOnce = false
         probe.stateUpdateHandler = { state in
+            guard !leftOnce else { return }
             switch state {
             case .ready:
                 alive = true
+                leftOnce = true
                 group.leave()
             case .failed, .cancelled, .waiting:
+                leftOnce = true
                 group.leave()
             default: break
             }

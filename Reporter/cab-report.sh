@@ -20,6 +20,7 @@ mkdir -p "$LOG_DIR" 2>/dev/null || true
 
 # Capture context BEFORE consuming stdin
 ITERM_SESSION_ID_VAL="${ITERM_SESSION_ID:-}"
+TERM_PROGRAM_VAL="${TERM_PROGRAM:-}"
 CLAUDE_PROJECT_DIR_VAL="${CLAUDE_PROJECT_DIR:-}"
 CWD_FALLBACK="$PWD"
 PPID_VAL="$PPID"
@@ -34,6 +35,7 @@ STDIN_JSON=$(cat 2>/dev/null) || STDIN_JSON=""
 JSON=$(STDIN_JSON="$STDIN_JSON" \
        EVENT="$EVENT" \
        ITERM="$ITERM_SESSION_ID_VAL" \
+       TERM_PROGRAM="$TERM_PROGRAM_VAL" \
        CLAUDE_DIR="$CLAUDE_PROJECT_DIR_VAL" \
        CWD_FALLBACK="$CWD_FALLBACK" \
        TTY_VAL="$TTY_VAL" \
@@ -60,6 +62,7 @@ envelope = {
     "transcript_path": parsed.get("transcript_path"),
     "cwd": parsed.get("cwd") or nz(env("CWD_FALLBACK")),
     "iterm_session_id": nz(env("ITERM")),
+    "term_program": nz(env("TERM_PROGRAM")),
     "tty": nz(env("TTY_VAL")),
     "ppid": int(env("PPID_VAL", "0")) or None,
     "claude_project_dir": nz(env("CLAUDE_DIR")),

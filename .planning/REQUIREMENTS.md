@@ -40,7 +40,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **WIDG-02**: 위젯이 등장할 때 현재 앱의 포커스를 빼앗지 않는다 (`.nonactivatingPanel`, `becomesKeyOnlyIfNeeded`)
 - [ ] **WIDG-03**: 위젯에 클로드 아이콘과 작업 폴더(프로젝트)명이 표시된다
 - [ ] **WIDG-04**: 위젯은 사용자가 클릭할 때까지 화면에 잔존한다 (자동 사라짐 없음)
-- [ ] **WIDG-05**: 평소(이벤트 없을 때)에는 위젯이 화면에 보이지 않는다
+- [x] **WIDG-05**: 평소(이벤트 없을 때)에는 위젯이 화면에 보이지 않는다
 - [ ] **WIDG-06**: 위젯 화면 위치 (네 모서리 중 하나 + 오프셋) 를 사용자가 설정할 수 있다
 - [ ] **WIDG-07**: 위젯 위치가 노치/멀티 디스플레이 환경에서도 안전 영역을 침범하지 않는다 (`NSScreen.safeAreaInsets`)
 
@@ -63,7 +63,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Audio (사운드)
 
 - [x] **AUD-01**: 알림 발생 시 사운드를 1회 재생한다 *(02-04 dedupe; 02-06 actual playback)*
-- [ ] **AUD-02**: 사운드 on/off 토글이 설정에 있다
+- [x] **AUD-02**: 사운드 on/off 토글이 설정에 있다
 - [ ] **AUD-03**: 배칭 윈도우 안의 동시 완료에 대해 사운드는 1번만 재생된다 (dedupe)
 
 ### Settings (사용자 설정)
@@ -173,7 +173,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | WIDG-02 | Phase 2 | Complete |
 | WIDG-03 | Phase 2 | Pending |
 | WIDG-04 | Phase 2 | Pending |
-| WIDG-05 | Phase 2 | Pending |
+| WIDG-05 | Phase 2 | Complete |
 | WIDG-06 | Phase 2 | Pending |
 | WIDG-07 | Phase 2 | Pending |
 | AGG-01 | Phase 4 | Pending |
@@ -187,7 +187,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | JUMP-04 | Phase 3 | Pending |
 | JUMP-05 | Phase 3 | Pending |
 | AUD-01 | Phase 2 | Partial (Plan 02-04 commit `35a2be1` — DedupeKey.from sound-only dedupe + playSoundOnce gating; actual AVAudioPlayer playback lands in 02-06) |
-| AUD-02 | Phase 2 | Pending |
+| AUD-02 | Phase 2 | Complete |
 | AUD-03 | Phase 4 | Pending |
 | SET-01 | Phase 2 | Pending |
 | SET-02 | Phase 2 | Pending |

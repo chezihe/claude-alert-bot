@@ -29,6 +29,7 @@
 		E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */; };
 		E6D06143C70520743ED73969 /* SocketPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B78D85FFDFAD8C99CF5951D /* SocketPaths.swift */; };
 		E80832057B78D1BCC2CB7848 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7151E148769D039124B77B2F /* main.swift */; };
+		F36E031107E8C11211C37A2A /* SoundPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA926DA96B54584A4A0B2E2 /* SoundPlayerTests.swift */; };
 		F5E04AAFC38DE8839E8D8DC4 /* PermissionDeepLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2492431EE9304DB1FF24B55 /* PermissionDeepLinkTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -77,6 +78,7 @@
 		EAEF869A88355CE7D6169965 /* MockNotifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockNotifier.swift; sourceTree = "<group>"; };
 		F38BDA29F2BDA2AC0F00354C /* ProjectNameTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectNameTests.swift; sourceTree = "<group>"; };
 		F3FAA5B1A2670AF3E46A1D52 /* MockNotifier+NotifierProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockNotifier+NotifierProtocol.swift"; sourceTree = "<group>"; };
+		FBA926DA96B54584A4A0B2E2 /* SoundPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundPlayerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -90,6 +92,7 @@
 				8446BA9DA3DB2F6E24A02697 /* SessionRecordTests.swift */,
 				8E982CB48D46A37C9DDD56AA /* SessionRegistryTests.swift */,
 				12CE8E75E63CBC95D6D3C0F3 /* SessionStoreTests.swift */,
+				FBA926DA96B54584A4A0B2E2 /* SoundPlayerTests.swift */,
 				888C9D5A15931A09DD01E8B4 /* Fixtures */,
 			);
 			name = ClaudeAlertBotTests;
@@ -317,6 +320,7 @@
 				78E4C5E92665EEC7E965DACD /* SessionRecordTests.swift in Sources */,
 				BAC90EB131673B372DBA2C88 /* SessionRegistryTests.swift in Sources */,
 				003B98084B11309FF52AFBE3 /* SessionStoreTests.swift in Sources */,
+				F36E031107E8C11211C37A2A /* SoundPlayerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

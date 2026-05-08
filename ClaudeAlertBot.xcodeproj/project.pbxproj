@@ -10,6 +10,7 @@
 		003B98084B11309FF52AFBE3 /* SessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12CE8E75E63CBC95D6D3C0F3 /* SessionStoreTests.swift */; };
 		12B4AD96D68F218C0C6BCC1E /* ClaudeAlertBotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */; };
 		130828703258F88DC24A971F /* ProjectName.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10C653B05E6F6D202CE920D /* ProjectName.swift */; };
+		20E904D935A6A682964658C4 /* SessionRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBA9501E7D277F63F6ECCC3 /* SessionRegistry.swift */; };
 		2581DA783324A83148D692E7 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D0B0A11E7A8D1588546D213 /* SessionStore.swift */; };
 		25A5F43CD41AC83F13E587D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A714300C48D443F40C0A625 /* AppDelegate.swift */; };
 		67297E2D444E24FE063D63F5 /* SessionRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50B23882ED554CD89626EEA0 /* SessionRecord.swift */; };
@@ -57,6 +58,7 @@
 		5D0B0A11E7A8D1588546D213 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		62D8CC37BBF74C6D6DCAEADF /* ClaudeAlertBotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClaudeAlertBotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6B78D85FFDFAD8C99CF5951D /* SocketPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocketPaths.swift; sourceTree = "<group>"; };
+		6BBA9501E7D277F63F6ECCC3 /* SessionRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRegistry.swift; sourceTree = "<group>"; };
 		7151E148769D039124B77B2F /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		8446BA9DA3DB2F6E24A02697 /* SessionRecordTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRecordTests.swift; sourceTree = "<group>"; };
 		85C8275D946E935468FEC149 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
@@ -110,6 +112,7 @@
 				4727020E044B4D9690900BC4 /* PermissionDeepLink.swift */,
 				B10C653B05E6F6D202CE920D /* ProjectName.swift */,
 				50B23882ED554CD89626EEA0 /* SessionRecord.swift */,
+				6BBA9501E7D277F63F6ECCC3 /* SessionRegistry.swift */,
 				5D0B0A11E7A8D1588546D213 /* SessionStore.swift */,
 				2F0532EA5559479069D65C1F /* SettingsStore.swift */,
 				6B78D85FFDFAD8C99CF5951D /* SocketPaths.swift */,
@@ -320,6 +323,7 @@
 				C2E97DBA3A369EDCD3C83066 /* PermissionDeepLink.swift in Sources */,
 				130828703258F88DC24A971F /* ProjectName.swift in Sources */,
 				67297E2D444E24FE063D63F5 /* SessionRecord.swift in Sources */,
+				20E904D935A6A682964658C4 /* SessionRegistry.swift in Sources */,
 				2581DA783324A83148D692E7 /* SessionStore.swift in Sources */,
 				C7419C65428643DFBE1C1607 /* SettingsStore.swift in Sources */,
 				E6D06143C70520743ED73969 /* SocketPaths.swift in Sources */,

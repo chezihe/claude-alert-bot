@@ -91,7 +91,9 @@ final class SessionRegistryTests: XCTestCase {
         let r = makeRegistry()
         await bind(r)
         let sid = "sid-C"
-        let t0 = Date(timeIntervalSince1970: 1_700_000_000)
+        // Use a "now"-anchored, whole-second timestamp so (a) lazy GC at ingest() does not
+        // evict the seed and (b) ISO8601 round-trip (no fractional seconds) preserves duration.
+        let t0 = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
         await r.seedInFlightForTesting(sessionID: sid, started: t0, cwd: "/x")
         let stop = HookEventFactory.stop(sessionID: sid, ts: iso(t0.addingTimeInterval(5)))
 
@@ -108,7 +110,9 @@ final class SessionRegistryTests: XCTestCase {
         let r = makeRegistry()
         await bind(r)
         let sid = "sid-D"
-        let t0 = Date(timeIntervalSince1970: 1_700_000_000)
+        // Use a "now"-anchored, whole-second timestamp so (a) lazy GC at ingest() does not
+        // evict the seed and (b) ISO8601 round-trip (no fractional seconds) preserves duration.
+        let t0 = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
         await r.seedInFlightForTesting(sessionID: sid, started: t0, cwd: "/x")
         let stop = HookEventFactory.stop(sessionID: sid, ts: iso(t0.addingTimeInterval(31)))
 

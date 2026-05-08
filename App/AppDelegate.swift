@@ -55,7 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             // 7. Construct widget + popover + notification orchestrator.
             let widget = FloatingWidgetWindowController()
-            let popover = WidgetPopoverController(widgetController: widget)
+            let popover = WidgetPopoverController(widgetController: widget, jumper: ITerm2Jumper())
             widget.hoverDelegate = popover
             let orchestrator = NotificationOrchestrator(widget: widget)
             self.widgetController = widget

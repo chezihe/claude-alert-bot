@@ -48,25 +48,12 @@ final class PopoverContentTests: XCTestCase {
             session: mkSession(id: "y", project: "P", duration: 42)))
     }
 
-    // MARK: - Phase-3-prep: unavailable session affordance
-
-    func test_isUnavailable_membershipCheck() {
-        let set: Set<String> = ["abc", "def"]
-        XCTAssertTrue(PopoverContentRules.isUnavailable(sessionID: "abc", in: set))
-        XCTAssertFalse(PopoverContentRules.isUnavailable(sessionID: "xyz", in: set))
-    }
-
-    func test_isUnavailable_emptySet_neverUnavailable() {
-        XCTAssertFalse(PopoverContentRules.isUnavailable(sessionID: "abc", in: []))
-    }
-
-    func test_unavailableLabelText_minimalEnglishCopy_locked() {
-        // Locked copy contract — UI tone is minimal English with "session" terminology.
-        // Update this assertion in lockstep with any approved copy change.
-        XCTAssertEqual(PopoverContentRules.unavailableLabelText, "Session unavailable")
-    }
-
     // MARK: - helpers
+    // Phase 3 / 03-06: removed `test_isUnavailable_membershipCheck`,
+    // `test_isUnavailable_emptySet_neverUnavailable`, and
+    // `test_unavailableLabelText_minimalEnglishCopy_locked` — the underlying
+    // PopoverContentRules.isUnavailable / unavailableLabelText symbols were
+    // Phase 2 placeholders superseded by the RowState `.missing` flow (D3-11/12).
 
     private func mkSession(id: String, project: String, duration: Int? = 31) -> CompletedSession {
         CompletedSession(

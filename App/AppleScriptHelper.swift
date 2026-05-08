@@ -37,6 +37,61 @@ actor AppleScriptHelper {
     end timeout
     """
 
+    /// jump-by-uuid script (D3-06 + D3-09). 3-second AppleScript-side timeout.
+    /// SECURITY (T-INJECTION-01): UUID is whitelist-validated by iTermSessionID.isValid(_:)
+    /// BEFORE substitution. Foundation UUID(uuidString:) rejects any character outside
+    /// [A-Fa-f0-9-] and any deviation from 8-4-4-4-12 form, which guarantees the
+    /// String(format:) substitution cannot inject AppleScript code.
+    ///
+    /// Options A/B/C/D considered (RESEARCH §Pattern 1):
+    ///   A: static source + AppleScript-internal `set target to ...` substituted before compile = SAME AS C.
+    ///   B: compile once + executeAppleEvent(:error:) parameter binding = REJECTED (macOS 14 cases sparse, AE descriptor boilerplate).
+    ///   C: per-call NSAppleScript(source: substituted) + whitelist-validate before substitution = LOCKED HERE.
+    ///   D: 2-step (UUID list → Swift match → select-by-index) = REJECTED (violates "by UUID, never by index").
+    ///
+    /// Per-call compile cost = 1-5ms (RESEARCH cited measurement) — sub-perceptual.
+    private static let jumpByUUIDTemplate: String = """
+    with timeout of 3 seconds
+        tell application "iTerm2"
+            set targetUUID to "%@"
+            repeat with w in windows
+                repeat with t in tabs of w
+                    repeat with s in sessions of t
+                        if id of s is targetUUID then
+                            tell s to select
+                            tell t to select
+                            set frontmost of w to true
+                            activate
+                            return "ok"
+                        end if
+                    end repeat
+                end repeat
+            end repeat
+            return ""
+        end tell
+    end timeout
+    """
+
+    /// focus-frontmost script (D3-17 #3 + SET-05). 3-second AppleScript-side timeout.
+    /// SECURITY: fully static source — no external input. T-INJECTION-01 trivially satisfied.
+    /// Returns:
+    ///   - empty string if iTerm2 has 0 windows (mapped to .iTermNotRunning by caller)
+    ///   - frontmost session UUID otherwise (mapped to .ok)
+    /// Activates iTerm2 and brings frontmost session to focus — used by SettingsView SET-05
+    /// "iTerm2 연결 테스트" button (D3-15) as a self-test of permission + automation.
+    private static let focusFrontmostSource: String = """
+    with timeout of 3 seconds
+        tell application "iTerm2"
+            if (count of windows) is 0 then return ""
+            activate
+            tell current window to set frontmost to true
+            return id of current session of current tab of current window
+        end tell
+    end timeout
+    """
+
+    private var compiledFocusFrontmost: NSAppleScript?
+
     private init() {}
 
     private func ensureCompiled() {
@@ -44,6 +99,13 @@ actor AppleScriptHelper {
         let s = NSAppleScript(source: Self.scriptSource)
         _ = s?.compileAndReturnError(nil)
         compiled = s
+    }
+
+    private func ensureCompiledFocusFrontmost() {
+        guard compiledFocusFrontmost == nil else { return }
+        let s = NSAppleScript(source: Self.focusFrontmostSource)
+        _ = s?.compileAndReturnError(nil)
+        compiledFocusFrontmost = s
     }
 
     /// D2-14 — returns true iff frontmost iTerm2 session id matches `target`.
@@ -71,6 +133,101 @@ actor AppleScriptHelper {
     /// Same script, target string we know won't match (so the bool result is irrelevant).
     func triggerPermissionPrompt() async {
         _ = await frontmostMatches(itermSessionID: "<no-match>")
+    }
+
+    /// D3-06 — jump to the iTerm2 session matching `uuid`.
+    /// Returns .ok on match-and-activate; .missing when the loop fell through (no UUID match).
+    /// Returns .permissionDenied / .timeout / .otherError per AppleScript classify result.
+    /// SECURITY (T-INJECTION-01): rejects any non-UUID input via iTermSessionID.isValid before substitution.
+    func runJumpByUUID(_ uuid: String) async -> JumpResult {
+        guard iTermSessionID.isValid(uuid) else {
+            log.error("runJumpByUUID rejected non-UUID input — possible injection attempt")
+            return .otherError(0)
+        }
+        let source = String(format: Self.jumpByUUIDTemplate, uuid)
+        let result: JumpResult = await withCheckedContinuation { (cont: CheckedContinuation<JumpResult, Never>) in
+            queue.async {
+                guard let script = NSAppleScript(source: source) else {
+                    cont.resume(returning: .otherError(0)); return
+                }
+                var compileErr: NSDictionary?
+                guard script.compileAndReturnError(&compileErr) else {
+                    let r = Self.classify(error: compileErr, result: "")
+                    cont.resume(returning: Self.scriptResultToJump(r, emptyMeans: .missing))
+                    return
+                }
+                var runErr: NSDictionary?
+                let value = script.executeAndReturnError(&runErr)
+                let s = value.stringValue ?? ""
+                let r = Self.classify(error: runErr, result: s)
+                cont.resume(returning: Self.scriptResultToJump(r, emptyMeans: .missing))
+            }
+        }
+        // State mirror — same contract as frontmostMatches (D2-35/D2-36 inheritance).
+        switch result {
+        case .ok:               await markGranted()
+        case .permissionDenied: await markDenied()
+        default: break
+        }
+        return result
+    }
+
+    /// D3-16 — SET-05 "iTerm2 연결 테스트" button dispatch.
+    /// Permission-state branching:
+    ///   .denied   → return .permissionDenied immediately (caller deep-links to Privacy & Security).
+    ///   .unknown  → trigger TCC prompt via triggerPermissionPrompt() then return .permissionDenied
+    ///               (post-prompt success will reflect on next press; this press surfaces the dialog).
+    ///   .granted  → run focus-frontmost. Empty result → .iTermNotRunning. UUID returned → .ok.
+    func testConnection() async -> JumpResult {
+        switch lastKnownPermission {
+        case .denied:
+            log.notice("testConnection: lastKnownPermission == .denied — returning early")
+            return .permissionDenied
+        case .unknown:
+            log.notice("testConnection: lastKnownPermission == .unknown — triggering TCC prompt")
+            await triggerPermissionPrompt()
+            // After the prompt, lastKnownPermission may have flipped to .granted or .denied
+            // depending on the user's choice. Return .permissionDenied here regardless;
+            // the user re-presses to actually exercise focus-frontmost.
+            return .permissionDenied
+        case .granted:
+            return await runFocusFrontmost()
+        }
+    }
+
+    private func runFocusFrontmost() async -> JumpResult {
+        ensureCompiledFocusFrontmost()
+        guard let script = compiledFocusFrontmost else { return .otherError(0) }
+        let result: JumpResult = await withCheckedContinuation { (cont: CheckedContinuation<JumpResult, Never>) in
+            queue.async {
+                var errInfo: NSDictionary?
+                let value = script.executeAndReturnError(&errInfo)
+                let s = value.stringValue ?? ""
+                let r = Self.classify(error: errInfo, result: s)
+                cont.resume(returning: Self.scriptResultToJump(r, emptyMeans: .iTermNotRunning))
+            }
+        }
+        switch result {
+        case .ok:               await markGranted()
+        case .permissionDenied: await markDenied()
+        default: break
+        }
+        return result
+    }
+
+    /// Maps the actor's internal ScriptResult into the public JumpResult contract.
+    /// `emptyMeans` = which JumpResult to return when the AppleScript succeeded with empty string.
+    ///   For runJumpByUUID: .missing (loop fell through, UUID not found).
+    ///   For runFocusFrontmost (testConnection): .iTermNotRunning (no windows).
+    private static func scriptResultToJump(_ result: ScriptResult, emptyMeans: JumpResult) -> JumpResult {
+        switch result {
+        case .success(let s):
+            if s == "ok" { return .ok }
+            return s.isEmpty ? emptyMeans : .ok   // non-empty non-"ok" treated as success (focus-frontmost returns UUID string)
+        case .denied:    return .permissionDenied
+        case .timeout:   return .timeout
+        case .otherError(let c): return .otherError(c)
+        }
     }
 
     // MARK: - private
@@ -113,11 +270,17 @@ actor AppleScriptHelper {
     #if DEBUG
     /// Test seams. Production callers must not use these.
     var rawSource: String { Self.scriptSource }
+    static var jumpRawTemplate: String { jumpByUUIDTemplate }
+    static var focusFrontmostRawSource: String { focusFrontmostSource }
     var compiledForTesting: NSAppleScript? {
         ensureCompiled()
         return compiled
     }
     func markGrantedForTesting() async { await markGranted() }
     func markDeniedForTesting() async { await markDenied() }
+    func markUnknownForTesting() async {
+        lastKnownPermission = .unknown
+        await MainActor.run { SettingsStore.shared.applescriptPermission = .unknown }
+    }
     #endif
 }

@@ -24,15 +24,15 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Session (세션 추적)
 
-- [ ] **SESS-01**: Swift `actor` 기반 SessionRegistry가 in-flight 세션과 완료-미클릭 큐를 단일 진실의 원천으로 보관한다
-- [ ] **SESS-02**: 시작(UserPromptSubmit)과 종료(Stop) 이벤트를 `session_id`로 상관시켜 경과 시간을 계산한다
-- [ ] **SESS-03**: 세션 상태를 `sessions.json`에 원자적으로 영속화하여 App 재시작 후에도 복원된다
-- [ ] **SESS-04**: 6시간 이상 지난 in-flight 세션은 GC하여 메모리 누수를 방지한다
+- [x] **SESS-01**: Swift `actor` 기반 SessionRegistry가 in-flight 세션과 완료-미클릭 큐를 단일 진실의 원천으로 보관한다 *(02-04)*
+- [x] **SESS-02**: 시작(UserPromptSubmit)과 종료(Stop) 이벤트를 `session_id`로 상관시켜 경과 시간을 계산한다 *(02-04)*
+- [x] **SESS-03**: 세션 상태를 `sessions.json`에 원자적으로 영속화하여 App 재시작 후에도 복원된다 *(02-04)*
+- [x] **SESS-04**: 6시간 이상 지난 in-flight 세션은 GC하여 메모리 누수를 방지한다 *(02-04)*
 
 ### Threshold (시간 임계값 필터)
 
-- [ ] **THR-01**: 사용자가 설정한 임계값 (기본 30초) 이상 걸린 작업만 알림을 발생시킨다
-- [ ] **THR-02**: 시작 이벤트가 누락되어 경과 시간을 계산할 수 없는 경우의 fallback 정책을 정의한다 (옵션: 항상 알림 / 무시 / 추정 경과)
+- [x] **THR-01**: 사용자가 설정한 임계값 (기본 30초) 이상 걸린 작업만 알림을 발생시킨다 *(02-04)*
+- [x] **THR-02**: 시작 이벤트가 누락되어 경과 시간을 계산할 수 없는 경우의 fallback 정책을 정의한다 (옵션: 항상 알림 / 무시 / 추정 경과) *(02-04)*
 
 ### Widget (플로팅 위젯)
 
@@ -62,7 +62,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Audio (사운드)
 
-- [ ] **AUD-01**: 알림 발생 시 사운드를 1회 재생한다
+- [x] **AUD-01**: 알림 발생 시 사운드를 1회 재생한다 *(02-04 dedupe; 02-06 actual playback)*
 - [ ] **AUD-02**: 사운드 on/off 토글이 설정에 있다
 - [ ] **AUD-03**: 배칭 윈도우 안의 동시 완료에 대해 사운드는 1번만 재생된다 (dedupe)
 
@@ -163,12 +163,12 @@ Explicitly excluded. Documented to prevent scope creep.
 | IPC-01 | Phase 1 | Satisfied (Plan 01-03 commit `04d1004` — NWListener.start with NWEndpoint.unix; ingress decode verified e2e via cab-test and Reporter) |
 | IPC-02 | Phase 1 | Satisfied (Plan 01-03 commit `04d1004` — SocketPaths.socketPath = ~/Library/Application Support/ClaudeAlertBot/sock; sun_path validator) |
 | IPC-03 | Phase 1 | Satisfied (Plan 01-03 commit `04d1004` — D-09 bind exclusivity → NSApp.terminate(nil) on .failed; Pattern 6 stale-socket reclaim) |
-| SESS-01 | Phase 2 | Pending |
-| SESS-02 | Phase 2 | Pending |
-| SESS-03 | Phase 2 | Pending |
-| SESS-04 | Phase 2 | Pending |
-| THR-01 | Phase 2 | Pending |
-| THR-02 | Phase 2 | Pending |
+| SESS-01 | Phase 2 | Satisfied (Plan 02-04 commit `35a2be1` — actor SessionRegistry single-source-of-truth; 13 unit tests) |
+| SESS-02 | Phase 2 | Satisfied (Plan 02-04 commit `35a2be1` — handleStart/handleStop correlation via session_id; durationSec computed) |
+| SESS-03 | Phase 2 | Satisfied (Plan 02-04 commit `74c0bf7` — SessionStore actor `Data.write(.atomic)` + restore() + corrupt-rename; 5 unit tests) |
+| SESS-04 | Phase 2 | Satisfied (Plan 02-04 commit `35a2be1` — runGC(now:) 6h sweep; lazy trigger at top of ingest()) |
+| THR-01 | Phase 2 | Satisfied (Plan 02-04 commit `35a2be1` — handleStop threshold guard via SettingsStore.thresholdSeconds parameter; below-threshold drops silently) |
+| THR-02 | Phase 2 | Satisfied (Plan 02-04 commit `35a2be1` — orphan-Stop fallback emits with durationSec=nil; threshold bypassed; never silently drops) |
 | WIDG-01 | Phase 2 | Pending |
 | WIDG-02 | Phase 2 | Complete |
 | WIDG-03 | Phase 2 | Pending |
@@ -186,7 +186,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | JUMP-03 | Phase 3 | Pending |
 | JUMP-04 | Phase 3 | Pending |
 | JUMP-05 | Phase 3 | Pending |
-| AUD-01 | Phase 2 | Pending |
+| AUD-01 | Phase 2 | Partial (Plan 02-04 commit `35a2be1` — DedupeKey.from sound-only dedupe + playSoundOnce gating; actual AVAudioPlayer playback lands in 02-06) |
 | AUD-02 | Phase 2 | Pending |
 | AUD-03 | Phase 4 | Pending |
 | SET-01 | Phase 2 | Pending |

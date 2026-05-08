@@ -64,7 +64,7 @@ Plans:
   4. Settings (threshold seconds, sound on/off, widget corner + offset) change behavior immediately, persist across app restart, and the "Test notification" button surfaces the widget and plays the sound on demand.
   5. Killing and restarting the app while a completed-but-unclicked alert is pending re-renders that alert from `sessions.json`; an in-flight session older than 6 hours does not.
   6. When a Stop event has no matching UserPromptSubmit (start lost), the configured fallback policy (default: alert with "?" duration) is applied — never silently dropped.
-**Plans:** 4/12 plans executed
+**Plans:** 5/12 plans executed
 Plans:
 **Wave 0** *(parallel — pre-implementation)*
 - [x] 02-00-PLAN.md — Test scaffold: XCTest target + verify-phase-2.sh skeleton + CabTest argv extension
@@ -75,7 +75,7 @@ Plans:
 - [x] 02-03-PLAN.md — Domain models: SessionRecord (Codable), SettingsStore (@AppStorage), ProjectName, SocketPaths.sessionsJSONPath
 
 **Wave 2** *(parallel)*
-- [ ] 02-04-PLAN.md — SessionRegistry actor + SessionStore atomic persistence (SESS-01..04, THR-01/02, AUD-01)
+- [x] 02-04-PLAN.md — SessionRegistry actor + SessionStore atomic persistence (SESS-01..04, THR-01/02, AUD-01)
 - [ ] 02-05-PLAN.md — AppleScriptHelper actor (compile-once, 1s timeout, error classification, state mirror)
 
 **Wave 3** *(parallel)*

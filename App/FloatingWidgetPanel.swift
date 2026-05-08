@@ -19,6 +19,11 @@ final class FloatingWidgetPanel: NSPanel {
         self.isOpaque = false
         self.backgroundColor = .clear
         self.acceptsMouseMovedEvents = true      // for NSTrackingArea hover
+        // Phase 3 03-09 fix — opt out of macOS Window Restoration. Default true would
+        // let the system silently re-show the panel on relaunch even when the queue is
+        // empty (no showWidget call from our code). Visibility is controlled exclusively
+        // by NotificationOrchestrator.refreshQueueState; restoration would race that.
+        self.isRestorable = false
     }
 
     // WIDG-02 belt-and-suspenders — `.nonactivatingPanel` already prevents key activation,

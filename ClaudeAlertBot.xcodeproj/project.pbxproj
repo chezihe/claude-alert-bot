@@ -22,6 +22,7 @@
 		7569503AF85CCD1ED620F61A /* PositioningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F846DC70533456E49CAC49C5 /* PositioningTests.swift */; };
 		77EE33694EF9AC81705A3746 /* ProjectNameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F38BDA29F2BDA2AC0F00354C /* ProjectNameTests.swift */; };
 		78E4C5E92665EEC7E965DACD /* SessionRecordTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8446BA9DA3DB2F6E24A02697 /* SessionRecordTests.swift */; };
+		7CDB1B27F00604DEBE01739E /* SessionGCTimerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE75F8C6E2B4371B287E4B6E /* SessionGCTimerTests.swift */; };
 		7FB4A5BE37BDC1B0C0CA18AD /* WidgetIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10B9E598D15FE4F984232A /* WidgetIconView.swift */; };
 		81C9844218324610D06FE9CF /* PopoverRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BCACF080D2BE209AC3408BB /* PopoverRowView.swift */; };
 		8E1ECB3C7626B361AF1EFBA5 /* WakeObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 650DBF68BEBAABAE7F7A198D /* WakeObserver.swift */; };
@@ -96,6 +97,7 @@
 		AA10B9E598D15FE4F984232A /* WidgetIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetIconView.swift; sourceTree = "<group>"; };
 		B10C653B05E6F6D202CE920D /* ProjectName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectName.swift; sourceTree = "<group>"; };
 		B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAlertBotTests.swift; sourceTree = "<group>"; };
+		BE75F8C6E2B4371B287E4B6E /* SessionGCTimerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionGCTimerTests.swift; sourceTree = "<group>"; };
 		C52574E53A8FD6995A80B23B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C884F642E992E25E5C950B7B /* AppleScriptHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleScriptHelperTests.swift; sourceTree = "<group>"; };
 		C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookEventFactory.swift; sourceTree = "<group>"; };
@@ -121,6 +123,7 @@
 				1CA2CABBA42E523EBB41F95E /* PopoverContentTests.swift */,
 				F846DC70533456E49CAC49C5 /* PositioningTests.swift */,
 				F38BDA29F2BDA2AC0F00354C /* ProjectNameTests.swift */,
+				BE75F8C6E2B4371B287E4B6E /* SessionGCTimerTests.swift */,
 				8446BA9DA3DB2F6E24A02697 /* SessionRecordTests.swift */,
 				8E982CB48D46A37C9DDD56AA /* SessionRegistryTests.swift */,
 				12CE8E75E63CBC95D6D3C0F3 /* SessionStoreTests.swift */,
@@ -363,6 +366,7 @@
 				EA53805587F6CDC63C612B50 /* PopoverContentTests.swift in Sources */,
 				7569503AF85CCD1ED620F61A /* PositioningTests.swift in Sources */,
 				77EE33694EF9AC81705A3746 /* ProjectNameTests.swift in Sources */,
+				7CDB1B27F00604DEBE01739E /* SessionGCTimerTests.swift in Sources */,
 				78E4C5E92665EEC7E965DACD /* SessionRecordTests.swift in Sources */,
 				BAC90EB131673B372DBA2C88 /* SessionRegistryTests.swift in Sources */,
 				003B98084B11309FF52AFBE3 /* SessionStoreTests.swift in Sources */,

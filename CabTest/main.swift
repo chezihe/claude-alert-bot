@@ -5,10 +5,19 @@
 import Foundation
 import Network
 
+/// Phase 2 — accept `cab-test --event=stop` or `cab-test --event=user_prompt_submit`.
+/// Defaults to "stop" preserving Phase 1 behavior.
+private func parseEventArg() -> String? {
+    for arg in CommandLine.arguments.dropFirst() {
+        if arg.hasPrefix("--event=") { return String(arg.dropFirst("--event=".count)) }
+    }
+    return nil
+}
+
 let socketPath = "\(NSHomeDirectory())/Library/Application Support/ClaudeAlertBot/sock"
 let payload: [String: Any] = [
     "schema_version": 1,
-    "event": "stop",
+    "event": parseEventArg() ?? "stop",
     "session_id": "cab-test-\(UUID().uuidString)",
     "transcript_path": NSNull(),
     "cwd": FileManager.default.currentDirectoryPath,

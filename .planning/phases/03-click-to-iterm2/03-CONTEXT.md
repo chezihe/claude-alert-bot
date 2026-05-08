@@ -71,11 +71,12 @@ Out of scope (다른 Phase 또는 v2):
   1. **cheap-query** (Phase 2부터 존재, 1s timeout) — D2-14/D2-15용. `id of current session of current tab of current window` 반환.
   2. **jump-by-uuid** (신설, 3s timeout) — D3-06 메인 점프 경로. UUID 매칭 + select + activate.
   3. **focus-frontmost** (신설, 3s timeout) — SET-05 전용. `tell application "iTerm2" to activate` + frontmost session select. iTerm2 미실행 시 빈 응답 → "iTerm2가 실행 중이 아닙니다" 분기.
-- **D3-18:** `SettingsStore`에 `lastConnectionTestAt: Date?` `@AppStorage` 추가. focus-frontmost 성공 시 timestamp 갱신. SettingsView에서 버튼 아래에 5초간 `"✓ 연결됨 (HH:mm)"` 인라인 표시 (toast/window 안 만듦, SwiftUI `@State` + `.task { try? await Task.sleep(...) }` 패턴) + `lastConnectionTestAt` 영속이라 Settings 재오픈 시 마지막 테스트 시각 보임.
-- **D3-19:** 실패 분류 한국어 라벨 (T-COPY-DRIFT-01 락):
-  - `iTermNotRunningLabel = "iTerm2가 실행 중이 아닙니다"` (granted + frontmost 빈 응답)
-  - `connectionDeniedLabel = "권한이 거부되어 있습니다 — 시스템 설정 열기"` (denied 라벨, 자동 딥링크와 동시 표시)
-  - `connectionTestSuccessFmt = "✓ 연결됨 (%@)"` (HH:mm 포맷)
+- **D3-18:** `SettingsStore`에 `lastConnectionTestAt: Date?` `@AppStorage` 추가. focus-frontmost 성공 시 timestamp 갱신. SettingsView에서 버튼 아래에 5초간 status 라벨 인라인 표시 (toast/window 안 만듦, SwiftUI `@State` + `.task { try? await Task.sleep(...) }` 패턴) + `lastConnectionTestAt` 영속이라 Settings 재오픈 시 마지막 테스트 시각 보임. **Status 카피는 minimal English / macOS-system tone** (memory: minimal-ui-copy 룰) — 데코 ✓ 체크마크 / 이모지 사용 안 함.
+- **D3-19:** **Status 라벨 = minimal English** (T-COPY-DRIFT-01 락 패턴은 유지하되 한국어→영어 전환):
+  - `connectionTestSuccessFmt = "Connected at %@"` (HH:mm 포맷; 데코 prefix 없음)
+  - `iTermNotRunningLabel = "iTerm2 is not running"` (granted + frontmost 빈 응답 분기)
+  - `connectionDeniedLabel = "Automation permission denied"` (denied 분기; 자동 딥링크와 동시 표시 — 별도 CTA 텍스트 없이 라벨만, 클릭 액션은 PermissionBannerView가 이미 owning)
+  - **버튼 라벨 D3-15는 그대로** (`"iTerm2 연결 테스트"` Korean 유지) — Settings form 안 다른 Phase 2 버튼들("테스트 알림 보내기" 등)과 톤 일관. memory 룰의 "match existing tone" 조항 적용.
 - **D3-20:** 회귀 가드 — `SettingsViewTests`에 SET-05 카피 verbatim 검증 + 버튼 누름 → `AppleScriptHelper.testConnection` 호출 트레이스 (테스트 시드). `AppleScriptHelperTests`에 `testConnection` 분기 단위 테스트 (unknown/denied/granted 모킹).
 
 ### Claude's Discretion
@@ -179,6 +180,7 @@ Out of scope (다른 Phase 또는 v2):
 - **사용자 결정 3:** "애니메이션 효과라던가 그런거로 넣을게" → "세션 없음" UX는 도리도리(±12° 0~0.3s) + collapse/fade(0.3~0.7s) 애니메이션 단일 처리. 텍스트 라벨 / 사운드 / 시스템 알림 모두 없음.
 - **사용자 시나리오:** "켜져있는 iterm의 작업 완료를 알고싶은거" — 핵심 가치를 살아있는 iTerm2 탭 한정으로 정의. UUID 단일 매칭 충분 근거.
 - **카운터팩트(귀여움 표현):** 사용자 본인이 "귀엽게 표현할 방법" 일찍 고민 → 결국 텍스트 대신 애니메이션 자체로 캐릭터성 살림. quick-260508-001(아이콘 통통 튀기) 톤과 일관.
+- **UI 카피 톤 (memory 룰):** 위젯/팝오버/status 라벨은 minimal English + macOS-system tone, "session" 용어 (tab/terminal 대신). 이모지·체크마크·컬러 dot 등 데코 요소 지양. 권한 banner / 온보딩 같은 기존 한국어 영역은 톤 일관성으로 한국어 유지. D3-19 status 라벨이 이 룰의 1차 적용 대상.
 
 </specifics>
 

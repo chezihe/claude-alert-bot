@@ -25,6 +25,7 @@
 		7CDB1B27F00604DEBE01739E /* SessionGCTimerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE75F8C6E2B4371B287E4B6E /* SessionGCTimerTests.swift */; };
 		7FB4A5BE37BDC1B0C0CA18AD /* WidgetIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10B9E598D15FE4F984232A /* WidgetIconView.swift */; };
 		81C9844218324610D06FE9CF /* PopoverRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BCACF080D2BE209AC3408BB /* PopoverRowView.swift */; };
+		852BC49996E1BFF94F8AF34D /* SettingsViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 524A1F92225F3605DDFE4B41 /* SettingsViewTests.swift */; };
 		8E1ECB3C7626B361AF1EFBA5 /* WakeObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 650DBF68BEBAABAE7F7A198D /* WakeObserver.swift */; };
 		8ECAB8E9D4C43DADEF756A7A /* HookListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D54D1C911C95F984BA6C8A1 /* HookListener.swift */; };
 		967FA8420333A8A7FC015774 /* MockNotifier+NotifierProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3FAA5B1A2670AF3E46A1D52 /* MockNotifier+NotifierProtocol.swift */; };
@@ -82,6 +83,7 @@
 		4BCACF080D2BE209AC3408BB /* PopoverRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverRowView.swift; sourceTree = "<group>"; };
 		4EFE56B7A8F24FC8FDBB7726 /* ClaudeAlertBot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeAlertBot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		50B23882ED554CD89626EEA0 /* SessionRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRecord.swift; sourceTree = "<group>"; };
+		524A1F92225F3605DDFE4B41 /* SettingsViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewTests.swift; sourceTree = "<group>"; };
 		5D0B0A11E7A8D1588546D213 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		62D8CC37BBF74C6D6DCAEADF /* ClaudeAlertBotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClaudeAlertBotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		650DBF68BEBAABAE7F7A198D /* WakeObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeObserver.swift; sourceTree = "<group>"; };
@@ -129,6 +131,7 @@
 				8446BA9DA3DB2F6E24A02697 /* SessionRecordTests.swift */,
 				8E982CB48D46A37C9DDD56AA /* SessionRegistryTests.swift */,
 				12CE8E75E63CBC95D6D3C0F3 /* SessionStoreTests.swift */,
+				524A1F92225F3605DDFE4B41 /* SettingsViewTests.swift */,
 				FBA926DA96B54584A4A0B2E2 /* SoundPlayerTests.swift */,
 				888C9D5A15931A09DD01E8B4 /* Fixtures */,
 			);
@@ -373,6 +376,7 @@
 				78E4C5E92665EEC7E965DACD /* SessionRecordTests.swift in Sources */,
 				BAC90EB131673B372DBA2C88 /* SessionRegistryTests.swift in Sources */,
 				003B98084B11309FF52AFBE3 /* SessionStoreTests.swift in Sources */,
+				852BC49996E1BFF94F8AF34D /* SettingsViewTests.swift in Sources */,
 				F36E031107E8C11211C37A2A /* SoundPlayerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

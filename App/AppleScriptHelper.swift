@@ -270,11 +270,17 @@ actor AppleScriptHelper {
     #if DEBUG
     /// Test seams. Production callers must not use these.
     var rawSource: String { Self.scriptSource }
+    static var jumpRawTemplate: String { jumpByUUIDTemplate }
+    static var focusFrontmostRawSource: String { focusFrontmostSource }
     var compiledForTesting: NSAppleScript? {
         ensureCompiled()
         return compiled
     }
     func markGrantedForTesting() async { await markGranted() }
     func markDeniedForTesting() async { await markDenied() }
+    func markUnknownForTesting() async {
+        lastKnownPermission = .unknown
+        await MainActor.run { SettingsStore.shared.applescriptPermission = .unknown }
+    }
     #endif
 }

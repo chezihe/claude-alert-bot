@@ -306,3 +306,19 @@ Pending blockers fix, the plan structure itself is sound: Wave DAG is correct, c
 *Phase 3 plan-check artifact*
 *Reviewer: gsd-plan-checker (Claude Opus 4.7, 1M context)*
 *Cap: 1 of 3 revision iterations*
+
+---
+
+## Resolution (commit e3dc42f, 2026-05-08)
+
+| ID | Disposition |
+|----|-------------|
+| **B1** TDD discipline absent | **resolved** — `03-PLAN-INDEX.md` adds "TDD Discipline" section before Cross-Cutting Invariants. Subject plans 03-01/03/04/05/06/07/08; exempt 03-00/02/09. Build-only carve-outs permitted per Phase 2 precedent. |
+| **B2** D3-04 regression test stub | **resolved** — Optional-bonus stub removed from 03-03 Task 3; concrete `test_d3_04_phase2SilentFailureRegression_postNormalizationContract` added to 03-04 Task 3 (3-part contract assertion: HookListener strip + AppleScript `id of session` UUID-only + idempotency). PLAN-INDEX D3-04 row updated. |
+| **B3** verify_3_09_02 count gate off-by-one | **resolved** — count-based gate replaced with allow-list of {2-08-01 D3-13, 2-11-02 V-7}. Row name, verify-block, threat register, success criteria all updated. |
+| **W1** D3-01 "한 곳" two write sites | **accept** — idempotency property of `iTermSessionID.uuid(fromRaw:)` justifies the safety net at HookListener decode + SessionRegistry write site + SessionStore.load migration. CONTEXT verbatim "한 곳" treated as guidance, not strict invariant. |
+| **W2** RESEARCH Q5 latency probe | **resolved** — 5-shot probe added to 03-09 SC#5 manual checkpoint (median <300ms, max <1s, fail any >2s). Uses SET-05 button as live trigger or os_signpost + Instruments. |
+| **W3** PopoverRowStateTests source greps | **accept** — D2-29 zero-deps invariant prevents adding ViewInspector/SnapshotTesting; source greps are the documented v1 stopgap. Phase 4+ may revisit. |
+| **W4** 03-06 Task 2 dead-test enumeration | **defer to executor** — planner cannot enumerate without reading the live `PopoverContentTests.swift` file at execution time. Executor identifies obsolete tests during 03-06 RED-task setup and removes in the same RED commit. |
+
+**Final status:** **PASS** — all blockers resolved + all warnings dispositioned. Phase 3 plan set is execution-ready.

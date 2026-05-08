@@ -1,0 +1,296 @@
+// SessionRegistryTests.swift — Phase 2 Wave 2 (02-04 Task 2).
+// 13 tests (A–M) covering ingest dispatch, threshold, dedupe, GC,
+// THR-02 fallback, D2-13 auto-clear, injectTest, restore.
+import XCTest
+@testable import ClaudeAlertBot
+
+@MainActor
+final class SessionRegistryTests: XCTestCase {
+    private var tempURL: URL!
+    private var notifier: MockNotifier!
+
+    override func setUp() async throws {
+        try await super.setUp()
+        tempURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("cab-reg-\(UUID().uuidString).json")
+        notifier = MockNotifier()
+    }
+
+    override func tearDown() async throws {
+        let dir = tempURL.deletingLastPathComponent()
+        let prefix = tempURL.lastPathComponent
+        if let entries = try? FileManager.default.contentsOfDirectory(atPath: dir.path) {
+            for name in entries where name.hasPrefix(prefix) {
+                try? FileManager.default.removeItem(at: dir.appendingPathComponent(name))
+            }
+        }
+        notifier = nil
+        tempURL = nil
+        try await super.tearDown()
+    }
+
+    // MARK: helpers
+
+    private func makeRegistry() -> SessionRegistry {
+        let store = SessionStore(url: tempURL)
+        var clock = Clock()
+        clock.sleepNanoseconds = { _ in /* no-op for tests */ }
+        let registry = SessionRegistry(persistence: store, clock: clock)
+        return registry
+    }
+
+    private func bind(_ registry: SessionRegistry) async {
+        await registry.bind(notifier: notifier)
+    }
+
+    private func iso(_ d: Date) -> String { ISO8601DateFormatter().string(from: d) }
+
+    private func suppressNo(_ id: String?) async -> Bool { false }
+    private func suppressYes(_ id: String?) async -> Bool { true }
+
+    // MARK: tests
+
+    /// Test A — user_prompt_submit registers an InFlightStart.
+    func test_ingest_userPromptSubmit_registersInFlight() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-A"
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let evt = HookEventFactory.userPromptSubmit(sessionID: sid, ts: iso(start))
+        await r.ingest(evt, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertNotNil(snap.inFlight[sid])
+        XCTAssertEqual(snap.inFlight[sid]?.startedAt, start)
+    }
+
+    /// Test B — D2-13: a fresh user_prompt_submit silently clears any pending Stop alert
+    ///         for the same session_id.
+    func test_ingest_userPromptSubmit_clearsPendingStop_D2_13() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-B"
+        let pending = CompletedSession(sessionID: sid, projectName: "p",
+                                       stoppedAt: Date(), durationSec: 99,
+                                       itermSessionID: nil, tty: nil, cwd: nil)
+        await r.seedCompletedForTesting(pending)
+
+        let evt = HookEventFactory.userPromptSubmit(sessionID: sid, ts: iso(Date()))
+        await r.ingest(evt, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertFalse(snap.completed.contains(where: { $0.sessionID == sid }),
+                       "D2-13 must remove pending Stop alerts for the same session_id.")
+        XCTAssertNotNil(snap.inFlight[sid], "user_prompt_submit also registers in-flight start.")
+    }
+
+    /// Test C — Stop arriving below threshold drops the alert silently.
+    func test_ingest_stop_belowThreshold_dropsAlert() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-C"
+        let t0 = Date(timeIntervalSince1970: 1_700_000_000)
+        await r.seedInFlightForTesting(sessionID: sid, started: t0, cwd: "/x")
+        let stop = HookEventFactory.stop(sessionID: sid, ts: iso(t0.addingTimeInterval(5)))
+
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.count, 0)
+        XCTAssertEqual(notifier.presentCalls.count, 0)
+    }
+
+    /// Test D — Stop above threshold emits an alert with the computed duration.
+    func test_ingest_stop_aboveThreshold_emitsAlert() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-D"
+        let t0 = Date(timeIntervalSince1970: 1_700_000_000)
+        await r.seedInFlightForTesting(sessionID: sid, started: t0, cwd: "/x")
+        let stop = HookEventFactory.stop(sessionID: sid, ts: iso(t0.addingTimeInterval(31)))
+
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.count, 1)
+        XCTAssertEqual(snap.completed.first?.durationSec, 31)
+        XCTAssertEqual(notifier.presentCalls.count, 1)
+        XCTAssertEqual(notifier.presentCalls.first?.session, sid)
+    }
+
+    /// Test E — THR-02: orphan Stop emits with durationSec=nil regardless of threshold.
+    func test_THR_02_orphanStop_emitsWithNilDuration() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-E"
+        let stop = HookEventFactory.stop(sessionID: sid, ts: iso(Date()))
+
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.count, 1)
+        XCTAssertNil(snap.completed.first?.durationSec)
+        XCTAssertEqual(notifier.presentCalls.count, 1)
+    }
+
+    /// Test F — AUD-01 dedupe: same (sid, ts/2s bucket) twice → second present.playSound=false.
+    func test_AUD_01_dedupe_sameKey_secondCallNoSound() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-F"
+        let stoppedAt = Date(timeIntervalSince1970: 1_700_000_000)
+        let stop1 = HookEventFactory.stop(sessionID: sid, ts: iso(stoppedAt))
+        let stop2 = HookEventFactory.stop(sessionID: sid, ts: iso(stoppedAt.addingTimeInterval(0.5)))
+
+        await r.ingest(stop1, thresholdSeconds: 0, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+        await r.ingest(stop2, thresholdSeconds: 0, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        XCTAssertEqual(notifier.presentCalls.count, 2)
+        XCTAssertEqual(notifier.presentCalls[0].playSound, true)
+        XCTAssertEqual(notifier.presentCalls[1].playSound, false)
+    }
+
+    /// Test G — D2-14: suppressIfFrontmost closure returning true silently drops the alert.
+    func test_suppressIfFrontmost_dropsAlertSilently_D2_14() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-G"
+        let stop = HookEventFactory.stop(sessionID: sid, iTermSessionID: "w0t0p1:X",
+                                         ts: iso(Date()))
+
+        await r.ingest(stop, thresholdSeconds: 0, soundEnabled: true,
+                       suppressIfFrontmost: suppressYes)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.count, 0)
+        XCTAssertEqual(notifier.presentCalls.count, 0)
+    }
+
+    /// Test H — SESS-04: runGC removes inFlight entries older than 6 hours.
+    func test_runGC_removesStaleInFlight_SESS_04() async {
+        let r = makeRegistry()
+        await bind(r)
+        let now = Date()
+        let stale = now.addingTimeInterval(-7 * 3600)
+        await r.seedInFlightForTesting(sessionID: "stale", started: stale, cwd: nil)
+        await r.seedInFlightForTesting(sessionID: "fresh", started: now, cwd: nil)
+
+        await r.runGC(now: now)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertNil(snap.inFlight["stale"])
+        XCTAssertNotNil(snap.inFlight["fresh"])
+    }
+
+    /// Test I — clearOne removes a single completed entry and refreshes notifier state.
+    func test_clearOne_removesAndRefreshes() async {
+        let r = makeRegistry()
+        await bind(r)
+        let a = CompletedSession(sessionID: "a", projectName: "p", stoppedAt: Date(),
+                                 durationSec: 10, itermSessionID: nil, tty: nil, cwd: nil)
+        let b = CompletedSession(sessionID: "b", projectName: "p", stoppedAt: Date(),
+                                 durationSec: 20, itermSessionID: nil, tty: nil, cwd: nil)
+        await r.seedCompletedForTesting(a)
+        await r.seedCompletedForTesting(b)
+
+        await r.clearOne(sessionID: "a")
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.map(\.sessionID), ["b"])
+        XCTAssertTrue(notifier.refreshCalls.contains(1))
+    }
+
+    /// Test J — clearAll empties the queue and broadcasts count=0.
+    func test_clearAll_emptiesQueue() async {
+        let r = makeRegistry()
+        await bind(r)
+        for sid in ["x", "y", "z"] {
+            await r.seedCompletedForTesting(
+                CompletedSession(sessionID: sid, projectName: "p", stoppedAt: Date(),
+                                 durationSec: 1, itermSessionID: nil, tty: nil, cwd: nil)
+            )
+        }
+
+        await r.clearAll()
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.count, 0)
+        XCTAssertTrue(notifier.refreshCalls.contains(0))
+    }
+
+    /// Test K — D2-21: injectTest appends a test fixture and schedules auto-dismiss.
+    /// With stub clock.sleepNanoseconds returning immediately, the dismiss Task fires fast.
+    func test_injectTest_appendsAndScheduleAutoDismiss() async {
+        let r = makeRegistry()
+        await bind(r)
+
+        await r.injectTest(soundEnabled: true)
+
+        // Right after injection the test row is present.
+        let pre = await r.snapshotForTesting()
+        XCTAssertEqual(pre.completed.count, 1)
+        XCTAssertTrue(pre.completed.first?.sessionID.hasPrefix("test-") == true)
+        XCTAssertEqual(notifier.presentCalls.count, 1)
+
+        // The auto-dismiss Task hops back into the actor; spin briefly waiting for it.
+        for _ in 0..<50 {
+            let snap = await r.snapshotForTesting()
+            if snap.completed.isEmpty { break }
+            try? await Task.sleep(nanoseconds: 20_000_000) // 20ms
+        }
+        let post = await r.snapshotForTesting()
+        XCTAssertEqual(post.completed.count, 0,
+                       "injectTest should auto-dismiss via clearOne after sleepNanoseconds returns.")
+        XCTAssertTrue(notifier.refreshCalls.contains(0))
+    }
+
+    /// Test L — D2-22: injectTest must not persist the test row to disk.
+    func test_injectTest_notPersisted() async {
+        let r = makeRegistry()
+        await bind(r)
+        await r.injectTest(soundEnabled: false)
+
+        // The store at tempURL should either not exist or contain no test- row.
+        if FileManager.default.fileExists(atPath: tempURL.path) {
+            let data = try! Data(contentsOf: tempURL)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let snap = try! decoder.decode(SessionsSnapshot.self, from: data)
+            XCTAssertFalse(snap.completed.contains { $0.sessionID.hasPrefix("test-") },
+                           "Test fixture must not be persisted (D2-22).")
+        }
+    }
+
+    /// Test M — restore() repopulates the registry from disk on boot.
+    func test_restore_loadsCompletedQueue() async {
+        // Seed disk via a separate SessionStore at the same URL.
+        let seedStore = SessionStore(url: tempURL)
+        let seeded = SessionsSnapshot(
+            schema: SessionsSnapshot.currentSchema,
+            inFlight: [:],
+            completed: [
+                CompletedSession(sessionID: "restored",
+                                 projectName: "p",
+                                 stoppedAt: Date(timeIntervalSince1970: 1_700_000_000),
+                                 durationSec: 99,
+                                 itermSessionID: nil, tty: nil, cwd: nil)
+            ]
+        )
+        await seedStore.save(seeded)
+
+        let r = makeRegistry()
+        await bind(r)
+        await r.restore()
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.map(\.sessionID), ["restored"])
+        XCTAssertTrue(notifier.refreshCalls.contains(1))
+    }
+}

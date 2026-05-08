@@ -42,4 +42,31 @@ extension SettingsViewTests {
         let labels = WidgetCorner.allCases.map(\.localizedLabel)
         XCTAssertEqual(labels, ["왼쪽 위", "오른쪽 위", "왼쪽 아래", "오른쪽 아래"])
     }
+
+    // MARK: - D3-15 / D3-19 SET-05 copy lock (T-COPY-DRIFT-01)
+
+    func test_settingsCopy_connectionTestHeading_isKorean() {
+        XCTAssertEqual(SettingsView.connectionTestHeading, "iTerm2 연결",
+                       "D3-15: section header stays Korean for tone consistency with Phase 2 sections")
+    }
+
+    func test_settingsCopy_connectionTestLabel_isKoreanVerbatim() {
+        XCTAssertEqual(SettingsView.connectionTestLabel, "iTerm2 연결 테스트",
+                       "D3-15: button label is Korean to match testButtonLabel tone")
+    }
+
+    func test_settingsCopy_connectionTestSuccessFmt_isMinimalEnglish() {
+        XCTAssertEqual(SettingsView.connectionTestSuccessFmt, "Connected at %@",
+                       "D3-19: success status label minimal English; %@ = HH:mm; no decoration prefix")
+    }
+
+    func test_settingsCopy_iTermNotRunningLabel_isMinimalEnglish() {
+        XCTAssertEqual(SettingsView.iTermNotRunningLabel, "iTerm2 is not running",
+                       "D3-19: iTermNotRunning status label minimal English")
+    }
+
+    func test_settingsCopy_connectionDeniedLabel_isMinimalEnglish() {
+        XCTAssertEqual(SettingsView.connectionDeniedLabel, "Automation permission denied",
+                       "D3-19: permission-denied status label minimal English")
+    }
 }

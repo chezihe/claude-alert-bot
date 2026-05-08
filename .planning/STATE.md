@@ -128,6 +128,7 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260508-001 | Replace bell.badge.fill placeholder with Claude Code SVG icon + vertical bounce animation in floating widget | 2026-05-08 | c735ff7 | [260508-001-claude-icon-bounce](./quick/260508-001-claude-icon-bounce/) |
+| 260508-002 | Add UI affordance for unavailable (closed iTerm2) sessions in popover — minimal English `Session unavailable` copy + opacity dim + Phase 3 wire-in seam | 2026-05-08 | f369c47 | [260508-002-popover-unavailable-state](./quick/260508-002-popover-unavailable-state/) |
 
 ## Session Continuity
 

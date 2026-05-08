@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-08T02:27:45.979Z"
+last_updated: "2026-05-08T02:44:53.179Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 19
-  completed_plans: 7
-  percent: 37
+  completed_plans: 8
+  percent: 42
 ---
 
 # State: Claude Alert Bot
 
-**Last updated:** 2026-05-07 (Phase 01 complete — phase_gate: green)
+**Last updated:** 2026-05-08 (Phase 02 Wave 0 — Plan 02-00 complete)
 
 ## Project Reference
 
@@ -25,14 +25,14 @@ progress:
 ## Current Position
 
 Phase: 2 (alert-loop) — EXECUTING
-Plan: 1 of 12
-Next: Phase 02 (Alert Loop) — `/gsd-context-phase 2` to begin
+Plan: 2 of 12 (next: 02-01)
+Next: Continue Phase 02 — execute 02-01 (Wave 1 SwiftUI app shell pre-req for D2-29)
 
 - **Milestone:** v1
-- **Phase:** 01 — Foundation, **all 7 plans complete**, Wave 3 closed, sign-off in `.planning/phases/01-foundation/01-VERIFICATION.md`
-- **Plan:** 01-06 complete (e2e verifier wiring + 01-VERIFICATION.md sign-off — `phase_gate: green`, 14/14 verifier PASS, DIST-05 manual checkpoint approved with real Claude Code hook.log evidence)
+- **Phase:** 02 — Alert Loop, Plan 02-00 complete (Wave 0 test scaffold). 11 plans remain.
+- **Plan:** 02-00 complete (XCTest target + fixtures + cab-test argv + verify-phase-2.sh skeleton — sentinel test PASS, verifier exit 0).
 - **Status:** Executing Phase 2
-- **Progress:** `[█░░░░░] 1/6 phases complete (7/7 plans in Phase 01)`
+- **Progress:** [████░░░░░░] 42% (8/19 plans)
 
 ## Performance Metrics
 
@@ -65,6 +65,8 @@ Next: Phase 02 (Alert Loop) — `/gsd-context-phase 2` to begin
 | AF_UNIX socket via `Network.framework` for hook→app IPC | STACK.md / ARCHITECTURE.md | Roadmap (Phase 1) |
 | Swift `actor` SessionRegistry; stress-test at Phase 4 | PITFALLS.md #9 / ARCHITECTURE.md | Roadmap |
 | Min OS macOS 14 Sonoma | STACK.md | Roadmap |
+| ENABLE_TESTABILITY scoped to Debug only (Release untouched) | 02-00 | Plan 02-00 (T-TEST-01 disposition) |
+| cab-test detection heuristic = `strings \| grep -- '--event='` literal (not symbol name; Swift inlines `private` funcs) | 02-00 | Plan 02-00 (verify-phase-2.sh row 2-00-02) |
 
 ### Open Questions (carried into planning)
 
@@ -83,19 +85,26 @@ None.
 
 ## Session Continuity
 
-- **Last action:** Completed Plan 01-06 (Wave 3 final — verify-phase-1.sh wiring + 01-VERIFICATION.md sign-off). 3 commits across 2 executor sessions:
-  - `460b620` feat(01-06): wire verify-phase-1.sh against real Plan 01-05 artifacts (Task 1, previous executor)
-  - `f3ab6e6` docs(01-06): record DIST-05 manual checkpoint result inline in verify-phase-1.sh (Task 2, this session)
-  - `52b3af6` docs(01-06): add 01-VERIFICATION.md — Phase 1 sign-off (phase_gate: green) (Task 3, this session)
+- **Last action:** Completed Plan 02-00 (Phase 2 Wave 0 — test scaffold). 3 commits on master (sequential mode):
+  - `bb43b32` feat(02-00): add ClaudeAlertBotTests XCTest target + fixture stubs (Task 1)
+  - `01a24a0` feat(02-00): cab-test accepts --event= argv (defaults to stop) (Task 2)
+  - `cd7bc54` feat(02-00): add verify-phase-2.sh skeleton (Wave 0) (Task 3)
 
-  Final verifier run: 14 pass, 0 fail, exit 0. DIST-05 manual checkpoint approved by user (`approved-A-with-observation`); both Part A (visual invisibility) and Part B (real Claude Code e2e — three real-Claude `event:stop` entries in hook.log carrying real iTerm2 session UUID `w0t0p1:79C4699F-7C77-4B92-B46A-10F818C00F8D` and `ppid_chain` proving real Claude origin) accepted. **Phase 01 closed: phase_gate green; Phase 02 unblocked.**
+  Final verifier run: `bash scripts/verify-phase-2.sh` → 1 pass (2-00-01 sentinel test), 0 fail, 1 skip (2-00-02 cab-test argv — skips cleanly because export build is Phase 1 era; auto-flips to PASS once 02-11 produces a fresh build/export). Functional cab-test --event=user_prompt_submit verified end-to-end against DerivedData build: ingress log line `event=user_prompt_submit` captured. xcodebuild test sentinel: 1/1 passed in 0.004s. Nyquist gate cleared — every downstream Phase 2 plan can ship `<verify><automated>` rows from day one.
+
+  New decisions logged: 02-00-D1..D6 (xcodegen test target schema, ENABLE_TESTABILITY scope, MockNotifier shape, cab-test detection heuristic, SKIP-not-FAIL on stale binary).
 
 - **Files written this session:**
-  - `scripts/verify-phase-1.sh` (modified — inline checkpoint result documentation in `verify_1_06_01`)
-  - `.planning/phases/01-foundation/01-VERIFICATION.md` (created — Phase 1 sign-off, 142 lines)
-  - `.planning/phases/01-foundation/01-06-SUMMARY.md` (created)
-  - `.planning/STATE.md`, `.planning/ROADMAP.md` (updated — phase + plan progress)
-- **Next action:** `/gsd-context-phase 2` (Phase 2 — Alert Loop). Phase 2 prerequisites surfaced in 01-06-SUMMARY: icon assets blocker (WIDG-03), sound-during-Focus/DnD strategy decision, threshold-default ratification.
+  - `ClaudeAlertBotTests/ClaudeAlertBotTests.swift` (created — sentinel test)
+  - `ClaudeAlertBotTests/Fixtures/HookEventFactory.swift` (created)
+  - `ClaudeAlertBotTests/Fixtures/MockNotifier.swift` (created)
+  - `scripts/verify-phase-2.sh` (created, executable)
+  - `project.yml` (modified — ClaudeAlertBotTests target + Debug ENABLE_TESTABILITY=YES + scheme test block)
+  - `CabTest/main.swift` (modified — parseEventArg() + 1-line literal change)
+  - `ClaudeAlertBot.xcodeproj/{project.pbxproj,xcshareddata/xcschemes/ClaudeAlertBot.xcscheme}` (xcodegen-regenerated)
+  - `.planning/phases/02-alert-loop/02-00-SUMMARY.md` (created)
+  - `.planning/STATE.md`, `.planning/ROADMAP.md`, `.planning/REQUIREMENTS.md` (updated — plan progress + HOOK-02 marked complete)
+- **Next action:** Execute Plan 02-01 (Wave 1 — SwiftUI app shell pre-req for D2-29 SettingsStore @AppStorage scene).
 
 ### Open follow-ups (carried into later phases)
 

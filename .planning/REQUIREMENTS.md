@@ -10,7 +10,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Hook (이벤트 수신)
 
 - [x] **HOOK-01**: Reporter shell script가 Claude Code의 `Stop` hook으로 실행되어 JSON 이벤트를 stdin으로 받아 App에 전달한다
-- [ ] **HOOK-02**: Reporter shell script가 Claude Code의 `UserPromptSubmit` hook으로도 실행되어 작업 시작 시점을 App에 전달한다
+- [x] **HOOK-02**: Reporter shell script가 Claude Code의 `UserPromptSubmit` hook으로도 실행되어 작업 시작 시점을 App에 전달한다
 - [ ] **HOOK-03**: Reporter는 항상 `exit 0`으로 종료한다 (Claude Code가 hook 실패로 멈추거나 무한 루프에 빠지지 않도록)
 - [ ] **HOOK-04**: Reporter가 `session_id`, `cwd`, `ITERM_SESSION_ID`, `tty`, `CLAUDE_PROJECT_DIR`, `ppid`, 타임스탬프를 캡처한다
 - [ ] **HOOK-05**: Reporter는 App이 실행 중이지 않을 때도 가만히 0으로 종료한다 (전송 실패해도 Claude Code 영향 없음)
@@ -155,7 +155,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | HOOK-01 | Phase 1 | Satisfied (e2e verified Plan 01-03: Reporter `1458693` → listener `04d1004` → OSLog ingress with reporter-supplied session_id) |
-| HOOK-02 | Phase 2 | Pending |
+| HOOK-02 | Phase 2 | Complete |
 | HOOK-03 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693`; 100x burst PASS; full Phase 1 verification in 01-06) |
 | HOOK-04 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693` — D-08 envelope all 10 fields; full verification in 01-06) |
 | HOOK-05 | Phase 1 | Pending (Reporter-side shipped in 01-02 commit `1458693` — silent no-op when socket missing; full verification in 01-06) |

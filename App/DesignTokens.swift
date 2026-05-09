@@ -21,6 +21,17 @@ enum ColorTokens {
     // SPEC.md §3 row "Status: waiting"
     static let statusWaiting: Color = makeColor(hex: 0xF5A623)
 
+    static func statusDot(for kind: AlertKind) -> Color {
+        switch kind {
+        case .success:
+            return statusSuccess
+        case .error:
+            return statusError
+        case .waiting:
+            return statusWaiting
+        }
+    }
+
     // SPEC.md §3 row "Row hover"
     static func rowHover(colorScheme: ColorScheme) -> Color {
         statusSuccess.opacity(colorScheme == .dark ? 0.20 : 0.13)

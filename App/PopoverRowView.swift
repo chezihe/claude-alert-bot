@@ -99,14 +99,15 @@ struct PopoverRowView: View {
 
     @ViewBuilder
     private var statusDot: some View {
+        let dotColor = ColorTokens.statusDot(for: session.kind)
         if session.available {
             Circle()
-                .fill(ColorTokens.statusSuccess)
+                .fill(dotColor)
                 .frame(width: GeometryTokens.statusDotDiameter,
                        height: GeometryTokens.statusDotDiameter)
         } else {
             Circle()
-                .stroke(ColorTokens.statusSuccess, lineWidth: GeometryTokens.statusDotRingStroke)
+                .stroke(dotColor, lineWidth: GeometryTokens.statusDotRingStroke)
                 .frame(width: GeometryTokens.statusDotDiameter,
                        height: GeometryTokens.statusDotDiameter)
         }

@@ -49,6 +49,12 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(c?.blueComponent  ?? 0, Double(0x23) / 255.0, accuracy: 0.005)
     }
 
+    func test_colorTokens_statusDotMapsAlertKindToStatusColors() {
+        assertColor(ColorTokens.statusDot(for: .success), matches: ColorTokens.statusSuccess)
+        assertColor(ColorTokens.statusDot(for: .error), matches: ColorTokens.statusError)
+        assertColor(ColorTokens.statusDot(for: .waiting), matches: ColorTokens.statusWaiting)
+    }
+
     func test_colorTokens_rowHoverLight_matchesSpecRGBA() {
         let c = NSColor(ColorTokens.rowHover(colorScheme: .light)).usingColorSpace(.sRGB)
         XCTAssertEqual(c?.redComponent   ?? 0, Double(0xD9) / 255.0, accuracy: 0.005)
@@ -121,5 +127,14 @@ final class DesignTokensTests: XCTestCase {
         // We cannot inspect Animation internals across SwiftUI versions; non-nil + the
         // reduce-motion=true → nil pair above is sufficient drift-guard.
         XCTAssertNotNil(MotionTokens.bounceAnimation(reduceMotion: false))
+    }
+
+    private func assertColor(_ actual: Color, matches expected: Color, file: StaticString = #filePath, line: UInt = #line) {
+        let actualColor = NSColor(actual).usingColorSpace(.sRGB)
+        let expectedColor = NSColor(expected).usingColorSpace(.sRGB)
+        XCTAssertEqual(actualColor?.redComponent ?? 0, expectedColor?.redComponent ?? 0, accuracy: 0.005, file: file, line: line)
+        XCTAssertEqual(actualColor?.greenComponent ?? 0, expectedColor?.greenComponent ?? 0, accuracy: 0.005, file: file, line: line)
+        XCTAssertEqual(actualColor?.blueComponent ?? 0, expectedColor?.blueComponent ?? 0, accuracy: 0.005, file: file, line: line)
+        XCTAssertEqual(actualColor?.alphaComponent ?? 0, expectedColor?.alphaComponent ?? 0, accuracy: 0.005, file: file, line: line)
     }
 }

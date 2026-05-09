@@ -50,6 +50,25 @@ final class PopoverRowStateTests: XCTestCase {
         )
     }
 
+    // MARK: - WO-005 status dot rendering contract (source-level audit)
+
+    func test_statusDot_usesAlertKindColorForFillAndUnavailableRing() {
+        let src = readPopoverRowViewSource()
+
+        XCTAssertTrue(
+            src.contains("let dotColor = ColorTokens.statusDot(for: session.kind)"),
+            "WO-005: PopoverRowView.statusDot must derive its color from session.kind"
+        )
+        XCTAssertTrue(
+            src.contains(".fill(dotColor)"),
+            "WO-005: available rows must fill the status dot with the kind color"
+        )
+        XCTAssertTrue(
+            src.contains(".stroke(dotColor, lineWidth: GeometryTokens.statusDotRingStroke)"),
+            "WO-005: unavailable rows must keep the hollow ring path while using the kind color"
+        )
+    }
+
     // MARK: - helpers
 
     /// Resolve App/PopoverRowView.swift relative to *this* test file's source location so

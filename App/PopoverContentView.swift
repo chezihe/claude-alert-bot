@@ -2,6 +2,7 @@
 // UI-SPEC §"Hover Popover" — 280pt fixed width, max 8 visible rows + ScrollView with hidden indicators,
 // top-trailing "모두 지우기" (Clear all) visible only when rowCount>=2 (D2-07; non-destructive — no confirm).
 // D2-06 row display rules; D2-08 row click → SessionRegistry.shared.clearOne(...) + [would-jump session=<uuid>] log.
+// Phase 03.1 — geometry literals consume GeometryTokens (F-1: token = 280, code SoT, not SPEC's 270).
 // PopoverContentRules is the pure-function namespace tested in PopoverContentTests.
 import SwiftUI
 import AppKit
@@ -83,9 +84,9 @@ struct PopoverContentView: View {
                 }
             }
             .scrollIndicators(.hidden)
-            .frame(maxHeight: 36 * 8)   // UI-SPEC: max 8 visible rows
+            .frame(maxHeight: GeometryTokens.rowMinHeight * CGFloat(GeometryTokens.popoverMaxVisibleRows))
         }
-        .frame(width: 280)
+        .frame(width: GeometryTokens.popoverWidth)
         .background(.thinMaterial)
         .onHover { hovering in onPopoverHoverChange(hovering) }
     }

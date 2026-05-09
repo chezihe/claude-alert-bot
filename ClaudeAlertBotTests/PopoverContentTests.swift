@@ -27,6 +27,53 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertEqual(dups, Set(["A"]))
     }
 
+    func test_groupedListItems_collapsesThreeSameProjectSessions() {
+        let queue = [
+            mkSession(id: "a1", project: "Alpha", stoppedAt: Date(timeIntervalSince1970: 300)),
+            mkSession(id: "b1", project: "Beta", stoppedAt: Date(timeIntervalSince1970: 250)),
+            mkSession(id: "a2", project: "Alpha", stoppedAt: Date(timeIntervalSince1970: 200)),
+            mkSession(id: "a3", project: "Alpha", stoppedAt: Date(timeIntervalSince1970: 100))
+        ]
+
+        let items = PopoverContentRules.groupedListItems(queue, expandedProjects: [])
+
+        XCTAssertEqual(items.map(\.id), ["group:Alpha", "session:b1"])
+        XCTAssertEqual(items.first, .group(projectName: "Alpha", count: 3, isExpanded: false))
+        XCTAssertEqual(PopoverContentRules.displayRowCount(queue, expandedProjects: []), 2)
+    }
+
+    func test_groupedListItems_expandedProjectIncludesHeaderAndRows() {
+        let queue = [
+            mkSession(id: "a1", project: "Alpha", stoppedAt: Date(timeIntervalSince1970: 300)),
+            mkSession(id: "b1", project: "Beta", stoppedAt: Date(timeIntervalSince1970: 250)),
+            mkSession(id: "a2", project: "Alpha", stoppedAt: Date(timeIntervalSince1970: 200)),
+            mkSession(id: "a3", project: "Alpha", stoppedAt: Date(timeIntervalSince1970: 100))
+        ]
+
+        let items = PopoverContentRules.groupedListItems(queue, expandedProjects: ["Alpha"])
+
+        XCTAssertEqual(items.map(\.id), ["group:Alpha", "session:a1", "session:a2", "session:a3", "session:b1"])
+        XCTAssertEqual(items.first, .group(projectName: "Alpha", count: 3, isExpanded: true))
+        XCTAssertEqual(PopoverContentRules.displayRowCount(queue, expandedProjects: ["Alpha"]), 5)
+    }
+
+    func test_groupedListItems_keepsTwoSameProjectSessionsAsRowsWithTimeSuffix() throws {
+        let queue = [
+            mkSession(id: "a1", project: "Alpha", stoppedAt: Date(timeIntervalSince1970: 300)),
+            mkSession(id: "a2", project: "Alpha", stoppedAt: Date(timeIntervalSince1970: 200))
+        ]
+
+        let items = PopoverContentRules.groupedListItems(queue, expandedProjects: [])
+
+        XCTAssertEqual(items.map(\.id), ["session:a1", "session:a2"])
+        guard case .session(_, let showFirstTimeSuffix)? = items.first,
+              case .session(_, let showSecondTimeSuffix)? = items.last else {
+            return XCTFail("Expected two session rows")
+        }
+        XCTAssertTrue(showFirstTimeSuffix)
+        XCTAssertTrue(showSecondTimeSuffix)
+    }
+
     func test_timeSuffix_format_hhmm() {
         var comps = DateComponents()
         comps.year = 2026; comps.month = 5; comps.day = 7
@@ -112,10 +159,20 @@ final class PopoverContentTests: XCTestCase {
     func test_widgetPopoverController_sizingUsesPopoverGeometryTokens() {
         let src = readWidgetPopoverControllerSource()
 
+        XCTAssertTrue(src.contains("PopoverContentRules.displayRowCount(queue, expandedProjects: expandedProjects)"))
         XCTAssertTrue(src.contains("let rowsClamped = min(rows, GeometryTokens.popoverMaxVisibleRows)"))
         XCTAssertTrue(src.contains("GeometryTokens.rowMinHeight * CGFloat(rowsClamped)"))
         XCTAssertTrue(src.contains("let chromeHeight: CGFloat = 32"))
         XCTAssertTrue(src.contains("NSSize(width: GeometryTokens.popoverWidth, height: bodyHeight + chromeHeight)"))
+    }
+
+    func test_widgetPopoverController_wiresProjectGroupExpansion() {
+        let src = readWidgetPopoverControllerSource()
+
+        XCTAssertTrue(src.contains("private var expandedProjects: Set<String> = []"))
+        XCTAssertTrue(src.contains("expandedProjects: expandedProjects"))
+        XCTAssertTrue(src.contains("onToggleGroup: {"))
+        XCTAssertTrue(src.contains("private func onToggleGroup(projectName: String)"))
     }
 
     func test_widgetPopoverController_wiresOpenSettingsCallback() {

@@ -9,6 +9,20 @@ import AppKit
 
 // MARK: - Pure display rules (testable without SwiftUI rendering)
 
+enum PopoverListItem: Equatable, Identifiable {
+    case group(projectName: String, count: Int, isExpanded: Bool)
+    case session(CompletedSession, showTimeSuffix: Bool)
+
+    var id: String {
+        switch self {
+        case .group(let projectName, _, _):
+            return "group:\(projectName)"
+        case .session(let session, _):
+            return "session:\(session.sessionID)"
+        }
+    }
+}
+
 enum PopoverContentRules {
     static let agingThresholdSec: TimeInterval = 60 * 60
 
@@ -48,6 +62,39 @@ enum PopoverContentRules {
             return lhs.offset < rhs.offset
         }.map(\.element)
     }
+
+    static func groupedListItems(_ queue: [CompletedSession], expandedProjects: Set<String>) -> [PopoverListItem] {
+        let ordered = orderedByPinnedThenStoppedAt(queue)
+        var counts: [String: Int] = [:]
+        for session in queue { counts[session.projectName, default: 0] += 1 }
+        let groupedByProject = Dictionary(grouping: ordered, by: \.projectName)
+        let duplicateProjects = projectsWithDuplicates(queue)
+        var emittedGroups: Set<String> = []
+        var items: [PopoverListItem] = []
+
+        for session in ordered {
+            let count = counts[session.projectName, default: 0]
+            if count >= 3 {
+                guard !emittedGroups.contains(session.projectName) else { continue }
+                emittedGroups.insert(session.projectName)
+                let isExpanded = expandedProjects.contains(session.projectName)
+                items.append(.group(projectName: session.projectName, count: count, isExpanded: isExpanded))
+                if isExpanded {
+                    for groupedSession in groupedByProject[session.projectName, default: []] {
+                        items.append(.session(groupedSession, showTimeSuffix: true))
+                    }
+                }
+            } else {
+                items.append(.session(session, showTimeSuffix: duplicateProjects.contains(session.projectName)))
+            }
+        }
+
+        return items
+    }
+
+    static func displayRowCount(_ queue: [CompletedSession], expandedProjects: Set<String>) -> Int {
+        groupedListItems(queue, expandedProjects: expandedProjects).count
+    }
 }
 
 // MARK: - SwiftUI container
@@ -71,13 +118,11 @@ struct PopoverContentView: View {
     /// without the 250ms widget exit grace dismissing the popover mid-flight.
     var onPopoverHoverChange: (Bool) -> Void = { _ in }
     var onOpenSettings: () -> Void = {}
+    var expandedProjects: Set<String> = []
+    var onToggleGroup: (String) -> Void = { _ in }
 
-    private var dupProjects: Set<String> {
-        PopoverContentRules.projectsWithDuplicates(queue)
-    }
-
-    private var orderedQueue: [CompletedSession] {
-        PopoverContentRules.orderedByPinnedThenStoppedAt(queue)
+    private var listItems: [PopoverListItem] {
+        PopoverContentRules.groupedListItems(queue, expandedProjects: expandedProjects)
     }
 
     var body: some View {
@@ -107,17 +152,29 @@ struct PopoverContentView: View {
             } else {
                 ScrollView {
                     VStack(spacing: 0) {
-                        ForEach(orderedQueue) { session in
-                            PopoverRowView(
-                                session: session,
-                                showTimeSuffix: dupProjects.contains(session.projectName),
-                                state: rowStates[session.sessionID, default: .normal],
-                                isMuted: isProjectMuted(session.projectName),
-                                onClick: { onRowClick(session.sessionID) },
-                                onTogglePin: { onTogglePin(session.sessionID) },
-                                onToggleMute: { onToggleMute(session.projectName) },
-                                onMissingComplete: { onRowMissingComplete(session.sessionID) }
-                            )
+                        ForEach(listItems) { item in
+                            switch item {
+                            case .group(let projectName, let count, let isExpanded):
+                                ProjectGroupHeaderView(
+                                    projectName: projectName,
+                                    count: count,
+                                    isExpanded: isExpanded,
+                                    isMuted: isProjectMuted(projectName),
+                                    onClick: { onToggleGroup(projectName) },
+                                    onToggleMute: { onToggleMute(projectName) }
+                                )
+                            case .session(let session, let showTimeSuffix):
+                                PopoverRowView(
+                                    session: session,
+                                    showTimeSuffix: showTimeSuffix,
+                                    state: rowStates[session.sessionID, default: .normal],
+                                    isMuted: isProjectMuted(session.projectName),
+                                    onClick: { onRowClick(session.sessionID) },
+                                    onTogglePin: { onTogglePin(session.sessionID) },
+                                    onToggleMute: { onToggleMute(session.projectName) },
+                                    onMissingComplete: { onRowMissingComplete(session.sessionID) }
+                                )
+                            }
                         }
                     }
                 }
@@ -128,5 +185,59 @@ struct PopoverContentView: View {
         .frame(width: GeometryTokens.popoverWidth)
         .background(.thinMaterial)
         .onHover { hovering in onPopoverHoverChange(hovering) }
+    }
+}
+
+private struct ProjectGroupHeaderView: View {
+    let projectName: String
+    let count: Int
+    let isExpanded: Bool
+    let isMuted: Bool
+    let onClick: () -> Void
+    let onToggleMute: () -> Void
+
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var isHovered: Bool = false
+
+    var body: some View {
+        Button(action: onClick) {
+            HStack(spacing: 8) {
+                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Color(NSColor.secondaryLabelColor))
+                    .frame(width: 7, height: 7)
+                Text(projectName)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color(NSColor.labelColor))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Spacer()
+                Text("\(count)")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(minWidth: 18, minHeight: 16)
+                    .background(
+                        Capsule().fill(Color(NSColor.systemGray))
+                    )
+            }
+            .padding(.vertical, GeometryTokens.rowVerticalPadding)
+            .padding(.horizontal, GeometryTokens.rowHorizontalPadding)
+            .frame(minHeight: GeometryTokens.rowMinHeight)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                isHovered ? ColorTokens.rowHover(colorScheme: colorScheme) : Color.clear
+            )
+            .opacity(isMuted ? 0.6 : 1.0)
+            .animation(.easeInOut(duration: 0.12), value: isHovered)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            Button(isMuted ? "Unmute This Project" : "Mute this project for 1h") { onToggleMute() }
+        }
+        .onHover { hovering in
+            isHovered = hovering
+        }
+        .accessibilityLabel("\(projectName), \(count) sessions, \(isExpanded ? "expanded" : "collapsed")")
     }
 }

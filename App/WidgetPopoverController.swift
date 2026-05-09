@@ -27,6 +27,7 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
 
     /// Phase 3 D3-11 — per-session row state. Mutations trigger popover content reload.
     private var rowStates: [String: RowState] = [:]
+    private var expandedProjects: Set<String> = []
 
     /// Production + tests inject the jumper explicitly. The convenience initializer below
     /// supplies the default `ITerm2Jumper()` — both `WidgetPopoverController` and `ITerm2Jumper`
@@ -104,6 +105,10 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             onOpenSettings: {
                 NSApp.activate(ignoringOtherApps: true)
                 NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+            },
+            expandedProjects: expandedProjects,
+            onToggleGroup: { [weak self] projectName in
+                self?.onToggleGroup(projectName: projectName)
             }
         )
         let pop: NSPopover
@@ -123,13 +128,7 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         } else {
             pop.contentViewController = NSHostingController(rootView: content)
         }
-        let rows = max(1, queue.count)
-        let rowsClamped = min(rows, GeometryTokens.popoverMaxVisibleRows)
-        let bodyHeight: CGFloat = queue.isEmpty
-            ? 48  // matches EmptyStateView natural height (text 12pt + .padding(.vertical, 16))
-            : GeometryTokens.rowMinHeight * CGFloat(rowsClamped)
-        let chromeHeight: CGFloat = 32  // header always visible (gear + optional Clear All)
-        pop.contentSize = NSSize(width: GeometryTokens.popoverWidth, height: bodyHeight + chromeHeight)
+        resizePopover(pop, queue: queue)
         pop.show(relativeTo: anchor.bounds, of: anchor, preferredEdge: cornerToEdge())
         log.notice("popover shown rows=\(queue.count, privacy: .public)")
     }
@@ -166,6 +165,10 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             onOpenSettings: {
                 NSApp.activate(ignoringOtherApps: true)
                 NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+            },
+            expandedProjects: expandedProjects,
+            onToggleGroup: { [weak self] projectName in
+                self?.onToggleGroup(projectName: projectName)
             }
         )
         // Phase 3 03-09 fix — same pattern as showPopover. Update rootView in place
@@ -176,6 +179,17 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         } else {
             pop.contentViewController = NSHostingController(rootView: content)
         }
+        resizePopover(pop, queue: queue)
+    }
+
+    private func resizePopover(_ pop: NSPopover, queue: [CompletedSession]) {
+        let rows = max(1, PopoverContentRules.displayRowCount(queue, expandedProjects: expandedProjects))
+        let rowsClamped = min(rows, GeometryTokens.popoverMaxVisibleRows)
+        let bodyHeight: CGFloat = queue.isEmpty
+            ? 48  // matches EmptyStateView natural height (text 12pt + .padding(.vertical, 16))
+            : GeometryTokens.rowMinHeight * CGFloat(rowsClamped)
+        let chromeHeight: CGFloat = 32  // header always visible (gear + optional Clear All)
+        pop.contentSize = NSSize(width: GeometryTokens.popoverWidth, height: bodyHeight + chromeHeight)
     }
 
     /// UI-SPEC: popover slides away from the widget's corner.
@@ -252,6 +266,15 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             settings.unmute(project: projectName)
         } else {
             settings.mute(project: projectName, now: Date())
+        }
+        reloadPopoverContent()
+    }
+
+    private func onToggleGroup(projectName: String) {
+        if expandedProjects.contains(projectName) {
+            expandedProjects.remove(projectName)
+        } else {
+            expandedProjects.insert(projectName)
         }
         reloadPopoverContent()
     }

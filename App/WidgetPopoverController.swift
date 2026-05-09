@@ -100,7 +100,11 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
                 self.rowStates.removeValue(forKey: sid)
                 self.reloadPopoverContent()
             },
-            onPopoverHoverChange: { [weak self] hovering in self?.onPopoverHover(hovering) }
+            onPopoverHoverChange: { [weak self] hovering in self?.onPopoverHover(hovering) },
+            onOpenSettings: {
+                NSApp.activate(ignoringOtherApps: true)
+                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+            }
         )
         let pop: NSPopover
         if let existing = popover {
@@ -119,12 +123,13 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         } else {
             pop.contentViewController = NSHostingController(rootView: content)
         }
-        // Width fixed at 280pt (UI-SPEC); height grows with row count up to 8 rows
-        // plus an extra 32pt strip when the Clear-all chrome is visible.
         let rows = max(1, queue.count)
-        let bodyHeight = min(36 * rows, 36 * 8)
-        let chromeHeight = PopoverContentRules.shouldShowClearAll(rowCount: queue.count) ? 32 : 0
-        pop.contentSize = NSSize(width: 280, height: bodyHeight + chromeHeight)
+        let rowsClamped = min(rows, GeometryTokens.popoverMaxVisibleRows)
+        let bodyHeight: CGFloat = queue.isEmpty
+            ? 48  // matches EmptyStateView natural height (text 12pt + .padding(.vertical, 16))
+            : GeometryTokens.rowMinHeight * CGFloat(rowsClamped)
+        let chromeHeight: CGFloat = 32  // header always visible (gear + optional Clear All)
+        pop.contentSize = NSSize(width: GeometryTokens.popoverWidth, height: bodyHeight + chromeHeight)
         pop.show(relativeTo: anchor.bounds, of: anchor, preferredEdge: cornerToEdge())
         log.notice("popover shown rows=\(queue.count, privacy: .public)")
     }
@@ -157,7 +162,11 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
                 self.rowStates.removeValue(forKey: sid)
                 self.reloadPopoverContent()
             },
-            onPopoverHoverChange: { [weak self] hovering in self?.onPopoverHover(hovering) }
+            onPopoverHoverChange: { [weak self] hovering in self?.onPopoverHover(hovering) },
+            onOpenSettings: {
+                NSApp.activate(ignoringOtherApps: true)
+                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+            }
         )
         // Phase 3 03-09 fix — same pattern as showPopover. Update rootView in place
         // so SwiftUI sees a diff (rowStates change) instead of a new tree, preserving

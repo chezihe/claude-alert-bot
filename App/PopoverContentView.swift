@@ -1,8 +1,8 @@
 // App/PopoverContentView.swift — Phase 2 / Plan 02-08 popover container view.
-// UI-SPEC §"Hover Popover" — 280pt fixed width, max 8 visible rows + ScrollView with hidden indicators,
-// top-trailing "모두 지우기" (Clear all) visible only when rowCount>=2 (D2-07; non-destructive — no confirm).
+// UI-SPEC §"Hover Popover" — fixed width, capped visible rows + ScrollView with hidden indicators,
+// top-trailing controls with "모두 지우기" visible only when rowCount>=2 (D2-07; non-destructive — no confirm).
 // D2-06 row display rules; D2-08 row click → SessionRegistry.shared.clearOne(...) + [would-jump session=<uuid>] log.
-// Phase 03.1 — geometry literals consume GeometryTokens (F-1: token = 280, code SoT, not SPEC's 270).
+// Phase 03.1 — geometry literals consume GeometryTokens.
 // PopoverContentRules is the pure-function namespace tested in PopoverContentTests.
 import SwiftUI
 import AppKit
@@ -70,6 +70,7 @@ struct PopoverContentView: View {
     /// hovering=true so the user can travel from the menu-bar icon onto the popover
     /// without the 250ms widget exit grace dismissing the popover mid-flight.
     var onPopoverHoverChange: (Bool) -> Void = { _ in }
+    var onOpenSettings: () -> Void = {}
 
     private var dupProjects: Set<String> {
         PopoverContentRules.projectsWithDuplicates(queue)
@@ -81,36 +82,48 @@ struct PopoverContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if PopoverContentRules.shouldShowClearAll(rowCount: queue.count) {
-                HStack {
-                    Spacer()
+            HStack(spacing: 8) {
+                Spacer()
+                if PopoverContentRules.shouldShowClearAll(rowCount: queue.count) {
                     Button("모두 지우기", action: onClearAll)
                         .buttonStyle(.plain)
                         .font(.system(size: 11))
                         .foregroundStyle(Color(NSColor.secondaryLabelColor))
                         .accessibilityLabel("모든 알림 지우기")
                 }
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
+                Button(action: onOpenSettings) {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color(NSColor.secondaryLabelColor))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Open Settings")
             }
-            ScrollView {
-                VStack(spacing: 0) {
-                    ForEach(orderedQueue) { session in
-                        PopoverRowView(
-                            session: session,
-                            showTimeSuffix: dupProjects.contains(session.projectName),
-                            state: rowStates[session.sessionID, default: .normal],
-                            isMuted: isProjectMuted(session.projectName),
-                            onClick: { onRowClick(session.sessionID) },
-                            onTogglePin: { onTogglePin(session.sessionID) },
-                            onToggleMute: { onToggleMute(session.projectName) },
-                            onMissingComplete: { onRowMissingComplete(session.sessionID) }
-                        )
+            .padding(.horizontal, 12)
+            .padding(.top, 8)
+
+            if queue.isEmpty {
+                EmptyStateView()
+            } else {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        ForEach(orderedQueue) { session in
+                            PopoverRowView(
+                                session: session,
+                                showTimeSuffix: dupProjects.contains(session.projectName),
+                                state: rowStates[session.sessionID, default: .normal],
+                                isMuted: isProjectMuted(session.projectName),
+                                onClick: { onRowClick(session.sessionID) },
+                                onTogglePin: { onTogglePin(session.sessionID) },
+                                onToggleMute: { onToggleMute(session.projectName) },
+                                onMissingComplete: { onRowMissingComplete(session.sessionID) }
+                            )
+                        }
                     }
                 }
+                .scrollIndicators(.hidden)
+                .frame(maxHeight: GeometryTokens.rowMinHeight * CGFloat(GeometryTokens.popoverMaxVisibleRows))
             }
-            .scrollIndicators(.hidden)
-            .frame(maxHeight: GeometryTokens.rowMinHeight * CGFloat(GeometryTokens.popoverMaxVisibleRows))
         }
         .frame(width: GeometryTokens.popoverWidth)
         .background(.thinMaterial)

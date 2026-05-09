@@ -92,6 +92,40 @@ final class PopoverContentTests: XCTestCase {
         ))
     }
 
+    // MARK: - WO-009 empty state + settings gear contract (source-level audit)
+
+    func test_popoverContentView_rendersEmptyStateWhenQueueIsEmpty() {
+        let src = readPopoverContentViewSource()
+
+        XCTAssertTrue(src.contains("if queue.isEmpty {"))
+        XCTAssertTrue(src.contains("EmptyStateView()"))
+    }
+
+    func test_popoverContentView_alwaysRendersHeaderWithSettingsGear() {
+        let src = readPopoverContentViewSource()
+
+        XCTAssertTrue(src.contains("var onOpenSettings: () -> Void = {}"))
+        XCTAssertTrue(src.contains(#"Image(systemName: "gearshape")"#))
+        XCTAssertTrue(src.contains(#".accessibilityLabel("Open Settings")"#))
+    }
+
+    func test_widgetPopoverController_sizingUsesPopoverGeometryTokens() {
+        let src = readWidgetPopoverControllerSource()
+
+        XCTAssertTrue(src.contains("let rowsClamped = min(rows, GeometryTokens.popoverMaxVisibleRows)"))
+        XCTAssertTrue(src.contains("GeometryTokens.rowMinHeight * CGFloat(rowsClamped)"))
+        XCTAssertTrue(src.contains("let chromeHeight: CGFloat = 32"))
+        XCTAssertTrue(src.contains("NSSize(width: GeometryTokens.popoverWidth, height: bodyHeight + chromeHeight)"))
+    }
+
+    func test_widgetPopoverController_wiresOpenSettingsCallback() {
+        let src = readWidgetPopoverControllerSource()
+
+        XCTAssertTrue(src.contains("onOpenSettings: {"))
+        XCTAssertTrue(src.contains("NSApp.activate(ignoringOtherApps: true)"))
+        XCTAssertTrue(src.contains(#"NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)"#))
+    }
+
     // MARK: - helpers
     // Phase 3 / 03-06: removed `test_isUnavailable_membershipCheck`,
     // `test_isUnavailable_emptySet_neverUnavailable`, and
@@ -114,5 +148,27 @@ final class PopoverContentTests: XCTestCase {
             cwd: nil,
             pinned: pinned
         )
+    }
+
+    private func readPopoverContentViewSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/PopoverContentView.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/PopoverContentView.swift at \(target.path)")
+            return ""
+        }
+        return data
+    }
+
+    private func readWidgetPopoverControllerSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/WidgetPopoverController.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/WidgetPopoverController.swift at \(target.path)")
+            return ""
+        }
+        return data
     }
 }

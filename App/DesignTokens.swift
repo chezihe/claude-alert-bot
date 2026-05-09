@@ -47,9 +47,8 @@ enum ColorTokens {
 }
 
 enum GeometryTokens {
-    // SPEC.md §3 says 270pt; code uses 280pt — token follows code per Finding F-1.
-    // Drift-guard test asserts 280; SPEC.md update is out-of-scope follow-up.
-    static let popoverWidth: CGFloat = 280
+    // SPEC.md §3 row "Popover: 270pt wide" — WO-009 reconciles code/spec.
+    static let popoverWidth: CGFloat = 270
     // SPEC.md §3 row "Popover: 14pt corner radius"
     static let popoverCornerRadius: CGFloat = 14
     // SPEC.md §3 row "Row: 36pt min height"
@@ -62,8 +61,8 @@ enum GeometryTokens {
     static let statusDotDiameter: CGFloat = 7
     // SPEC.md §3 row "hollow ring stroke 1.5pt"
     static let statusDotRingStroke: CGFloat = 1.5
-    // Derived: SPEC §3 silent on max rows; current code uses `36 * 8`. Centralise here for Phase 4.
-    static let popoverMaxVisibleRows: Int = 8
+    // FEATURES.md §3 row "최대 4행 표시" — WO-009 enforces; rows beyond scroll vertically.
+    static let popoverMaxVisibleRows: Int = 4
 }
 
 enum EffectTokens {

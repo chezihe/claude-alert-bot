@@ -1,6 +1,6 @@
 // DesignTokensTests.swift — Phase 03.1 Plan 01.
 // Drift-guard XCTests for App/DesignTokens.swift. Every documented token value
-// (SPEC.md §3 + §4 + Finding F-1) is asserted here; mutating any token literal
+// (SPEC.md §3 + §4) is asserted here; mutating any token literal
 // MUST break exactly one test below. SC#2 contract.
 //
 // Pure XCTest — no SnapshotTesting / pointfreeco / external Swift deps (D2-29).
@@ -73,9 +73,8 @@ final class DesignTokensTests: XCTestCase {
 
     // MARK: - GeometryTokens (SPEC.md §3 "Geometry")
 
-    func test_geometryTokens_popoverWidth_is280_perFindingF1() {
-        // F-1: SPEC.md §3 says 270pt; code SoT is 280pt — token follows code (Constraint D).
-        XCTAssertEqual(GeometryTokens.popoverWidth, 280)
+    func test_geometryTokens_popoverWidth_is270_perSpec() {
+        XCTAssertEqual(GeometryTokens.popoverWidth, 270)
     }
 
     func test_geometryTokens_popoverCornerRadius_is14() {
@@ -102,8 +101,8 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(GeometryTokens.statusDotRingStroke, 1.5)
     }
 
-    func test_geometryTokens_popoverMaxVisibleRows_is8() {
-        XCTAssertEqual(GeometryTokens.popoverMaxVisibleRows, 8)
+    func test_geometryTokens_popoverMaxVisibleRows_is4_perFeaturesSpec() {
+        XCTAssertEqual(GeometryTokens.popoverMaxVisibleRows, 4)
     }
 
     // MARK: - MotionTokens (SPEC.md §4 "Motion")

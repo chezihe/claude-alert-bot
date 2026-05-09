@@ -75,7 +75,7 @@ Lift these directly from the HTML.
 | Text secondary | `rgba(20,20,22,0.5)` | `rgba(255,255,255,0.55)` |
 
 ### Geometry
-- Popover: 280pt wide, 14pt corner radius
+- Popover: 270pt wide, 14pt corner radius
 - Row: 36pt min height, 12pt horizontal padding, 8pt vertical padding
 - Status dot: 7pt; hollow ring stroke 1.5pt
 - Widget glyph: ~22pt in 28pt status item; badge offsets `top: -11, right: -5`

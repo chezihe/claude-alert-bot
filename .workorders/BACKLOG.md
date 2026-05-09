@@ -12,9 +12,9 @@
 - [DONE] NSPopover transient shell is wired to widget hover — `WidgetPopoverController.swift`
 - [PARTIAL] Popover material uses SwiftUI `.thinMaterial` — `PopoverContentView.swift`
   SPEC asks `NSVisualEffectView` with `.popover`, `.behindWindow`, and `.active`.
-- [DONE] Popover width is 280pt with max 8 visible rows — `WidgetPopoverController.swift`
-- [TODO] Popover footer gear icon is missing.
-- [TODO] Onboarding empty state "Listening to iTerm" is missing.
+- [DONE] Popover width is 270pt with max 4 visible rows — `DesignTokens.swift`, `WidgetPopoverController.swift`. (WO-009)
+- [DONE] Popover header gear opens Settings — `PopoverContentView.swift`, `WidgetPopoverController.swift`. (WO-009)
+- [DONE] Empty state "Listening for Claude sessions" renders when the queue is empty — `EmptyStateView.swift`, `PopoverContentView.swift`. (WO-009)
 
 ## Step 2 — Animations
 - [TODO] Breathe animation (2.4s scale 1.0↔1.06) is missing.
@@ -56,8 +56,7 @@
 ## Step 5 — Settings + persistence
 - [DONE] SwiftUI Settings scene exists — `ClaudeAlertBotApp.swift`, `SettingsView.swift`
 - [DONE] Widget corner position picker (4 corners, 16pt inset, immediate reposition) — `SettingsStore.swift`, `SettingsView.swift`, `FloatingWidgetWindowController.swift`. (WO-003)
-- [PARTIAL] Settings are opened from MenuBarExtra, not popover gear — `ClaudeAlertBotApp.swift`
-  SPEC asks a gear icon in the popover footer.
+- [DONE] Settings are opened from MenuBarExtra and popover header gear — `ClaudeAlertBotApp.swift`, `PopoverContentView.swift`, `WidgetPopoverController.swift`. (WO-009)
 - [DONE] UserDefaults-backed preferences exist — `SettingsStore.swift`
 - [DONE] Queue snapshot persistence exists — `SessionStore.swift`
 - [PARTIAL] `CompletedSession` has `available` (WO-002); kind/pinned/justArrived still missing — `SessionRecord.swift`. SPEC `Session` also uses UUID `id`; code uses string `sessionID`.

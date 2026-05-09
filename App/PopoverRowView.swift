@@ -108,7 +108,12 @@ struct PopoverRowView: View {
                 runMissingAnimation()
             }
         }
-        .accessibilityLabel("\(session.projectName) 작업 완료, 클릭하여 정리")
+        .accessibilityLabel(rowAccessibilityLabel)
+    }
+
+    private var rowAccessibilityLabel: String {
+        let pinnedPrefix = session.pinned ? "Pinned, " : ""
+        return "\(session.projectName) \(pinnedPrefix)작업 완료, 클릭하여 정리"
     }
 
     @ViewBuilder

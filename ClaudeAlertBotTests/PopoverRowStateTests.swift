@@ -123,6 +123,30 @@ final class PopoverRowStateTests: XCTestCase {
         )
     }
 
+    func test_pinnedRowAccessibility_isAnnouncedFromButtonLabel() {
+        let src = readPopoverRowViewSource()
+
+        XCTAssertTrue(
+            src.contains(".accessibilityLabel(rowAccessibilityLabel)"),
+            "WO-011 review: parent Button accessibility label must announce pinned state"
+        )
+
+        guard let helperRange = src.range(of: "private var rowAccessibilityLabel: String") else {
+            XCTFail("WO-011 review: PopoverRowView must define rowAccessibilityLabel")
+            return
+        }
+
+        let helperSource = String(src[helperRange.lowerBound...])
+        XCTAssertTrue(
+            helperSource.contains("session.pinned ? \"Pinned, \" : \"\""),
+            "WO-011 review: rowAccessibilityLabel must branch on session.pinned"
+        )
+        XCTAssertTrue(
+            helperSource.contains(#"return "\(session.projectName) \(pinnedPrefix)작업 완료, 클릭하여 정리""#),
+            "WO-011 review: rowAccessibilityLabel must include pinned state in the row-level label"
+        )
+    }
+
     // MARK: - helpers
 
     /// Resolve App/PopoverRowView.swift relative to *this* test file's source location so

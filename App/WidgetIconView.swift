@@ -10,6 +10,7 @@ import AppKit
 struct WidgetIconView: View {
     let pendingCount: Int
     var idleAnimation: IdleAnimation = .default
+    var quietHoursEnabled: Bool = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var bounceOffset: CGFloat = 0
@@ -24,24 +25,26 @@ struct WidgetIconView: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 36, height: 36)
                 .frame(width: 44, height: 44)
-                .scaleEffect(breatheScale)
-                .offset(y: bounceOffset)
+                .scaleEffect(quietHoursEnabled ? 1.0 : breatheScale)
+                .offset(y: quietHoursEnabled ? 0 : bounceOffset)
                 .onAppear {
-                    // Phase 03.1: consume MotionTokens (SC#1, SC#3 uniform reduce-motion gate).
-                    switch idleAnimation {
-                    case .bounce:
-                        guard let anim = MotionTokens.bounceAnimation(reduceMotion: reduceMotion) else { return }
-                        withAnimation(anim) {
-                            bounceOffset = -MotionTokens.bounceOffset
-                        }
-                    case .breathe:
-                        guard let anim = MotionTokens.breatheAnimation(reduceMotion: reduceMotion) else { return }
-                        withAnimation(anim) {
-                            breatheScale = MotionTokens.breatheScale
-                        }
+                    startIdleAnimation()
+                }
+                .onChange(of: quietHoursEnabled) { _, quiet in
+                    if quiet {
+                        bounceOffset = 0
+                        breatheScale = 1.0
+                    } else {
+                        startIdleAnimation()
                     }
                 }
-            if pendingCount >= 2 {
+            if quietHoursEnabled {
+                Text("Zzz")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Color(NSColor.secondaryLabelColor))
+                    .offset(x: 5, y: -6)
+                    .accessibilityHidden(true)
+            } else if pendingCount >= 2 {
                 Text("+\(pendingCount - 1)")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.white)
@@ -57,5 +60,22 @@ struct WidgetIconView: View {
         .accessibilityElement()
         .accessibilityLabel("Claude 작업 완료 알림. 보류 중 \(pendingCount)건")
         .accessibilityAddTraits(.isButton)
+    }
+
+    private func startIdleAnimation() {
+        guard !quietHoursEnabled else { return }
+        // Phase 03.1: consume MotionTokens (SC#1, SC#3 uniform reduce-motion gate).
+        switch idleAnimation {
+        case .bounce:
+            guard let anim = MotionTokens.bounceAnimation(reduceMotion: reduceMotion) else { return }
+            withAnimation(anim) {
+                bounceOffset = -MotionTokens.bounceOffset
+            }
+        case .breathe:
+            guard let anim = MotionTokens.breatheAnimation(reduceMotion: reduceMotion) else { return }
+            withAnimation(anim) {
+                breatheScale = MotionTokens.breatheScale
+            }
+        }
     }
 }

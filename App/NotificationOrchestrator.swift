@@ -68,11 +68,11 @@ final class NotificationOrchestrator: NotifierProtocol {
     func present(session: CompletedSession, playSoundOnce: Bool) async {
         let store = settings()
         widget?.showWidget(pendingCount: 1, latest: session)
-        if playSoundOnce && store.soundEnabled {
+        if playSoundOnce && store.soundEnabled && !store.quietHoursEnabled {
             sound.playOnce()
             log.notice("present session=\(session.sessionID, privacy: .public) sound=on")
         } else {
-            log.notice("present session=\(session.sessionID, privacy: .public) sound=off playSoundOnce=\(playSoundOnce, privacy: .public) enabled=\(store.soundEnabled, privacy: .public)")
+            log.notice("present session=\(session.sessionID, privacy: .public) sound=off playSoundOnce=\(playSoundOnce, privacy: .public) enabled=\(store.soundEnabled, privacy: .public) quiet=\(store.quietHoursEnabled, privacy: .public)")
         }
     }
 

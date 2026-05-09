@@ -57,11 +57,13 @@ final class NotificationOrchestratorTests: XCTestCase {
         // (UserDefaults persists across XCTest invocations; explicit reset prevents
         // cross-test leakage).
         SettingsStore.shared.soundEnabled = true
+        SettingsStore.shared.quietHoursEnabled = false
     }
 
     @MainActor
     override func tearDown() async throws {
         SettingsStore.shared.soundEnabled = true
+        SettingsStore.shared.quietHoursEnabled = false
     }
 
     @MainActor
@@ -90,6 +92,20 @@ final class NotificationOrchestratorTests: XCTestCase {
 
         XCTAssertEqual(widget.showCalls.count, 1, "Widget must still show")
         XCTAssertEqual(sound.playOnceCount, 0, "AUD-02: sound MUST NOT play when toggle off")
+    }
+
+    @MainActor
+    func test_present_skipsSound_whenQuietHoursEnabled() async {
+        SettingsStore.shared.soundEnabled = true
+        SettingsStore.shared.quietHoursEnabled = true
+        let widget = SpyWidget()
+        let sound = SpySoundPlayer()
+        let orch = NotificationOrchestrator(widget: widget, sound: sound)
+
+        await orch.present(session: makeSession(), playSoundOnce: true)
+
+        XCTAssertEqual(widget.showCalls.count, 1, "Quiet Hours must still queue/show the widget")
+        XCTAssertEqual(sound.playOnceCount, 0, "Quiet Hours must suppress sound")
     }
 
     @MainActor

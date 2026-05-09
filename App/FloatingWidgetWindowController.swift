@@ -24,6 +24,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     private var trackingArea: NSTrackingArea?
     private var settingsCancellable: AnyCancellable?
     private var currentQueue: [CompletedSession] = []
+    private var currentPendingCount: Int = 0
     weak var hoverDelegate: WidgetHoverDelegate?
 
     init() {
@@ -39,7 +40,9 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
         installTrackingArea(on: hv)
         settingsCancellable = SettingsStore.shared.objectWillChange.sink { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.repositionIfVisible()
+                guard let self else { return }
+                self.updateRootView(pendingCount: self.currentPendingCount)
+                self.repositionIfVisible()
             }
         }
     }
@@ -49,6 +52,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     // MARK: - WidgetControllerProtocol
 
     func showWidget(pendingCount: Int, latest: CompletedSession?) {
+        currentPendingCount = pendingCount
         updateRootView(pendingCount: pendingCount)
         reposition()
         if !panel.isVisible {
@@ -68,6 +72,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     }
 
     func updatePendingCount(_ n: Int, latest: CompletedSession?) {
+        currentPendingCount = n
         updateRootView(pendingCount: n)
         // No reposition unless settings changed — caller (02-06) decides via showWidget vs updatePendingCount.
     }
@@ -83,7 +88,10 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     // MARK: - private
 
     private func updateRootView(pendingCount: Int) {
-        hostingView?.rootView = WidgetIconView(pendingCount: pendingCount)
+        hostingView?.rootView = WidgetIconView(
+            pendingCount: pendingCount,
+            quietHoursEnabled: SettingsStore.shared.quietHoursEnabled
+        )
     }
 
     private func repositionIfVisible() {

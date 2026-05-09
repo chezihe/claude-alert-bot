@@ -13,6 +13,8 @@ struct SettingsView: View {
     static let thresholdCaption = "이 시간 이상 걸린 작업만 알려요"
     static let soundHeading = "사운드"
     static let soundToggleLabel = "알림 사운드 재생"
+    static let quietHoursHeading = "Quiet Hours"
+    static let quietHoursToggleLabel = "Quiet Hours"
     static let widgetPositionHeading = "Widget Position"
     static let cornerLabel = "Corner"
     static let offsetXLabel = "Horizontal Offset"
@@ -61,6 +63,10 @@ struct SettingsView: View {
 
             Section(Self.soundHeading) {
                 Toggle(Self.soundToggleLabel, isOn: $store.soundEnabled)
+            }
+
+            Section(Self.quietHoursHeading) {
+                Toggle(Self.quietHoursToggleLabel, isOn: $store.quietHoursEnabled)
             }
 
             Section(Self.widgetPositionHeading) {

@@ -29,6 +29,30 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(second.widgetCorner, .bottomLeft)
     }
 
+    func test_quietHours_defaultIsOff() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = SettingsStore(defaults: defaults)
+
+        XCTAssertFalse(store.quietHoursEnabled)
+    }
+
+    func test_quietHours_persistsAcrossInit() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let first = SettingsStore(defaults: defaults)
+        first.quietHoursEnabled = true
+
+        let second = SettingsStore(defaults: defaults)
+        XCTAssertTrue(second.quietHoursEnabled)
+    }
+
     func test_muteProject_isMutedUntilExpirationBoundary() {
         let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!

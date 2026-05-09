@@ -29,6 +29,10 @@ extension SettingsViewTests {
         XCTAssertEqual(SettingsView.soundHeading, "사운드")
         XCTAssertEqual(SettingsView.soundToggleLabel, "알림 사운드 재생")
     }
+    func test_settingsCopy_quietHoursSection() {
+        XCTAssertEqual(SettingsView.quietHoursHeading, "Quiet Hours")
+        XCTAssertEqual(SettingsView.quietHoursToggleLabel, "Quiet Hours")
+    }
     func test_settingsCopy_widgetPositionSection() {
         XCTAssertEqual(SettingsView.widgetPositionHeading, "Widget Position")
         XCTAssertEqual(SettingsView.cornerLabel, "Corner")
@@ -99,6 +103,12 @@ extension SettingsViewTests {
 
         XCTAssertTrue(src.contains(#"static let mutedProjectsHeading = "Muted Projects""#))
         XCTAssertTrue(src.contains(#"static let unmuteButtonLabel = "Unmute""#))
+    }
+
+    func test_quietHoursSection_wiresToggleToStore() {
+        let src = readSettingsViewSource()
+
+        XCTAssertTrue(src.contains("Toggle(Self.quietHoursToggleLabel, isOn: $store.quietHoursEnabled)"))
     }
 
     /// Resolve App/SettingsView.swift relative to this test file so source-level

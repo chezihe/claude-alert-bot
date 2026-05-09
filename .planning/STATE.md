@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-09T12:30:00.000Z"
+last_updated: "2026-05-09T06:32:40.279Z"
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 3
-  total_plans: 39
+  total_plans: 34
   completed_plans: 29
-  percent: 74
+  percent: 85
 ---
 
 # State: Claude Alert Bot
@@ -20,25 +20,25 @@ progress:
 
 - **What this is:** Native macOS app that turns Claude Code's `Stop` hook into a persistent floating widget that lands the user back on the exact iTerm2 tab where the work happened.
 - **Core value:** "Claude Code 사용자가 자리를 비웠을 때, 길게 걸린 작업의 완료를 놓치지 않고 정확한 그 iTerm2 세션으로 즉시 복귀할 수 있다." — alert + correct-tab jump are the inseparable core; either failing destroys the value.
-- **Current focus:** Phase 04 — multi-session UX (next)
+- **Current focus:** Phase 03.1 — design-system-foundation
 
 ## Current Position
 
-Phase: 03 (click-to-iterm2) — COMPLETE; Phase 04 next
-Plan: 10 of 10 (Phase 03 closed)
-Next: `/gsd-context-phase 4` to begin Phase 4 (Multi-Session UX). Phase 3 carry-overs: V-9 (1-06-01 contract drift — MenuBarExtra now expected), V-10 (verifier ordering — 3-09-01/02 environmental), D-backlog (Stop hook delay observed in checkpoint).
+Phase: 03.1 (design-system-foundation) — EXECUTING
+Plan: 1 of 5
+Next: `/gsd-plan-phase 03.1` to break down Phase 3.1 (Design System Foundation — extract Prototype v2 visual + motion tokens into Swift design-system module; refactor existing views to consume tokens with no behavioral change). Phase 3 carry-overs: V-9 (1-06-01 contract drift — MenuBarExtra now expected), V-10 (verifier ordering — 3-09-01/02 environmental), D-backlog (Stop hook delay observed in checkpoint).
 
 - **Milestone:** v1
-- **Phase:** 3 (closed) → 4 (next)
-- **Plan:** 10 / 10 complete in Phase 03
-- **Status:** Phase 03 complete (phase_gate: green)
-- **Progress:** [██████████] 100%
+- **Phase:** 3 (closed) → 3.1 (next, INSERTED) → 4 (deferred)
+- **Plan:** 10 / 10 complete in Phase 03; Phase 03.1 not yet planned
+- **Status:** Executing Phase 03.1
+- **Progress:** [██████████] 100% of pre-3.1 milestone scope
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
-| Phases complete | 3 / 6 |
+| Phases complete | 3 / 7 (Phase 3.1 inserted 2026-05-09) |
 | Plans complete | 7 / 7 in Phase 01 + 12 / 12 in Phase 02 + 10 / 10 in Phase 03 |
 | Requirements covered | 38 / 53 (+ Phase 3: JUMP-01, JUMP-02, JUMP-03, JUMP-04, JUMP-05, SET-05, ONB-02, ONB-03) |
 | Plan 03-09 metrics | ~3 hr duration · 4 tasks (verify-phase-3 population, verify-phase-2 annotation, manual checkpoint, 03-VERIFICATION.md) · 12 files modified/created · 9 commits (Tasks 1+2 + 7 in-flight checkpoint fixes) · verifier 19 PASS / 2 FAIL\* / 1 SKIP from clean state · 8 production bugs diagnosed + locked during checkpoint · all 5 SCs PASS post-fix · phase_gate: green |
@@ -59,6 +59,10 @@ Next: `/gsd-context-phase 4` to begin Phase 4 (Multi-Session UX). Phase 3 carry-
 | Plan 02-10 metrics | ~3 min duration · 2 TDD tasks · 3 files created (App/PermissionBannerView.swift, App/SettingsView.swift, ClaudeAlertBotTests/SettingsViewTests.swift) · 4 commits (RED + GREEN ×2) · 8/8 SettingsViewTests pass (3 banner-copy + 5 settings-copy/corner) · full target 79/79 pass (was 71 + 8 new) · 0 regressions · zero new external dependencies (D2-29 preserved) |
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 3.1 (Design System Foundation) inserted after Phase 3 on 2026-05-09 — extract Prototype v2 visual + motion tokens into Swift design-system module before Phase 4 multi-session views consume them. Goal: single source of truth for accent `#D97757`, status dot colors, popover geometry (270×14×36pt), animation timings, reduce-motion gating. No behavioral change to existing views in this phase. (URGENT — gates Phase 4)
 
 ### Locked Decisions (from research, ratified by roadmap)
 

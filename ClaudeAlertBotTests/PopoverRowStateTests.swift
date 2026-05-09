@@ -147,6 +147,26 @@ final class PopoverRowStateTests: XCTestCase {
         )
     }
 
+    // MARK: - WO-010 aging saturation contract (source-level audit)
+
+    func test_agingSaturationModifier_isAppliedToRow() {
+        let src = readPopoverRowViewSource()
+
+        XCTAssertTrue(
+            src.contains(".saturation("),
+            "WO-010: PopoverRowView must apply saturation for aged rows"
+        )
+    }
+
+    func test_agingSaturationModifier_usesPopoverContentRulesIsAged() {
+        let src = readPopoverRowViewSource()
+
+        XCTAssertTrue(
+            src.contains("PopoverContentRules.isAged"),
+            "WO-010: PopoverRowView saturation must be driven by PopoverContentRules.isAged"
+        )
+    }
+
     // MARK: - helpers
 
     /// Resolve App/PopoverRowView.swift relative to *this* test file's source location so

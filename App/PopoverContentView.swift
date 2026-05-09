@@ -10,6 +10,12 @@ import AppKit
 // MARK: - Pure display rules (testable without SwiftUI rendering)
 
 enum PopoverContentRules {
+    static let agingThresholdSec: TimeInterval = 60 * 60
+
+    static func isAged(session: CompletedSession, now: Date) -> Bool {
+        now.timeIntervalSince(session.stoppedAt) > agingThresholdSec
+    }
+
     /// D2-07 + UI-SPEC line 89: Clear all visible only when ≥2 rows.
     static func shouldShowClearAll(rowCount: Int) -> Bool { rowCount >= 2 }
 

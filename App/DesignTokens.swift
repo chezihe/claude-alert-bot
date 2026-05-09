@@ -66,6 +66,10 @@ enum GeometryTokens {
     static let popoverMaxVisibleRows: Int = 8
 }
 
+enum EffectTokens {
+    static let agedSaturation: Double = 0.4
+}
+
 enum MotionTokens {
     // SPEC.md §4 row "Bounce (idle)" — 0.45s duration, 5pt vertical, easeInOut, autoreverse, infinite.
     static let bounceDuration: TimeInterval = 0.45

@@ -90,6 +90,7 @@ struct PopoverRowView: View {
                 isHovered ? ColorTokens.rowHover(colorScheme: colorScheme) : Color.clear
             )
             .opacity(faded ? 0 : (session.available ? 1 : 0.5))
+            .saturation(PopoverContentRules.isAged(session: session, now: Date()) ? EffectTokens.agedSaturation : 1.0)
             .animation(.easeInOut(duration: 0.12), value: isHovered)
             .clipped()
             .contentShape(Rectangle())

@@ -73,7 +73,7 @@
 - [TODO] Quiet Hours sound/pulse gating is missing.
 - [PARTIAL] Reduce Motion is honored by some animations — `DesignTokens.swift`
   Bounce, panel enter/exit, and missing-row collapse are gated; many SPEC motions are absent.
-- [TODO] Aging style for rows older than 60 minutes is missing.
+- [DONE] Aging style for rows older than 60 minutes is implemented via strict 60-minute threshold and row saturation.
 - [PARTIAL] Grouping is time suffix only, not collapse/expand — `PopoverContentView.swift`
   SPEC asks 3+ same-project sessions to collapse under an expandable header.
 

@@ -129,6 +129,12 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertNotNil(MotionTokens.bounceAnimation(reduceMotion: false))
     }
 
+    // MARK: - EffectTokens (WO-010 aging)
+
+    func test_effectTokens_agedSaturation_is0_4() {
+        XCTAssertEqual(EffectTokens.agedSaturation, 0.4, accuracy: 0.001)
+    }
+
     private func assertColor(_ actual: Color, matches expected: Color, file: StaticString = #filePath, line: UInt = #line) {
         let actualColor = NSColor(actual).usingColorSpace(.sRGB)
         let expectedColor = NSColor(expected).usingColorSpace(.sRGB)

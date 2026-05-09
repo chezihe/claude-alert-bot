@@ -69,6 +69,29 @@ final class PopoverContentTests: XCTestCase {
         ])
     }
 
+    // MARK: - WO-010 aging threshold
+
+    func test_isAged_usesStrictSixtyMinuteThreshold() {
+        let now = Date(timeIntervalSince1970: 3_600)
+
+        XCTAssertFalse(PopoverContentRules.isAged(
+            session: mkSession(id: "now", project: "P", stoppedAt: now),
+            now: now
+        ))
+        XCTAssertFalse(PopoverContentRules.isAged(
+            session: mkSession(id: "fifty-nine-minutes", project: "P", stoppedAt: now.addingTimeInterval(-59 * 60)),
+            now: now
+        ))
+        XCTAssertFalse(PopoverContentRules.isAged(
+            session: mkSession(id: "exactly-sixty-minutes", project: "P", stoppedAt: now.addingTimeInterval(-60 * 60)),
+            now: now
+        ))
+        XCTAssertTrue(PopoverContentRules.isAged(
+            session: mkSession(id: "sixty-minutes-one-second", project: "P", stoppedAt: now.addingTimeInterval(-(60 * 60 + 1))),
+            now: now
+        ))
+    }
+
     // MARK: - helpers
     // Phase 3 / 03-06: removed `test_isUnavailable_membershipCheck`,
     // `test_isUnavailable_emptySet_neverUnavailable`, and

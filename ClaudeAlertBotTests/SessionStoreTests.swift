@@ -39,7 +39,9 @@ final class SessionStoreTests: XCTestCase {
                 CompletedSession(sessionID: "c1", projectName: "alpha",
                                  stoppedAt: Date(timeIntervalSince1970: 1_700_000_200),
                                  durationSec: 42, itermSessionID: "UUID", tty: "/dev/ttys001",
-                                 cwd: "/tmp/a"),
+                                 cwd: "/tmp/a", kind: .error, exitCode: 2,
+                                 startedAt: Date(timeIntervalSince1970: 1_700_000_100),
+                                 lastOutput: "tail output"),
                 CompletedSession(sessionID: "c2", projectName: "beta",
                                  stoppedAt: Date(timeIntervalSince1970: 1_700_000_300),
                                  durationSec: nil, itermSessionID: nil, tty: nil, cwd: nil),
@@ -57,6 +59,10 @@ final class SessionStoreTests: XCTestCase {
         XCTAssertEqual(loaded?.schema, snapshot.schema)
         XCTAssertEqual(loaded?.inFlight, snapshot.inFlight)
         XCTAssertEqual(loaded?.completed, snapshot.completed)
+        XCTAssertEqual(loaded?.completed.first?.kind, .error)
+        XCTAssertEqual(loaded?.completed.first?.exitCode, 2)
+        XCTAssertEqual(loaded?.completed.first?.startedAt, Date(timeIntervalSince1970: 1_700_000_100))
+        XCTAssertEqual(loaded?.completed.first?.lastOutput, "tail output")
     }
 
     /// Test 2: load returns nil (not throws) when file does not exist.
@@ -112,7 +118,11 @@ final class SessionStoreTests: XCTestCase {
                     durationSec: 31,
                     itermSessionID: "w0t0p1:79C4699F-1234-5678-9ABC-DEF012345678",
                     tty: "/dev/ttys001",
-                    cwd: "/tmp"
+                    cwd: "/tmp",
+                    kind: .waiting,
+                    exitCode: 7,
+                    startedAt: Date(timeIntervalSince1970: 1_700_000_010),
+                    lastOutput: "tail output"
                 )
             ]
         )
@@ -121,6 +131,10 @@ final class SessionStoreTests: XCTestCase {
         let loaded = await store.load()
         XCTAssertEqual(loaded?.completed.first?.itermSessionID, "79C4699F-1234-5678-9ABC-DEF012345678",
                        "D3-03: load() must strip the wXtYpZ: prefix in-memory")
+        XCTAssertEqual(loaded?.completed.first?.kind, .waiting)
+        XCTAssertEqual(loaded?.completed.first?.exitCode, 7)
+        XCTAssertEqual(loaded?.completed.first?.startedAt, Date(timeIntervalSince1970: 1_700_000_010))
+        XCTAssertEqual(loaded?.completed.first?.lastOutput, "tail output")
     }
 
     /// D3-04 idempotency — already-normalized value passes through unchanged.

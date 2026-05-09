@@ -119,7 +119,11 @@ actor SessionRegistry {
             durationSec: durationSec,
             itermSessionID: iTermSessionID.uuid(fromRaw: event.iterm_session_id),   // D3-02 — UUID-only on write
             tty: event.tty,
-            cwd: event.cwd
+            cwd: event.cwd,
+            kind: event.kind ?? .success,
+            exitCode: event.exit_code,
+            startedAt: event.started_at,
+            lastOutput: event.last_output
         )
         completed.append(session)
         await persist()

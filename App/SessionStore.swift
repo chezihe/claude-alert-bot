@@ -83,6 +83,10 @@ actor SessionStore {
                 itermSessionID: stripped,
                 tty: c.tty,
                 cwd: c.cwd,
+                kind: c.kind,
+                exitCode: c.exitCode,
+                startedAt: c.startedAt,
+                lastOutput: c.lastOutput,
                 available: c.available
             )
         }

@@ -4,6 +4,40 @@
 // D2-23/D2-25 sessions.json schema_version=1 (separate from D-08's schema_version=1; namespaces are independent).
 import Foundation
 
+enum LastOutputLimiter {
+    static let maxBytes = 4_096
+
+    static func capped(_ value: String?) -> String? {
+        guard let value else { return nil }
+        guard value.utf8.count > maxBytes else { return value }
+
+        var result = ""
+        var used = 0
+        for scalar in value.unicodeScalars {
+            let count = scalar.utf8.count
+            guard used + count <= maxBytes else { break }
+            result.unicodeScalars.append(scalar)
+            used += count
+        }
+        return result
+    }
+}
+
+enum AlertKind: String, Codable {
+    case success, error, waiting
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let raw = try? container.decode(String.self)
+        self = raw.flatMap(AlertKind.init(rawValue:)) ?? .success
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
+}
+
 /// In-flight start — created by user_prompt_submit, removed by matching stop or 6h GC.
 struct InFlightStart: Codable, Equatable {
     let startedAt: Date
@@ -19,6 +53,10 @@ struct CompletedSession: Codable, Equatable, Identifiable {
     let itermSessionID: String?
     let tty: String?
     let cwd: String?
+    let kind: AlertKind
+    let exitCode: Int?
+    let startedAt: Date?
+    let lastOutput: String?
     var available: Bool             // false = iTerm session gone
 
     var id: String { sessionID }    // for SwiftUI ForEach in popover
@@ -30,6 +68,10 @@ struct CompletedSession: Codable, Equatable, Identifiable {
          itermSessionID: String?,
          tty: String?,
          cwd: String?,
+         kind: AlertKind = .success,
+         exitCode: Int? = nil,
+         startedAt: Date? = nil,
+         lastOutput: String? = nil,
          available: Bool = true) {
         self.sessionID = sessionID
         self.projectName = projectName
@@ -38,6 +80,10 @@ struct CompletedSession: Codable, Equatable, Identifiable {
         self.itermSessionID = itermSessionID
         self.tty = tty
         self.cwd = cwd
+        self.kind = kind
+        self.exitCode = exitCode
+        self.startedAt = startedAt
+        self.lastOutput = LastOutputLimiter.capped(lastOutput)
         self.available = available
     }
 
@@ -49,6 +95,10 @@ struct CompletedSession: Codable, Equatable, Identifiable {
         case itermSessionID
         case tty
         case cwd
+        case kind
+        case exitCode
+        case startedAt
+        case lastOutput
         case available
     }
 
@@ -61,6 +111,10 @@ struct CompletedSession: Codable, Equatable, Identifiable {
         self.itermSessionID = try container.decodeIfPresent(String.self, forKey: .itermSessionID)
         self.tty = try container.decodeIfPresent(String.self, forKey: .tty)
         self.cwd = try container.decodeIfPresent(String.self, forKey: .cwd)
+        self.kind = try container.decodeIfPresent(AlertKind.self, forKey: .kind) ?? .success
+        self.exitCode = try container.decodeIfPresent(Int.self, forKey: .exitCode)
+        self.startedAt = try container.decodeIfPresent(Date.self, forKey: .startedAt)
+        self.lastOutput = LastOutputLimiter.capped(try container.decodeIfPresent(String.self, forKey: .lastOutput))
         self.available = try container.decodeIfPresent(Bool.self, forKey: .available) ?? true
     }
 
@@ -73,6 +127,10 @@ struct CompletedSession: Codable, Equatable, Identifiable {
         try container.encodeIfPresent(itermSessionID, forKey: .itermSessionID)
         try container.encodeIfPresent(tty, forKey: .tty)
         try container.encodeIfPresent(cwd, forKey: .cwd)
+        try container.encode(kind, forKey: .kind)
+        try container.encodeIfPresent(exitCode, forKey: .exitCode)
+        try container.encodeIfPresent(startedAt, forKey: .startedAt)
+        try container.encodeIfPresent(lastOutput, forKey: .lastOutput)
         try container.encode(available, forKey: .available)
     }
 

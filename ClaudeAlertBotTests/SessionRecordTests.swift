@@ -16,6 +16,10 @@ final class SessionRecordTests: XCTestCase {
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode(CompletedSession.self, from: data)
         XCTAssertEqual(decoded, original)
+        XCTAssertEqual(decoded.kind, .success)
+        XCTAssertNil(decoded.exitCode)
+        XCTAssertNil(decoded.startedAt)
+        XCTAssertNil(decoded.lastOutput)
 
         // optional-nil round-trip
         let nilCase = CompletedSession(
@@ -50,6 +54,81 @@ final class SessionRecordTests: XCTestCase {
         let decoded = try decoder.decode(CompletedSession.self, from: json)
 
         XCTAssertTrue(decoded.available)
+        XCTAssertEqual(decoded.kind, .success)
+        XCTAssertNil(decoded.exitCode)
+        XCTAssertNil(decoded.startedAt)
+        XCTAssertNil(decoded.lastOutput)
+    }
+
+    func test_alertKind_decodesUnknownAsSuccess() throws {
+        let decoded = try JSONDecoder().decode(AlertKind.self, from: Data(#""surprise""#.utf8))
+
+        XCTAssertEqual(decoded, .success)
+    }
+
+    func test_completedSession_roundTripsExtendedPayloadFields() throws {
+        let json = """
+        {
+          "sessionID": "extended",
+          "projectName": "claude_alert_bot",
+          "stoppedAt": "2026-05-09T00:00:10Z",
+          "durationSec": 45,
+          "itermSessionID": "79C4699F-1234-5678-9ABC-DEF012345678",
+          "tty": "/dev/ttys001",
+          "cwd": "/Users/me/proj",
+          "available": true,
+          "kind": "waiting",
+          "exitCode": 7,
+          "startedAt": "2026-05-09T00:00:00Z",
+          "lastOutput": "tail output"
+        }
+        """.data(using: .utf8)!
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+
+        let decoded = try decoder.decode(CompletedSession.self, from: json)
+        let encoded = try encoder.encode(decoded)
+        let roundTripped = try decoder.decode(CompletedSession.self, from: encoded)
+
+        XCTAssertEqual(roundTripped, decoded)
+        XCTAssertEqual(roundTripped.kind, .waiting)
+        XCTAssertEqual(roundTripped.exitCode, 7)
+        XCTAssertEqual(roundTripped.startedAt, ISO8601DateFormatter().date(from: "2026-05-09T00:00:00Z"))
+        XCTAssertEqual(roundTripped.lastOutput, "tail output")
+    }
+
+    func test_completedSession_capsLastOutputTo4KB() throws {
+        let oversized = String(repeating: "x", count: 5_000)
+        let session = CompletedSession(
+            sessionID: "capped",
+            projectName: "claude_alert_bot",
+            stoppedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            durationSec: 45,
+            itermSessionID: nil,
+            tty: nil,
+            cwd: nil,
+            lastOutput: oversized
+        )
+
+        XCTAssertEqual(session.lastOutput?.utf8.count, 4_096)
+
+        let json = """
+        {
+          "sessionID": "capped-json",
+          "projectName": "claude_alert_bot",
+          "stoppedAt": "2026-05-09T00:00:10Z",
+          "durationSec": 45,
+          "available": true,
+          "lastOutput": "\(oversized)"
+        }
+        """.data(using: .utf8)!
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let decoded = try decoder.decode(CompletedSession.self, from: json)
+
+        XCTAssertEqual(decoded.lastOutput?.utf8.count, 4_096)
     }
 
     func test_sessionsSnapshot_schemaVersion_1() throws {

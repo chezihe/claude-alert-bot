@@ -19,7 +19,11 @@ enum HookEventFactory {
                      iTermSessionID: String? = "w0t0p1:TEST-UUID",
                      cwd: String? = "/Users/test/project",
                      ts: String = ISO8601DateFormatter().string(from: Date()),
-                     termProgram: String? = nil) -> HookEvent {
+                     termProgram: String? = nil,
+                     exitCode: Int? = nil,
+                     startedAt: Date? = nil,
+                     kind: AlertKind? = nil,
+                     lastOutput: String? = nil) -> HookEvent {
         var dict: [String: Any] = [
             "schema_version": 1,
             "event": "stop",
@@ -33,6 +37,10 @@ enum HookEventFactory {
             "ts": ts
         ]
         if let tp = termProgram { dict["term_program"] = tp }
+        if let exitCode { dict["exit_code"] = exitCode }
+        if let startedAt { dict["started_at"] = startedAt.timeIntervalSince1970 }
+        if let kind { dict["kind"] = kind.rawValue }
+        if let lastOutput { dict["last_output"] = lastOutput }
         let data = try! JSONSerialization.data(withJSONObject: dict, options: [])
         return try! JSONDecoder().decode(HookEvent.self, from: data)
     }

@@ -142,6 +142,28 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(notifier.presentCalls.count, 1)
     }
 
+    func test_ingest_stop_propagatesExtendedPayloadFields() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-E2"
+        let startedAt = Date(timeIntervalSince1970: 1_730_000_000)
+        let stop = HookEventFactory.stop(sessionID: sid,
+                                         ts: iso(Date()),
+                                         exitCode: 2,
+                                         startedAt: startedAt,
+                                         kind: .error,
+                                         lastOutput: "tail output")
+
+        await r.ingest(stop, thresholdSeconds: 0, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let session = await r.snapshotForTesting().completed.first
+        XCTAssertEqual(session?.kind, .error)
+        XCTAssertEqual(session?.exitCode, 2)
+        XCTAssertEqual(session?.startedAt, startedAt)
+        XCTAssertEqual(session?.lastOutput, "tail output")
+    }
+
     /// Test F — AUD-01 dedupe: same (sid, ts/2s bucket) twice → second present.playSound=false.
     func test_AUD_01_dedupe_sameKey_secondCallNoSound() async {
         let r = makeRegistry()

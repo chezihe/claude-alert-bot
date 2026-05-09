@@ -43,6 +43,7 @@ JSON=$(STDIN_JSON="$STDIN_JSON" \
        PPID_VAL="$PPID_VAL" \
        /usr/bin/python3 -S -c '
 import json, os, sys
+from datetime import datetime
 
 raw = os.environ.get("STDIN_JSON", "")
 parsed = {}
@@ -54,6 +55,45 @@ if raw.strip():
 
 env = os.environ.get
 def nz(v): return v if v else None
+def is_number(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+def cap_utf8(v):
+    if not isinstance(v, str):
+        return None
+    data = v.encode("utf-8")[:4096]
+    while True:
+        try:
+            return data.decode("utf-8")
+        except UnicodeDecodeError as e:
+            data = data[:e.start]
+def epoch(v):
+    if is_number(v):
+        return v
+    if isinstance(v, str):
+        try:
+            text = v.replace("Z", "+00:00")
+            return datetime.fromisoformat(text).timestamp()
+        except Exception:
+            return None
+    return None
+def transcript_started_at(path):
+    if not isinstance(path, str) or not path:
+        return None
+    try:
+        latest = None
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    obj = json.loads(line)
+                except Exception:
+                    continue
+                if obj.get("type") == "user":
+                    ts = epoch(obj.get("timestamp"))
+                    if ts is not None:
+                        latest = ts
+        return latest
+    except Exception:
+        return None
 
 envelope = {
     "schema_version": 1,
@@ -68,6 +108,31 @@ envelope = {
     "claude_project_dir": nz(env("CLAUDE_DIR")),
     "ts": env("TS"),
 }
+tool_use = parsed.get("tool_use") if isinstance(parsed.get("tool_use"), dict) else {}
+exit_code = parsed.get("exit_code")
+if exit_code is None:
+    exit_code = tool_use.get("exit_code")
+if isinstance(exit_code, int) and not isinstance(exit_code, bool):
+    envelope["exit_code"] = exit_code
+started_at = epoch(parsed.get("started_at"))
+if started_at is None:
+    started_at = epoch(parsed.get("prompt_started_at"))
+if started_at is None:
+    started_at = transcript_started_at(parsed.get("transcript_path"))
+if started_at is not None:
+    envelope["started_at"] = started_at
+kind = parsed.get("kind")
+if isinstance(kind, str):
+    envelope["kind"] = kind
+last_output = parsed.get("last_output")
+if not isinstance(last_output, str):
+    for key in ("output", "result", "summary"):
+        if isinstance(parsed.get(key), str):
+            last_output = parsed.get(key)
+            break
+last_output = cap_utf8(last_output)
+if last_output is not None:
+    envelope["last_output"] = last_output
 print(json.dumps(envelope, ensure_ascii=False))
 ' 2>/dev/null) || JSON=""
 

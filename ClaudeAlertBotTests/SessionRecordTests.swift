@@ -60,6 +60,46 @@ final class SessionRecordTests: XCTestCase {
         XCTAssertNil(decoded.lastOutput)
     }
 
+    func test_completedSession_decodesMissingPinnedAsFalse() throws {
+        let json = """
+        {
+          "sessionID": "legacy-pin",
+          "projectName": "claude_alert_bot",
+          "stoppedAt": "2026-05-09T00:00:00Z",
+          "durationSec": 45,
+          "itermSessionID": "79C4699F-1234-5678-9ABC-DEF012345678",
+          "tty": "/dev/ttys001",
+          "cwd": "/Users/me/proj",
+          "available": true
+        }
+        """.data(using: .utf8)!
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        let decoded = try decoder.decode(CompletedSession.self, from: json)
+
+        XCTAssertFalse(decoded.pinned)
+    }
+
+    func test_completedSession_roundTripsPinned() throws {
+        let original = CompletedSession(
+            sessionID: "pinned",
+            projectName: "claude_alert_bot",
+            stoppedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            durationSec: 45,
+            itermSessionID: nil,
+            tty: nil,
+            cwd: nil,
+            pinned: true
+        )
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(CompletedSession.self, from: data)
+
+        XCTAssertEqual(decoded, original)
+        XCTAssertTrue(decoded.pinned)
+    }
+
     func test_alertKind_decodesUnknownAsSuccess() throws {
         let decoded = try JSONDecoder().decode(AlertKind.self, from: Data(#""surprise""#.utf8))
 

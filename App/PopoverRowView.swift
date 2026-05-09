@@ -31,7 +31,10 @@ struct PopoverRowView: View {
     /// Phase 3 D3-11 — state owned by parent (WidgetPopoverController via PopoverContentView).
     /// Default `.normal` keeps any call site that hasn't wired state yet working until 03-07.
     var state: RowState = .normal
+    var isMuted: Bool = false
     let onClick: () -> Void
+    var onTogglePin: () -> Void = {}
+    var onToggleMute: () -> Void = {}
     /// Phase 3 D3-11 — fired after the missing-collapse animation completes; parent should
     /// then call `SessionRegistry.shared.clearOne(sessionID:)`. No-op default for call sites
     /// that pin state to `.normal` and will never reach the failure branch.
@@ -86,6 +89,10 @@ struct PopoverRowView: View {
         }
         .buttonStyle(.plain)
         .disabled(state != .normal)                         // belt-and-suspenders for JUMP-05
+        .contextMenu {
+            Button(session.pinned ? "Unpin" : "Pin") { onTogglePin() }
+            Button(isMuted ? "Unmute This Project" : "Mute this project for 1h") { onToggleMute() }
+        }
         .onHover { hovering in
             isHovered = hovering
         }

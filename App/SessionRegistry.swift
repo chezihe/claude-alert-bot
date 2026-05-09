@@ -112,9 +112,15 @@ actor SessionRegistry {
             await persist()
             return
         }
+        let projectName = ProjectName.derive(cwd: event.cwd, claudeProjectDir: event.claude_project_dir)
+        if await MainActor.run(body: { SettingsStore.shared.isMuted(project: projectName, now: stoppedAt) }) {
+            log.notice("ingest_stop muted project=\(projectName, privacy: .public) session=\(sid, privacy: .public)")
+            await persist()
+            return
+        }
         let session = CompletedSession(
             sessionID: sid,
-            projectName: ProjectName.derive(cwd: event.cwd, claudeProjectDir: event.claude_project_dir),
+            projectName: projectName,
             stoppedAt: stoppedAt,
             durationSec: durationSec,
             itermSessionID: iTermSessionID.uuid(fromRaw: event.iterm_session_id),   // D3-02 — UUID-only on write
@@ -167,6 +173,21 @@ actor SessionRegistry {
         log.notice("markUnavailable session=\(sessionID, privacy: .public)")
     }
 
+    func togglePin(sessionID: String) async {
+        guard let idx = completed.firstIndex(where: { $0.sessionID == sessionID }) else {
+            log.notice("togglePin session=\(sessionID, privacy: .public) ignored (no longer in queue)")
+            return
+        }
+        completed[idx].pinned.toggle()
+        let pinned = completed[idx].pinned
+        await persist()
+        let snapshot = self.completed
+        let count = snapshot.count
+        let n = self.notifier
+        await n?.refreshQueueState(completed: snapshot, count: count)
+        log.notice("togglePin session=\(sessionID, privacy: .public) pinned=\(pinned, privacy: .public)")
+    }
+
     /// Read-only snapshot of pending completed sessions. Used by 02-09 WorkspaceFrontmostObserver (D2-15).
     /// Returns a copy so iteration outside the actor cannot data-race the queue.
     func peekPending() -> [CompletedSession] {
@@ -174,11 +195,13 @@ actor SessionRegistry {
     }
 
     func clearAll() async {
-        completed.removeAll()
+        completed.removeAll(where: { !$0.pinned })
         await persist()
+        let snapshot = self.completed
+        let count = snapshot.count
         let n = self.notifier
-        await n?.refreshQueueState(completed: [], count: 0)
-        log.notice("clearAll")
+        await n?.refreshQueueState(completed: snapshot, count: count)
+        log.notice("clearAll remaining=\(count, privacy: .public)")
     }
 
     /// D2-21 — synthetic injection that walks the standard alert path but does NOT persist.

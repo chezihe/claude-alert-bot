@@ -58,6 +58,7 @@ struct CompletedSession: Codable, Equatable, Identifiable {
     let startedAt: Date?
     let lastOutput: String?
     var available: Bool             // false = iTerm session gone
+    var pinned: Bool
 
     var id: String { sessionID }    // for SwiftUI ForEach in popover
 
@@ -72,7 +73,8 @@ struct CompletedSession: Codable, Equatable, Identifiable {
          exitCode: Int? = nil,
          startedAt: Date? = nil,
          lastOutput: String? = nil,
-         available: Bool = true) {
+         available: Bool = true,
+         pinned: Bool = false) {
         self.sessionID = sessionID
         self.projectName = projectName
         self.stoppedAt = stoppedAt
@@ -85,6 +87,7 @@ struct CompletedSession: Codable, Equatable, Identifiable {
         self.startedAt = startedAt
         self.lastOutput = LastOutputLimiter.capped(lastOutput)
         self.available = available
+        self.pinned = pinned
     }
 
     enum CodingKeys: String, CodingKey {
@@ -100,6 +103,7 @@ struct CompletedSession: Codable, Equatable, Identifiable {
         case startedAt
         case lastOutput
         case available
+        case pinned
     }
 
     init(from decoder: Decoder) throws {
@@ -116,6 +120,7 @@ struct CompletedSession: Codable, Equatable, Identifiable {
         self.startedAt = try container.decodeIfPresent(Date.self, forKey: .startedAt)
         self.lastOutput = LastOutputLimiter.capped(try container.decodeIfPresent(String.self, forKey: .lastOutput))
         self.available = try container.decodeIfPresent(Bool.self, forKey: .available) ?? true
+        self.pinned = try container.decodeIfPresent(Bool.self, forKey: .pinned) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -132,6 +137,7 @@ struct CompletedSession: Codable, Equatable, Identifiable {
         try container.encodeIfPresent(startedAt, forKey: .startedAt)
         try container.encodeIfPresent(lastOutput, forKey: .lastOutput)
         try container.encode(available, forKey: .available)
+        try container.encode(pinned, forKey: .pinned)
     }
 
     /// D2-21 — SET-04 Test notification fixture. NOT persisted (D2-22) per SessionRegistry.injectTest.

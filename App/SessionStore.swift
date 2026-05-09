@@ -87,7 +87,8 @@ actor SessionStore {
                 exitCode: c.exitCode,
                 startedAt: c.startedAt,
                 lastOutput: c.lastOutput,
-                available: c.available
+                available: c.available,
+                pinned: c.pinned
             )
         }
         var result = snap

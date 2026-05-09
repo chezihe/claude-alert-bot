@@ -69,6 +69,22 @@ final class PopoverRowStateTests: XCTestCase {
         )
     }
 
+    // MARK: - WO-006 context menu contract (source-level audit)
+
+    func test_contextMenu_wiresPinAndMuteCallbacks() {
+        let src = readPopoverRowViewSource()
+
+        XCTAssertTrue(src.contains(".contextMenu {"), "WO-006: row must expose a context menu")
+        XCTAssertTrue(src.contains("Button(session.pinned ? \"Unpin\" : \"Pin\")"),
+                      "WO-006: context menu must branch Pin/Unpin from session.pinned")
+        XCTAssertTrue(src.contains("Button(isMuted ? \"Unmute This Project\" : \"Mute this project for 1h\")"),
+                      "WO-006: context menu must branch Mute/Unmute from isMuted")
+        XCTAssertTrue(src.contains("onTogglePin()"),
+                      "WO-006: Pin menu item must dispatch through the row callback")
+        XCTAssertTrue(src.contains("onToggleMute()"),
+                      "WO-006: Mute menu item must dispatch through the row callback")
+    }
+
     // MARK: - helpers
 
     /// Resolve App/PopoverRowView.swift relative to *this* test file's source location so

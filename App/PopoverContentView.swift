@@ -32,6 +32,16 @@ enum PopoverContentRules {
     static func showsOrphanIndicator(session: CompletedSession) -> Bool {
         session.durationSec == nil
     }
+
+    static func orderedByPinnedThenStoppedAt(_ queue: [CompletedSession]) -> [CompletedSession] {
+        queue.enumerated().sorted { lhs, rhs in
+            let left = lhs.element
+            let right = rhs.element
+            if left.pinned != right.pinned { return left.pinned && !right.pinned }
+            if left.stoppedAt != right.stoppedAt { return left.stoppedAt > right.stoppedAt }
+            return lhs.offset < rhs.offset
+        }.map(\.element)
+    }
 }
 
 // MARK: - SwiftUI container
@@ -40,6 +50,9 @@ struct PopoverContentView: View {
     let queue: [CompletedSession]
     let onRowClick: (String) -> Void   // sessionID
     let onClearAll: () -> Void
+    var onTogglePin: (String) -> Void = { _ in }
+    var onToggleMute: (String) -> Void = { _ in }
+    var isProjectMuted: (String) -> Bool = { _ in false }
     /// Phase 3 D3-11 — state map keyed by sessionID. Default empty → all rows render in `.normal`.
     /// Owned by WidgetPopoverController (03-07); content view stays pure (no @State).
     var rowStates: [String: RowState] = [:]
@@ -54,6 +67,10 @@ struct PopoverContentView: View {
 
     private var dupProjects: Set<String> {
         PopoverContentRules.projectsWithDuplicates(queue)
+    }
+
+    private var orderedQueue: [CompletedSession] {
+        PopoverContentRules.orderedByPinnedThenStoppedAt(queue)
     }
 
     var body: some View {
@@ -72,12 +89,15 @@ struct PopoverContentView: View {
             }
             ScrollView {
                 VStack(spacing: 0) {
-                    ForEach(queue) { session in
+                    ForEach(orderedQueue) { session in
                         PopoverRowView(
                             session: session,
                             showTimeSuffix: dupProjects.contains(session.projectName),
                             state: rowStates[session.sessionID, default: .normal],
+                            isMuted: isProjectMuted(session.projectName),
                             onClick: { onRowClick(session.sessionID) },
+                            onTogglePin: { onTogglePin(session.sessionID) },
+                            onToggleMute: { onToggleMute(session.projectName) },
                             onMissingComplete: { onRowMissingComplete(session.sessionID) }
                         )
                     }

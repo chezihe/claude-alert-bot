@@ -48,6 +48,27 @@ final class PopoverContentTests: XCTestCase {
             session: mkSession(id: "y", project: "P", duration: 42)))
     }
 
+    func test_orderedQueue_placesPinnedFirstThenStoppedAtDescending() {
+        let oldPinned = mkSession(id: "old-pinned", project: "P",
+                                  stoppedAt: Date(timeIntervalSince1970: 100),
+                                  pinned: true)
+        let newPinned = mkSession(id: "new-pinned", project: "P",
+                                  stoppedAt: Date(timeIntervalSince1970: 300),
+                                  pinned: true)
+        let newestUnpinned = mkSession(id: "newest-unpinned", project: "P",
+                                       stoppedAt: Date(timeIntervalSince1970: 400))
+        let olderUnpinned = mkSession(id: "older-unpinned", project: "P",
+                                      stoppedAt: Date(timeIntervalSince1970: 200))
+
+        let ordered = PopoverContentRules.orderedByPinnedThenStoppedAt([
+            olderUnpinned, oldPinned, newestUnpinned, newPinned
+        ])
+
+        XCTAssertEqual(ordered.map(\.sessionID), [
+            "new-pinned", "old-pinned", "newest-unpinned", "older-unpinned"
+        ])
+    }
+
     // MARK: - helpers
     // Phase 3 / 03-06: removed `test_isUnavailable_membershipCheck`,
     // `test_isUnavailable_emptySet_neverUnavailable`, and
@@ -55,15 +76,20 @@ final class PopoverContentTests: XCTestCase {
     // PopoverContentRules.isUnavailable / unavailableLabelText symbols were
     // Phase 2 placeholders superseded by the RowState `.missing` flow (D3-11/12).
 
-    private func mkSession(id: String, project: String, duration: Int? = 31) -> CompletedSession {
+    private func mkSession(id: String,
+                           project: String,
+                           duration: Int? = 31,
+                           stoppedAt: Date = Date(),
+                           pinned: Bool = false) -> CompletedSession {
         CompletedSession(
             sessionID: id,
             projectName: project,
-            stoppedAt: Date(),
+            stoppedAt: stoppedAt,
             durationSec: duration,
             itermSessionID: nil,
             tty: nil,
-            cwd: nil
+            cwd: nil,
+            pinned: pinned
         )
     }
 }

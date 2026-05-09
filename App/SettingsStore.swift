@@ -34,6 +34,10 @@ final class SettingsStore: ObservableObject {
         didSet { defaults.set(applescriptPermission.rawValue, forKey: "applescript_permission") }
     }
 
+    @Published var mutedProjects: [String: Date] {
+        didSet { persistMutedProjects() }
+    }
+
     /// D3-18 — written by SettingsView SET-05 button after testConnection() returns .ok.
     /// Sentinel: stored as TimeInterval; 0 (or absent) maps to nil.
     /// @Published so SettingsView re-renders when the value updates after a successful test.
@@ -58,7 +62,30 @@ final class SettingsStore: ObservableObject {
         self._offsetY = AppStorage(wrappedValue: 16, "widget_offset_y", store: defaults)
         let raw = defaults.string(forKey: "applescript_permission") ?? PermissionStatus.unknown.rawValue
         self.applescriptPermission = PermissionStatus(rawValue: raw) ?? .unknown
+        if let data = defaults.data(forKey: "muted_projects"),
+           let decoded = try? JSONDecoder().decode([String: Date].self, from: data) {
+            self.mutedProjects = decoded
+        } else {
+            self.mutedProjects = [:]
+        }
         let ti = defaults.double(forKey: "last_connection_test_at")
         self.lastConnectionTestAt = ti > 0 ? Date(timeIntervalSince1970: ti) : nil
+    }
+
+    func mute(project: String, duration: TimeInterval = 3600, now: Date) {
+        mutedProjects[project] = now.addingTimeInterval(duration)
+    }
+
+    func unmute(project: String) {
+        mutedProjects.removeValue(forKey: project)
+    }
+
+    func isMuted(project: String, now: Date) -> Bool {
+        (mutedProjects[project] ?? .distantPast) > now
+    }
+
+    private func persistMutedProjects() {
+        guard let data = try? JSONEncoder().encode(mutedProjects) else { return }
+        defaults.set(data, forKey: "muted_projects")
     }
 }

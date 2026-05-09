@@ -185,6 +185,34 @@ final class SessionStoreTests: XCTestCase {
                      "Migration must preserve nil itermSessionID (orphan path).")
     }
 
+    func test_load_legacyCompletedWithoutPinned_defaultsFalse() async throws {
+        let legacy = """
+        {
+          "schema": 1,
+          "inFlight": {},
+          "completed": [
+            {
+              "sessionID": "legacy-pin",
+              "projectName": "Legacy",
+              "stoppedAt": "2026-05-09T00:00:00Z",
+              "durationSec": 31,
+              "itermSessionID": "79C4699F-1234-5678-9ABC-DEF012345678",
+              "tty": "/dev/ttys001",
+              "cwd": "/tmp/Legacy",
+              "available": true
+            }
+          ]
+        }
+        """
+        try Data(legacy.utf8).write(to: tempURL)
+        let store = SessionStore(url: tempURL)
+
+        let loaded = await store.load()
+
+        XCTAssertEqual(loaded?.completed.first?.sessionID, "legacy-pin")
+        XCTAssertFalse(loaded?.completed.first?.pinned ?? true)
+    }
+
     /// Test 5: schema-mismatched JSON → load renames + returns nil (forward-compat guard).
     func test_load_schemaMismatch_renamesAndReturnsNil() async {
         let mismatched = """

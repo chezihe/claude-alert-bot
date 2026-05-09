@@ -88,6 +88,11 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             queue: queue,
             onRowClick: { [weak self] sid in self?.onRowClick(sessionID: sid) },
             onClearAll: { [weak self] in self?.onClearAll() },
+            onTogglePin: { [weak self] sid in self?.onTogglePin(sessionID: sid) },
+            onToggleMute: { [weak self] projectName in self?.onToggleMute(projectName: projectName) },
+            isProjectMuted: { projectName in
+                SettingsStore.shared.isMuted(project: projectName, now: Date())
+            },
             rowStates: rowStates,
             onRowMissingComplete: { [weak self] sid in
                 guard let self else { return }
@@ -140,6 +145,11 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             queue: queue,
             onRowClick: { [weak self] sid in self?.onRowClick(sessionID: sid) },
             onClearAll: { [weak self] in self?.onClearAll() },
+            onTogglePin: { [weak self] sid in self?.onTogglePin(sessionID: sid) },
+            onToggleMute: { [weak self] projectName in self?.onToggleMute(projectName: projectName) },
+            isProjectMuted: { projectName in
+                SettingsStore.shared.isMuted(project: projectName, now: Date())
+            },
             rowStates: rowStates,
             onRowMissingComplete: { [weak self] sid in
                 guard let self else { return }
@@ -218,5 +228,22 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         log.notice("popover Clear all")
         Task { await SessionRegistry.shared.clearAll() }
         dismissPopover()
+    }
+
+    private func onTogglePin(sessionID: String) {
+        Task { [weak self] in
+            await SessionRegistry.shared.togglePin(sessionID: sessionID)
+            await MainActor.run { self?.reloadPopoverContent() }
+        }
+    }
+
+    private func onToggleMute(projectName: String) {
+        let settings = SettingsStore.shared
+        if settings.isMuted(project: projectName, now: Date()) {
+            settings.unmute(project: projectName)
+        } else {
+            settings.mute(project: projectName, now: Date())
+        }
+        reloadPopoverContent()
     }
 }

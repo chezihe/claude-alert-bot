@@ -266,6 +266,66 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertTrue(notifier.refreshCalls.contains(0))
     }
 
+    func test_togglePin_togglesAndPersistsSession() async {
+        let r = makeRegistry()
+        await bind(r)
+        let session = CompletedSession(sessionID: "pin-me", projectName: "p", stoppedAt: Date(),
+                                       durationSec: 10, itermSessionID: nil, tty: nil, cwd: nil)
+        await r.seedCompletedForTesting(session)
+
+        await r.togglePin(sessionID: "pin-me")
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertTrue(snap.completed.first?.pinned ?? false)
+        XCTAssertTrue(notifier.refreshCalls.contains(1))
+
+        let loaded = await SessionStore(url: tempURL).load()
+        XCTAssertTrue(loaded?.completed.first?.pinned ?? false)
+    }
+
+    func test_clearAll_preservesPinnedSessions() async {
+        let r = makeRegistry()
+        await bind(r)
+        let pinned = CompletedSession(sessionID: "pinned", projectName: "p", stoppedAt: Date(),
+                                      durationSec: 10, itermSessionID: nil, tty: nil, cwd: nil,
+                                      pinned: true)
+        let unpinned = CompletedSession(sessionID: "unpinned", projectName: "p", stoppedAt: Date(),
+                                        durationSec: 10, itermSessionID: nil, tty: nil, cwd: nil)
+        await r.seedCompletedForTesting(pinned)
+        await r.seedCompletedForTesting(unpinned)
+
+        await r.clearAll()
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.map(\.sessionID), ["pinned"])
+        XCTAssertTrue(snap.completed.first?.pinned ?? false)
+        XCTAssertTrue(notifier.refreshCalls.contains(1))
+    }
+
+    func test_ingestStop_mutedProjectSkipsAppendAndPresent() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-muted"
+        let project = "muted-\(UUID().uuidString)"
+        let stoppedAt = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
+        SettingsStore.shared.mute(project: project, duration: 3600, now: stoppedAt)
+        defer { SettingsStore.shared.unmute(project: project) }
+        await r.seedInFlightForTesting(sessionID: sid,
+                                       started: stoppedAt.addingTimeInterval(-31),
+                                       cwd: "/tmp/\(project)")
+        let stop = HookEventFactory.stop(sessionID: sid,
+                                         cwd: "/tmp/\(project)",
+                                         ts: iso(stoppedAt))
+
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertNil(snap.inFlight[sid])
+        XCTAssertEqual(snap.completed.count, 0)
+        XCTAssertEqual(notifier.presentCalls.count, 0)
+    }
+
     /// Test K — D2-21: injectTest appends a test fixture and schedules auto-dismiss.
     /// With stub clock.sleepNanoseconds returning immediately, the dismiss Task fires fast.
     func test_injectTest_appendsAndScheduleAutoDismiss() async {
@@ -283,7 +343,7 @@ final class SessionRegistryTests: XCTestCase {
         // The auto-dismiss Task hops back into the actor; spin briefly waiting for it.
         for _ in 0..<50 {
             let snap = await r.snapshotForTesting()
-            if snap.completed.isEmpty { break }
+            if snap.completed.isEmpty && notifier.refreshCalls.contains(0) { break }
             try? await Task.sleep(nanoseconds: 20_000_000) // 20ms
         }
         let post = await r.snapshotForTesting()

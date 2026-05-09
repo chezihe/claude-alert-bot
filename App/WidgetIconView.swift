@@ -48,11 +48,12 @@ struct WidgetIconView: View {
                     )
                     .offset(x: 4, y: -4)        // top-trailing -4/-4 overhang
                     .accessibilityHidden(true)  // count is announced via the parent label
-            } else if quietHoursEnabled {
+            }
+            if quietHoursEnabled {
                 Text("Zzz")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(Color(NSColor.secondaryLabelColor))
-                    .offset(x: 5, y: -6)
+                    .offset(x: 5, y: pendingCount >= 2 ? 11 : -6)
                     .accessibilityHidden(true)
             }
         }

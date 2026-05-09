@@ -26,8 +26,10 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("var quietHoursEnabled: Bool = false"))
         XCTAssertTrue(src.contains("guard !quietHoursEnabled else { return }"))
         XCTAssertTrue(src.contains("if pendingCount >= 2 {"))
-        XCTAssertTrue(src.contains("else if quietHoursEnabled {"))
+        XCTAssertTrue(src.contains("if quietHoursEnabled {"))
+        XCTAssertFalse(src.contains("else if quietHoursEnabled {"))
         XCTAssertTrue(src.contains("quietHoursEnabled ? Color(NSColor.systemGray) : Color(NSColor.systemRed)"))
+        XCTAssertTrue(src.contains("y: pendingCount >= 2 ? 11 : -6"))
         XCTAssertTrue(src.contains(#"Text("Zzz")"#))
     }
 

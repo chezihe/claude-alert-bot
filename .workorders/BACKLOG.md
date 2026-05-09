@@ -32,8 +32,7 @@
 
 ## Step 3 — iTerm2 bridge
 - [DONE] Unix-domain-socket listener accepts hook JSON — `HookListener.swift`
-- [PARTIAL] App hook payload differs from SPEC's iTerm event shape — `HookEvent.swift`
-  Missing `exit_code`, `kind`, `last_output`, and `started_at`; duration is correlated internally.
+- [DONE] Hook payload includes `exit_code`, `kind`, `last_output`, `started_at` — `HookEvent.swift`, `SessionRecord.swift`. (WO-004)
 - [DONE] Project name is derived from cwd/claude_project_dir — `ProjectName.swift`
 - [UNCLEAR] iTerm2 Python API helper is intentionally absent.
   `CLAUDE.md` rejects a Python daemon; implementation uses AppleScript instead.
@@ -48,10 +47,10 @@
 - [PARTIAL] Same-project duplicates show time suffixes only — `PopoverContentView.swift`
   SPEC asks 3+ sessions to collapse into a grouped header with count badge.
 - [DONE] Row hover uses SPEC accent hover token — `PopoverRowView.swift`, `DesignTokens.swift`. (WO-002)
-- [TODO] Right-click row menu is missing.
-- [TODO] "Mute this project for 1h" is missing.
+- [DONE] Right-click context menu with Pin/Mute — `PopoverRowView.swift`. (WO-006)
+- [DONE] "Mute this project for 1h" + 1h auto-expiry — `MutedProjectsRules.swift`, `SessionRegistry.swift`. (WO-006)
 - [DONE] Pin state is complete via ordering, Clear All preservation, and visual indicator — `SessionRegistry.swift`, `PopoverContentView.swift`, `PopoverRowView.swift`. (WO-006, WO-011)
-- [PARTIAL] Status dot scaffolding rendered (single success color + hollow ring for unavailable) — `PopoverRowView.swift`, `DesignTokens.swift`. (WO-002) Color branching for error/waiting awaits hook payload extension.
+- [DONE] Status dot color branches by AlertKind (success/error/waiting) + hollow ring for unavailable — `PopoverRowView.swift`, `DesignTokens.swift`. (WO-002, WO-005)
 
 ## Step 5 — Settings + persistence
 - [DONE] SwiftUI Settings scene exists — `ClaudeAlertBotApp.swift`, `SettingsView.swift`
@@ -59,9 +58,9 @@
 - [DONE] Settings are opened from MenuBarExtra and popover header gear — `ClaudeAlertBotApp.swift`, `PopoverContentView.swift`, `WidgetPopoverController.swift`. (WO-009)
 - [DONE] UserDefaults-backed preferences exist — `SettingsStore.swift`
 - [DONE] Queue snapshot persistence exists — `SessionStore.swift`
-- [PARTIAL] `CompletedSession` has `available` (WO-002); kind/pinned/justArrived still missing — `SessionRecord.swift`. SPEC `Session` also uses UUID `id`; code uses string `sessionID`.
+- [PARTIAL] `CompletedSession` has `available` (WO-002), `kind` (WO-004/005), `pinned` (WO-006), `exitCode`/`startedAt`/`lastOutput` (WO-004); `justArrived` still missing — `SessionRecord.swift`. SPEC `Session` uses UUID `id`; code uses string `sessionID`.
 - [PARTIAL] `SessionRegistry` replaces `AlertBotStore` queue state — `SessionRegistry.swift`
-  No `quietHours`, `mutedProjects`, or `reduceMotion` fields are present.
+  `mutedProjects` handled in `SettingsStore` (WO-006/007). `quietHours` and `reduceMotion` fields still absent.
 - [DONE] `mutedProjects` persistence and Settings unmute list exist — `SettingsStore.swift`, `SettingsView.swift`, `MutedProjectsRules.swift`. (WO-006, WO-007)
 - [TODO] `everHadAlerts` onboarding persistence is missing.
 
@@ -89,6 +88,6 @@
   `NotificationOrchestrator` comments say D2-18 Focus/DnD detection was retracted.
 
 ## Recommended Next 3 WOs
-1. Implement row states: status dots, unavailable rendering, context menu, mute, and pin.
-2. Add Quiet Hours end-to-end: store fields, settings UI, glyph state, and sound gating.
-3. Reconcile SPEC iTerm payload/API decisions with current AppleScript + hook architecture.
+1. Add idle animations: Breathe (2.4s scale), Ring bell (0.55s rotate), and new-alert pulse + sonar.
+2. Add Quiet Hours end-to-end: store fields, settings UI, glyph moon overlay, badge desat, and sound gating.
+3. Add same-project grouping (3+ collapse/expand header with count badge + caret toggle).

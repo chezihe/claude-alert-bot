@@ -22,6 +22,7 @@ Claude Code 사용자가 자리를 비웠을 때, 길게 걸린 작업의 완료
 - [x] **Phase 1: Foundation** — Hook script + AF_UNIX IPC + headless app skeleton + ad-hoc-sign build pipeline; a Stop event lands as a structured log line in the running app. **(complete 2026-05-07; phase_gate: green; see `.planning/phases/01-foundation/01-VERIFICATION.md`)**
 - [x] **Phase 2: Alert Loop** — UserPromptSubmit/Stop correlation, threshold filter, persistent floating NSPanel widget, sound, Settings window. A 31-second Claude turn produces a clickable widget showing the project name (no jump yet). (completed 2026-05-08)
 - [x] **Phase 3: Click-to-iTerm2** — UUID-based AppleScript jump, TTY fallback, Automation permission flow, click debounce, 3-second hard timeout. Clicking the widget lands on the exact originating tab. **(complete 2026-05-09; phase_gate: green; see `.planning/phases/03-click-to-iterm2/03-VERIFICATION.md`)**
+- [ ] **Phase 3.1: Design System Foundation** *(INSERTED 2026-05-09)* — Extract visual + motion tokens from Prototype v2 / SPEC.md into a Swift design-system module; refactor existing Phase 2 views to consume them with no behavioral change. Foundation for Phase 4 and later polish.
 - [ ] **Phase 4: Multi-Session UX** — Counter-badge widget, expandable session list popover, batching window, sound dedupe, concurrency stress hardening. Five near-simultaneous completions produce one badge that opens a list and jumps each to its correct tab.
 - [ ] **Phase 5: Hook Installer & Onboarding** — Idempotent JSON5-tolerant patch of `~/.claude/settings.json` with manual fallback, 3-screen first-run wizard, clean uninstall. A new user reaches a working notifier without touching their terminal.
 - [ ] **Phase 6: Distribution** — `.dmg` packaging, README with macOS 14/15+ Gatekeeper paths, `bypass-gatekeeper.command` helper, fresh-account validation. Another macOS user installs from `.dmg` and reaches a working notifier in under five minutes.
@@ -109,9 +110,33 @@ Plans:
 **Reference:** TokenEater (`AThevon/TokenEater`, MIT) — referenced for v2 (env-stripped shell fallback). v1 does not borrow code; README CREDIT entry tracked for Phase 6.
 **UI hint:** yes
 
+### Phase 03.1: Design System Foundation (INSERTED)
+
+**Goal:** Extract visual and motion tokens from `Claude Alert Bot - Prototype v2.html` and `SPEC.md` §3-§4 into Swift design-system files (single source of truth for accent `#D97757`, status dot colors, popover geometry 270×14×36pt, animation timings, reduce-motion gating). Refactor existing Phase 2 views (`WidgetIconView`, `PopoverContentView`, `PopoverRowView`) to consume those tokens with **no behavioral change** — pure scaffolding for Phase 4 Multi-Session UX and downstream polish (status dots, animations, themes, Quiet Hours).
+**Depends on:** Phase 3
+**Requirements:** (none new — supports WIDG-* and AGG-* without adding contract surface)
+**Success Criteria** (what must be TRUE):
+  1. A single Swift module exposes accent / status / popover geometry / motion tokens; every numeric/color literal in `WidgetIconView`, `PopoverContentView`, `PopoverRowView` resolves through it.
+  2. Snapshot or unit tests guard token drift — changing `#D97757` to a wrong hue or 270pt to 280pt fails a test, not silently shifts the UI.
+  3. `accessibilityDisplayShouldReduceMotion` and the existing reduce-motion code path consume motion tokens uniformly (no scattered `Animation.easeInOut(duration: 0.45)` literals).
+  4. Phase 2 verifier (`scripts/verify-phase-2.sh`) and full XCTest target stay green; the existing widget + popover are visually indistinguishable from before the refactor (no behavioral diff).
+  5. Token file is consumable by Phase 4 multi-session views without modification — Phase 4 plans reference these tokens by name, not by literal.
+**Plans:** 5 plans
+**UI hint:** yes
+
+Plans:
+**Wave 1**
+- [ ] 03.1-01-design-tokens-module-PLAN.md — Author DesignTokens.swift (Color/Geometry/Motion namespaces) + 13 drift-guard XCTests
+**Wave 2** *(parallel — disjoint files; blocked on Wave 1)*
+- [ ] 03.1-02-widget-icon-refactor-PLAN.md — WidgetIconView consumes MotionTokens.bounceAnimation + bounceOffset (SC#3 uniform reduce-motion gate)
+- [ ] 03.1-03-popover-content-refactor-PLAN.md — PopoverContentView consumes GeometryTokens (popoverWidth/rowMinHeight/popoverMaxVisibleRows)
+- [ ] 03.1-04-popover-row-refactor-PLAN.md — PopoverRowView consumes GeometryTokens (rowMinHeight/Vertical/HorizontalPadding); D3-11 missing animation preserved
+**Wave 3** *(blocked on Wave 2 — checkpoint:human-verify visual fidelity)*
+- [ ] 03.1-05-visual-fidelity-checkpoint-PLAN.md — verify-phase-2 + XCTest green + manual screenshot checkpoint + 03.1-VERIFICATION.md (phase_gate) + 03.1-SUMMARY.md (F-1/F-2/F-3 + Phase 4 readiness contract)
+
 ### Phase 4: Multi-Session UX
 **Goal:** Five near-simultaneous Claude completions produce one widget — not five — that expands into a list, plays one sound, and routes each list item to its own correct tab. Concurrency races cannot corrupt the queue under stress.
-**Depends on:** Phase 3
+**Depends on:** Phase 3.1 (consumes design tokens)
 **Requirements:** AGG-01, AGG-02, AGG-03, AGG-04, AGG-05, AUD-03
 **Success Criteria** (what must be TRUE):
   1. Five Stop events arriving within a 500ms-2s batching window produce a single counter-badge widget showing "5", not five stacked widgets; the sound plays exactly once.
@@ -154,6 +179,7 @@ Plans:
 | 1. Foundation | 7/7 | Complete (phase_gate: green) | 2026-05-07 |
 | 2. Alert Loop | 12/12 | Complete    | 2026-05-08 |
 | 3. Click-to-iTerm2 | 10/10 | Complete (phase_gate: green) | 2026-05-09 |
+| 3.1. Design System Foundation *(INSERTED)* | 0/0 | Not started | - |
 | 4. Multi-Session UX | 0/0 | Not started | - |
 | 5. Hook Installer & Onboarding | 0/0 | Not started | - |
 | 6. Distribution | 0/0 | Not started | - |

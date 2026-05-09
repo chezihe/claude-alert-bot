@@ -20,6 +20,7 @@
 		25A5F43CD41AC83F13E587D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A714300C48D443F40C0A625 /* AppDelegate.swift */; };
 		2AF0C68FF0D110A70ADA27D9 /* DesignTokensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7447ADE56CD4CC06C811494 /* DesignTokensTests.swift */; };
 		36C9FE5D269DBAA20CEADDB3 /* NotificationOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F78A117E749843C430D7FA /* NotificationOrchestrator.swift */; };
+		3E34F876C0E5EE6646F97A2A /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4659AB687A21FAB2AB35ECE /* DesignTokens.swift */; };
 		67297E2D444E24FE063D63F5 /* SessionRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50B23882ED554CD89626EEA0 /* SessionRecord.swift */; };
 		6D860F2F4A5F204144F1FC3E /* WidgetPopoverController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EC061914D2B7ECEB85B1014 /* WidgetPopoverController.swift */; };
 		7569503AF85CCD1ED620F61A /* PositioningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F846DC70533456E49CAC49C5 /* PositioningTests.swift */; };
@@ -126,6 +127,7 @@
 		C52574E53A8FD6995A80B23B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C884F642E992E25E5C950B7B /* AppleScriptHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleScriptHelperTests.swift; sourceTree = "<group>"; };
 		C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookEventFactory.swift; sourceTree = "<group>"; };
+		D4659AB687A21FAB2AB35ECE /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		D699217A41C1D86EBB145BC3 /* ClaudeAlertBot.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClaudeAlertBot.entitlements; sourceTree = "<group>"; };
 		DBB92DF8ECD2021AD37F1AAC /* iTermSessionID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermSessionID.swift; sourceTree = "<group>"; };
 		DD87652FF46DACEA294E54A6 /* PopoverContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverContentView.swift; sourceTree = "<group>"; };
@@ -184,6 +186,7 @@
 				3AD080323016E4B964B92C69 /* Assets.xcassets */,
 				D699217A41C1D86EBB145BC3 /* ClaudeAlertBot.entitlements */,
 				184BC5521D0393073C46E63A /* ClaudeAlertBotApp.swift */,
+				D4659AB687A21FAB2AB35ECE /* DesignTokens.swift */,
 				10A1150F9BBA13057C1B014A /* FloatingWidgetPanel.swift */,
 				F3804D51921660FB395D4326 /* FloatingWidgetWindowController.swift */,
 				422669922C84673FA026FD1E /* HookEvent.swift */,
@@ -440,6 +443,7 @@
 				25A5F43CD41AC83F13E587D9 /* AppDelegate.swift in Sources */,
 				05594CE07D57F8773968D7F1 /* AppleScriptHelper.swift in Sources */,
 				D4F0BAE2D982705E01F8E9CF /* ClaudeAlertBotApp.swift in Sources */,
+				3E34F876C0E5EE6646F97A2A /* DesignTokens.swift in Sources */,
 				E6AD2F8FB235BC0F741D5F1A /* FloatingWidgetPanel.swift in Sources */,
 				F9DEF37670C35DB441688F45 /* FloatingWidgetWindowController.swift in Sources */,
 				DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */,

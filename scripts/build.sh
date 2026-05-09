@@ -9,6 +9,12 @@ BUILD_DIR="$ROOT/build"
 ARCHIVE_PATH="$BUILD_DIR/ClaudeAlertBot.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
 APP_NAME="ClaudeAlertBot.app"
+ENTITLEMENTS="$ROOT/App/ClaudeAlertBot.entitlements"
+
+if [ ! -f "$ENTITLEMENTS" ]; then
+    echo "FAIL: entitlements file missing: $ENTITLEMENTS" >&2
+    exit 1
+fi
 
 # Clean prior artifacts
 rm -rf "$BUILD_DIR"
@@ -30,13 +36,19 @@ cp -R "$ARCHIVE_PATH/Products/Applications/$APP_NAME" "$EXPORT_DIR/"
 APP="$EXPORT_DIR/$APP_NAME"
 
 # 3. Ad-hoc sign each Mach-O explicitly (Pitfall #9 — Apple deprecated the recursive flag)
+# --entitlements is required because hardened runtime + missing
+# `com.apple.security.automation.apple-events` causes macOS to silently deny the
+# AppleEvents permission prompt with -1743 (errAEEventNotPermitted) instead of showing
+# the user the TCC dialog. The bundle-seal step also takes --entitlements because
+# `codesign --force` on the bundle re-signs the inner main executable and would
+# strip entitlements if not re-supplied.
 echo "=== Ad-hoc signing ==="
 if [ -f "$APP/Contents/MacOS/cab-test" ]; then
     codesign --force --sign - --options=runtime "$APP/Contents/MacOS/cab-test"
 fi
-codesign --force --sign - --options=runtime "$APP/Contents/MacOS/ClaudeAlertBot"
+codesign --force --sign - --options=runtime --entitlements "$ENTITLEMENTS" "$APP/Contents/MacOS/ClaudeAlertBot"
 # Bundle seal LAST
-codesign --force --sign - --options=runtime "$APP"
+codesign --force --sign - --options=runtime --entitlements "$ENTITLEMENTS" "$APP"
 
 # 4. Verify each binary
 echo "=== Verifying signatures ==="

@@ -31,7 +31,6 @@ This is a Swift macOS app generated from `project.yml` into `ClaudeAlertBot.xcod
 - `CabTest/` builds the `cab-test` helper tool embedded into the app bundle.
 - `Reporter/` contains `cab-report.sh`, the Claude hook reporter script.
 - `scripts/` contains build, verification, and local hook-install helpers.
-- `.workorders/` holds Work Orders dispatched from Claude → Codex (manual handoff). See `.workorders/README.md`.
 - `build/` is generated output and should not be committed.
 
 ## Build, Test, and Development Commands
@@ -98,7 +97,7 @@ Widget and popover copy is **minimal English in macOS-system tone**. Use the ter
 
 ## Commit & Pull Request Guidelines
 
-Recent commits use concise Conventional Commit-style prefixes, often with phase scopes: `refactor(03.1-03): ...`, `docs(phase-03.1): ...`, `chore: ...`, `test(03.1-05): ...`. Keep commits narrow and describe the user-visible or verification-relevant change. When a change comes from a Work Order, reference its number (e.g. `feat(WO-007): ...`). Pull requests should include a summary, tests run, linked issue or phase context when applicable, and screenshots or recordings for UI/widget changes.
+Recent commits use concise Conventional Commit-style prefixes, often with phase scopes: `refactor(03.1-03): ...`, `docs(phase-03.1): ...`, `chore: ...`, `test(03.1-05): ...`. Keep commits narrow and describe the user-visible or verification-relevant change. Pull requests should include a summary, tests run, linked issue or phase context when applicable, and screenshots or recordings for UI/widget changes.
 
 ## Security & Configuration Tips
 

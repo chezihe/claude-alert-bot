@@ -121,16 +121,16 @@ Plans:
   3. `accessibilityDisplayShouldReduceMotion` and the existing reduce-motion code path consume motion tokens uniformly (no scattered `Animation.easeInOut(duration: 0.45)` literals).
   4. Phase 2 verifier (`scripts/verify-phase-2.sh`) and full XCTest target stay green; the existing widget + popover are visually indistinguishable from before the refactor (no behavioral diff).
   5. Token file is consumable by Phase 4 multi-session views without modification — Phase 4 plans reference these tokens by name, not by literal.
-**Plans:** 1/5 plans executed
+**Plans:** 4/5 plans executed
 **UI hint:** yes
 
 Plans:
 **Wave 1**
 - [x] 03.1-01-design-tokens-module-PLAN.md — Author DesignTokens.swift (Color/Geometry/Motion namespaces) + 13 drift-guard XCTests
 **Wave 2** *(parallel — disjoint files; blocked on Wave 1)*
-- [ ] 03.1-02-widget-icon-refactor-PLAN.md — WidgetIconView consumes MotionTokens.bounceAnimation + bounceOffset (SC#3 uniform reduce-motion gate)
-- [ ] 03.1-03-popover-content-refactor-PLAN.md — PopoverContentView consumes GeometryTokens (popoverWidth/rowMinHeight/popoverMaxVisibleRows)
-- [ ] 03.1-04-popover-row-refactor-PLAN.md — PopoverRowView consumes GeometryTokens (rowMinHeight/Vertical/HorizontalPadding); D3-11 missing animation preserved
+- [x] 03.1-02-widget-icon-refactor-PLAN.md — WidgetIconView consumes MotionTokens.bounceAnimation + bounceOffset (SC#3 uniform reduce-motion gate)
+- [x] 03.1-03-popover-content-refactor-PLAN.md — PopoverContentView consumes GeometryTokens (popoverWidth/rowMinHeight/popoverMaxVisibleRows)
+- [x] 03.1-04-popover-row-refactor-PLAN.md — PopoverRowView consumes GeometryTokens (rowMinHeight/Vertical/HorizontalPadding); D3-11 missing animation preserved
 **Wave 3** *(blocked on Wave 2 — checkpoint:human-verify visual fidelity)*
 - [ ] 03.1-05-visual-fidelity-checkpoint-PLAN.md — verify-phase-2 + XCTest green + manual screenshot checkpoint + 03.1-VERIFICATION.md (phase_gate) + 03.1-SUMMARY.md (F-1/F-2/F-3 + Phase 4 readiness contract)
 

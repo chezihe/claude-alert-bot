@@ -73,6 +73,9 @@ enum MotionTokens {
     // SPEC.md §4 row "Bounce (idle)" — 0.45s duration, 5pt vertical, easeInOut, autoreverse, infinite.
     static let bounceDuration: TimeInterval = 0.45
     static let bounceOffset: CGFloat = 5
+    // SPEC.md §4 row "Breathe" — 2.4s, autoreverse, infinite, easeInOut, scale 1.0↔1.06.
+    static let breatheDuration: TimeInterval = 2.4
+    static let breatheScale: CGFloat = 1.06
 
     /// D4 (SC#3) — uniform reduce-motion gate. Returns nil when reduce-motion is on so call-sites
     /// can `if let anim = MotionTokens.bounceAnimation(...) { withAnimation(anim) { ... } }`.
@@ -80,5 +83,10 @@ enum MotionTokens {
     static func bounceAnimation(reduceMotion: Bool) -> Animation? {
         guard !reduceMotion else { return nil }
         return .easeInOut(duration: bounceDuration).repeatForever(autoreverses: true)
+    }
+
+    static func breatheAnimation(reduceMotion: Bool) -> Animation? {
+        guard !reduceMotion else { return nil }
+        return .easeInOut(duration: breatheDuration).repeatForever(autoreverses: true)
     }
 }

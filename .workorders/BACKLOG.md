@@ -17,7 +17,7 @@
 - [DONE] Empty state "Listening for Claude sessions" renders when the queue is empty — `EmptyStateView.swift`, `PopoverContentView.swift`. (WO-009)
 
 ## Step 2 — Animations
-- [TODO] Breathe animation (2.4s scale 1.0↔1.06) is missing.
+- [DONE] Breathe animation (2.4s scale 1.0↔1.06) is implemented as the default idle animation. (WO-012)
 - [DONE] Bounce idle timing/offset is implemented — `MotionTokens`, `WidgetIconView`
 - [TODO] Ring bell animation (0.55s rotate ±10°) is missing.
 - [TODO] Roam animation (1.6s elliptical linear path) is missing.

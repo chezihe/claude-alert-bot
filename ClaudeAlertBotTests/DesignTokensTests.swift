@@ -115,6 +115,14 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(MotionTokens.bounceOffset, 5)
     }
 
+    func test_motionTokens_breatheDuration_is2_4() {
+        XCTAssertEqual(MotionTokens.breatheDuration, 2.4, accuracy: 0.001)
+    }
+
+    func test_motionTokens_breatheScale_is1_06() {
+        XCTAssertEqual(MotionTokens.breatheScale, 1.06, accuracy: 0.001)
+    }
+
     // MARK: - MotionTokens reduce-motion gate (D4 / SC#3)
 
     func test_motionTokens_bounceAnimation_returnsNil_whenReduceMotionIsTrue() {
@@ -126,6 +134,14 @@ final class DesignTokensTests: XCTestCase {
         // We cannot inspect Animation internals across SwiftUI versions; non-nil + the
         // reduce-motion=true → nil pair above is sufficient drift-guard.
         XCTAssertNotNil(MotionTokens.bounceAnimation(reduceMotion: false))
+    }
+
+    func test_motionTokens_breatheAnimation_returnsNil_whenReduceMotionIsTrue() {
+        XCTAssertNil(MotionTokens.breatheAnimation(reduceMotion: true))
+    }
+
+    func test_motionTokens_breatheAnimation_returnsNonNil_whenReduceMotionIsFalse() {
+        XCTAssertNotNil(MotionTokens.breatheAnimation(reduceMotion: false))
     }
 
     // MARK: - EffectTokens (WO-010 aging)

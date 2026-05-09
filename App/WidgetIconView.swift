@@ -14,6 +14,8 @@ struct WidgetIconView: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
+            // Non-SPEC literals retained per Finding F-2 (see 03.1-01-SUMMARY.md):
+            // floating-widget topology differs from SPEC §3 NSStatusItem 22pt-in-28pt + badge offsets.
             Image("ClaudeCodeIcon")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
@@ -21,9 +23,10 @@ struct WidgetIconView: View {
                 .frame(width: 44, height: 44)
                 .offset(y: bounceOffset)
                 .onAppear {
-                    guard !reduceMotion else { return }
-                    withAnimation(.easeInOut(duration: 0.45).repeatForever(autoreverses: true)) {
-                        bounceOffset = -5
+                    // Phase 03.1: consume MotionTokens (SC#1, SC#3 uniform reduce-motion gate).
+                    guard let anim = MotionTokens.bounceAnimation(reduceMotion: reduceMotion) else { return }
+                    withAnimation(anim) {
+                        bounceOffset = -MotionTokens.bounceOffset
                     }
                 }
             if pendingCount >= 2 {

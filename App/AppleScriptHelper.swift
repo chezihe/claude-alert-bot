@@ -111,6 +111,16 @@ actor AppleScriptHelper {
     /// D2-14 — returns true iff frontmost iTerm2 session id matches `target`.
     /// Permission denial / timeout / other failure → returns false (silent skip per D2-36).
     func frontmostMatches(itermSessionID target: String) async -> Bool {
+        // Phase 3 03-09 fix — gate cheap-query while permission is unknown so the
+        // FIRST AppleScript call against TCC is the deliberate 30s prompt from
+        // Settings (D2-35 Path A). Otherwise this 1s cheap-query races the user
+        // (Stop hook auto-suppress, NSWorkspace iTerm2-frontmost re-query) and
+        // poisons lastKnownPermission to .denied before the prompt completes —
+        // observed via -1712 timeout followed by -1743 silent skips on launch.
+        // Returning false = "treat as different session, don't suppress" — safe.
+        if lastKnownPermission == .unknown {
+            return false
+        }
         let result = await runQuery()
         switch result {
         case .success(let s):
@@ -130,9 +140,48 @@ actor AppleScriptHelper {
     }
 
     /// D2-35 — used by Path A (Settings open) and Path B (first Stop) to surface the TCC dialog.
-    /// Same script, target string we know won't match (so the bool result is irrelevant).
+    /// Uses a 30-second AppleScript-side timeout (vs. cheap-query's 1s in `scriptSource`)
+    /// so the user has time to read and respond to the system permission dialog. Without
+    /// the longer window the dialog is auto-dismissed by the AppleScript timeout after 1s
+    /// before the user can click Allow/Deny. The cheap-query 1s contract (D2-34) is
+    /// unaffected — only this prompt-trigger path uses 30s.
     func triggerPermissionPrompt() async {
-        _ = await frontmostMatches(itermSessionID: "<no-match>")
+        let source = """
+        with timeout of 30 seconds
+            tell application "iTerm2"
+                if (count of windows) is 0 then return ""
+                return id of current session of current tab of current window
+            end tell
+        end timeout
+        """
+        let result: ScriptResult = await withCheckedContinuation { (cont: CheckedContinuation<ScriptResult, Never>) in
+            queue.async {
+                guard let script = NSAppleScript(source: source) else {
+                    cont.resume(returning: .otherError(0)); return
+                }
+                var compileErr: NSDictionary?
+                guard script.compileAndReturnError(&compileErr) else {
+                    cont.resume(returning: Self.classify(error: compileErr, result: ""))
+                    return
+                }
+                var runErr: NSDictionary?
+                let value = script.executeAndReturnError(&runErr)
+                let s = value.stringValue ?? ""
+                cont.resume(returning: Self.classify(error: runErr, result: s))
+            }
+        }
+        switch result {
+        case .success:
+            await markGranted()
+            log.notice("triggerPermissionPrompt: granted")
+        case .denied:
+            await markDenied()
+            log.notice("triggerPermissionPrompt: denied")
+        case .timeout:
+            log.warning("triggerPermissionPrompt: timeout (-1712) after 30s")
+        case .otherError(let code):
+            log.warning("triggerPermissionPrompt: error code=\(code, privacy: .public)")
+        }
     }
 
     /// D3-06 — jump to the iTerm2 session matching `uuid`.

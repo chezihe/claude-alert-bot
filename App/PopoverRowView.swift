@@ -11,6 +11,10 @@
 // - Reduced-motion fallback skips rotation, collapses immediately
 //   (mirrors FloatingWidgetWindowController.swift lines 113-115).
 // - D3-12: animation IS the message — no copy strings, no sound, no system notifications.
+// Phase 03.1: row geometry literals (36/12/8) resolve through GeometryTokens (SC#1).
+// Non-SPEC literals retained per Finding F-2: hover color/anim (controlAccentColor + 0.12s),
+// Phase 3 D3-11 missing-animation timings (0.15s × 2 + 0.4s collapse + 0.2s reduce-motion fallback),
+// typography (13pt body, 11pt secondary). See 03.1-01-SUMMARY.md.
 import SwiftUI
 import AppKit
 
@@ -67,9 +71,9 @@ struct PopoverRowView: View {
                 }
             }
             .opacity(faded ? 0 : 1)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 12)
-            .frame(minHeight: collapsed ? 0 : 36)
+            .padding(.vertical, GeometryTokens.rowVerticalPadding)
+            .padding(.horizontal, GeometryTokens.rowHorizontalPadding)
+            .frame(minHeight: collapsed ? 0 : GeometryTokens.rowMinHeight)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 isHovered ? Color(NSColor.controlAccentColor).opacity(0.12) : Color.clear

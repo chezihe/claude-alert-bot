@@ -140,7 +140,7 @@ final class AlertBotStore {
 
 ### Behaviors
 - **Onboarding:** if `queue.isEmpty && !state.everHadAlerts`, popover shows "Listening to iTerm" empty state
-- **Aging:** rows older than 60min get desaturated (filter `saturate(0.25) brightness(1.15)` on the dot, opacity 0.55 on project text)
+- **Aging:** rows older than 60min get desaturated (`saturation(0.4)` on the whole row, binary on/off; opacity unchanged) — see `EffectTokens.agedSaturation`
 - **Grouping:** when 3+ sessions share `projectName`, collapse into a header row with count badge; tap to expand
 - **Mute project:** right-click row → "Mute this project for 1h" — stores `Date().addingTimeInterval(3600)` in `mutedProjects[projectName]`. Incoming alerts for muted projects bypass the queue silently.
 - **Pin:** muted from auto-clear sweeps; persists across app restarts

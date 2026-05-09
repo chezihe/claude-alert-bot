@@ -62,6 +62,13 @@ struct PopoverRowView: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .rotationEffect(.degrees(rotation))     // 도리도리 effect — only animates in .missing
+                if session.pinned {
+                    Image(systemName: "pin.fill")
+                        .font(.system(size: 11))
+                        .rotationEffect(.degrees(45))
+                        .foregroundStyle(Color(NSColor.secondaryLabelColor))
+                        .accessibilityLabel("Pinned")
+                }
                 Spacer()
                 if showTimeSuffix {
                     Text("· \(PopoverContentRules.timeSuffix(for: session.stoppedAt))")

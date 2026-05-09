@@ -85,6 +85,44 @@ final class PopoverRowStateTests: XCTestCase {
                       "WO-006: Mute menu item must dispatch through the row callback")
     }
 
+    // MARK: - WO-011 pinned row indicator contract (source-level audit)
+
+    func test_pinnedRowIndicator_usesPinFillSymbol() {
+        let src = readPopoverRowViewSource()
+
+        XCTAssertTrue(
+            src.contains("Image(systemName: \"pin.fill\")"),
+            "WO-011: pinned rows must render the SF Symbol pin.fill"
+        )
+    }
+
+    func test_pinnedRowIndicator_isGatedBySessionPinnedNearby() {
+        let src = readPopoverRowViewSource()
+        let lines = src.components(separatedBy: .newlines)
+
+        guard let symbolLine = lines.firstIndex(where: { $0.contains("Image(systemName: \"pin.fill\")") }) else {
+            XCTFail("WO-011: could not find pin.fill indicator")
+            return
+        }
+
+        let start = max(0, symbolLine - 5)
+        let end = min(lines.count - 1, symbolLine + 5)
+        let nearby = lines[start...end].joined(separator: "\n")
+        XCTAssertTrue(
+            nearby.contains("if session.pinned"),
+            "WO-011: pin.fill indicator must be conditionally rendered by session.pinned near the indicator"
+        )
+    }
+
+    func test_pinnedRowIndicator_hasAccessibilityLabel() {
+        let src = readPopoverRowViewSource()
+
+        XCTAssertTrue(
+            src.contains(".accessibilityLabel(\"Pinned\")"),
+            "WO-011: pinned row indicator must expose a Pinned accessibility label"
+        )
+    }
+
     // MARK: - helpers
 
     /// Resolve App/PopoverRowView.swift relative to *this* test file's source location so

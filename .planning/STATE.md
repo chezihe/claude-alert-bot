@@ -3,44 +3,45 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-08T14:52:48.687Z"
+last_updated: "2026-05-09T12:30:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 2
-  total_plans: 29
-  completed_plans: 19
-  percent: 66
+  completed_phases: 3
+  total_plans: 39
+  completed_plans: 29
+  percent: 74
 ---
 
 # State: Claude Alert Bot
 
-**Last updated:** 2026-05-08 (Phase 02 Wave 6 complete — Plan 02-11 complete: AppDelegate Pitfall #11 boot wiring + HookListener.ingest dispatch + @main SwiftUI App per D2-29 + scripts/verify-phase-2.sh fully populated. SC#3 manual checkpoint APPROVED with all 11 sub-checks. Verifier from clean state: 23 PASS / 1 FAIL\* / 2 SKIP (\*2-11-02 cab-test UUID-per-invocation tooling artifact, not regression — V-7 logged). Phase 1 regression PASS. **Phase 2 closed: phase_gate: green** — see `.planning/phases/02-alert-loop/02-VERIFICATION.md`. Phase 3 unblocked.)
+**Last updated:** 2026-05-09 (Phase 03 Wave 6 complete — Plan 03-09 complete: scripts/verify-phase-3.sh fully populated + verify-phase-2.sh D3-13 contract annotation + 03-VERIFICATION.md sign-off. SC#1..5 manual checkpoint surfaced 8 in-flight production bugs that were diagnosed + fixed live (commits `9b1f58d`, `6ad2b82`, `4d5c4bd`, `bbc8a72`, `2ef1fdd`, `444f05b`, `a198823`). All 5 SCs PASS post-fix. Verifier from clean state: 19 PASS / 2 FAIL\* / 1 SKIP (\*both FAILs are 3-09-* environmental ordering — Phase 1 row 1-02-02 needs app UP while xcodebuild test rows need app DOWN; documented, not code regressions). **Phase 3 closed: phase_gate: green** — see `.planning/phases/03-click-to-iterm2/03-VERIFICATION.md`. Phase 4 unblocked.)
 
 ## Project Reference
 
 - **What this is:** Native macOS app that turns Claude Code's `Stop` hook into a persistent floating widget that lands the user back on the exact iTerm2 tab where the work happened.
 - **Core value:** "Claude Code 사용자가 자리를 비웠을 때, 길게 걸린 작업의 완료를 놓치지 않고 정확한 그 iTerm2 세션으로 즉시 복귀할 수 있다." — alert + correct-tab jump are the inseparable core; either failing destroys the value.
-- **Current focus:** Phase 03 — click-to-iterm2
+- **Current focus:** Phase 04 — multi-session UX (next)
 
 ## Current Position
 
-Phase: 03 (click-to-iterm2) — EXECUTING
-Plan: 1 of 10
-Next: `/gsd-progress` to report, or `/gsd-context-phase 3` to begin Phase 3 (Click-to-iTerm2). Phase 3 prerequisites in ROADMAP §"Research Flags": (a) `ITERM_SESSION_ID` reliability under tmux/screen/nix-shell/zellij/containerized shells; (b) AppleScript `unique ID` lookup latency probe under typical pane counts; (c) `errAEEventNotPermitted (-1743)` deep-link reliability across macOS 14/15/26.
+Phase: 03 (click-to-iterm2) — COMPLETE; Phase 04 next
+Plan: 10 of 10 (Phase 03 closed)
+Next: `/gsd-context-phase 4` to begin Phase 4 (Multi-Session UX). Phase 3 carry-overs: V-9 (1-06-01 contract drift — MenuBarExtra now expected), V-10 (verifier ordering — 3-09-01/02 environmental), D-backlog (Stop hook delay observed in checkpoint).
 
 - **Milestone:** v1
-- **Phase:** 3
-- **Plan:** Not started
-- **Status:** Executing Phase 03
+- **Phase:** 3 (closed) → 4 (next)
+- **Plan:** 10 / 10 complete in Phase 03
+- **Status:** Phase 03 complete (phase_gate: green)
 - **Progress:** [██████████] 100%
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
-| Phases complete | 2 / 6 |
-| Plans complete | 7 / 7 in Phase 01 + 12 / 12 in Phase 02 |
-| Requirements covered | 30 / 53 (Phase 1: HOOK-01, HOOK-03, HOOK-04, HOOK-05, HOOK-06, IPC-01, IPC-02, IPC-03, DIST-01, DIST-05 + Phase 2: HOOK-02, SESS-01..04, THR-01..02, AUD-01, AUD-02, WIDG-01..07, SET-01..04) |
+| Phases complete | 3 / 6 |
+| Plans complete | 7 / 7 in Phase 01 + 12 / 12 in Phase 02 + 10 / 10 in Phase 03 |
+| Requirements covered | 38 / 53 (+ Phase 3: JUMP-01, JUMP-02, JUMP-03, JUMP-04, JUMP-05, SET-05, ONB-02, ONB-03) |
+| Plan 03-09 metrics | ~3 hr duration · 4 tasks (verify-phase-3 population, verify-phase-2 annotation, manual checkpoint, 03-VERIFICATION.md) · 12 files modified/created · 9 commits (Tasks 1+2 + 7 in-flight checkpoint fixes) · verifier 19 PASS / 2 FAIL\* / 1 SKIP from clean state · 8 production bugs diagnosed + locked during checkpoint · all 5 SCs PASS post-fix · phase_gate: green |
 | Plan 02-11 metrics | ~45 min duration (across 2 executor sessions) · 4 tasks (Tasks 1+2 auto, Task 3 human-verify, Task 4 auto) · 4 files modified (AppDelegate.swift, HookListener.swift, ClaudeAlertBotApp.swift renamed, verify-phase-2.sh) + 1 file created (02-VERIFICATION.md) · 3 commits (Tasks 1+2+4) · verifier 23 PASS/1 FAIL/2 SKIP from clean state · Phase 1 regression PASS · phase_gate: green |
 | Phase branch | master (no branching strategy per config.json) |
 | Last plan duration | ~25 min (01-06, verifier sign-off — incl. inherited Task 1 from previous executor) |

@@ -21,7 +21,7 @@ Claude Code 사용자가 자리를 비웠을 때, 길게 걸린 작업의 완료
 
 - [x] **Phase 1: Foundation** — Hook script + AF_UNIX IPC + headless app skeleton + ad-hoc-sign build pipeline; a Stop event lands as a structured log line in the running app. **(complete 2026-05-07; phase_gate: green; see `.planning/phases/01-foundation/01-VERIFICATION.md`)**
 - [x] **Phase 2: Alert Loop** — UserPromptSubmit/Stop correlation, threshold filter, persistent floating NSPanel widget, sound, Settings window. A 31-second Claude turn produces a clickable widget showing the project name (no jump yet). (completed 2026-05-08)
-- [ ] **Phase 3: Click-to-iTerm2** — UUID-based AppleScript jump, TTY fallback, Automation permission flow, click debounce, 3-second hard timeout. Clicking the widget lands on the exact originating tab.
+- [x] **Phase 3: Click-to-iTerm2** — UUID-based AppleScript jump, TTY fallback, Automation permission flow, click debounce, 3-second hard timeout. Clicking the widget lands on the exact originating tab. **(complete 2026-05-09; phase_gate: green; see `.planning/phases/03-click-to-iterm2/03-VERIFICATION.md`)**
 - [ ] **Phase 4: Multi-Session UX** — Counter-badge widget, expandable session list popover, batching window, sound dedupe, concurrency stress hardening. Five near-simultaneous completions produce one badge that opens a list and jumps each to its correct tab.
 - [ ] **Phase 5: Hook Installer & Onboarding** — Idempotent JSON5-tolerant patch of `~/.claude/settings.json` with manual fallback, 3-screen first-run wizard, clean uninstall. A new user reaches a working notifier without touching their terminal.
 - [ ] **Phase 6: Distribution** — `.dmg` packaging, README with macOS 14/15+ Gatekeeper paths, `bypass-gatekeeper.command` helper, fresh-account validation. Another macOS user installs from `.dmg` and reaches a working notifier in under five minutes.
@@ -105,7 +105,7 @@ Plans:
   4. When Automation permission is denied, the next click surfaces a recovery banner with a button that deep-links to System Settings → Privacy & Security → Automation; the app does not silently no-op.
   5. AppleScript calls run on a background queue with a 3-second hard timeout and a 500ms click debounce; the main thread never beachballs even when iTerm2 is busy.
   6. ~~When `ITERM_SESSION_ID` was unavailable at hook time (e.g., shell-integration-disabled environment), TTY-based fallback lookup still focuses the correct pane.~~ **(Moved to v2 by 03-CONTEXT.md D3-06~10.)** Rationale: a dead iTerm2 session means the Claude process inside it died, so no Stop hook fires for that work; the widget queue cannot point at a dead-tab. Env-stripped shells (nix-shell, containers) where `ITERM_SESSION_ID` is missing at hook time but the tab is still alive are deferred as `JUMP-FALLBACK-01` in v2.
-**Plans:** TBD
+**Plans:** 10 / 10 complete — see `.planning/phases/03-click-to-iterm2/03-PLAN-INDEX.md`
 **Reference:** TokenEater (`AThevon/TokenEater`, MIT) — referenced for v2 (env-stripped shell fallback). v1 does not borrow code; README CREDIT entry tracked for Phase 6.
 **UI hint:** yes
 
@@ -153,7 +153,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation | 7/7 | Complete (phase_gate: green) | 2026-05-07 |
 | 2. Alert Loop | 12/12 | Complete    | 2026-05-08 |
-| 3. Click-to-iTerm2 | 0/0 | Not started | - |
+| 3. Click-to-iTerm2 | 10/10 | Complete (phase_gate: green) | 2026-05-09 |
 | 4. Multi-Session UX | 0/0 | Not started | - |
 | 5. Hook Installer & Onboarding | 0/0 | Not started | - |
 | 6. Distribution | 0/0 | Not started | - |

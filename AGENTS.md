@@ -13,8 +13,11 @@ These are project axioms. Do not propose changes that violate them; if a task se
 - **Min OS:** macOS 14 Sonoma. Use `MenuBarExtra`, `SMAppService.mainApp`, `Network.framework` UDS as the stable surface.
 - **Terminal:** iTerm2 only (MVP scope). Do not add Terminal.app/Warp/Ghostty support.
 - **Tech stack:** Swift / SwiftUI + AppKit interop. **Zero external Swift dependencies.** No SwiftPM packages added.
+- **Build environment:** Xcode 15.4+ is required for local development. Users receive build artifacts, not build instructions as the primary install path.
+- **External runtime requirements:** Claude Code and iTerm2 must both be installed.
 - **No App Sandbox.** Sandboxing breaks Network.framework UDS + AppleScript automation. Do not enable it.
-- **Code signing:** Ad-hoc only (`codesign --force --deep --sign -`). No Apple Developer Program. Do not add notarization steps.
+- **Code signing:** Ad-hoc only (`codesign --force --deep --sign -`). This is required for Apple Silicon launch. No Apple Developer Program. Do not add notarization steps.
+- **Gatekeeper:** For unsigned distribution on macOS 15+, document System Settings → Privacy & Security → "Open Anyway" or an `xattr -cr` helper. Do not rely on right-click → Open instructions.
 - **Hooks required:** Both `Stop` and `UserPromptSubmit` Claude Code hooks. Merge idempotently into `~/.claude/settings.json`.
 - **AppleScript permission:** `NSAppleEventsUsageDescription` Info.plist key required for iTerm2 automation.
 - **Out of scope:** Sparkle auto-updater, sandboxing, App Store distribution.
@@ -51,6 +54,7 @@ This is a Swift macOS app generated from `project.yml` into `ClaudeAlertBot.xcod
 | Settings UI | SwiftUI `Settings { … }` scene + `@AppStorage` | Standard, zero deps |
 | Dock hide | `LSUIElement = true` in Info.plist | Accessory app, invisible until Stop event |
 | Build system | Xcode project (`.xcodeproj` via XcodeGen from `project.yml`) | Required for `MenuBarExtra` + asset catalog + Info.plist + signing |
+| DMG packaging | `create-dmg` if DMG packaging is added | Simple unsigned DMG flow; current canonical build still produces an ad-hoc signed `.app` |
 
 ## Tech Stack — AVOID these
 
@@ -63,6 +67,8 @@ This is a Swift macOS app generated from `project.yml` into `ClaudeAlertBot.xcod
 | `UNUserNotificationCenter` as **primary** notify | Banners auto-dismiss; violates the persistence requirement. May only be a fallback. |
 | App Sandbox | Breaks Network.framework UDS + AppleScript automation. |
 | Sparkle, fastlane, notarytool | Out of scope per project decision. |
+| `node-appdmg` | Stale packaging tool. Prefer `create-dmg` if DMG packaging is added. |
+| Right-click → Open install instructions | Removed/unreliable on macOS 15+. Document "Open Anyway" or `xattr -cr`. |
 | External Swift dependencies (SwiftPM packages) | Zero-deps constraint. |
 | SwiftUI `Window` scene for floating widget | `collectionBehavior` not exposed; cannot pin across spaces. |
 
@@ -96,4 +102,4 @@ Recent commits use concise Conventional Commit-style prefixes, often with phase 
 
 ## Security & Configuration Tips
 
-Do not commit generated build products, user hook settings, logs, or local app-support data. Be careful around AppleEvents, entitlements, socket paths, file permissions, and hook installation because these affect macOS privacy prompts and local user state.
+Do not commit generated build products, user hook settings, logs, or local app-support data. Be careful around AppleEvents, entitlements, socket paths, file permissions, and hook installation because these affect macOS privacy prompts and local user state. Distribution docs should be explicit that unsigned/ad-hoc signed apps require Gatekeeper handling on recent macOS versions.

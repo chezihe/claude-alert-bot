@@ -1,6 +1,6 @@
 // App/WidgetIconView.swift — Phase 2 WIDG-03 (icon + project name location).
 // UI-SPEC: 36pt Claude Code glyph, 4pt internal padding (44pt total).
-// +N badge: 16pt × 16pt circle, systemRed fill, white SF Pro Semibold 11pt numeral.
+// +N badge: 16pt × 16pt circle, systemRed fill (systemGray in Quiet Hours), white SF Pro Semibold 11pt numeral.
 // Anchored top-trailing with -4/-4 overhang per UI-SPEC.
 // Bounce: 5pt vertical, 0.45s easeInOut, autoreverse forever; suppressed when Reduce Motion is on.
 // Breathe: 2.4s scale 1.0↔1.06, autoreverse forever; default idle animation for WO-012.
@@ -38,22 +38,22 @@ struct WidgetIconView: View {
                         startIdleAnimation()
                     }
                 }
-            if quietHoursEnabled {
-                Text("Zzz")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(Color(NSColor.secondaryLabelColor))
-                    .offset(x: 5, y: -6)
-                    .accessibilityHidden(true)
-            } else if pendingCount >= 2 {
+            if pendingCount >= 2 {
                 Text("+\(pendingCount - 1)")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: 16, height: 16)
                     .background(
-                        Circle().fill(Color(NSColor.systemRed))
+                        Circle().fill(quietHoursEnabled ? Color(NSColor.systemGray) : Color(NSColor.systemRed))
                     )
                     .offset(x: 4, y: -4)        // top-trailing -4/-4 overhang
                     .accessibilityHidden(true)  // count is announced via the parent label
+            } else if quietHoursEnabled {
+                Text("Zzz")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Color(NSColor.secondaryLabelColor))
+                    .offset(x: 5, y: -6)
+                    .accessibilityHidden(true)
             }
         }
         .frame(width: 44, height: 44, alignment: .center)

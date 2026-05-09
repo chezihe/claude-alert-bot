@@ -20,12 +20,14 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("MotionTokens.breatheAnimation"))
     }
 
-    func test_widgetIconViewSource_quietHoursSuppressesIdleAndBadge() {
+    func test_widgetIconViewSource_quietHoursSuppressesIdleAndKeepsPendingBadge() {
         let src = readWidgetIconViewSource()
 
         XCTAssertTrue(src.contains("var quietHoursEnabled: Bool = false"))
         XCTAssertTrue(src.contains("guard !quietHoursEnabled else { return }"))
-        XCTAssertTrue(src.contains("if quietHoursEnabled {"))
+        XCTAssertTrue(src.contains("if pendingCount >= 2 {"))
+        XCTAssertTrue(src.contains("else if quietHoursEnabled {"))
+        XCTAssertTrue(src.contains("quietHoursEnabled ? Color(NSColor.systemGray) : Color(NSColor.systemRed)"))
         XCTAssertTrue(src.contains(#"Text("Zzz")"#))
     }
 

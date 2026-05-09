@@ -82,7 +82,8 @@ actor SessionStore {
                 durationSec: c.durationSec,
                 itermSessionID: stripped,
                 tty: c.tty,
-                cwd: c.cwd
+                cwd: c.cwd,
+                available: c.available
             )
         }
         var result = snap

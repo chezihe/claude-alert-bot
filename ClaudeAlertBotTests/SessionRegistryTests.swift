@@ -211,6 +211,21 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertTrue(notifier.refreshCalls.contains(1))
     }
 
+    func test_markUnavailable_keepsRowAndRefreshes() async {
+        let r = makeRegistry()
+        await bind(r)
+        let session = CompletedSession(sessionID: "a", projectName: "p", stoppedAt: Date(),
+                                       durationSec: 10, itermSessionID: nil, tty: nil, cwd: nil)
+        await r.seedCompletedForTesting(session)
+
+        await r.markUnavailable(sessionID: "a")
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.map(\.sessionID), ["a"])
+        XCTAssertFalse(snap.completed.first?.available ?? true)
+        XCTAssertTrue(notifier.refreshCalls.contains(1))
+    }
+
     /// Test J — clearAll empties the queue and broadcasts count=0.
     func test_clearAll_emptiesQueue() async {
         let r = makeRegistry()

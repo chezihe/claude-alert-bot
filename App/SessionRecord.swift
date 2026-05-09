@@ -19,8 +19,62 @@ struct CompletedSession: Codable, Equatable, Identifiable {
     let itermSessionID: String?
     let tty: String?
     let cwd: String?
+    var available: Bool             // false = iTerm session gone
 
     var id: String { sessionID }    // for SwiftUI ForEach in popover
+
+    init(sessionID: String,
+         projectName: String,
+         stoppedAt: Date,
+         durationSec: Int?,
+         itermSessionID: String?,
+         tty: String?,
+         cwd: String?,
+         available: Bool = true) {
+        self.sessionID = sessionID
+        self.projectName = projectName
+        self.stoppedAt = stoppedAt
+        self.durationSec = durationSec
+        self.itermSessionID = itermSessionID
+        self.tty = tty
+        self.cwd = cwd
+        self.available = available
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case sessionID
+        case projectName
+        case stoppedAt
+        case durationSec
+        case itermSessionID
+        case tty
+        case cwd
+        case available
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.sessionID = try container.decode(String.self, forKey: .sessionID)
+        self.projectName = try container.decode(String.self, forKey: .projectName)
+        self.stoppedAt = try container.decode(Date.self, forKey: .stoppedAt)
+        self.durationSec = try container.decodeIfPresent(Int.self, forKey: .durationSec)
+        self.itermSessionID = try container.decodeIfPresent(String.self, forKey: .itermSessionID)
+        self.tty = try container.decodeIfPresent(String.self, forKey: .tty)
+        self.cwd = try container.decodeIfPresent(String.self, forKey: .cwd)
+        self.available = try container.decodeIfPresent(Bool.self, forKey: .available) ?? true
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(sessionID, forKey: .sessionID)
+        try container.encode(projectName, forKey: .projectName)
+        try container.encode(stoppedAt, forKey: .stoppedAt)
+        try container.encodeIfPresent(durationSec, forKey: .durationSec)
+        try container.encodeIfPresent(itermSessionID, forKey: .itermSessionID)
+        try container.encodeIfPresent(tty, forKey: .tty)
+        try container.encodeIfPresent(cwd, forKey: .cwd)
+        try container.encode(available, forKey: .available)
+    }
 
     /// D2-21 — SET-04 Test notification fixture. NOT persisted (D2-22) per SessionRegistry.injectTest.
     static func testFixture() -> CompletedSession {

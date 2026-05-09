@@ -49,6 +49,22 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(c?.blueComponent  ?? 0, Double(0x23) / 255.0, accuracy: 0.005)
     }
 
+    func test_colorTokens_rowHoverLight_matchesSpecRGBA() {
+        let c = NSColor(ColorTokens.rowHover(colorScheme: .light)).usingColorSpace(.sRGB)
+        XCTAssertEqual(c?.redComponent   ?? 0, Double(0xD9) / 255.0, accuracy: 0.005)
+        XCTAssertEqual(c?.greenComponent ?? 0, Double(0x77) / 255.0, accuracy: 0.005)
+        XCTAssertEqual(c?.blueComponent  ?? 0, Double(0x57) / 255.0, accuracy: 0.005)
+        XCTAssertEqual(c?.alphaComponent ?? 0, 0.13, accuracy: 0.005)
+    }
+
+    func test_colorTokens_rowHoverDark_matchesSpecRGBA() {
+        let c = NSColor(ColorTokens.rowHover(colorScheme: .dark)).usingColorSpace(.sRGB)
+        XCTAssertEqual(c?.redComponent   ?? 0, Double(0xD9) / 255.0, accuracy: 0.005)
+        XCTAssertEqual(c?.greenComponent ?? 0, Double(0x77) / 255.0, accuracy: 0.005)
+        XCTAssertEqual(c?.blueComponent  ?? 0, Double(0x57) / 255.0, accuracy: 0.005)
+        XCTAssertEqual(c?.alphaComponent ?? 0, 0.20, accuracy: 0.005)
+    }
+
     // MARK: - GeometryTokens (SPEC.md §3 "Geometry")
 
     func test_geometryTokens_popoverWidth_is280_perFindingF1() {
@@ -70,6 +86,14 @@ final class DesignTokensTests: XCTestCase {
 
     func test_geometryTokens_rowVerticalPadding_is8() {
         XCTAssertEqual(GeometryTokens.rowVerticalPadding, 8)
+    }
+
+    func test_geometryTokens_statusDotDiameter_is7() {
+        XCTAssertEqual(GeometryTokens.statusDotDiameter, 7)
+    }
+
+    func test_geometryTokens_statusDotRingStroke_is1_5() {
+        XCTAssertEqual(GeometryTokens.statusDotRingStroke, 1.5)
     }
 
     func test_geometryTokens_popoverMaxVisibleRows_is8() {

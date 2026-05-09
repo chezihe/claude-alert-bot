@@ -193,7 +193,13 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
                     self.rowStates.removeValue(forKey: sessionID)
                     Task { await SessionRegistry.shared.clearOne(sessionID: sessionID) }
                     self.dismissPopover()
-                case .missing, .iTermNotRunning, .timeout, .otherError:
+                case .missing:
+                    self.rowStates.removeValue(forKey: sessionID)
+                    Task { [weak self] in
+                        await SessionRegistry.shared.markUnavailable(sessionID: sessionID)
+                        await MainActor.run { self?.reloadPopoverContent() }
+                    }
+                case .iTermNotRunning, .timeout, .otherError:
                     self.rowStates[sessionID] = .missing
                     self.reloadPopoverContent()
                     // Row's missing-animation completion will fire onRowMissingComplete → SessionRegistry.clearOne.

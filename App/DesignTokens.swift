@@ -21,6 +21,11 @@ enum ColorTokens {
     // SPEC.md §3 row "Status: waiting"
     static let statusWaiting: Color = makeColor(hex: 0xF5A623)
 
+    // SPEC.md §3 row "Row hover"
+    static func rowHover(colorScheme: ColorScheme) -> Color {
+        statusSuccess.opacity(colorScheme == .dark ? 0.20 : 0.13)
+    }
+
     /// Hex (RRGGBB) → SwiftUI Color via componentwise sRGB. Private helper, zero deps.
     fileprivate static func makeColor(hex: UInt32) -> Color {
         let r = Double((hex >> 16) & 0xFF) / 255.0
@@ -42,6 +47,10 @@ enum GeometryTokens {
     static let rowHorizontalPadding: CGFloat = 12
     // SPEC.md §3 row "8pt vertical padding"
     static let rowVerticalPadding: CGFloat = 8
+    // SPEC.md §3 row "Status dot: 7pt"
+    static let statusDotDiameter: CGFloat = 7
+    // SPEC.md §3 row "hollow ring stroke 1.5pt"
+    static let statusDotRingStroke: CGFloat = 1.5
     // Derived: SPEC §3 silent on max rows; current code uses `36 * 8`. Centralise here for Phase 4.
     static let popoverMaxVisibleRows: Int = 8
 }

@@ -32,6 +32,26 @@ final class SessionRecordTests: XCTestCase {
         XCTAssertEqual(nilDecoded, nilCase)
     }
 
+    func test_completedSession_decodesMissingAvailableAsTrue() throws {
+        let json = """
+        {
+          "sessionID": "legacy",
+          "projectName": "claude_alert_bot",
+          "stoppedAt": "2026-05-09T00:00:00Z",
+          "durationSec": 45,
+          "itermSessionID": "79C4699F-1234-5678-9ABC-DEF012345678",
+          "tty": "/dev/ttys001",
+          "cwd": "/Users/me/proj"
+        }
+        """.data(using: .utf8)!
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        let decoded = try decoder.decode(CompletedSession.self, from: json)
+
+        XCTAssertTrue(decoded.available)
+    }
+
     func test_sessionsSnapshot_schemaVersion_1() throws {
         let snap = SessionsSnapshot(inFlight: [:], completed: [])
         let data = try JSONEncoder().encode(snap)

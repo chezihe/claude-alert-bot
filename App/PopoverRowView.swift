@@ -41,6 +41,7 @@ struct PopoverRowView: View {
     @State private var rotation: Double = 0
     @State private var collapsed: Bool = false
     @State private var faded: Bool = false
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Button(action: {
@@ -49,6 +50,7 @@ struct PopoverRowView: View {
             onClick()
         }) {
             HStack(spacing: 8) {
+                statusDot
                 Text(session.projectName)
                     .font(.system(size: 13))
                     .foregroundStyle(state == .jumping
@@ -70,14 +72,14 @@ struct PopoverRowView: View {
                         .accessibilityLabel("경과 시간 알 수 없음")
                 }
             }
-            .opacity(faded ? 0 : 1)
             .padding(.vertical, GeometryTokens.rowVerticalPadding)
             .padding(.horizontal, GeometryTokens.rowHorizontalPadding)
             .frame(minHeight: collapsed ? 0 : GeometryTokens.rowMinHeight)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                isHovered ? Color(NSColor.controlAccentColor).opacity(0.12) : Color.clear
+                isHovered ? ColorTokens.rowHover(colorScheme: colorScheme) : Color.clear
             )
+            .opacity(faded ? 0 : (session.available ? 1 : 0.5))
             .animation(.easeInOut(duration: 0.12), value: isHovered)
             .clipped()
             .contentShape(Rectangle())
@@ -93,6 +95,21 @@ struct PopoverRowView: View {
             }
         }
         .accessibilityLabel("\(session.projectName) 작업 완료, 클릭하여 정리")
+    }
+
+    @ViewBuilder
+    private var statusDot: some View {
+        if session.available {
+            Circle()
+                .fill(ColorTokens.statusSuccess)
+                .frame(width: GeometryTokens.statusDotDiameter,
+                       height: GeometryTokens.statusDotDiameter)
+        } else {
+            Circle()
+                .stroke(ColorTokens.statusSuccess, lineWidth: GeometryTokens.statusDotRingStroke)
+                .frame(width: GeometryTokens.statusDotDiameter,
+                       height: GeometryTokens.statusDotDiameter)
+        }
     }
 
     // MARK: - Phase 3 D3-11 missing animation

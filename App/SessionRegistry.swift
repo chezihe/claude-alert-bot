@@ -149,6 +149,20 @@ actor SessionRegistry {
         log.notice("clearOne session=\(sessionID, privacy: .public)")
     }
 
+    func markUnavailable(sessionID: String) async {
+        guard let idx = completed.firstIndex(where: { $0.sessionID == sessionID }) else {
+            log.notice("markUnavailable session=\(sessionID, privacy: .public) ignored (no longer in queue)")
+            return
+        }
+        completed[idx].available = false
+        await persist()
+        let snapshot = self.completed
+        let count = snapshot.count
+        let n = self.notifier
+        await n?.refreshQueueState(completed: snapshot, count: count)
+        log.notice("markUnavailable session=\(sessionID, privacy: .public)")
+    }
+
     /// Read-only snapshot of pending completed sessions. Used by 02-09 WorkspaceFrontmostObserver (D2-15).
     /// Returns a copy so iteration outside the actor cannot data-race the queue.
     func peekPending() -> [CompletedSession] {

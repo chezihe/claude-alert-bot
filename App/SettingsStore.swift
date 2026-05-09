@@ -9,6 +9,7 @@ import Combine
 @MainActor
 final class SettingsStore: ObservableObject {
     static let shared = SettingsStore()
+    private let defaults: UserDefaults
 
     @AppStorage("threshold_seconds") var thresholdSeconds: Int = 30   // THR-01 default per ROADMAP
     @AppStorage("sound_enabled")     var soundEnabled: Bool = true    // AUD-02
@@ -30,7 +31,7 @@ final class SettingsStore: ObservableObject {
     /// D2-35/D2-36 — written by AppleScriptHelper after first cheap-query, then persisted.
     /// Not @AppStorage because (a) the helper is `actor`-isolated and (b) we want @Published broadcast.
     @Published var applescriptPermission: PermissionStatus {
-        didSet { UserDefaults.standard.set(applescriptPermission.rawValue, forKey: "applescript_permission") }
+        didSet { defaults.set(applescriptPermission.rawValue, forKey: "applescript_permission") }
     }
 
     /// D3-18 — written by SettingsView SET-05 button after testConnection() returns .ok.
@@ -41,17 +42,23 @@ final class SettingsStore: ObservableObject {
     @Published var lastConnectionTestAt: Date? {
         didSet {
             if let d = lastConnectionTestAt {
-                UserDefaults.standard.set(d.timeIntervalSince1970, forKey: "last_connection_test_at")
+                defaults.set(d.timeIntervalSince1970, forKey: "last_connection_test_at")
             } else {
-                UserDefaults.standard.removeObject(forKey: "last_connection_test_at")
+                defaults.removeObject(forKey: "last_connection_test_at")
             }
         }
     }
 
-    private init() {
-        let raw = UserDefaults.standard.string(forKey: "applescript_permission") ?? PermissionStatus.unknown.rawValue
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        self._thresholdSeconds = AppStorage(wrappedValue: 30, "threshold_seconds", store: defaults)
+        self._soundEnabled = AppStorage(wrappedValue: true, "sound_enabled", store: defaults)
+        self._cornerRaw = AppStorage(wrappedValue: WidgetCorner.topRight.rawValue, "widget_corner", store: defaults)
+        self._offsetX = AppStorage(wrappedValue: 16, "widget_offset_x", store: defaults)
+        self._offsetY = AppStorage(wrappedValue: 16, "widget_offset_y", store: defaults)
+        let raw = defaults.string(forKey: "applescript_permission") ?? PermissionStatus.unknown.rawValue
         self.applescriptPermission = PermissionStatus(rawValue: raw) ?? .unknown
-        let ti = UserDefaults.standard.double(forKey: "last_connection_test_at")
+        let ti = defaults.double(forKey: "last_connection_test_at")
         self.lastConnectionTestAt = ti > 0 ? Date(timeIntervalSince1970: ti) : nil
     }
 }

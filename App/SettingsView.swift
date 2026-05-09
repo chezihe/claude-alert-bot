@@ -13,10 +13,10 @@ struct SettingsView: View {
     static let thresholdCaption = "이 시간 이상 걸린 작업만 알려요"
     static let soundHeading = "사운드"
     static let soundToggleLabel = "알림 사운드 재생"
-    static let widgetPositionHeading = "위젯 위치"
-    static let cornerLabel = "코너"
-    static let offsetXLabel = "가로 오프셋"
-    static let offsetYLabel = "세로 오프셋"
+    static let widgetPositionHeading = "Widget Position"
+    static let cornerLabel = "Corner"
+    static let offsetXLabel = "Horizontal Offset"
+    static let offsetYLabel = "Vertical Offset"
     static let testHeading = "테스트"
     static let testButtonLabel = "테스트 알림 보내기"
 
@@ -64,7 +64,7 @@ struct SettingsView: View {
             Section(Self.widgetPositionHeading) {
                 Picker(Self.cornerLabel, selection: store.cornerBinding) {
                     ForEach(WidgetCorner.allCases) { c in
-                        Text(c.localizedLabel).tag(c)
+                        Text(Self.widgetCornerLabel(c)).tag(c)
                     }
                 }
                 .pickerStyle(.menu)
@@ -123,6 +123,15 @@ struct SettingsView: View {
     }
 
     // MARK: - SET-05 helpers (D3-15..20)
+
+    static func widgetCornerLabel(_ corner: WidgetCorner) -> String {
+        switch corner {
+        case .topLeft: return "Top Left"
+        case .topRight: return "Top Right"
+        case .bottomLeft: return "Bottom Left"
+        case .bottomRight: return "Bottom Right"
+        }
+    }
 
     /// D3-16 — SET-05 button handler. Calls AppleScriptHelper.testConnection() and
     /// branches on the result: .ok persists lastConnectionTestAt; .permissionDenied

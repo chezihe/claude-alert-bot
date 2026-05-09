@@ -40,6 +40,7 @@
 		9B0842F0AF46BCC68CD94660 /* SessionGCTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 800FA652B76F41855EDB0DEA /* SessionGCTimer.swift */; };
 		9BF0D15681380CCD6F7825FB /* AppleScriptHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C884F642E992E25E5C950B7B /* AppleScriptHelperTests.swift */; };
 		A18B22B68BE4366E466158B9 /* SoundPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13A9A6378829C0CD87A47282 /* SoundPlayer.swift */; };
+		A2FA166B55CBB73C348B9E9B /* SettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22B1AABE29B040176423CE0A /* SettingsStoreTests.swift */; };
 		A8F29327F7881CB4C3E7D507 /* MockNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAEF869A88355CE7D6169965 /* MockNotifier.swift */; };
 		AE06704A525B5DDE625A26FD /* iTermSessionIDTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09884DA38C8ABC43B43A4C15 /* iTermSessionIDTests.swift */; };
 		BAC90EB131673B372DBA2C88 /* SessionRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E982CB48D46A37C9DDD56AA /* SessionRegistryTests.swift */; };
@@ -55,6 +56,7 @@
 		E6AD2F8FB235BC0F741D5F1A /* FloatingWidgetPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10A1150F9BBA13057C1B014A /* FloatingWidgetPanel.swift */; };
 		E6D06143C70520743ED73969 /* SocketPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B78D85FFDFAD8C99CF5951D /* SocketPaths.swift */; };
 		E80832057B78D1BCC2CB7848 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7151E148769D039124B77B2F /* main.swift */; };
+		EA430EDC2166E2232996BB1F /* FloatingWidgetWindowControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EF5D9778A789F1B7E663648 /* FloatingWidgetWindowControllerTests.swift */; };
 		EA53805587F6CDC63C612B50 /* PopoverContentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CA2CABBA42E523EBB41F95E /* PopoverContentTests.swift */; };
 		F36E031107E8C11211C37A2A /* SoundPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA926DA96B54584A4A0B2E2 /* SoundPlayerTests.swift */; };
 		F5E04AAFC38DE8839E8D8DC4 /* PermissionDeepLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2492431EE9304DB1FF24B55 /* PermissionDeepLinkTests.swift */; };
@@ -93,6 +95,7 @@
 		184BC5521D0393073C46E63A /* ClaudeAlertBotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAlertBotApp.swift; sourceTree = "<group>"; };
 		1CA2CABBA42E523EBB41F95E /* PopoverContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverContentTests.swift; sourceTree = "<group>"; };
 		1D54D1C911C95F984BA6C8A1 /* HookListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookListener.swift; sourceTree = "<group>"; };
+		22B1AABE29B040176423CE0A /* SettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStoreTests.swift; sourceTree = "<group>"; };
 		2F0532EA5559479069D65C1F /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		36BDD5D1C291C8C40FA6F82D /* NotificationOrchestratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOrchestratorTests.swift; sourceTree = "<group>"; };
 		3AD080323016E4B964B92C69 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -106,6 +109,7 @@
 		524A1F92225F3605DDFE4B41 /* SettingsViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewTests.swift; sourceTree = "<group>"; };
 		5486D21A0C5465A9F1319450 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		5D0B0A11E7A8D1588546D213 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		5EF5D9778A789F1B7E663648 /* FloatingWidgetWindowControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingWidgetWindowControllerTests.swift; sourceTree = "<group>"; };
 		62D8CC37BBF74C6D6DCAEADF /* ClaudeAlertBotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClaudeAlertBotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		650DBF68BEBAABAE7F7A198D /* WakeObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeObserver.swift; sourceTree = "<group>"; };
 		6B78D85FFDFAD8C99CF5951D /* SocketPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocketPaths.swift; sourceTree = "<group>"; };
@@ -148,6 +152,7 @@
 				B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */,
 				A7447ADE56CD4CC06C811494 /* DesignTokensTests.swift */,
 				9DE80FA8FCF86DDC5881D02A /* FloatingWidgetPanelTests.swift */,
+				5EF5D9778A789F1B7E663648 /* FloatingWidgetWindowControllerTests.swift */,
 				135F84C6B3B261E51AAD624D /* ITerm2JumperTests.swift */,
 				09884DA38C8ABC43B43A4C15 /* iTermSessionIDTests.swift */,
 				36BDD5D1C291C8C40FA6F82D /* NotificationOrchestratorTests.swift */,
@@ -160,6 +165,7 @@
 				8446BA9DA3DB2F6E24A02697 /* SessionRecordTests.swift */,
 				8E982CB48D46A37C9DDD56AA /* SessionRegistryTests.swift */,
 				12CE8E75E63CBC95D6D3C0F3 /* SessionStoreTests.swift */,
+				22B1AABE29B040176423CE0A /* SettingsStoreTests.swift */,
 				524A1F92225F3605DDFE4B41 /* SettingsViewTests.swift */,
 				FBA926DA96B54584A4A0B2E2 /* SoundPlayerTests.swift */,
 				888C9D5A15931A09DD01E8B4 /* Fixtures */,
@@ -415,6 +421,7 @@
 				12B4AD96D68F218C0C6BCC1E /* ClaudeAlertBotTests.swift in Sources */,
 				2AF0C68FF0D110A70ADA27D9 /* DesignTokensTests.swift in Sources */,
 				2185CDDB44AD540DCB31275C /* FloatingWidgetPanelTests.swift in Sources */,
+				EA430EDC2166E2232996BB1F /* FloatingWidgetWindowControllerTests.swift in Sources */,
 				E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */,
 				E571EED85EA6293D7C70BDE2 /* ITerm2JumperTests.swift in Sources */,
 				967FA8420333A8A7FC015774 /* MockNotifier+NotifierProtocol.swift in Sources */,
@@ -430,6 +437,7 @@
 				78E4C5E92665EEC7E965DACD /* SessionRecordTests.swift in Sources */,
 				BAC90EB131673B372DBA2C88 /* SessionRegistryTests.swift in Sources */,
 				003B98084B11309FF52AFBE3 /* SessionStoreTests.swift in Sources */,
+				A2FA166B55CBB73C348B9E9B /* SettingsStoreTests.swift in Sources */,
 				852BC49996E1BFF94F8AF34D /* SettingsViewTests.swift in Sources */,
 				F36E031107E8C11211C37A2A /* SoundPlayerTests.swift in Sources */,
 				AE06704A525B5DDE625A26FD /* iTermSessionIDTests.swift in Sources */,

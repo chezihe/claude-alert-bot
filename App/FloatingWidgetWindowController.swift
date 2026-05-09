@@ -8,6 +8,7 @@
 // the panel + icon view + HoverDelegate stub only.
 import AppKit
 import SwiftUI
+import Combine
 import os
 
 @MainActor protocol WidgetHoverDelegate: AnyObject {
@@ -21,6 +22,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     private let panel: FloatingWidgetPanel
     private var hostingView: NSHostingView<WidgetIconView>?
     private var trackingArea: NSTrackingArea?
+    private var settingsCancellable: AnyCancellable?
     private var currentQueue: [CompletedSession] = []
     weak var hoverDelegate: WidgetHoverDelegate?
 
@@ -35,6 +37,11 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
         p.contentView = hv
         self.hostingView = hv
         installTrackingArea(on: hv)
+        settingsCancellable = SettingsStore.shared.objectWillChange.sink { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.repositionIfVisible()
+            }
+        }
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
@@ -77,6 +84,11 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
 
     private func updateRootView(pendingCount: Int) {
         hostingView?.rootView = WidgetIconView(pendingCount: pendingCount)
+    }
+
+    private func repositionIfVisible() {
+        guard panel.isVisible else { return }
+        reposition()
     }
 
     private func reposition() {

@@ -30,17 +30,17 @@ extension SettingsViewTests {
         XCTAssertEqual(SettingsView.soundToggleLabel, "알림 사운드 재생")
     }
     func test_settingsCopy_widgetPositionSection() {
-        XCTAssertEqual(SettingsView.widgetPositionHeading, "위젯 위치")
-        XCTAssertEqual(SettingsView.cornerLabel, "코너")
-        XCTAssertEqual(SettingsView.offsetXLabel, "가로 오프셋")
-        XCTAssertEqual(SettingsView.offsetYLabel, "세로 오프셋")
+        XCTAssertEqual(SettingsView.widgetPositionHeading, "Widget Position")
+        XCTAssertEqual(SettingsView.cornerLabel, "Corner")
+        XCTAssertEqual(SettingsView.offsetXLabel, "Horizontal Offset")
+        XCTAssertEqual(SettingsView.offsetYLabel, "Vertical Offset")
     }
     func test_settingsCopy_testButtonLabel() {
         XCTAssertEqual(SettingsView.testButtonLabel, "테스트 알림 보내기")
     }
-    func test_widgetCornerLabels_4Korean() {
-        let labels = WidgetCorner.allCases.map(\.localizedLabel)
-        XCTAssertEqual(labels, ["왼쪽 위", "오른쪽 위", "왼쪽 아래", "오른쪽 아래"])
+    func test_widgetCornerLabels_4English() {
+        let labels = WidgetCorner.allCases.map(SettingsView.widgetCornerLabel)
+        XCTAssertEqual(labels, ["Top Left", "Top Right", "Bottom Left", "Bottom Right"])
     }
 
     // MARK: - D3-15 / D3-19 SET-05 copy lock (T-COPY-DRIFT-01)

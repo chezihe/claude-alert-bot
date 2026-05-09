@@ -35,6 +35,10 @@ extension SettingsViewTests {
         XCTAssertEqual(SettingsView.offsetXLabel, "Horizontal Offset")
         XCTAssertEqual(SettingsView.offsetYLabel, "Vertical Offset")
     }
+    func test_settingsCopy_mutedProjectsSection() {
+        XCTAssertEqual(SettingsView.mutedProjectsHeading, "Muted Projects")
+        XCTAssertEqual(SettingsView.unmuteButtonLabel, "Unmute")
+    }
     func test_settingsCopy_testButtonLabel() {
         XCTAssertEqual(SettingsView.testButtonLabel, "테스트 알림 보내기")
     }
@@ -68,5 +72,45 @@ extension SettingsViewTests {
     func test_settingsCopy_connectionDeniedLabel_isMinimalEnglish() {
         XCTAssertEqual(SettingsView.connectionDeniedLabel, "Automation permission denied",
                        "D3-19: permission-denied status label minimal English")
+    }
+
+    // MARK: - WO-007 muted projects section contract (source-level audit)
+
+    func test_mutedProjectsSection_usesActiveMutesRule() {
+        let src = readSettingsViewSource()
+
+        XCTAssertTrue(
+            src.contains("MutedProjectsRules.activeMutes(store.mutedProjects, now: now)"),
+            "WO-007: SettingsView must derive visible mutes through MutedProjectsRules.activeMutes"
+        )
+    }
+
+    func test_mutedProjectsSection_wiresUnmuteButtonToStore() {
+        let src = readSettingsViewSource()
+
+        XCTAssertTrue(
+            src.contains("store.unmute(project: entry.project)"),
+            "WO-007: SettingsView Unmute button must call SettingsStore.unmute(project:)"
+        )
+    }
+
+    func test_mutedProjectsSection_usesLockedCopy() {
+        let src = readSettingsViewSource()
+
+        XCTAssertTrue(src.contains(#"static let mutedProjectsHeading = "Muted Projects""#))
+        XCTAssertTrue(src.contains(#"static let unmuteButtonLabel = "Unmute""#))
+    }
+
+    /// Resolve App/SettingsView.swift relative to this test file so source-level
+    /// audits are independent of xcodebuild's working directory.
+    private func readSettingsViewSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/SettingsView.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/SettingsView.swift at \(target.path)")
+            return ""
+        }
+        return data
     }
 }

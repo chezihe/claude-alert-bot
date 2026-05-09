@@ -63,7 +63,7 @@
 - [PARTIAL] `CompletedSession` has `available` (WO-002); kind/pinned/justArrived still missing — `SessionRecord.swift`. SPEC `Session` also uses UUID `id`; code uses string `sessionID`.
 - [PARTIAL] `SessionRegistry` replaces `AlertBotStore` queue state — `SessionRegistry.swift`
   No `quietHours`, `mutedProjects`, or `reduceMotion` fields are present.
-- [TODO] `mutedProjects` persistence is missing.
+- [DONE] `mutedProjects` persistence and Settings unmute list exist — `SettingsStore.swift`, `SettingsView.swift`, `MutedProjectsRules.swift`. (WO-006, WO-007)
 - [TODO] `everHadAlerts` onboarding persistence is missing.
 
 ## Step 6 — Quiet Hours / Reduce Motion / Aging

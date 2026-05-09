@@ -17,6 +17,8 @@ struct SettingsView: View {
     static let cornerLabel = "Corner"
     static let offsetXLabel = "Horizontal Offset"
     static let offsetYLabel = "Vertical Offset"
+    static let mutedProjectsHeading = "Muted Projects"
+    static let unmuteButtonLabel = "Unmute"
     static let testHeading = "테스트"
     static let testButtonLabel = "테스트 알림 보내기"
 
@@ -70,6 +72,26 @@ struct SettingsView: View {
                 .pickerStyle(.menu)
                 Stepper("\(Self.offsetXLabel): \(store.offsetX) pt", value: $store.offsetX, in: 0...64)
                 Stepper("\(Self.offsetYLabel): \(store.offsetY) pt", value: $store.offsetY, in: 0...64)
+            }
+
+            let now = Date()
+            let activeMutes = MutedProjectsRules.activeMutes(store.mutedProjects, now: now)
+            if !activeMutes.isEmpty {
+                Section(Self.mutedProjectsHeading) {
+                    ForEach(activeMutes, id: \.project) { entry in
+                        HStack {
+                            Text(entry.project)
+                            Text("· " + MutedProjectsRules.remainingMinutesLabel(expiresAt: entry.expiresAt, now: now))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button(Self.unmuteButtonLabel) {
+                                store.unmute(project: entry.project)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    }
+                }
             }
 
             Section(Self.testHeading) {

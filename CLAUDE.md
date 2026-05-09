@@ -1,4 +1,3 @@
-<!-- GSD:project-start source:PROJECT.md -->
 ## Project
 
 **Claude Alert Bot**
@@ -18,9 +17,7 @@ Claude Code 작업이 끝났을 때 macOS 화면에 클로드 아이콘 플로�
 - **외부 의존**: Claude Code 설치 + iTerm2 설치 필수
 - **Hook 등록**: Claude Code의 `Stop` hook + `UserPromptSubmit` hook **둘 다** 필요 (시작/종료 상관으로 경과 시간 계산). App이 `~/.claude/settings.json`에 멱등 병합으로 자동 등록
 - **AppleScript 자동화 권한**: 첫 사용 시 macOS가 "Claude Alert Bot이 iTerm2를 제어하려 합니다" 권한 다이얼로그를 띄움 — 사용자가 허용해야 함. `NSAppleEventsUsageDescription` Info.plist 키 필수
-<!-- GSD:project-end -->
 
-<!-- GSD:stack-start source:research/STACK.md -->
 ## Technology Stack
 
 ## TL;DR — One-Line Recommendations
@@ -183,48 +180,15 @@ Claude Code 작업이 끝났을 때 macOS 화면에 클로드 아이콘 플로�
 - [macOS distribution — code signing, notarization, quarantine — rsms gist](https://gist.github.com/rsms/929c9c2fec231f0cf843a1a746a416f5) — MEDIUM (excellent overview)
 - [Open unsigned applications on macOS Sequoia and newer — Hacks Guide Wiki](https://wiki.hacks.guide/wiki/Open_unsigned_applications_on_macOS_Sequoia_and_newer) — MEDIUM (current)
 - [Apple Forces The Signing Of Applications In MacOS Sequoia 15.1 — Hackaday](https://hackaday.com/2024/11/01/apple-forces-the-signing-of-applications-in-macos-sequoia-15-1/) — MEDIUM
-- [macOS Sequoia removes the Control-click method to bypass Gatekeeper — iDownloadBlog](https://www.idownloadblog.com/2024/08/07/apple-macos-sequoia-gatekeeper-change-install-unsigned-apps-mac/) — MEDIUM
+- [macOS Sequasia removes the Control-click method to bypass Gatekeeper — iDownloadBlog](https://www.idownloadblog.com/2024/08/07/apple-macos-sequoia-gatekeeper-change-install-unsigned-apps-mac/) — MEDIUM
 - [Allow downloaded Apps to Open in macOS Tahoe — SwissMacUser](https://swissmacuser.ch/fix-macos-tahoe-app-is-damaged-and-cant-be-opened-move-trash/) — MEDIUM
 - [Hooks reference — Claude Code Docs](https://code.claude.com/docs/en/hooks) — HIGH (official; verified Stop hook fields and HTTP hook support)
 - [Claude Code Hooks: Complete Guide to All 12 Lifecycle Events — claudefa.st](https://claudefa.st/blog/tools/hooks/hooks-guide) — MEDIUM
-<!-- GSD:stack-end -->
 
-<!-- GSD:conventions-start source:CONVENTIONS.md -->
 ## Conventions
 
 Conventions not yet established. Will populate as patterns emerge during development.
-<!-- GSD:conventions-end -->
 
-<!-- GSD:architecture-start source:ARCHITECTURE.md -->
 ## Architecture
 
 Architecture not yet mapped. Follow existing patterns found in the codebase.
-<!-- GSD:architecture-end -->
-
-<!-- GSD:skills-start source:skills/ -->
-## Project Skills
-
-No project skills found. Add skills to any of: `.claude/skills/`, `.agents/skills/`, `.cursor/skills/`, `.github/skills/`, or `.codex/skills/` with a `SKILL.md` index file.
-<!-- GSD:skills-end -->
-
-<!-- GSD:workflow-start source:GSD defaults -->
-## GSD Workflow Enforcement
-
-Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
-
-Use these entry points:
-- `/gsd-quick` for small fixes, doc updates, and ad-hoc tasks
-- `/gsd-debug` for investigation and bug fixing
-- `/gsd-execute-phase` for planned phase work
-
-Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
-<!-- GSD:workflow-end -->
-
-
-
-<!-- GSD:profile-start -->
-## Developer Profile
-
-> Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
-> This section is managed by `generate-claude-profile` -- do not edit manually.
-<!-- GSD:profile-end -->

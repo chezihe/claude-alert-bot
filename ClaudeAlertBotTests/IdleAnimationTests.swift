@@ -19,6 +19,12 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("case ring"))
     }
 
+    func test_idleAnimationSource_includesHeartCase() {
+        let src = readIdleAnimationSource()
+
+        XCTAssertTrue(src.contains("case heart"))
+    }
+
     func test_idleAnimationSource_includesRoamCase() {
         let src = readIdleAnimationSource()
 
@@ -36,6 +42,19 @@ final class IdleAnimationTests: XCTestCase {
 
         XCTAssertTrue(src.contains("case .breathe:"))
         XCTAssertTrue(src.contains("MotionTokens.breatheAnimation"))
+    }
+
+    func test_widgetIconViewSource_wiresHeartBranch() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("@State private var heartScale: CGFloat = 1.0"))
+        XCTAssertTrue(src.contains("@State private var heartGeneration: Int = 0"))
+        XCTAssertTrue(src.contains("case .heart:"))
+        XCTAssertTrue(src.contains("startHeartAnimation()"))
+        XCTAssertTrue(src.contains("MotionTokens.heartBeatAnimation"))
+        XCTAssertTrue(src.contains("heartScale = MotionTokens.heartPeakScale"))
+        XCTAssertTrue(src.contains("scale: MotionTokens.heartSecondScale"))
+        XCTAssertTrue(src.contains("heartScale = 1.0"))
     }
 
     func test_widgetIconViewSource_wiresRingBranch() {
@@ -100,7 +119,7 @@ final class IdleAnimationTests: XCTestCase {
         let src = readWidgetIconViewSource()
 
         XCTAssertTrue(src.contains("@State private var bounceScale: CGFloat = 1.0"))
-        XCTAssertTrue(src.contains(".scaleEffect(quietHoursEnabled ? 1.0 : breatheScale * bounceScale * alertPulseScale)"))
+        XCTAssertTrue(src.contains(".scaleEffect(quietHoursEnabled ? 1.0 : heartScale * breatheScale * bounceScale * alertPulseScale)"))
         XCTAssertTrue(src.contains("bounceScale = 1.0"))
         XCTAssertTrue(src.contains("bounceScale = MotionTokens.bounceStretchScale"))
         XCTAssertTrue(src.contains("bounceScale = MotionTokens.bounceSquashScale"))
@@ -157,6 +176,8 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(restartBody.contains("bounceOffset = 0"))
         XCTAssertTrue(restartBody.contains("bounceScale = 1.0"))
         XCTAssertTrue(restartBody.contains("breatheScale = 1.0"))
+        XCTAssertTrue(restartBody.contains("heartScale = 1.0"))
+        XCTAssertTrue(restartBody.contains("heartGeneration += 1"))
         XCTAssertTrue(restartBody.contains("roamPhase = 0"))
         XCTAssertTrue(restartBody.contains("driftOffset = .zero"))
         XCTAssertTrue(restartBody.contains("driftGeneration += 1"))

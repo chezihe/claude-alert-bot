@@ -4,6 +4,7 @@
 // Anchored top-trailing with -4/-4 overhang per UI-SPEC.
 // Bounce: 5pt vertical + 1.04↔0.94 squash, 0.45s easeInOut, autoreverse forever; suppressed when Reduce Motion is on.
 // Breathe: 2.4s scale 1.0↔1.06, autoreverse forever; default idle animation for WO-012.
+// Heart: 1.4s double-pulse scale 1.14 then 1.08; suppressed when Reduce Motion is on.
 // Ring: 0.55s ±10° top-anchor rotation, autoreverse forever; suppressed when Reduce Motion is on.
 // Roam: 1.6s counter-clockwise 24×6pt ellipse, linear forever; suppressed when Reduce Motion is on.
 // Drift: 6s random jitter within 14×16pt, easeInOut forever; suppressed when Reduce Motion is on.
@@ -22,6 +23,8 @@ struct WidgetIconView: View {
     @State private var bounceOffset: CGFloat = 0
     @State private var bounceScale: CGFloat = 1.0
     @State private var breatheScale: CGFloat = 1.0
+    @State private var heartScale: CGFloat = 1.0
+    @State private var heartGeneration: Int = 0
     @State private var idleRotation: Double = 0
     @State private var roamPhase: Double = 0
     @State private var driftOffset: CGSize = .zero
@@ -65,7 +68,7 @@ struct WidgetIconView: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 36, height: 36)
                     .frame(width: 44, height: 44)
-                    .scaleEffect(quietHoursEnabled ? 1.0 : breatheScale * bounceScale * alertPulseScale)
+                    .scaleEffect(quietHoursEnabled ? 1.0 : heartScale * breatheScale * bounceScale * alertPulseScale)
                     .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation + idleRotation), anchor: .top)
                     .offset(
                         x: quietHoursEnabled ? 0 : driftOffset.width,
@@ -83,6 +86,7 @@ struct WidgetIconView: View {
                     }
                     .onDisappear {
                         stopDriftAnimation()
+                        stopHeartAnimation()
                     }
                     .onChange(of: quietHoursEnabled) { _, _ in
                         resetAlertPulse()
@@ -141,6 +145,8 @@ struct WidgetIconView: View {
             withAnimation(anim) {
                 breatheScale = MotionTokens.breatheScale
             }
+        case .heart:
+            startHeartAnimation()
         case .ring:
             guard let anim = MotionTokens.ringAnimation(reduceMotion: reduceMotion) else { return }
             idleRotation = -MotionTokens.ringRotation
@@ -160,12 +166,54 @@ struct WidgetIconView: View {
 
     private func restartIdleAnimation() {
         stopDriftAnimation()
+        stopHeartAnimation()
         bounceOffset = 0
         bounceScale = 1.0
         breatheScale = 1.0
+        heartScale = 1.0
         idleRotation = 0
         roamPhase = 0
         startIdleAnimation()
+    }
+
+    private func startHeartAnimation() {
+        heartGeneration += 1
+        runHeartBeat(generation: heartGeneration)
+    }
+
+    private func stopHeartAnimation() {
+        heartGeneration += 1
+        heartScale = 1.0
+    }
+
+    private func runHeartBeat(generation: Int) {
+        guard
+            idleAnimation == .heart,
+            !quietHoursEnabled,
+            generation == heartGeneration,
+            let anim = MotionTokens.heartBeatAnimation(reduceMotion: reduceMotion)
+        else { return }
+
+        withAnimation(anim) {
+            heartScale = MotionTokens.heartPeakScale
+        }
+        scheduleHeartBeat(after: MotionTokens.heartBeatStepDuration, generation: generation, scale: 1.0)
+        scheduleHeartBeat(after: MotionTokens.heartBeatStepDuration * 2, generation: generation, scale: MotionTokens.heartSecondScale)
+        scheduleHeartBeat(after: MotionTokens.heartBeatStepDuration * 3, generation: generation, scale: 1.0)
+        DispatchQueue.main.asyncAfter(deadline: .now() + MotionTokens.heartDuration) {
+            guard generation == heartGeneration else { return }
+            runHeartBeat(generation: generation)
+        }
+    }
+
+    private func scheduleHeartBeat(after delay: TimeInterval, generation: Int, scale: CGFloat) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            guard generation == heartGeneration else { return }
+            guard let anim = MotionTokens.heartBeatAnimation(reduceMotion: reduceMotion) else { return }
+            withAnimation(anim) {
+                heartScale = scale
+            }
+        }
     }
 
     private func startDriftAnimation() {

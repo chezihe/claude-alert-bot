@@ -207,6 +207,7 @@ struct SettingsView: View {
         switch animation {
         case .bounce: return "Bounce"
         case .breathe: return "Breathe"
+        case .heart: return "Heart"
         case .ring: return "Ring"
         case .roam: return "Roam"
         case .drift: return "Drift"

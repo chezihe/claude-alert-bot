@@ -138,6 +138,7 @@ extension SettingsViewTests {
     func test_idleAnimationLabels_areMinimalEnglish() {
         XCTAssertEqual(SettingsView.idleAnimationName(.bounce), "Bounce")
         XCTAssertEqual(SettingsView.idleAnimationName(.breathe), "Breathe")
+        XCTAssertEqual(SettingsView.idleAnimationName(.heart), "Heart")
         XCTAssertEqual(SettingsView.idleAnimationName(.drift), "Drift")
     }
 
@@ -145,6 +146,12 @@ extension SettingsViewTests {
         let src = readSettingsViewSource()
 
         XCTAssertTrue(src.contains("case .ring: return \"Ring\""))
+    }
+
+    func test_idleAnimationLabelsSource_includesHeart() {
+        let src = readSettingsViewSource()
+
+        XCTAssertTrue(src.contains("case .heart: return \"Heart\""))
     }
 
     func test_idleAnimationLabelsSource_includesRoam() {

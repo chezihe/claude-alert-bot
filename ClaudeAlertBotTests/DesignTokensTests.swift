@@ -196,6 +196,16 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(MotionTokens.breatheScale, 1.06, accuracy: 0.001)
     }
 
+    func test_motionTokensSource_heartValues_matchPrototype() {
+        let src = readDesignTokensSource()
+
+        XCTAssertTrue(src.contains("static let heartDuration: TimeInterval = 1.4"))
+        XCTAssertTrue(src.contains("static let heartBeatStepDuration: TimeInterval = heartDuration * 0.14"))
+        XCTAssertTrue(src.contains("static let heartPeakScale: CGFloat = 1.14"))
+        XCTAssertTrue(src.contains("static let heartSecondScale: CGFloat = 1.08"))
+        XCTAssertTrue(src.contains("static func heartBeatAnimation(reduceMotion: Bool) -> Animation?"))
+    }
+
     func test_motionTokensSource_ringValues_matchSpec() {
         let src = readDesignTokensSource()
 

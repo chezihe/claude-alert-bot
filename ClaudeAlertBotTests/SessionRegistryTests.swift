@@ -643,8 +643,34 @@ final class SessionRegistryTests: XCTestCase {
         }
         let post = await r.snapshotForTesting()
         XCTAssertEqual(post.completed.count, 0,
-                       "injectTest should auto-dismiss via clearOne after sleepNanoseconds returns.")
+                       "injectTest should auto-dismiss unpinned rows after sleepNanoseconds returns.")
         XCTAssertTrue(notifier.refreshCalls.contains(0))
+    }
+
+    func test_injectTest_autoDismissPreservesPinnedTestAlert() async {
+        let gate = SleepGate()
+        var clock = Clock()
+        clock.sleepNanoseconds = { _ in await gate.wait() }
+        let r = SessionRegistry(persistence: SessionStore(url: tempURL), clock: clock)
+        await bind(r)
+
+        await r.injectTest(soundEnabled: true)
+        let pre = await r.snapshotForTesting()
+        let alertID = try! XCTUnwrap(pre.completed.first?.id)
+
+        await r.togglePin(alertID: alertID)
+        let refreshCountBeforeRelease = notifier.refreshCalls.count
+        await gate.release()
+
+        for _ in 0..<50 {
+            if notifier.refreshCalls.count > refreshCountBeforeRelease { break }
+            try? await Task.sleep(nanoseconds: 20_000_000) // 20ms
+        }
+        let post = await r.snapshotForTesting()
+        XCTAssertEqual(post.completed.map(\.id), [alertID])
+        XCTAssertTrue(post.completed.first?.pinned ?? false,
+                      "Pinned test alert must survive the synthetic auto-dismiss timer.")
+        XCTAssertFalse(notifier.refreshCalls.contains(0))
     }
 
     func test_injectTest_refreshesWidgetWithFullInMemoryQueue() async {
@@ -717,6 +743,24 @@ final class SessionRegistryTests: XCTestCase {
             return ""
         }
         return data
+    }
+}
+
+private actor SleepGate {
+    private var released = false
+    private var continuation: CheckedContinuation<Void, Never>?
+
+    func wait() async {
+        if released { return }
+        await withCheckedContinuation { continuation in
+            self.continuation = continuation
+        }
+    }
+
+    func release() {
+        released = true
+        continuation?.resume()
+        continuation = nil
     }
 }
 

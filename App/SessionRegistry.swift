@@ -274,7 +274,7 @@ actor SessionRegistry {
         let sid = session.sessionID
         Task { [weak self, clock = self.clock] in
             try? await clock.sleepNanoseconds(30 * 1_000_000_000)
-            await self?.clearOne(sessionID: sid)
+            await self?.clearUnpinned(sessionID: sid)
         }
     }
 

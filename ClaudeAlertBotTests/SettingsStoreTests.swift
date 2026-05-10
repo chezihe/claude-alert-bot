@@ -189,6 +189,23 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertTrue(src.contains("try service.unregister()"))
     }
 
+    func test_loginItemControllerSource_doesNotRegisterWhenApprovalRequiresUserAction() {
+        let src = readAppDelegateSource()
+
+        XCTAssertTrue(src.contains("case .requiresApproval:"))
+        XCTAssertTrue(src.contains("SettingsStore.shared.launchAtLoginEnabled = false"))
+        XCTAssertTrue(src.contains("case .notRegistered, .notFound:\n                    try service.register()"))
+    }
+
+    func test_loginItemControllerSource_opensLoginItemsOnlyFromSettingsRecovery() {
+        let src = readAppDelegateSource()
+
+        XCTAssertTrue(src.contains("static func applyFromSettings(enabled: Bool)"))
+        XCTAssertTrue(src.contains("SMAppService.openSystemSettingsLoginItems()"))
+        XCTAssertTrue(src.contains("apply(enabled: enabled, openSettingsWhenApprovalRequired: true)"))
+        XCTAssertTrue(src.contains("apply(enabled: enabled, openSettingsWhenApprovalRequired: false)"))
+    }
+
     func test_everHadAlerts_defaultIsFalse() {
         let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!

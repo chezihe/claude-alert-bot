@@ -107,7 +107,7 @@ struct SettingsView: View {
             Section(Self.startupHeading) {
                 Toggle(Self.launchAtLoginToggleLabel, isOn: $store.launchAtLoginEnabled)
                     .onChange(of: store.launchAtLoginEnabled) { _, enabled in
-                        LoginItemController.apply(enabled: enabled)
+                        LoginItemController.applyFromSettings(enabled: enabled)
                     }
             }
 

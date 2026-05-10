@@ -196,23 +196,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 enum LoginItemController {
     private static let log = Logger(subsystem: "com.claudealert.bot.hook", category: "lifecycle")
 
+    static func applyFromSettings(enabled: Bool) {
+        apply(enabled: enabled, openSettingsWhenApprovalRequired: true)
+    }
+
     static func apply(enabled: Bool) {
+        apply(enabled: enabled, openSettingsWhenApprovalRequired: false)
+    }
+
+    private static func apply(enabled: Bool, openSettingsWhenApprovalRequired: Bool) {
         let service = SMAppService.mainApp
         do {
             if enabled {
                 switch service.status {
                 case .enabled:
                     return
-                case .notRegistered, .requiresApproval, .notFound:
+                case .notRegistered, .notFound:
                     try service.register()
+                case .requiresApproval:
+                    SettingsStore.shared.launchAtLoginEnabled = false
+                    if openSettingsWhenApprovalRequired {
+                        SMAppService.openSystemSettingsLoginItems()
+                    }
+                    log.notice("login item requires user approval; disabled stored preference")
+                    return
                 @unknown default:
                     try service.register()
                 }
             } else {
                 switch service.status {
-                case .enabled, .requiresApproval:
+                case .enabled:
                     try service.unregister()
-                case .notRegistered, .notFound:
+                case .notRegistered, .requiresApproval, .notFound:
                     return
                 @unknown default:
                     return

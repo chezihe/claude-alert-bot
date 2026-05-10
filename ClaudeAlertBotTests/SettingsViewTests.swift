@@ -191,7 +191,7 @@ extension SettingsViewTests {
 
         XCTAssertTrue(src.contains("Toggle(Self.launchAtLoginToggleLabel, isOn: $store.launchAtLoginEnabled)"))
         XCTAssertTrue(src.contains(".onChange(of: store.launchAtLoginEnabled)"))
-        XCTAssertTrue(src.contains("LoginItemController.apply(enabled: enabled)"))
+        XCTAssertTrue(src.contains("LoginItemController.applyFromSettings(enabled: enabled)"))
     }
 
     /// Resolve App/SettingsView.swift relative to this test file so source-level

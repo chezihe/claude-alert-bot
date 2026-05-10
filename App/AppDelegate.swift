@@ -252,10 +252,94 @@ enum HookInstaller {
         guard fileManager.fileExists(atPath: url.path) else { return [:] }
         let data = try Data(contentsOf: url)
         guard !data.isEmpty else { return [:] }
+        if let settings = try? parseSettingsData(data) {
+            return settings
+        }
+        guard let raw = String(data: data, encoding: .utf8) else {
+            throw CocoaError(.fileReadInapplicableStringEncoding)
+        }
+        let cleaned = try stripJSONComments(from: raw)
+        guard !cleaned.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return [:] }
+        return try parseSettingsData(Data(cleaned.utf8))
+    }
+
+    private static func parseSettingsData(_ data: Data) throws -> [String: Any] {
         guard let settings = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw CocoaError(.propertyListReadCorrupt)
         }
         return settings
+    }
+
+    private static func stripJSONComments(from text: String) throws -> String {
+        let characters = Array(text)
+        var cleaned = ""
+        var index = 0
+        var inString = false
+        var isEscaping = false
+        var lineOnlyWhitespace = true
+
+        func append(_ character: Character) {
+            cleaned.append(character)
+            if character == "\n" || character == "\r" {
+                lineOnlyWhitespace = true
+            } else if !character.isWhitespace {
+                lineOnlyWhitespace = false
+            }
+        }
+
+        while index < characters.count {
+            let character = characters[index]
+            let next = index + 1 < characters.count ? characters[index + 1] : nil
+
+            if inString {
+                append(character)
+                if isEscaping {
+                    isEscaping = false
+                } else if character == "\\" {
+                    isEscaping = true
+                } else if character == "\"" {
+                    inString = false
+                }
+                index += 1
+                continue
+            }
+
+            if character == "\"" {
+                inString = true
+                append(character)
+                index += 1
+            } else if character == "/" && next == "/" && lineOnlyWhitespace {
+                index += 2
+                while index < characters.count,
+                      characters[index] != "\n",
+                      characters[index] != "\r" {
+                    index += 1
+                }
+            } else if character == "/" && next == "*" {
+                index += 2
+                var foundTerminator = false
+                while index < characters.count {
+                    if characters[index] == "*" &&
+                        index + 1 < characters.count &&
+                        characters[index + 1] == "/" {
+                        index += 2
+                        foundTerminator = true
+                        break
+                    }
+                    if characters[index] == "\n" || characters[index] == "\r" {
+                        lineOnlyWhitespace = true
+                    }
+                    index += 1
+                }
+                guard foundTerminator else { throw CocoaError(.propertyListReadCorrupt) }
+                append(" ")
+            } else {
+                append(character)
+                index += 1
+            }
+        }
+
+        return cleaned
     }
 
     private static func mergedEntries(existing: Any?, event: String) -> [[String: Any]] {

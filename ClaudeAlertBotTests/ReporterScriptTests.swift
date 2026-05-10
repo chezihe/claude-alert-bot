@@ -115,6 +115,123 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit").count, 1)
     }
 
+    func test_hookInstallerAcceptsCommentedClaudeSettings() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+        let settings = tempHome.appendingPathComponent(".claude/settings.json")
+        try FileManager.default.createDirectory(at: settings.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try """
+        {
+          // User note that dev-install-hook.sh already tolerates.
+          "theme": "dark",
+          /*
+             Existing block comment.
+          */
+          "hooks": {}
+        }
+        """.write(to: settings, atomically: true, encoding: .utf8)
+
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+
+        let installed = try loadInstalledSettings()
+        XCTAssertEqual(installed["theme"] as? String, "dark")
+        let hooks = try XCTUnwrap(installed["hooks"] as? [String: Any])
+        XCTAssertEqual(cabCommands(in: hooks, event: "Stop").count, 1)
+        XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit").count, 1)
+    }
+
+    func test_hookInstallerAcceptsUTF16ClaudeSettings() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+        let settings = tempHome.appendingPathComponent(".claude/settings.json")
+        try FileManager.default.createDirectory(at: settings.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let rawSettings = #"{"theme":"dark","hooks":{}}"#
+        var data = Data([0xFF, 0xFE])
+        data.append(try XCTUnwrap(rawSettings.data(using: .utf16LittleEndian)))
+        try data.write(to: settings)
+
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+
+        let installed = try loadInstalledSettings()
+        XCTAssertEqual(installed["theme"] as? String, "dark")
+        let hooks = try XCTUnwrap(installed["hooks"] as? [String: Any])
+        XCTAssertEqual(cabCommands(in: hooks, event: "Stop").count, 1)
+        XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit").count, 1)
+    }
+
+    func test_hookInstallerTreatsCommentOnlyClaudeSettingsAsEmpty() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+        let settings = tempHome.appendingPathComponent(".claude/settings.json")
+        try FileManager.default.createDirectory(at: settings.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try """
+        // User note.
+        /*
+           Existing block comment.
+        */
+        """.write(to: settings, atomically: true, encoding: .utf8)
+
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+
+        let hooks = try loadInstalledHooks()
+        XCTAssertEqual(cabCommands(in: hooks, event: "Stop").count, 1)
+        XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit").count, 1)
+    }
+
+    func test_hookInstallerPreservesCommentMarkersInsideStrings() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+        let settings = tempHome.appendingPathComponent(".claude/settings.json")
+        try FileManager.default.createDirectory(at: settings.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try """
+        {
+          "hooks": {
+            "Stop": [
+              {
+                "matcher": "keep",
+                "hooks": [
+                  { "type": "command", "command": "echo /* keep me */", "timeout": 1 }
+                ]
+              }
+            ]
+          }
+        }
+        """.write(to: settings, atomically: true, encoding: .utf8)
+
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+
+        let hooks = try loadInstalledHooks()
+        XCTAssertEqual(otherCommands(in: hooks, event: "Stop"), ["echo /* keep me */"])
+        XCTAssertEqual(cabCommands(in: hooks, event: "Stop").count, 1)
+    }
+
+    func test_hookInstallerRejectsUnterminatedBlockCommentWithoutRewritingSettings() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+        let settings = tempHome.appendingPathComponent(".claude/settings.json")
+        try FileManager.default.createDirectory(at: settings.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let originalSettings = """
+        {"theme":"dark"} /* broken comment
+        "hooks": {"Stop": []}}
+        """
+        try originalSettings.write(to: settings, atomically: true, encoding: .utf8)
+
+        XCTAssertThrowsError(try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome))
+        XCTAssertEqual(try String(contentsOf: settings, encoding: .utf8), originalSettings)
+    }
+
+    func test_hookInstallerRejectsBlockCommentBetweenNumberTokensWithoutRewritingSettings() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+        let settings = tempHome.appendingPathComponent(".claude/settings.json")
+        try FileManager.default.createDirectory(at: settings.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let originalSettings = #"{"theme":1/*x*/2}"#
+        try originalSettings.write(to: settings, atomically: true, encoding: .utf8)
+
+        XCTAssertThrowsError(try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome))
+        XCTAssertEqual(try String(contentsOf: settings, encoding: .utf8), originalSettings)
+    }
+
     func test_appDelegateWiresHookInstallerOutsideUnitTests() throws {
         let source = try readAppDelegateSource()
 

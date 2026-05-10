@@ -8,7 +8,8 @@
 //
 // AUD-02 — when SettingsStore.soundEnabled=false, present() does NOT play sound regardless
 // of the playSoundOnce parameter forwarded by the registry's dedupe path.
-// WIDG-05 — refreshQueueState(count:0) calls hideWidget(); count≥1 calls setQueue + updatePendingCount.
+// WIDG-05 — refreshQueueState(count:0) clears widget state then calls hideWidget();
+// count≥1 calls setQueue + updatePendingCount.
 //
 // D2-18 RETRACTED — no Focus/DnD detection. Sound is gated solely by SettingsStore.soundEnabled.
 //
@@ -81,6 +82,8 @@ final class NotificationOrchestrator: NotifierProtocol {
 
     func refreshQueueState(completed: [CompletedSession], count: Int) async {
         if count == 0 {
+            widget?.setQueue([])
+            widget?.updatePendingCount(0, latest: nil)
             widget?.hideWidget()
             log.notice("refreshQueueState: queue empty → hideWidget")
         } else {

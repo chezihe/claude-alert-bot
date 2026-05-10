@@ -186,8 +186,9 @@ final class NotificationOrchestratorTests: XCTestCase {
         await orch.refreshQueueState(completed: [], count: 0)
 
         XCTAssertEqual(widget.hideCount, 1, "WIDG-05: count==0 → hideWidget")
-        XCTAssertTrue(widget.updateCalls.isEmpty)
-        XCTAssertTrue(widget.queueCalls.isEmpty)
+        XCTAssertEqual(widget.queueCalls, [[]])
+        XCTAssertEqual(widget.updateCalls, [.init(n: 0, latestID: nil)])
+        XCTAssertEqual(widget.events, ["setQueue:", "update:nil", "hide"])
     }
 
     @MainActor

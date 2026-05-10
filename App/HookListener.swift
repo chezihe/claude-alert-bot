@@ -102,9 +102,7 @@ final class HookListener {
                 let soundOn = store.soundEnabled
                 let perm = store.applescriptPermission
 
-                if perm == .unknown,
-                   event.event == "stop",
-                   SessionRegistry.isSupportedTerminal(event.term_program) {
+                if Self.shouldTriggerPermissionPrompt(permission: perm, event: event) {
                     Task { await AppleScriptHelper.shared.triggerPermissionPrompt() }
                 }
 
@@ -122,5 +120,11 @@ final class HookListener {
         } catch {
             log.error("decode failed: \(String(describing: error), privacy: .public)")
         }
+    }
+
+    static func shouldTriggerPermissionPrompt(permission: PermissionStatus, event: HookEvent) -> Bool {
+        permission == .unknown &&
+        event.event == "stop" &&
+        SessionRegistry.isSupportedTerminal(event.term_program)
     }
 }

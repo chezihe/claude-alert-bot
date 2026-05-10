@@ -48,6 +48,7 @@ struct PopoverRowView: View {
     @State private var rippleOpacity: Double = 0
     @State private var waitingDotOpacity: Double = 1.0
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Button(action: {
@@ -117,6 +118,9 @@ struct PopoverRowView: View {
         .onChange(of: session.available) { _, _ in
             runWaitingDotPulseIfNeeded()
         }
+        .onChange(of: reduceMotion) { _, _ in
+            runWaitingDotPulseIfNeeded()
+        }
         .onChange(of: state) { _, newState in
             if newState == .missing {
                 runMissingAnimation()
@@ -169,9 +173,11 @@ struct PopoverRowView: View {
     }
 
     private func runWaitingDotPulseIfNeeded() {
-        waitingDotOpacity = 1.0
+        withTransaction(Transaction(animation: nil)) {
+            waitingDotOpacity = 1.0
+        }
         guard session.available, session.kind == .waiting else { return }
-        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
+        guard !reduceMotion else { return }
         withAnimation(.easeInOut(duration: MotionTokens.waitingDotPulseDuration).repeatForever(autoreverses: true)) {
             waitingDotOpacity = MotionTokens.waitingDotPulseMinOpacity
         }

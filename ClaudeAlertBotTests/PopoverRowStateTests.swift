@@ -92,7 +92,10 @@ final class PopoverRowStateTests: XCTestCase {
         XCTAssertTrue(src.contains("session.kind == .waiting"))
         XCTAssertTrue(src.contains("MotionTokens.waitingDotPulseDuration"))
         XCTAssertTrue(src.contains("MotionTokens.waitingDotPulseMinOpacity"))
-        XCTAssertTrue(src.contains("NSWorkspace.shared.accessibilityDisplayShouldReduceMotion"))
+        XCTAssertTrue(src.contains("@Environment(\\.accessibilityReduceMotion) private var reduceMotion"))
+        XCTAssertTrue(src.contains(".onChange(of: reduceMotion)"))
+        XCTAssertTrue(src.contains("guard !reduceMotion else { return }"))
+        XCTAssertTrue(src.contains("withTransaction(Transaction(animation: nil))"))
     }
 
     // MARK: - WO-006 context menu contract (source-level audit)

@@ -65,8 +65,8 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(snap.inFlight[sid]?.startedAt, start)
     }
 
-    /// Test B — D2-13: a fresh user_prompt_submit silently clears any pending Stop alert
-    ///         for the same session_id.
+    /// Test B — D2-13: a fresh user_prompt_submit silently clears unpinned pending
+    ///         Stop alerts for the same session_id.
     func test_ingest_userPromptSubmit_clearsPendingStop_D2_13() async {
         let r = makeRegistry()
         await bind(r)
@@ -84,6 +84,35 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertFalse(snap.completed.contains(where: { $0.sessionID == sid }),
                        "D2-13 must remove pending Stop alerts for the same session_id.")
         XCTAssertNotNil(snap.inFlight[sid], "user_prompt_submit also registers in-flight start.")
+    }
+
+    func test_ingest_userPromptSubmit_preservesPinnedPendingStop_D2_13() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-B-pinned"
+        let pinned = CompletedSession(sessionID: sid, projectName: "p",
+                                      stoppedAt: Date(), durationSec: 99,
+                                      itermSessionID: nil, tty: nil, cwd: nil,
+                                      pinned: true)
+        let unpinned = CompletedSession(sessionID: sid, projectName: "p",
+                                        stoppedAt: Date(), durationSec: 100,
+                                        itermSessionID: nil, tty: nil, cwd: nil)
+        await r.seedCompletedForTesting(pinned)
+        await r.seedCompletedForTesting(unpinned)
+
+        let evt = HookEventFactory.userPromptSubmit(sessionID: sid, ts: iso(Date()))
+        await r.ingest(evt, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.count, 1)
+        XCTAssertEqual(snap.completed.first?.sessionID, sid)
+        XCTAssertTrue(snap.completed.first?.pinned ?? false)
+        XCTAssertNotNil(snap.inFlight[sid], "user_prompt_submit still registers the new in-flight start.")
+
+        let loaded = await SessionStore(url: tempURL).load()
+        XCTAssertEqual(loaded?.completed.count, 1)
+        XCTAssertTrue(loaded?.completed.first?.pinned ?? false)
     }
 
     /// Test C — Stop arriving below threshold drops the alert silently.

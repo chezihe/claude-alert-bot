@@ -68,9 +68,9 @@ actor SessionRegistry {
 
     private func handleStart(_ event: HookEvent) async {
         guard let sid = event.session_id, let ts = parseTS(event.ts) else { return }
-        // D2-13 — silently remove pending stop alert for same sid.
+        // D2-13 — silently remove unpinned pending stop alerts for same sid.
         let before = completed.count
-        completed.removeAll(where: { $0.sessionID == sid })
+        completed.removeAll(where: { $0.sessionID == sid && !$0.pinned })
         if completed.count < before {
             log.notice("D2-13 auto-clear session=\(sid, privacy: .public)")
         }

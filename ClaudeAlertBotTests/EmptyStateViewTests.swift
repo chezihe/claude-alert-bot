@@ -6,7 +6,7 @@ import SwiftUI
 final class EmptyStateViewTests: XCTestCase {
 
     func test_emptyStateMessage_isLockedCopy() {
-        XCTAssertEqual(EmptyStateView.message, "Listening for Claude sessions")
+        XCTAssertEqual(EmptyStateView.message, "Listening to iTerm")
     }
 
     func test_emptyStateView_canBeConstructed() {

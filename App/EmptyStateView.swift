@@ -4,7 +4,7 @@
 import SwiftUI
 
 struct EmptyStateView: View {
-    static let message = "Listening for Claude sessions"
+    static let message = "Listening to iTerm"
 
     var body: some View {
         Text(Self.message)

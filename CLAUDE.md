@@ -45,13 +45,13 @@ Claude Code 작업이 끝났을 때 macOS 화면에 클로드 아이콘 플로�
 | **AVFoundation (`AVAudioPlayer`)** | macOS 14 SDK | Play notification sound once on event | NSSound has reported regressions in macOS 26 (CoreAudio init crash); AVAudioPlayer is the durable choice |
 | **Carbon `NSAppleScript`** | macOS 14 SDK | Drive iTerm2 (focus tab/window, look up by PID) | AppleScript is iTerm2's most complete external automation surface. `NSAppleScript` compiles once, executes repeatedly, and surfaces errors as `NSDictionary` |
 | **UserNotifications (`UNUserNotificationCenter`)** | macOS 14 SDK | (Optional, secondary) System banner *fallback* if widget fails | NOT the primary mechanism — banners auto-dismiss, which violates the core requirement. Useful only as a backup notify channel |
-### Supporting Libraries
-| Library | Version | Purpose | When to Use |
-|---|---|---|---|
-| **`KeyboardShortcuts` (sindresorhus)** | 2.x | (Optional) Global hotkey to manually surface the widget | Only if we add "press hotkey to peek the queue" later — not MVP |
-| **`Defaults` (sindresorhus)** | 8.x | Type-safe `@AppStorage` replacement | Skip for MVP; built-in `@AppStorage` covers our 3-4 settings |
-| **`LaunchAtLogin` (sindresorhus)** | 5.x (uses SMAppService under the hood) | Auto-start on login | Add when v1 is stable; uses `SMAppService.mainApp.register()` on macOS 13+ |
-| **`Sparkle`** | — | Auto-updater | **Explicitly out of scope per `PROJECT.md`**. Do not add |
+### Swift Dependencies
+| Need | Use | Notes |
+|---|---|---|
+| Settings persistence | Built-in `@AppStorage` / `UserDefaults` | Do not add `Defaults`; the project has a zero external Swift dependency constraint. |
+| Launch at login | Built-in `SMAppService.mainApp` | Already implemented natively; do not add `LaunchAtLogin`. |
+| Global hotkey | Defer or implement with native AppKit/Event APIs if it becomes in-scope | Do not add `KeyboardShortcuts` for MVP. |
+| Auto-updater | None | Sparkle is explicitly out of scope. |
 ### Development Tools
 | Tool | Purpose | Notes |
 |---|---|---|

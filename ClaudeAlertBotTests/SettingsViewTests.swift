@@ -33,6 +33,10 @@ extension SettingsViewTests {
         XCTAssertEqual(SettingsView.quietHoursHeading, "Quiet Hours")
         XCTAssertEqual(SettingsView.quietHoursToggleLabel, "Quiet Hours")
     }
+    func test_settingsCopy_idleAnimationSection() {
+        XCTAssertEqual(SettingsView.idleAnimationHeading, "Idle Animation")
+        XCTAssertEqual(SettingsView.idleAnimationLabel, "Animation")
+    }
     func test_settingsCopy_widgetPositionSection() {
         XCTAssertEqual(SettingsView.widgetPositionHeading, "Widget Position")
         XCTAssertEqual(SettingsView.cornerLabel, "Corner")
@@ -109,6 +113,19 @@ extension SettingsViewTests {
         let src = readSettingsViewSource()
 
         XCTAssertTrue(src.contains("Toggle(Self.quietHoursToggleLabel, isOn: $store.quietHoursEnabled)"))
+    }
+
+    func test_idleAnimationSection_wiresPickerToStore() {
+        let src = readSettingsViewSource()
+
+        XCTAssertTrue(src.contains("Picker(Self.idleAnimationLabel, selection: store.idleAnimationBinding)"))
+        XCTAssertTrue(src.contains("ForEach(IdleAnimation.allCases, id: \\.self)"))
+        XCTAssertTrue(src.contains("Text(Self.idleAnimationName(animation)).tag(animation)"))
+    }
+
+    func test_idleAnimationLabels_areMinimalEnglish() {
+        XCTAssertEqual(SettingsView.idleAnimationName(.bounce), "Bounce")
+        XCTAssertEqual(SettingsView.idleAnimationName(.breathe), "Breathe")
     }
 
     /// Resolve App/SettingsView.swift relative to this test file so source-level

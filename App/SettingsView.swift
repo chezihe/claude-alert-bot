@@ -15,6 +15,8 @@ struct SettingsView: View {
     static let soundToggleLabel = "알림 사운드 재생"
     static let quietHoursHeading = "Quiet Hours"
     static let quietHoursToggleLabel = "Quiet Hours"
+    static let idleAnimationHeading = "Idle Animation"
+    static let idleAnimationLabel = "Animation"
     static let widgetPositionHeading = "Widget Position"
     static let cornerLabel = "Corner"
     static let offsetXLabel = "Horizontal Offset"
@@ -67,6 +69,15 @@ struct SettingsView: View {
 
             Section(Self.quietHoursHeading) {
                 Toggle(Self.quietHoursToggleLabel, isOn: $store.quietHoursEnabled)
+            }
+
+            Section(Self.idleAnimationHeading) {
+                Picker(Self.idleAnimationLabel, selection: store.idleAnimationBinding) {
+                    ForEach(IdleAnimation.allCases, id: \.self) { animation in
+                        Text(Self.idleAnimationName(animation)).tag(animation)
+                    }
+                }
+                .pickerStyle(.menu)
             }
 
             Section(Self.widgetPositionHeading) {
@@ -158,6 +169,13 @@ struct SettingsView: View {
         case .topRight: return "Top Right"
         case .bottomLeft: return "Bottom Left"
         case .bottomRight: return "Bottom Right"
+        }
+    }
+
+    static func idleAnimationName(_ animation: IdleAnimation) -> String {
+        switch animation {
+        case .bounce: return "Bounce"
+        case .breathe: return "Breathe"
         }
     }
 

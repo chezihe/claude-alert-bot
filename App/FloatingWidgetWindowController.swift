@@ -33,7 +33,11 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
         self.panel = p
         super.init(window: p)
         // Initial host view
-        let hv = NSHostingView(rootView: WidgetIconView(pendingCount: 0))
+        let hv = NSHostingView(rootView: WidgetIconView(
+            pendingCount: 0,
+            idleAnimation: SettingsStore.shared.idleAnimation,
+            quietHoursEnabled: SettingsStore.shared.quietHoursEnabled
+        ))
         hv.frame = initialFrame
         p.contentView = hv
         self.hostingView = hv
@@ -90,6 +94,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     private func updateRootView(pendingCount: Int) {
         hostingView?.rootView = WidgetIconView(
             pendingCount: pendingCount,
+            idleAnimation: SettingsStore.shared.idleAnimation,
             quietHoursEnabled: SettingsStore.shared.quietHoursEnabled
         )
     }

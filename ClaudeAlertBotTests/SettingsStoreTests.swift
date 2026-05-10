@@ -53,6 +53,30 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertTrue(second.quietHoursEnabled)
     }
 
+    func test_idleAnimation_defaultIsBreathe() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = SettingsStore(defaults: defaults)
+
+        XCTAssertEqual(store.idleAnimation, .breathe)
+    }
+
+    func test_idleAnimation_persistsAcrossInit() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let first = SettingsStore(defaults: defaults)
+        first.idleAnimation = .bounce
+
+        let second = SettingsStore(defaults: defaults)
+        XCTAssertEqual(second.idleAnimation, .bounce)
+    }
+
     func test_everHadAlerts_defaultIsFalse() {
         let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!

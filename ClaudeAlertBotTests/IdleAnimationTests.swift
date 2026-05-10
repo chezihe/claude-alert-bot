@@ -30,6 +30,12 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("bounceScale = MotionTokens.bounceSquashScale"))
     }
 
+    func test_floatingWidgetWindowController_passesSelectedIdleAnimationToIconView() {
+        let src = readFloatingWidgetWindowControllerSource()
+
+        XCTAssertTrue(src.contains("idleAnimation: SettingsStore.shared.idleAnimation"))
+    }
+
     func test_widgetIconViewSource_quietHoursSuppressesIdleAndKeepsPendingBadge() {
         let src = readWidgetIconViewSource()
 
@@ -49,6 +55,17 @@ final class IdleAnimationTests: XCTestCase {
         let target = repoRoot.appendingPathComponent("App/WidgetIconView.swift")
         guard let data = try? String(contentsOf: target, encoding: .utf8) else {
             XCTFail("Could not read App/WidgetIconView.swift at \(target.path)")
+            return ""
+        }
+        return data
+    }
+
+    private func readFloatingWidgetWindowControllerSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/FloatingWidgetWindowController.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/FloatingWidgetWindowController.swift at \(target.path)")
             return ""
         }
         return data

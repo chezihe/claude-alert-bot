@@ -15,6 +15,7 @@ final class SettingsStore: ObservableObject {
     @AppStorage("sound_enabled")     var soundEnabled: Bool = true    // AUD-02
     @AppStorage("quiet_hours_enabled") var quietHoursEnabled: Bool = false
     @AppStorage("ever_had_alerts")   var everHadAlerts: Bool = false
+    @AppStorage("idle_animation")    private var idleAnimationRaw: String = IdleAnimation.default.rawValue
     @AppStorage("widget_corner")     private var cornerRaw: String = WidgetCorner.topRight.rawValue  // D2-26
     @AppStorage("widget_offset_x")   var offsetX: Int = 16            // D2-27
     @AppStorage("widget_offset_y")   var offsetY: Int = 16            // D2-27
@@ -25,9 +26,18 @@ final class SettingsStore: ObservableObject {
         set { cornerRaw = newValue.rawValue; objectWillChange.send() }
     }
 
+    var idleAnimation: IdleAnimation {
+        get { IdleAnimation(rawValue: idleAnimationRaw) ?? .default }
+        set { idleAnimationRaw = newValue.rawValue; objectWillChange.send() }
+    }
+
     /// SwiftUI binding helper for the Picker (Pitfall #7 ergonomics).
     var cornerBinding: Binding<WidgetCorner> {
         Binding(get: { self.widgetCorner }, set: { self.widgetCorner = $0 })
+    }
+
+    var idleAnimationBinding: Binding<IdleAnimation> {
+        Binding(get: { self.idleAnimation }, set: { self.idleAnimation = $0 })
     }
 
     /// D2-35/D2-36 — written by AppleScriptHelper after first cheap-query, then persisted.
@@ -61,6 +71,7 @@ final class SettingsStore: ObservableObject {
         self._soundEnabled = AppStorage(wrappedValue: true, "sound_enabled", store: defaults)
         self._quietHoursEnabled = AppStorage(wrappedValue: false, "quiet_hours_enabled", store: defaults)
         self._everHadAlerts = AppStorage(wrappedValue: false, "ever_had_alerts", store: defaults)
+        self._idleAnimationRaw = AppStorage(wrappedValue: IdleAnimation.default.rawValue, "idle_animation", store: defaults)
         self._cornerRaw = AppStorage(wrappedValue: WidgetCorner.topRight.rawValue, "widget_corner", store: defaults)
         self._offsetX = AppStorage(wrappedValue: 16, "widget_offset_x", store: defaults)
         self._offsetY = AppStorage(wrappedValue: 16, "widget_offset_y", store: defaults)

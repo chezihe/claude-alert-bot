@@ -247,6 +247,30 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains(#"Text("Zzz")"#))
     }
 
+    func test_widgetIconViewAccessibilityLabel_announcesQuietHoursState() {
+        let src = readWidgetIconViewSource()
+
+        guard let helperRange = src.range(of: "private var widgetAccessibilityLabel: String") else {
+            XCTFail("WidgetIconView must define widgetAccessibilityLabel")
+            return
+        }
+
+        let helperSource = String(src[helperRange.lowerBound...])
+        XCTAssertTrue(
+            helperSource.contains(#"let sessionCount = pendingCount == 1 ? "1 pending session" : "\(pendingCount) pending sessions""#),
+            "Widget accessibility label must keep announcing the pending session count"
+        )
+        XCTAssertTrue(
+            helperSource.contains(#"let quietSuffix = quietHoursEnabled ? ". Quiet Hours" : """#),
+            "Quiet Hours marker must be announced by the widget accessibility label"
+        )
+        XCTAssertTrue(
+            helperSource.contains(#"return "Claude alert. \(sessionCount)\(quietSuffix)""#),
+            "Widget accessibility label must include the quiet-hours suffix in its returned value"
+        )
+        XCTAssertTrue(src.contains(".accessibilityLabel(widgetAccessibilityLabel)"))
+    }
+
     private func readWidgetIconViewSource(_ thisFile: StaticString = #filePath) -> String {
         let here = URL(fileURLWithPath: "\(thisFile)")
         let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()

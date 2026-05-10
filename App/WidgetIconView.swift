@@ -125,8 +125,14 @@ struct WidgetIconView: View {
         }
         .frame(width: widgetBoundsSize.width, height: widgetBoundsSize.height, alignment: .center)
         .accessibilityElement()
-        .accessibilityLabel("Claude 작업 완료 알림. 보류 중 \(pendingCount)건")
+        .accessibilityLabel(widgetAccessibilityLabel)
         .accessibilityAddTraits(.isButton)
+    }
+
+    private var widgetAccessibilityLabel: String {
+        let sessionCount = pendingCount == 1 ? "1 pending session" : "\(pendingCount) pending sessions"
+        let quietSuffix = quietHoursEnabled ? ". Quiet Hours" : ""
+        return "Claude alert. \(sessionCount)\(quietSuffix)"
     }
 
     private func startIdleAnimation() {

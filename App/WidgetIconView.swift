@@ -80,6 +80,7 @@ struct WidgetIconView: View {
                         stopDriftAnimation()
                     }
                     .onChange(of: quietHoursEnabled) { _, _ in
+                        resetAlertPulse()
                         restartIdleAnimation()
                     }
                     .onChange(of: idleAnimation) { _, _ in

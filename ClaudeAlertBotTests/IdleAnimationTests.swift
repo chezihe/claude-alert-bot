@@ -196,6 +196,14 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("guard alertPulseID > 0, alertPulseID != activeAlertPulseID, !quietHoursEnabled else { return }"))
     }
 
+    func test_widgetIconViewSource_cancelsAlertPulseWhenQuietHoursChanges() {
+        let src = readWidgetIconViewSource()
+        let block = onChangeBlock(for: ".onChange(of: quietHoursEnabled)", in: src)
+
+        XCTAssertTrue(block.contains("resetAlertPulse()"))
+        XCTAssertTrue(block.contains("restartIdleAnimation()"))
+    }
+
     func test_widgetIconViewSource_quietHoursSuppressesIdleAndKeepsPendingBadge() {
         let src = readWidgetIconViewSource()
 
@@ -246,6 +254,16 @@ final class IdleAnimationTests: XCTestCase {
         guard
             let start = source.range(of: "if sonarOpacity > 0, !quietHoursEnabled"),
             let end = source.range(of: #"Image("ClaudeCodeIcon")"#, range: start.upperBound..<source.endIndex)
+        else {
+            return ""
+        }
+        return String(source[start.lowerBound..<end.lowerBound])
+    }
+
+    private func onChangeBlock(for marker: String, in source: String) -> String {
+        guard
+            let start = source.range(of: marker),
+            let end = source.range(of: ".onChange", range: start.upperBound..<source.endIndex)
         else {
             return ""
         }

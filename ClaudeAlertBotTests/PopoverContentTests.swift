@@ -74,6 +74,49 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(showSecondTimeSuffix)
     }
 
+    func test_canCollapseProjectGroup_blocksJumpingChildRows() {
+        let queue = [
+            mkSession(id: "a1", project: "Alpha"),
+            mkSession(id: "a2", project: "Alpha"),
+            mkSession(id: "a3", project: "Alpha")
+        ]
+
+        XCTAssertFalse(PopoverContentRules.canCollapseProjectGroup(
+            projectName: "Alpha",
+            queue: queue,
+            rowStates: ["a2": .jumping]
+        ))
+    }
+
+    func test_canCollapseProjectGroup_blocksMissingChildRows() {
+        let queue = [
+            mkSession(id: "a1", project: "Alpha"),
+            mkSession(id: "a2", project: "Alpha"),
+            mkSession(id: "a3", project: "Alpha")
+        ]
+
+        XCTAssertFalse(PopoverContentRules.canCollapseProjectGroup(
+            projectName: "Alpha",
+            queue: queue,
+            rowStates: ["a2": .missing]
+        ))
+    }
+
+    func test_canCollapseProjectGroup_allowsNormalAndOtherProjectRows() {
+        let queue = [
+            mkSession(id: "a1", project: "Alpha"),
+            mkSession(id: "a2", project: "Alpha"),
+            mkSession(id: "a3", project: "Alpha"),
+            mkSession(id: "b1", project: "Beta")
+        ]
+
+        XCTAssertTrue(PopoverContentRules.canCollapseProjectGroup(
+            projectName: "Alpha",
+            queue: queue,
+            rowStates: ["a2": .normal, "b1": .jumping]
+        ))
+    }
+
     func test_timeSuffix_format_hhmm() {
         var comps = DateComponents()
         comps.year = 2026; comps.month = 5; comps.day = 7
@@ -173,6 +216,13 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains("expandedProjects: expandedProjects"))
         XCTAssertTrue(src.contains("onToggleGroup: {"))
         XCTAssertTrue(src.contains("private func onToggleGroup(projectName: String)"))
+    }
+
+    func test_widgetPopoverController_blocksCollapsingGroupWithPendingChildRows() {
+        let src = readWidgetPopoverControllerSource()
+
+        XCTAssertTrue(src.contains("PopoverContentRules.canCollapseProjectGroup("))
+        XCTAssertTrue(src.contains("rowStates: rowStates"))
     }
 
     func test_widgetPopoverController_wiresOpenSettingsCallback() {

@@ -95,6 +95,15 @@ enum PopoverContentRules {
     static func displayRowCount(_ queue: [CompletedSession], expandedProjects: Set<String>) -> Int {
         groupedListItems(queue, expandedProjects: expandedProjects).count
     }
+
+    static func canCollapseProjectGroup(projectName: String,
+                                        queue: [CompletedSession],
+                                        rowStates: [String: RowState]) -> Bool {
+        !queue.contains { session in
+            session.projectName == projectName &&
+            rowStates[session.sessionID, default: .normal] != .normal
+        }
+    }
 }
 
 // MARK: - SwiftUI container

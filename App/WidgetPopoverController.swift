@@ -272,6 +272,12 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
 
     private func onToggleGroup(projectName: String) {
         if expandedProjects.contains(projectName) {
+            let queue = widgetController?.queueSnapshot ?? []
+            guard PopoverContentRules.canCollapseProjectGroup(
+                projectName: projectName,
+                queue: queue,
+                rowStates: rowStates
+            ) else { return }
             expandedProjects.remove(projectName)
         } else {
             expandedProjects.insert(projectName)

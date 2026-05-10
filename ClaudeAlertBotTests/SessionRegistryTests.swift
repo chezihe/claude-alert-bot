@@ -239,6 +239,30 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(notifier.refreshQueueCalls.last, ["existing", sid])
     }
 
+    func test_ingest_stop_refreshUsesLatestQueueAfterReentrantPresent() async {
+        let r = makeRegistry()
+        let reentrantNotifier = ReentrantNotifier()
+        await r.bind(notifier: reentrantNotifier)
+        let firstID = "sid-reentrant-1"
+        let secondID = "sid-reentrant-2"
+        let stoppedAt = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
+        let secondStop = HookEventFactory.stop(
+            sessionID: secondID,
+            ts: iso(stoppedAt.addingTimeInterval(1))
+        )
+        reentrantNotifier.onFirstPresent = {
+            await r.ingest(secondStop, thresholdSeconds: 0, soundEnabled: true,
+                           suppressIfFrontmost: self.suppressNo)
+        }
+
+        let firstStop = HookEventFactory.stop(sessionID: firstID, ts: iso(stoppedAt))
+        await r.ingest(firstStop, thresholdSeconds: 0, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        XCTAssertEqual(reentrantNotifier.presentQueues.last, [firstID, secondID])
+        XCTAssertEqual(reentrantNotifier.refreshQueueCalls.last, [firstID, secondID])
+    }
+
     /// Test E — THR-02: orphan Stop emits with durationSec=nil regardless of threshold.
     func test_THR_02_orphanStop_emitsWithNilDuration() async {
         let r = makeRegistry()
@@ -665,5 +689,24 @@ final class SessionRegistryTests: XCTestCase {
             return ""
         }
         return data
+    }
+}
+
+@MainActor
+private final class ReentrantNotifier: NotifierProtocol {
+    var onFirstPresent: (() async -> Void)?
+    private(set) var presentQueues: [[String]] = []
+    private(set) var refreshQueueCalls: [[String]] = []
+    private var didReenter = false
+
+    func present(session: CompletedSession, pendingQueue: [CompletedSession], playSoundOnce: Bool) async {
+        presentQueues.append(pendingQueue.map(\.sessionID))
+        guard !didReenter else { return }
+        didReenter = true
+        await onFirstPresent?()
+    }
+
+    func refreshQueueState(completed: [CompletedSession], count: Int) async {
+        refreshQueueCalls.append(completed.map(\.sessionID))
     }
 }

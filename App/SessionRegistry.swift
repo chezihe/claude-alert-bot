@@ -81,9 +81,8 @@ actor SessionRegistry {
         inFlight[sid] = InFlightStart(startedAt: ts, cwd: event.cwd)
         await persist()
         let snapshot = self.completed
-        let count = snapshot.count
         let n = self.notifier
-        await n?.refreshQueueState(completed: snapshot, count: count)
+        await n?.refreshQueueState(completed: snapshot, count: snapshot.count)
     }
 
     private func handleStop(_ event: HookEvent,
@@ -139,10 +138,10 @@ actor SessionRegistry {
         completed.append(session)
         await persist()
         let snapshot = self.completed
-        let count = snapshot.count
         let n = self.notifier
         await n?.present(session: session, pendingQueue: snapshot, playSoundOnce: soundEnabled && !isDup)
-        await n?.refreshQueueState(completed: snapshot, count: count)
+        let refreshedSnapshot = self.completed
+        await n?.refreshQueueState(completed: refreshedSnapshot, count: refreshedSnapshot.count)
     }
 
     /// SESS-04 — 6h GC. Called from ingest (lazy), wake observer (Wave 4), and timer (Wave 4).
@@ -266,10 +265,10 @@ actor SessionRegistry {
         let session = CompletedSession.testFixture()
         completed.append(session)   // in-memory only — NO `await persist()` (D2-22)
         let snapshot = self.completed
-        let count = snapshot.count
         let n = self.notifier
         await n?.present(session: session, pendingQueue: snapshot, playSoundOnce: soundEnabled)
-        await n?.refreshQueueState(completed: snapshot, count: count)
+        let refreshedSnapshot = self.completed
+        await n?.refreshQueueState(completed: refreshedSnapshot, count: refreshedSnapshot.count)
         // Auto-dismiss after 30s (D2-21). Clock injection enables fast-forward in tests.
         let sid = session.sessionID
         Task { [weak self, clock = self.clock] in

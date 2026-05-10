@@ -132,8 +132,3 @@ await ITerm2Jumper().jump(to: session)
 7. 사운드 통합 — Focus/DnD 감지는 철회됨. 무음 처리는 Quiet Hours가 담당
 
 ---
-
-**구현자 확인사항**
-- App Sandbox 적용 여부 (iTerm2 브릿지는 Apple Events 권한 필요)
-- Sparkle 자동 업데이트 여부
-- 코드 사이닝 / 노터라이제이션 계획

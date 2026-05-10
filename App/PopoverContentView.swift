@@ -33,6 +33,10 @@ enum PopoverContentRules {
     /// D2-07 + UI-SPEC line 89: Clear all visible only when ≥2 rows.
     static func shouldShowClearAll(rowCount: Int) -> Bool { rowCount >= 2 }
 
+    static func shouldShowEmptyState(queue: [CompletedSession], everHadAlerts: Bool) -> Bool {
+        queue.isEmpty && !everHadAlerts
+    }
+
     /// D2-06: same-project duplicates → time suffix on those rows only.
     /// Returns the set of project names that appear ≥2 times in the queue.
     static func projectsWithDuplicates(_ queue: [CompletedSession]) -> Set<String> {
@@ -129,6 +133,7 @@ struct PopoverContentView: View {
     var onOpenSettings: () -> Void = {}
     var expandedProjects: Set<String> = []
     var onToggleGroup: (String) -> Void = { _ in }
+    var everHadAlerts: Bool = false
 
     private var listItems: [PopoverListItem] {
         PopoverContentRules.groupedListItems(queue, expandedProjects: expandedProjects)
@@ -156,9 +161,9 @@ struct PopoverContentView: View {
             .padding(.horizontal, 12)
             .padding(.top, 8)
 
-            if queue.isEmpty {
+            if PopoverContentRules.shouldShowEmptyState(queue: queue, everHadAlerts: everHadAlerts) {
                 EmptyStateView()
-            } else {
+            } else if !queue.isEmpty {
                 ScrollView {
                     VStack(spacing: 0) {
                         ForEach(listItems) { item in

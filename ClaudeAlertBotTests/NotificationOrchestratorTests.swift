@@ -58,12 +58,14 @@ final class NotificationOrchestratorTests: XCTestCase {
         // cross-test leakage).
         SettingsStore.shared.soundEnabled = true
         SettingsStore.shared.quietHoursEnabled = false
+        SettingsStore.shared.everHadAlerts = false
     }
 
     @MainActor
     override func tearDown() async throws {
         SettingsStore.shared.soundEnabled = true
         SettingsStore.shared.quietHoursEnabled = false
+        SettingsStore.shared.everHadAlerts = false
     }
 
     @MainActor
@@ -79,6 +81,17 @@ final class NotificationOrchestratorTests: XCTestCase {
         XCTAssertEqual(widget.showCalls.count, 1)
         XCTAssertEqual(widget.showCalls.first?.latestID, "sess-A")
         XCTAssertEqual(sound.playOnceCount, 1)
+    }
+
+    @MainActor
+    func test_present_marksEverHadAlerts() async {
+        let widget = SpyWidget()
+        let sound = SpySoundPlayer()
+        let orch = NotificationOrchestrator(widget: widget, sound: sound)
+
+        await orch.present(session: makeSession(), playSoundOnce: false)
+
+        XCTAssertTrue(SettingsStore.shared.everHadAlerts)
     }
 
     @MainActor
@@ -151,6 +164,17 @@ final class NotificationOrchestratorTests: XCTestCase {
         XCTAssertEqual(widget.updateCalls.first?.latestID, "sess-2",
                        "latest = last element of completed array")
         XCTAssertEqual(widget.hideCount, 0)
+    }
+
+    @MainActor
+    func test_refreshQueueState_nonEmpty_marksEverHadAlerts() async {
+        let widget = SpyWidget()
+        let sound = SpySoundPlayer()
+        let orch = NotificationOrchestrator(widget: widget, sound: sound)
+
+        await orch.refreshQueueState(completed: [makeSession("sess-restored")], count: 1)
+
+        XCTAssertTrue(SettingsStore.shared.everHadAlerts)
     }
 
     @MainActor

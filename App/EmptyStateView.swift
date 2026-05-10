@@ -1,6 +1,6 @@
 // App/EmptyStateView.swift — WO-009 popover empty-state placeholder.
 // SPEC §5 Behaviors row "Onboarding" + FEATURES §3 row "빈 상태 온보딩".
-// Note: this WO does NOT gate on `everHadAlerts` (separate follow-up). Always renders when queue.isEmpty.
+// Visibility is gated by PopoverContentView: queue.isEmpty && !everHadAlerts.
 import SwiftUI
 
 struct EmptyStateView: View {

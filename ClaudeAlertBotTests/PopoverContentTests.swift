@@ -117,6 +117,15 @@ final class PopoverContentTests: XCTestCase {
         ))
     }
 
+    func test_shouldShowEmptyState_onlyBeforeFirstAlert() {
+        XCTAssertTrue(PopoverContentRules.shouldShowEmptyState(queue: [], everHadAlerts: false))
+        XCTAssertFalse(PopoverContentRules.shouldShowEmptyState(queue: [], everHadAlerts: true))
+        XCTAssertFalse(PopoverContentRules.shouldShowEmptyState(
+            queue: [mkSession(id: "a1", project: "Alpha")],
+            everHadAlerts: false
+        ))
+    }
+
     func test_timeSuffix_format_hhmm() {
         var comps = DateComponents()
         comps.year = 2026; comps.month = 5; comps.day = 7
@@ -187,8 +196,15 @@ final class PopoverContentTests: XCTestCase {
     func test_popoverContentView_rendersEmptyStateWhenQueueIsEmpty() {
         let src = readPopoverContentViewSource()
 
-        XCTAssertTrue(src.contains("if queue.isEmpty {"))
+        XCTAssertTrue(src.contains("var everHadAlerts: Bool = false"))
+        XCTAssertTrue(src.contains("PopoverContentRules.shouldShowEmptyState(queue: queue, everHadAlerts: everHadAlerts)"))
         XCTAssertTrue(src.contains("EmptyStateView()"))
+    }
+
+    func test_widgetPopoverController_passesEverHadAlertsStateToContent() {
+        let src = readWidgetPopoverControllerSource()
+
+        XCTAssertTrue(src.contains("everHadAlerts: SettingsStore.shared.everHadAlerts"))
     }
 
     func test_popoverContentView_alwaysRendersHeaderWithSettingsGear() {

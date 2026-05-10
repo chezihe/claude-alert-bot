@@ -109,7 +109,8 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             expandedProjects: expandedProjects,
             onToggleGroup: { [weak self] projectName in
                 self?.onToggleGroup(projectName: projectName)
-            }
+            },
+            everHadAlerts: SettingsStore.shared.everHadAlerts
         )
         let pop: NSPopover
         if let existing = popover {
@@ -169,7 +170,8 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             expandedProjects: expandedProjects,
             onToggleGroup: { [weak self] projectName in
                 self?.onToggleGroup(projectName: projectName)
-            }
+            },
+            everHadAlerts: SettingsStore.shared.everHadAlerts
         )
         // Phase 3 03-09 fix — same pattern as showPopover. Update rootView in place
         // so SwiftUI sees a diff (rowStates change) instead of a new tree, preserving
@@ -185,9 +187,9 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
     private func resizePopover(_ pop: NSPopover, queue: [CompletedSession]) {
         let rows = max(1, PopoverContentRules.displayRowCount(queue, expandedProjects: expandedProjects))
         let rowsClamped = min(rows, GeometryTokens.popoverMaxVisibleRows)
-        let bodyHeight: CGFloat = queue.isEmpty
+        let bodyHeight: CGFloat = queue.isEmpty && !SettingsStore.shared.everHadAlerts
             ? 48  // matches EmptyStateView natural height (text 12pt + .padding(.vertical, 16))
-            : GeometryTokens.rowMinHeight * CGFloat(rowsClamped)
+            : (queue.isEmpty ? 0 : GeometryTokens.rowMinHeight * CGFloat(rowsClamped))
         let chromeHeight: CGFloat = 32  // header always visible (gear + optional Clear All)
         pop.contentSize = NSSize(width: GeometryTokens.popoverWidth, height: bodyHeight + chromeHeight)
     }

@@ -53,6 +53,30 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertTrue(second.quietHoursEnabled)
     }
 
+    func test_everHadAlerts_defaultIsFalse() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = SettingsStore(defaults: defaults)
+
+        XCTAssertFalse(store.everHadAlerts)
+    }
+
+    func test_everHadAlerts_persistsAcrossInit() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let first = SettingsStore(defaults: defaults)
+        first.everHadAlerts = true
+
+        let second = SettingsStore(defaults: defaults)
+        XCTAssertTrue(second.everHadAlerts)
+    }
+
     func test_muteProject_isMutedUntilExpirationBoundary() {
         let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!

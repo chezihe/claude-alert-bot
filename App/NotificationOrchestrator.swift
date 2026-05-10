@@ -3,8 +3,8 @@
 // RESEARCH §"Architectural Responsibility Map": this class is the @MainActor handoff
 // point between the SessionRegistry actor and the AppKit widget + AVAudioPlayer.
 //
-// Single-direction rule (RESEARCH Pattern 4): SettingsStore is read at present()-time only;
-// SessionRegistry never imports SettingsStore.
+// Single-direction rule (RESEARCH Pattern 4): SettingsStore is touched at the MainActor
+// notification boundary only; SessionRegistry never imports SettingsStore.
 //
 // AUD-02 — when SettingsStore.soundEnabled=false, present() does NOT play sound regardless
 // of the playSoundOnce parameter forwarded by the registry's dedupe path.
@@ -67,6 +67,7 @@ final class NotificationOrchestrator: NotifierProtocol {
 
     func present(session: CompletedSession, playSoundOnce: Bool) async {
         let store = settings()
+        store.everHadAlerts = true
         widget?.showWidget(pendingCount: 1, latest: session)
         if playSoundOnce && store.soundEnabled && !store.quietHoursEnabled {
             sound.playOnce()
@@ -81,6 +82,7 @@ final class NotificationOrchestrator: NotifierProtocol {
             widget?.hideWidget()
             log.notice("refreshQueueState: queue empty → hideWidget")
         } else {
+            settings().everHadAlerts = true
             widget?.setQueue(completed)
             widget?.updatePendingCount(count, latest: completed.last)
             log.notice("refreshQueueState: count=\(count)")

@@ -128,6 +128,9 @@ enum MotionTokens {
     static let statusDotRippleEndScale: CGFloat = 2.4
     static let statusDotRippleStartOpacity: Double = 0.6
     static let statusDotRippleRepeatCount: Int = 3
+    // Prototype v2 `.status-dot.waiting` attention pulse — 1.6s easeInOut opacity 1.0↔0.5.
+    static let waitingDotPulseDuration: TimeInterval = 1.6
+    static let waitingDotPulseMinOpacity: Double = 0.5
     static let reduceMotionFadeDuration: TimeInterval = 0.15
 
     /// D4 (SC#3) — uniform reduce-motion gate. Returns nil when reduce-motion is on so call-sites

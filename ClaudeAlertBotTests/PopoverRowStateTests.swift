@@ -83,6 +83,18 @@ final class PopoverRowStateTests: XCTestCase {
         XCTAssertTrue(src.contains("runArrivalRippleIfNeeded()"))
     }
 
+    func test_waitingStatusDot_usesAttentionPulseAndReduceMotionGate() {
+        let src = readPopoverRowViewSource()
+
+        XCTAssertTrue(src.contains("@State private var waitingDotOpacity: Double = 1.0"))
+        XCTAssertTrue(src.contains(".opacity(waitingDotOpacity)"))
+        XCTAssertTrue(src.contains("runWaitingDotPulseIfNeeded()"))
+        XCTAssertTrue(src.contains("session.kind == .waiting"))
+        XCTAssertTrue(src.contains("MotionTokens.waitingDotPulseDuration"))
+        XCTAssertTrue(src.contains("MotionTokens.waitingDotPulseMinOpacity"))
+        XCTAssertTrue(src.contains("NSWorkspace.shared.accessibilityDisplayShouldReduceMotion"))
+    }
+
     // MARK: - WO-006 context menu contract (source-level audit)
 
     func test_contextMenu_wiresPinAndMuteCallbacks() {

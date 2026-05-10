@@ -249,6 +249,11 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(MotionTokens.statusDotRippleRepeatCount, 3)
     }
 
+    func test_motionTokens_waitingDotPulseValues_matchPrototype() {
+        XCTAssertEqual(MotionTokens.waitingDotPulseDuration, 1.6, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.waitingDotPulseMinOpacity, 0.5, accuracy: 0.001)
+    }
+
     // MARK: - MotionTokens reduce-motion gate (D4 / SC#3)
 
     func test_motionTokens_bounceAnimation_returnsNil_whenReduceMotionIsTrue() {

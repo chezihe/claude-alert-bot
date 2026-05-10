@@ -46,6 +46,7 @@ struct PopoverRowView: View {
     @State private var faded: Bool = false
     @State private var rippleScale: CGFloat = 1.0
     @State private var rippleOpacity: Double = 0
+    @State private var waitingDotOpacity: Double = 1.0
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
@@ -108,6 +109,13 @@ struct PopoverRowView: View {
         }
         .onAppear {
             runArrivalRippleIfNeeded()
+            runWaitingDotPulseIfNeeded()
+        }
+        .onChange(of: session.kind) { _, _ in
+            runWaitingDotPulseIfNeeded()
+        }
+        .onChange(of: session.available) { _, _ in
+            runWaitingDotPulseIfNeeded()
         }
         .onChange(of: state) { _, newState in
             if newState == .missing {
@@ -130,6 +138,7 @@ struct PopoverRowView: View {
                 .fill(dotColor)
                 .frame(width: GeometryTokens.statusDotDiameter,
                        height: GeometryTokens.statusDotDiameter)
+                .opacity(waitingDotOpacity)
                 .overlay {
                     Circle()
                         .stroke(dotColor.opacity(rippleOpacity), lineWidth: GeometryTokens.statusDotRingStroke)
@@ -156,6 +165,15 @@ struct PopoverRowView: View {
         withAnimation(.easeOut(duration: MotionTokens.statusDotRippleDuration).repeatCount(MotionTokens.statusDotRippleRepeatCount, autoreverses: false)) {
             rippleScale = MotionTokens.statusDotRippleEndScale
             rippleOpacity = 0
+        }
+    }
+
+    private func runWaitingDotPulseIfNeeded() {
+        waitingDotOpacity = 1.0
+        guard session.available, session.kind == .waiting else { return }
+        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
+        withAnimation(.easeInOut(duration: MotionTokens.waitingDotPulseDuration).repeatForever(autoreverses: true)) {
+            waitingDotOpacity = MotionTokens.waitingDotPulseMinOpacity
         }
     }
 

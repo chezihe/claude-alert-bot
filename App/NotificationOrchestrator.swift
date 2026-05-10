@@ -41,17 +41,22 @@ final class NotificationOrchestrator: NotifierProtocol {
     private let log = Logger(subsystem: "com.claudealert.bot.hook", category: "notification")
     private weak var widget: (any WidgetControllerProtocol)?
     private let sound: any SoundPlaying
-    private let settings: () -> SettingsStore   // closure so tests can swap
+    private let settings: @MainActor () -> SettingsStore   // closure so tests can swap
 
     /// Production constructors must inject `sound` (typically `SoundPlayer()`).
     /// Construction is @MainActor-isolated by the class annotation, so callers
     /// (AppDelegate / tests) are already in the right context to allocate AVAudioPlayer.
     init(widget: (any WidgetControllerProtocol)?,
          sound: any SoundPlaying,
-         settings: @autoclosure @escaping () -> SettingsStore = SettingsStore.shared) {
+         settings: @escaping @MainActor () -> SettingsStore) {
         self.widget = widget
         self.sound = sound
         self.settings = settings
+    }
+
+    convenience init(widget: (any WidgetControllerProtocol)?,
+                     sound: any SoundPlaying) {
+        self.init(widget: widget, sound: sound, settings: { SettingsStore.shared })
     }
 
     /// Convenience for production callers that want the default SoundPlayer.

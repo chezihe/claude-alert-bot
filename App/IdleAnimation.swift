@@ -1,6 +1,6 @@
-// App/IdleAnimation.swift — WO-012 idle animation selector.
-// SPEC §4 lists multiple idle animations; this enum lets WidgetIconView
-// switch between them. Settings UI for user selection is a follow-up.
+// App/IdleAnimation.swift — idle animation selector.
+// SPEC §4 lists multiple idle animations; this enum is persisted by SettingsStore
+// and drives WidgetIconView's selected idle motion.
 import Foundation
 
 enum IdleAnimation: String, CaseIterable {

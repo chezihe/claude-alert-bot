@@ -1,8 +1,7 @@
 #!/bin/bash
-# scripts/dev-install-hook.sh — Phase 1 dev convenience.
-# Copies Reporter to user-data path (D-04) and prints / applies the
-# ~/.claude/settings.json hook registration (Stop + UserPromptSubmit).
-# Phase 5's in-app installer (INST-01..04) will replace this.
+# scripts/dev-install-hook.sh — developer hook installer.
+# The app installs hooks on launch; this remains a manual development helper
+# for checking or repairing ~/.claude/settings.json.
 
 set -uo pipefail
 
@@ -80,8 +79,8 @@ snippet = json.loads(os.environ["SNIPPET"])
 try:
     with open(settings_path) as f:
         text = f.read()
-    # Strip JSON5-style line/block comments before parsing
-    # (Phase 1 best-effort; Phase 5 INST-04 owns full JSON5 tolerance).
+    # Strip JSON5-style line/block comments before parsing.
+    # The in-app installer uses the canonical Swift implementation.
     cleaned = re.sub(r'^\s*//.*$', '', text, flags=re.MULTILINE)
     cleaned = re.sub(r'/\*.*?\*/', '', cleaned, flags=re.DOTALL)
     existing = json.loads(cleaned) if cleaned.strip() else {}

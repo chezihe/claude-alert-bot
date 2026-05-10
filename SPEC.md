@@ -2,6 +2,8 @@
 
 > **Reference prototype:** `Claude Alert Bot - Prototype v2.html`
 > The HTML file is the source of truth for visuals, motion, and interaction. This document maps it to native macOS APIs.
+>
+> **Current implementation note:** repository-level constraints in `AGENTS.md` / `CLAUDE.md` override prototype-era alternatives below. The app currently uses Claude Code hooks + Unix domain socket IPC, `NSAppleScript` for iTerm2, `AVAudioPlayer` for sound, and a floating `NSPanel` widget.
 
 ---
 
@@ -9,15 +11,15 @@
 
 | Concern | Native API |
 |---|---|
-| Menu-bar widget (the floating bot glyph) | `NSStatusItem` with custom `NSView` (do **not** use the default text/image — we need full custom drawing for the breathing/bounce animations and badge) |
+| Floating widget (the bot glyph) | `NSPanel` subclass + `NSHostingView`, floating above spaces; `MenuBarExtra` is only the Settings/Quit handle |
 | Popover panel | `NSPopover` (behavior: `.transient`, animates: `true`, contentSize matches HTML 270×auto) |
 | Frosted material | `NSVisualEffectView` — `.material = .popover`, `.blendingMode = .behindWindow`, `.state = .active` |
-| Glyph rendering | Custom `CALayer` tree, or SwiftUI `Canvas` inside the status item view |
+| Glyph rendering | SwiftUI `Image("ClaudeCodeIcon")` inside `WidgetIconView` |
 | Animations | `CABasicAnimation` / `CAKeyframeAnimation` (timings below), or SwiftUI `.animation()` with custom `Animation.spring` |
-| Sounds (optional) | `NSSound(named: "Tink")` on new alert, gated by Quiet Hours |
-| Right-click menu | `NSMenu` attached to status item / popover row |
+| Sounds (optional) | `AVAudioPlayer` on new alert, gated by Quiet Hours |
+| Right-click menu | SwiftUI context menu on popover rows / grouped project headers |
 | Settings window | Standard `NSWindow` opened from the gear icon in popover footer |
-| Persistence | `UserDefaults` for prefs, `Codable` queue snapshots in `~/Library/Application Support/AlertBot/` |
+| Persistence | `UserDefaults` for prefs, `Codable` queue snapshots in `~/Library/Application Support/ClaudeAlertBot/sessions.json` |
 
 ---
 
@@ -25,33 +27,31 @@
 
 The widget needs to know **(a) when a Claude Code session finishes** and **(b) how to focus that exact iTerm session** when the user clicks a row.
 
-**Recommended:** iTerm2 Python API (`iterm2` package). Spawn a long-lived helper script that:
-
-1. Subscribes to session-end / prompt-detected events
-2. Filters for sessions where the running command was `claude` / `claude code`
-3. Posts an event to the AlertBot app (Unix domain socket, XPC, or local HTTP)
+**Current implementation:** Claude Code `Stop` and `UserPromptSubmit` hooks run `Reporter/cab-report.sh`, which posts a JSON envelope to the app over a Unix domain socket. Row click focuses iTerm2 with compiled `NSAppleScript`. The iTerm2 Python API is not used in this project.
 
 Each event payload:
 
 ```json
 {
+  "schema_version": 1,
+  "event": "stop",
   "session_id": "...",       // iTerm2 session UUID
-  "project_name": "...",     // basename of cwd
+  "transcript_path": "...",
+  "cwd": "...",
+  "iterm_session_id": "...",
+  "tty": "/dev/ttys001",
+  "term_program": "iTerm.app",
+  "ts": "2026-05-10T00:00:00Z",
   "started_at": 1730000000,
-  "stopped_at": 1730000067,
   "exit_code": 0,            // 0 = success, nonzero = error
   "kind": "success" | "error" | "waiting",
   "last_output": "..."       // optional, last 3-5 lines
 }
 ```
 
-**Fallback:** AppleScript polling (less reliable, higher latency).
-
 **Row click → focus session:**
 ```swift
-// via iTerm2 Python API
-session = await iterm2.Session.async_get(session_id)
-await session.async_activate()
+await ITerm2Jumper().jump(to: session)
 ```
 If session no longer exists, mark row `unavailable` (50% opacity, hollow status dot) — see prototype.
 
@@ -78,7 +78,7 @@ Lift these directly from the HTML.
 - Popover: 270pt wide, 14pt corner radius
 - Row: 36pt min height, 12pt horizontal padding, 8pt vertical padding
 - Status dot: 7pt; hollow ring stroke 1.5pt
-- Widget glyph: ~22pt in 28pt status item; badge offsets `top: -11, right: -5`
+- Widget glyph: 36pt glyph in a 44pt drawable; badge overhangs the top-trailing edge by 4pt
 - Context menu: 180pt min width, 8pt corner radius
 
 ### Typography
@@ -144,7 +144,7 @@ final class AlertBotStore {
 - **Grouping:** when 3+ sessions share `projectName`, collapse into a header row with count badge; tap to expand
 - **Mute project:** right-click row → "Mute this project for 1h" — stores `Date().addingTimeInterval(3600)` in `mutedProjects[projectName]`. Incoming alerts for muted projects bypass the queue silently.
 - **Pin:** muted from auto-clear sweeps; persists across app restarts
-- **Quiet Hours:** glyph animation paused, moon overlay shown, badge desaturated; alerts still queue but no sound/pulse fires
+- **Quiet Hours:** glyph animation paused, quiet marker shown, badge remains visible but desaturated; alerts still queue but no sound/pulse fires
 - **Clear All:** appears only when `queue.count >= 2`
 
 ---
@@ -152,24 +152,30 @@ final class AlertBotStore {
 ## 6. Files to Build
 
 ```
-AlertBot/
-├── AlertBotApp.swift              // @main, lifecycle
-├── StatusItemController.swift     // NSStatusItem + custom view
-├── Views/
-│   ├── WidgetView.swift           // glyph + badge + animations
-│   ├── PopoverView.swift          // SwiftUI list of sessions
-│   ├── SessionRow.swift           // single row with status dot
-│   ├── EmptyStateView.swift       // onboarding "Listening..."
-│   └── PreferencesWindow.swift    // gear icon target
-├── Models/
-│   ├── Session.swift
-│   └── AlertBotStore.swift
-├── Services/
-│   ├── ITermBridge.swift          // Python API socket client
-│   ├── NotificationCoordinator.swift
-│   └── PersistenceController.swift
+ClaudeAlertBot/
+├── App/
+│   ├── ClaudeAlertBotApp.swift
+│   ├── AppDelegate.swift
+│   ├── FloatingWidgetPanel.swift
+│   ├── FloatingWidgetWindowController.swift
+│   ├── WidgetIconView.swift
+│   ├── WidgetPopoverController.swift
+│   ├── PopoverContentView.swift
+│   ├── PopoverRowView.swift
+│   ├── EmptyStateView.swift
+│   ├── SettingsView.swift
+│   ├── SessionRegistry.swift
+│   ├── SessionStore.swift
+│   ├── HookListener.swift
+│   ├── AppleScriptHelper.swift
+│   ├── ITerm2Jumper.swift
+│   └── SoundPlayer.swift
+├── Reporter/
+│   └── cab-report.sh              // Claude Code hook reporter
+├── ClaudeAlertBotTests/
+│   └── ...                        // XCTest coverage
 └── Resources/
-    └── Sounds/Tink.aiff
+    └── Sounds/                    // optional future bundled sounds
 ```
 
 ---
@@ -177,7 +183,7 @@ AlertBot/
 ## 7. Out of Scope (Prototype Liberties)
 
 These exist in the HTML for demo purposes only:
-- The fake "iTerm flash" overlay when clicking a row — real app just calls `async_activate()`
+- The fake "iTerm flash" overlay when clicking a row — real app calls `ITerm2Jumper.jump(to:)`
 - The dev controls panel on the right — remove entirely
 - The "v2" chip banner — remove
 - The `<desktop>` background and dock — replace with real macOS host
@@ -187,9 +193,9 @@ These exist in the HTML for demo purposes only:
 
 ## 8. Recommended Build Order
 
-1. **Status item + popover shell** with hardcoded queue → match prototype look
+1. **Floating widget + popover shell** with hardcoded queue → match prototype look
 2. **Animations** — start with breathe (simplest), then bounce, then new-alert pulse
-3. **iTerm2 bridge** — get one real alert end-to-end
+3. **Claude hook + iTerm2 AppleScript bridge** — get one real alert end-to-end
 4. **Row interactions** — click-to-focus, context menu, mute/pin
 5. **Settings window** + persistence
 6. **Quiet Hours, Reduce Motion, aging** — polish pass
@@ -197,7 +203,7 @@ These exist in the HTML for demo purposes only:
 
 ---
 
-**Questions for the implementer:**
-- App Sandbox? (iTerm2 bridge needs Apple Events entitlement either way)
-- Sparkle for auto-update?
-- Code signing / notarization plan?
+**Resolved implementation decisions:**
+- App Sandbox stays off.
+- Sparkle auto-update is out of scope.
+- Code signing is ad-hoc only; notarization is out of scope.

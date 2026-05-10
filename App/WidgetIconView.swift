@@ -37,6 +37,9 @@ struct WidgetIconView: View {
                 .onChange(of: idleAnimation) { _, _ in
                     restartIdleAnimation()
                 }
+                .onChange(of: reduceMotion) { _, _ in
+                    restartIdleAnimation()
+                }
             if pendingCount >= 2 {
                 Text("+\(pendingCount - 1)")
                     .font(.system(size: 11, weight: .semibold))

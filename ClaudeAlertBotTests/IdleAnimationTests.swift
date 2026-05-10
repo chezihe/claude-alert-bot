@@ -52,6 +52,13 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(restartBody.contains("startIdleAnimation()"))
     }
 
+    func test_widgetIconViewSource_restartsWhenReduceMotionChanges() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains(".onChange(of: reduceMotion)"))
+        XCTAssertTrue(src.contains("restartIdleAnimation()"))
+    }
+
     func test_widgetIconViewSource_quietHoursSuppressesIdleAndKeepsPendingBadge() {
         let src = readWidgetIconViewSource()
 

@@ -90,7 +90,9 @@ final class PopoverRowStateTests: XCTestCase {
             src.contains("NSWorkspace.shared.accessibilityDisplayShouldReduceMotion"),
             "PopoverRowView is a SwiftUI view and should use the accessibilityReduceMotion environment instead of polling NSWorkspace directly"
         )
-        XCTAssertTrue(src.contains("@Environment(\\.accessibilityReduceMotion) private var reduceMotion"))
+        XCTAssertTrue(src.contains("@ObservedObject private var settings = SettingsStore.shared"))
+        XCTAssertTrue(src.contains("@Environment(\\.accessibilityReduceMotion) private var systemReduceMotion"))
+        XCTAssertTrue(src.contains("settings.reduceMotionPreference.effectiveReduceMotion(systemReduceMotion: systemReduceMotion)"))
         XCTAssertTrue(src.contains("resetArrivalRipple()"))
 
         let lines = src.components(separatedBy: .newlines)
@@ -113,7 +115,7 @@ final class PopoverRowStateTests: XCTestCase {
         XCTAssertTrue(src.contains("session.kind == .waiting"))
         XCTAssertTrue(src.contains("MotionTokens.waitingDotPulseDuration"))
         XCTAssertTrue(src.contains("MotionTokens.waitingDotPulseMinOpacity"))
-        XCTAssertTrue(src.contains("@Environment(\\.accessibilityReduceMotion) private var reduceMotion"))
+        XCTAssertTrue(src.contains("@Environment(\\.accessibilityReduceMotion) private var systemReduceMotion"))
         XCTAssertTrue(src.contains(".onChange(of: reduceMotion)"))
         XCTAssertTrue(src.contains("guard !reduceMotion else { return }"))
         XCTAssertTrue(src.contains("withTransaction(Transaction(animation: nil))"))

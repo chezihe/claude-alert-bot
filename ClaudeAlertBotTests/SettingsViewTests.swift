@@ -41,6 +41,10 @@ extension SettingsViewTests {
         XCTAssertEqual(SettingsView.themeHeading, "Theme")
         XCTAssertEqual(SettingsView.themeLabel, "Appearance")
     }
+    func test_settingsCopy_reduceMotionSection() {
+        XCTAssertEqual(SettingsView.reduceMotionHeading, "Reduce Motion")
+        XCTAssertEqual(SettingsView.reduceMotionLabel, "Mode")
+    }
     func test_settingsCopy_widgetPositionSection() {
         XCTAssertEqual(SettingsView.widgetPositionHeading, "Widget Position")
         XCTAssertEqual(SettingsView.cornerLabel, "Corner")
@@ -163,6 +167,19 @@ extension SettingsViewTests {
         XCTAssertEqual(SettingsView.themeModeName(.system), "System")
         XCTAssertEqual(SettingsView.themeModeName(.light), "Light")
         XCTAssertEqual(SettingsView.themeModeName(.dark), "Dark")
+    }
+
+    func test_reduceMotionSection_wiresPickerToStore() {
+        let src = readSettingsViewSource()
+
+        XCTAssertTrue(src.contains("Picker(Self.reduceMotionLabel, selection: store.reduceMotionPreferenceBinding)"))
+        XCTAssertTrue(src.contains("ForEach(ReduceMotionPreference.allCases, id: \\.self)"))
+        XCTAssertTrue(src.contains("Text(Self.reduceMotionPreferenceName(preference)).tag(preference)"))
+    }
+
+    func test_reduceMotionPreferenceLabels_areMinimalEnglish() {
+        XCTAssertEqual(SettingsView.reduceMotionPreferenceName(.system), "System")
+        XCTAssertEqual(SettingsView.reduceMotionPreferenceName(.reduced), "Reduced")
     }
 
     /// Resolve App/SettingsView.swift relative to this test file so source-level

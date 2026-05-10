@@ -26,6 +26,22 @@ enum ThemeMode: String, CaseIterable {
     }
 }
 
+enum ReduceMotionPreference: String, CaseIterable {
+    case system
+    case reduced
+
+    static let `default`: ReduceMotionPreference = .system
+
+    func effectiveReduceMotion(systemReduceMotion: Bool) -> Bool {
+        switch self {
+        case .system:
+            return systemReduceMotion
+        case .reduced:
+            return true
+        }
+    }
+}
+
 @MainActor
 final class SettingsStore: ObservableObject {
     static let shared = SettingsStore()
@@ -37,6 +53,7 @@ final class SettingsStore: ObservableObject {
     @AppStorage("ever_had_alerts")   var everHadAlerts: Bool = false
     @AppStorage("idle_animation")    private var idleAnimationRaw: String = IdleAnimation.default.rawValue
     @AppStorage("theme_mode")        private var themeModeRaw: String = ThemeMode.default.rawValue
+    @AppStorage("reduce_motion_preference") private var reduceMotionPreferenceRaw: String = ReduceMotionPreference.default.rawValue
     @AppStorage("widget_corner")     private var cornerRaw: String = WidgetCorner.topRight.rawValue  // D2-26
     @AppStorage("widget_offset_x")   var offsetX: Int = 16            // D2-27
     @AppStorage("widget_offset_y")   var offsetY: Int = 16            // D2-27
@@ -57,6 +74,11 @@ final class SettingsStore: ObservableObject {
         set { themeModeRaw = newValue.rawValue; objectWillChange.send() }
     }
 
+    var reduceMotionPreference: ReduceMotionPreference {
+        get { ReduceMotionPreference(rawValue: reduceMotionPreferenceRaw) ?? .default }
+        set { reduceMotionPreferenceRaw = newValue.rawValue; objectWillChange.send() }
+    }
+
     /// SwiftUI binding helper for the Picker (Pitfall #7 ergonomics).
     var cornerBinding: Binding<WidgetCorner> {
         Binding(get: { self.widgetCorner }, set: { self.widgetCorner = $0 })
@@ -68,6 +90,10 @@ final class SettingsStore: ObservableObject {
 
     var themeModeBinding: Binding<ThemeMode> {
         Binding(get: { self.themeMode }, set: { self.themeMode = $0 })
+    }
+
+    var reduceMotionPreferenceBinding: Binding<ReduceMotionPreference> {
+        Binding(get: { self.reduceMotionPreference }, set: { self.reduceMotionPreference = $0 })
     }
 
     /// D2-35/D2-36 — written by AppleScriptHelper after first cheap-query, then persisted.
@@ -103,6 +129,7 @@ final class SettingsStore: ObservableObject {
         self._everHadAlerts = AppStorage(wrappedValue: false, "ever_had_alerts", store: defaults)
         self._idleAnimationRaw = AppStorage(wrappedValue: IdleAnimation.default.rawValue, "idle_animation", store: defaults)
         self._themeModeRaw = AppStorage(wrappedValue: ThemeMode.default.rawValue, "theme_mode", store: defaults)
+        self._reduceMotionPreferenceRaw = AppStorage(wrappedValue: ReduceMotionPreference.default.rawValue, "reduce_motion_preference", store: defaults)
         self._cornerRaw = AppStorage(wrappedValue: WidgetCorner.topRight.rawValue, "widget_corner", store: defaults)
         self._offsetX = AppStorage(wrappedValue: 16, "widget_offset_x", store: defaults)
         self._offsetY = AppStorage(wrappedValue: 16, "widget_offset_y", store: defaults)

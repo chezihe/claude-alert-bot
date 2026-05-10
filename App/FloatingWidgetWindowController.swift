@@ -34,7 +34,9 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
         let initialSize = GeometryTokens.widgetDrawableSize(
             idleAnimation: store.idleAnimation,
             quietHoursEnabled: store.quietHoursEnabled,
-            reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            reduceMotion: store.reduceMotionPreference.effectiveReduceMotion(
+                systemReduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            )
         )
         let initialFrame = NSRect(origin: .zero, size: initialSize)
         let p = FloatingWidgetPanel(contentRect: initialFrame)
@@ -45,7 +47,8 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
             pendingCount: 0,
             idleAnimation: SettingsStore.shared.idleAnimation,
             alertPulseID: currentAlertPulseID,
-            quietHoursEnabled: SettingsStore.shared.quietHoursEnabled
+            quietHoursEnabled: SettingsStore.shared.quietHoursEnabled,
+            reduceMotionPreference: SettingsStore.shared.reduceMotionPreference
         ))
         hv.frame = initialFrame
         p.contentView = hv
@@ -124,7 +127,8 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
             pendingCount: pendingCount,
             idleAnimation: SettingsStore.shared.idleAnimation,
             alertPulseID: currentAlertPulseID,
-            quietHoursEnabled: SettingsStore.shared.quietHoursEnabled
+            quietHoursEnabled: SettingsStore.shared.quietHoursEnabled,
+            reduceMotionPreference: SettingsStore.shared.reduceMotionPreference
         )
     }
 
@@ -173,7 +177,9 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     // MARK: - animation (UI-SPEC §"Layout & Dimensions")
 
     private var reducedMotion: Bool {
-        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        SettingsStore.shared.reduceMotionPreference.effectiveReduceMotion(
+            systemReduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        )
     }
 
     private func applyEnterAnimation() {

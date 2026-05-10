@@ -16,8 +16,9 @@ struct WidgetIconView: View {
     var idleAnimation: IdleAnimation = .default
     var alertPulseID: Int = 0
     var quietHoursEnabled: Bool = false
+    var reduceMotionPreference: ReduceMotionPreference = .system
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @State private var bounceOffset: CGFloat = 0
     @State private var bounceScale: CGFloat = 1.0
     @State private var breatheScale: CGFloat = 1.0
@@ -32,6 +33,10 @@ struct WidgetIconView: View {
     @State private var sonarOpacity: Double = 0
     @State private var activeAlertPulseID: Int = 0
     @State private var alertPulseGeneration: Int = 0
+
+    private var reduceMotion: Bool {
+        reduceMotionPreference.effectiveReduceMotion(systemReduceMotion: systemReduceMotion)
+    }
 
     private var widgetBoundsSize: CGSize {
         GeometryTokens.widgetDrawableSize(

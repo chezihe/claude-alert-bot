@@ -17,6 +17,14 @@ final class FloatingWidgetWindowControllerTests: XCTestCase {
         XCTAssertTrue(src.contains("self.repositionIfVisible()"))
     }
 
+    func test_sourceAppliesManualReduceMotionPreferenceToWidgetSizing() {
+        let src = readFloatingWidgetWindowControllerSource()
+
+        XCTAssertTrue(src.contains("SettingsStore.shared.reduceMotionPreference.effectiveReduceMotion"))
+        XCTAssertTrue(src.contains("systemReduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion"))
+        XCTAssertTrue(src.contains("reduceMotion: reducedMotion"))
+    }
+
     func test_visibleWidgetRepositionsWhenWidgetCornerChanges() async throws {
         guard let screen = NSScreen.main else {
             throw XCTSkip("NSScreen.main unavailable in this test environment")

@@ -112,6 +112,12 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("idleAnimation: SettingsStore.shared.idleAnimation"))
     }
 
+    func test_floatingWidgetWindowController_passesReduceMotionPreferenceToIconView() {
+        let src = readFloatingWidgetWindowControllerSource()
+
+        XCTAssertTrue(src.contains("reduceMotionPreference: SettingsStore.shared.reduceMotionPreference"))
+    }
+
     func test_floatingWidgetWindowController_resizesHostToWidgetDrawableSize() {
         let src = readFloatingWidgetWindowControllerSource()
 
@@ -160,6 +166,9 @@ final class IdleAnimationTests: XCTestCase {
     func test_widgetIconViewSource_restartsWhenReduceMotionChanges() {
         let src = readWidgetIconViewSource()
 
+        XCTAssertTrue(src.contains("var reduceMotionPreference: ReduceMotionPreference = .system"))
+        XCTAssertTrue(src.contains("@Environment(\\.accessibilityReduceMotion) private var systemReduceMotion"))
+        XCTAssertTrue(src.contains("reduceMotionPreference.effectiveReduceMotion(systemReduceMotion: systemReduceMotion)"))
         XCTAssertTrue(src.contains(".onChange(of: reduceMotion)"))
         XCTAssertTrue(src.contains("restartIdleAnimation()"))
     }

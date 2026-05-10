@@ -47,8 +47,13 @@ struct PopoverRowView: View {
     @State private var rippleScale: CGFloat = 1.0
     @State private var rippleOpacity: Double = 0
     @State private var waitingDotOpacity: Double = 1.0
+    @ObservedObject private var settings = SettingsStore.shared
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+
+    private var reduceMotion: Bool {
+        settings.reduceMotionPreference.effectiveReduceMotion(systemReduceMotion: systemReduceMotion)
+    }
 
     var body: some View {
         Button(action: {

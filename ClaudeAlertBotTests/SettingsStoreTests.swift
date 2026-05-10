@@ -108,6 +108,37 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(ThemeMode.dark.nsAppearance?.name, .darkAqua)
     }
 
+    func test_reduceMotionPreference_defaultIsSystem() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = SettingsStore(defaults: defaults)
+
+        XCTAssertEqual(store.reduceMotionPreference, .system)
+    }
+
+    func test_reduceMotionPreference_persistsAcrossInit() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let first = SettingsStore(defaults: defaults)
+        first.reduceMotionPreference = .reduced
+
+        let second = SettingsStore(defaults: defaults)
+        XCTAssertEqual(second.reduceMotionPreference, .reduced)
+    }
+
+    func test_reduceMotionPreferenceEffectiveMotion_respectsSystemAndManualReduce() {
+        XCTAssertFalse(ReduceMotionPreference.system.effectiveReduceMotion(systemReduceMotion: false))
+        XCTAssertTrue(ReduceMotionPreference.system.effectiveReduceMotion(systemReduceMotion: true))
+        XCTAssertTrue(ReduceMotionPreference.reduced.effectiveReduceMotion(systemReduceMotion: false))
+        XCTAssertTrue(ReduceMotionPreference.reduced.effectiveReduceMotion(systemReduceMotion: true))
+    }
+
     func test_appDelegateSourceAppliesThemeOnLaunchAndSettingsChange() {
         let src = readAppDelegateSource()
 

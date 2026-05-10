@@ -19,6 +19,8 @@ struct SettingsView: View {
     static let idleAnimationLabel = "Animation"
     static let themeHeading = "Theme"
     static let themeLabel = "Appearance"
+    static let reduceMotionHeading = "Reduce Motion"
+    static let reduceMotionLabel = "Mode"
     static let widgetPositionHeading = "Widget Position"
     static let cornerLabel = "Corner"
     static let offsetXLabel = "Horizontal Offset"
@@ -86,6 +88,15 @@ struct SettingsView: View {
                 Picker(Self.themeLabel, selection: store.themeModeBinding) {
                     ForEach(ThemeMode.allCases, id: \.self) { mode in
                         Text(Self.themeModeName(mode)).tag(mode)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+
+            Section(Self.reduceMotionHeading) {
+                Picker(Self.reduceMotionLabel, selection: store.reduceMotionPreferenceBinding) {
+                    ForEach(ReduceMotionPreference.allCases, id: \.self) { preference in
+                        Text(Self.reduceMotionPreferenceName(preference)).tag(preference)
                     }
                 }
                 .pickerStyle(.menu)
@@ -198,6 +209,13 @@ struct SettingsView: View {
         case .system: return "System"
         case .light: return "Light"
         case .dark: return "Dark"
+        }
+    }
+
+    static func reduceMotionPreferenceName(_ preference: ReduceMotionPreference) -> String {
+        switch preference {
+        case .system: return "System"
+        case .reduced: return "Reduced"
         }
     }
 

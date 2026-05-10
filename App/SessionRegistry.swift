@@ -133,8 +133,11 @@ actor SessionRegistry {
         )
         completed.append(session)
         await persist()
+        let snapshot = self.completed
+        let count = snapshot.count
         let n = self.notifier
         await n?.present(session: session, playSoundOnce: soundEnabled && !isDup)
+        await n?.refreshQueueState(completed: snapshot, count: count)
     }
 
     /// SESS-04 — 6h GC. Called from ingest (lazy), wake observer (Wave 4), and timer (Wave 4).

@@ -126,6 +126,26 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(notifier.presentCalls.first?.session, sid)
     }
 
+    func test_ingest_stop_refreshesWidgetWithFullCompletedQueue() async {
+        let r = makeRegistry()
+        await bind(r)
+        let existing = CompletedSession(sessionID: "existing", projectName: "p",
+                                        stoppedAt: Date(), durationSec: 10,
+                                        itermSessionID: nil, tty: nil, cwd: nil)
+        await r.seedCompletedForTesting(existing)
+        let sid = "sid-D2"
+        let t0 = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
+        await r.seedInFlightForTesting(sessionID: sid, started: t0, cwd: "/x")
+        let stop = HookEventFactory.stop(sessionID: sid, ts: iso(t0.addingTimeInterval(31)))
+
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        XCTAssertEqual(notifier.presentCalls.map(\.session), [sid])
+        XCTAssertEqual(notifier.refreshCalls.last, 2)
+        XCTAssertEqual(notifier.refreshQueueCalls.last, ["existing", sid])
+    }
+
     /// Test E — THR-02: orphan Stop emits with durationSec=nil regardless of threshold.
     func test_THR_02_orphanStop_emitsWithNilDuration() async {
         let r = makeRegistry()

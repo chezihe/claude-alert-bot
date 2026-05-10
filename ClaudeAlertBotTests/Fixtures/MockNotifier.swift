@@ -10,12 +10,14 @@ final class MockNotifier {
     struct PresentCall { let session: String; let playSound: Bool }
     private(set) var presentCalls: [PresentCall] = []
     private(set) var refreshCalls: [Int] = []
+    private(set) var refreshQueueCalls: [[String]] = []
 
     func present(sessionID: String, playSound: Bool) {
         presentCalls.append(.init(session: sessionID, playSound: playSound))
     }
 
-    func refresh(count: Int) {
+    func refresh(count: Int, completedSessionIDs: [String] = []) {
         refreshCalls.append(count)
+        refreshQueueCalls.append(completedSessionIDs)
     }
 }

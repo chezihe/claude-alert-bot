@@ -13,6 +13,6 @@ extension MockNotifier: NotifierProtocol {
         present(sessionID: session.sessionID, playSound: playSoundOnce)
     }
     func refreshQueueState(completed: [CompletedSession], count: Int) async {
-        refresh(count: count)
+        refresh(count: count, completedSessionIDs: completed.map(\.sessionID))
     }
 }

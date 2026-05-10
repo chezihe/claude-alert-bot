@@ -214,20 +214,23 @@ enum LoginItemController {
                 case .notRegistered, .notFound:
                     try service.register()
                 case .requiresApproval:
-                    SettingsStore.shared.launchAtLoginEnabled = false
                     if openSettingsWhenApprovalRequired {
                         SMAppService.openSystemSettingsLoginItems()
+                        log.notice("login item requires user approval; opened Login Items settings")
+                        return
                     }
-                    log.notice("login item requires user approval; disabled stored preference")
+                    try service.unregister()
+                    SettingsStore.shared.launchAtLoginEnabled = false
+                    log.notice("login item requires user approval; unregistered pending item and disabled stored preference")
                     return
                 @unknown default:
                     try service.register()
                 }
             } else {
                 switch service.status {
-                case .enabled:
+                case .enabled, .requiresApproval:
                     try service.unregister()
-                case .notRegistered, .requiresApproval, .notFound:
+                case .notRegistered, .notFound:
                     return
                 @unknown default:
                     return

@@ -197,6 +197,34 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertTrue(src.contains("case .notRegistered, .notFound:\n                    try service.register()"))
     }
 
+    func test_loginItemControllerSource_unregistersApprovalPendingItemBeforeClearingPreference() throws {
+        let src = readAppDelegateSource()
+        let approvalRange = try XCTUnwrap(src.range(of: "case .requiresApproval:"))
+        let unknownRange = try XCTUnwrap(src.range(of: "@unknown default:", range: approvalRange.lowerBound..<src.endIndex))
+        let approvalBlock = src[approvalRange.lowerBound..<unknownRange.lowerBound]
+
+        let unregisterRange = try XCTUnwrap(approvalBlock.range(of: "try service.unregister()"))
+        let clearRange = try XCTUnwrap(approvalBlock.range(of: "SettingsStore.shared.launchAtLoginEnabled = false"))
+        XCTAssertLessThan(unregisterRange.lowerBound, clearRange.lowerBound)
+    }
+
+    func test_loginItemControllerSource_keepsSettingsRecoveryPreferencePendingApproval() throws {
+        let src = readAppDelegateSource()
+        let approvalRange = try XCTUnwrap(src.range(of: "case .requiresApproval:"))
+        let unknownRange = try XCTUnwrap(src.range(of: "@unknown default:", range: approvalRange.lowerBound..<src.endIndex))
+        let approvalBlock = src[approvalRange.lowerBound..<unknownRange.lowerBound]
+
+        let recoveryRange = try XCTUnwrap(approvalBlock.range(of: "if openSettingsWhenApprovalRequired"))
+        let clearRange = try XCTUnwrap(approvalBlock.range(of: "SettingsStore.shared.launchAtLoginEnabled = false"))
+        XCTAssertLessThan(recoveryRange.lowerBound, clearRange.lowerBound)
+    }
+
+    func test_loginItemControllerSource_unregistersApprovalPendingItemWhenPreferenceTurnsOff() {
+        let src = readAppDelegateSource()
+
+        XCTAssertTrue(src.contains("case .enabled, .requiresApproval:\n                    try service.unregister()"))
+    }
+
     func test_loginItemControllerSource_opensLoginItemsOnlyFromSettingsRecovery() {
         let src = readAppDelegateSource()
 

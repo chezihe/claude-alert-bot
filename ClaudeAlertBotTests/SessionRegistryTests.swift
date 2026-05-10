@@ -763,6 +763,36 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertTrue(notifier.refreshCalls.contains(1))
     }
 
+    func test_restore_dropsPersistedSyntheticTestFixture() async {
+        let seedStore = SessionStore(url: tempURL)
+        var synthetic = CompletedSession.testFixture()
+        synthetic.pinned = true
+        let real = CompletedSession(sessionID: "test-real",
+                                    projectName: "p",
+                                    stoppedAt: Date(timeIntervalSince1970: 1_700_000_100),
+                                    durationSec: 31,
+                                    itermSessionID: nil,
+                                    tty: nil,
+                                    cwd: nil,
+                                    pinned: true,
+                                    alertID: "real-alert")
+        let seeded = SessionsSnapshot(schema: SessionsSnapshot.currentSchema,
+                                      inFlight: [:],
+                                      completed: [synthetic, real])
+        await seedStore.save(seeded)
+
+        let r = makeRegistry()
+        await bind(r)
+        await r.restore()
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.map(\.id), ["real-alert"])
+        XCTAssertTrue(notifier.refreshCalls.contains(1))
+
+        let cleaned = await SessionStore(url: tempURL).load()
+        XCTAssertEqual(cleaned?.completed.map(\.id), ["real-alert"])
+    }
+
     private func readWorkspaceFrontmostObserverSource(_ thisFile: StaticString = #filePath) -> String {
         let here = URL(fileURLWithPath: "\(thisFile)")
         let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()

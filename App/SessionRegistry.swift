@@ -42,12 +42,16 @@ actor SessionRegistry {
     func restore() async {
         guard let snap = await persistence.load() else { return }
         self.inFlight = snap.inFlight
-        self.completed = snap.completed
+        let restoredCompleted = snap.completed.filter { !Self.isSyntheticTestFixture($0) }
+        self.completed = restoredCompleted
+        if restoredCompleted.count != snap.completed.count {
+            await persist()
+        }
         let n = self.notifier
         let snapshot = self.completed
         let count = snapshot.count
         await n?.refreshQueueState(completed: snapshot, count: count)
-        log.notice("restore: inFlight=\(snap.inFlight.count) completed=\(snap.completed.count)")
+        log.notice("restore: inFlight=\(snap.inFlight.count) completed=\(count)")
     }
 
     func ingest(_ event: HookEvent,

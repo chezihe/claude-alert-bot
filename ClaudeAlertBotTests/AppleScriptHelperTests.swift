@@ -132,6 +132,28 @@ final class AppleScriptHelperTests: XCTestCase {
                        "testConnection in .denied state must short-circuit without script execution")
     }
 
+    func test_hookListenerGatesStopPermissionPromptBySupportedTerminal() {
+        let testFile = URL(fileURLWithPath: #filePath)
+        let projectRoot = testFile
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let listenerURL = projectRoot
+            .appendingPathComponent("App")
+            .appendingPathComponent("HookListener.swift")
+        let src = (try? String(contentsOf: listenerURL, encoding: .utf8)) ?? ""
+        XCTAssertFalse(src.isEmpty, "Could not read App/HookListener.swift at \(listenerURL.path)")
+
+        guard let promptRange = src.range(of: "triggerPermissionPrompt()") else {
+            XCTFail("HookListener must keep the D2-35 permission prompt hook")
+            return
+        }
+        let promptPrefix = String(src[..<promptRange.lowerBound].suffix(320))
+        XCTAssertTrue(
+            promptPrefix.contains("SessionRegistry.isSupportedTerminal(event.term_program)"),
+            "D2-35 Path B must not prompt for explicit non-iTerm hook events"
+        )
+    }
+
     // MARK: - D3-04 Phase 2 D2-14/D2-15 silent-failure regression (plan-check B2 relocation)
 
     func test_d3_04_phase2SilentFailureRegression_postNormalizationContract() async {

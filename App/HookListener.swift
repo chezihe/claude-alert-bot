@@ -102,7 +102,9 @@ final class HookListener {
                 let soundOn = store.soundEnabled
                 let perm = store.applescriptPermission
 
-                if perm == .unknown && event.event == "stop" {
+                if perm == .unknown,
+                   event.event == "stop",
+                   SessionRegistry.isSupportedTerminal(event.term_program) {
                     Task { await AppleScriptHelper.shared.triggerPermissionPrompt() }
                 }
 

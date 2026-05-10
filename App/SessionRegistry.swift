@@ -302,7 +302,7 @@ actor SessionRegistry {
         await persist()
     }
 
-    private static func isSupportedTerminal(_ termProgram: String?) -> Bool {
+    static func isSupportedTerminal(_ termProgram: String?) -> Bool {
         guard let termProgram, !termProgram.isEmpty else { return true }
         return termProgram == "iTerm.app"
     }

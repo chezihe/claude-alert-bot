@@ -56,7 +56,7 @@ final class SessionRegistryTests: XCTestCase {
         await bind(r)
         let sid = "sid-A"
         let start = Date(timeIntervalSince1970: 1_700_000_000)
-        let evt = HookEventFactory.userPromptSubmit(sessionID: sid, ts: iso(start))
+        let evt = HookEventFactory.userPromptSubmit(sessionID: sid, ts: iso(start), termProgram: "iTerm.app")
         await r.ingest(evt, thresholdSeconds: 30, soundEnabled: true,
                        suppressIfFrontmost: suppressNo)
 
@@ -115,6 +115,25 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertTrue(loaded?.completed.first?.pinned ?? false)
     }
 
+    func test_ingest_userPromptSubmit_fromExplicitNonITerm_isIgnored() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-non-iterm-start"
+        let evt = HookEventFactory.userPromptSubmit(
+            sessionID: sid,
+            ts: iso(Date()),
+            termProgram: "Apple_Terminal"
+        )
+
+        await r.ingest(evt, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertNil(snap.inFlight[sid])
+        XCTAssertTrue(snap.completed.isEmpty)
+        XCTAssertTrue(notifier.refreshCalls.isEmpty)
+    }
+
     /// Test C — Stop arriving below threshold drops the alert silently.
     func test_ingest_stop_belowThreshold_dropsAlert() async {
         let r = makeRegistry()
@@ -143,7 +162,7 @@ final class SessionRegistryTests: XCTestCase {
         // evict the seed and (b) ISO8601 round-trip (no fractional seconds) preserves duration.
         let t0 = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
         await r.seedInFlightForTesting(sessionID: sid, started: t0, cwd: "/x")
-        let stop = HookEventFactory.stop(sessionID: sid, ts: iso(t0.addingTimeInterval(31)))
+        let stop = HookEventFactory.stop(sessionID: sid, ts: iso(t0.addingTimeInterval(31)), termProgram: "iTerm.app")
 
         await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
                        suppressIfFrontmost: suppressNo)
@@ -153,6 +172,50 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(snap.completed.first?.durationSec, 31)
         XCTAssertEqual(notifier.presentCalls.count, 1)
         XCTAssertEqual(notifier.presentCalls.first?.session, sid)
+    }
+
+    func test_ingest_stop_fromExplicitNonITerm_skipsAppendAndPresent() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-non-iterm-stop"
+        let stop = HookEventFactory.stop(
+            sessionID: sid,
+            ts: iso(Date()),
+            termProgram: "Apple_Terminal"
+        )
+
+        await r.ingest(stop, thresholdSeconds: 0, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertTrue(snap.inFlight.isEmpty)
+        XCTAssertTrue(snap.completed.isEmpty)
+        XCTAssertTrue(notifier.presentCalls.isEmpty)
+        XCTAssertTrue(notifier.refreshCalls.isEmpty)
+    }
+
+    func test_ingest_stop_fromExplicitNonITerm_clearsMatchingInFlight() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-non-iterm-existing"
+        await r.seedInFlightForTesting(sessionID: sid, started: Date(), cwd: "/x")
+        let stop = HookEventFactory.stop(
+            sessionID: sid,
+            ts: iso(Date()),
+            termProgram: "Apple_Terminal"
+        )
+
+        await r.ingest(stop, thresholdSeconds: 0, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertNil(snap.inFlight[sid])
+        XCTAssertTrue(snap.completed.isEmpty)
+        XCTAssertTrue(notifier.presentCalls.isEmpty)
+        XCTAssertTrue(notifier.refreshCalls.isEmpty)
+
+        let persisted = await SessionStore(url: tempURL).load()
+        XCTAssertNil(persisted?.inFlight[sid])
     }
 
     func test_ingest_stop_refreshesWidgetWithFullCompletedQueue() async {

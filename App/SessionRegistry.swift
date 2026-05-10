@@ -56,6 +56,10 @@ actor SessionRegistry {
                 suppressIfFrontmost: @Sendable (String?) async -> Bool) async {
         // Lazy GC kick (Pattern 6 third trigger)
         await runGC()
+        guard Self.isSupportedTerminal(event.term_program) else {
+            await discardUnsupportedTerminalEvent(event)
+            return
+        }
         switch event.event {
         case "user_prompt_submit": await handleStart(event)
         case "stop": await handleStop(event,
@@ -287,6 +291,20 @@ actor SessionRegistry {
         guard let s = s else { return nil }
         let f = ISO8601DateFormatter()
         return f.date(from: s)
+    }
+
+    private func discardUnsupportedTerminalEvent(_ event: HookEvent) async {
+        log.notice("ignoring unsupported terminal=\(event.term_program ?? "nil", privacy: .public) event=\(event.event, privacy: .public)")
+        guard event.event == "stop",
+              let sid = event.session_id,
+              inFlight.removeValue(forKey: sid) != nil
+        else { return }
+        await persist()
+    }
+
+    private static func isSupportedTerminal(_ termProgram: String?) -> Bool {
+        guard let termProgram, !termProgram.isEmpty else { return true }
+        return termProgram == "iTerm.app"
     }
 
     #if DEBUG

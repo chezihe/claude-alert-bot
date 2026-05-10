@@ -25,6 +25,7 @@ struct WidgetIconView: View {
     @State private var roamPhase: Double = 0
     @State private var driftOffset: CGSize = .zero
     @State private var driftGeneration: Int = 0
+    @State private var driftWorkItem: DispatchWorkItem?
     @State private var alertPulseScale: CGFloat = 1.0
     @State private var alertPulseRotation: Double = 0
     @State private var sonarScale: CGFloat = MotionTokens.sonarStartScale
@@ -73,6 +74,9 @@ struct WidgetIconView: View {
                     .onAppear {
                         startIdleAnimation()
                         runNewAlertPulse()
+                    }
+                    .onDisappear {
+                        stopDriftAnimation()
                     }
                     .onChange(of: quietHoursEnabled) { _, _ in
                         restartIdleAnimation()
@@ -142,19 +146,35 @@ struct WidgetIconView: View {
             }
         case .drift:
             guard MotionTokens.driftAnimation(reduceMotion: reduceMotion) != nil else { return }
-            runDriftStep(generation: driftGeneration)
+            startDriftAnimation()
         }
     }
 
     private func restartIdleAnimation() {
-        driftGeneration += 1
+        stopDriftAnimation()
         bounceOffset = 0
         bounceScale = 1.0
         breatheScale = 1.0
         idleRotation = 0
         roamPhase = 0
-        driftOffset = .zero
         startIdleAnimation()
+    }
+
+    private func startDriftAnimation() {
+        cancelDriftWorkItem()
+        driftGeneration += 1
+        runDriftStep(generation: driftGeneration)
+    }
+
+    private func stopDriftAnimation() {
+        cancelDriftWorkItem()
+        driftGeneration += 1
+        driftOffset = .zero
+    }
+
+    private func cancelDriftWorkItem() {
+        driftWorkItem?.cancel()
+        driftWorkItem = nil
     }
 
     private func runDriftStep(generation: Int) {
@@ -168,10 +188,13 @@ struct WidgetIconView: View {
         withAnimation(anim) {
             driftOffset = makeDriftTarget()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + MotionTokens.driftDuration) {
+        let workItem = DispatchWorkItem {
             guard generation == driftGeneration else { return }
+            driftWorkItem = nil
             runDriftStep(generation: generation)
         }
+        driftWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + MotionTokens.driftDuration, execute: workItem)
     }
 
     private func makeDriftTarget() -> CGSize {

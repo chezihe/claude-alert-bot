@@ -73,6 +73,19 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("Double.random(in: -MotionTokens.driftRadiusY...MotionTokens.driftRadiusY)"))
     }
 
+    func test_widgetIconViewSource_cancelsDriftLoopOnLifecycleEnd() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("@State private var driftWorkItem: DispatchWorkItem?"))
+        XCTAssertTrue(src.contains(".onDisappear"))
+        XCTAssertTrue(src.contains("stopDriftAnimation()"))
+        XCTAssertTrue(src.contains("private func stopDriftAnimation()"))
+        XCTAssertTrue(src.contains("private func cancelDriftWorkItem()"))
+        XCTAssertTrue(src.contains("driftWorkItem?.cancel()"))
+        XCTAssertTrue(src.contains("driftGeneration += 1"))
+        XCTAssertTrue(src.contains("execute: workItem"))
+    }
+
     func test_widgetIconViewSource_roamUsesCounterClockwiseGeometryEffect() {
         let src = readWidgetIconViewSource()
 

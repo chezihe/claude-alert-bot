@@ -214,6 +214,54 @@ final class PopoverContentTests: XCTestCase {
         ))
     }
 
+    func test_scrollFadeVisibility_whenNotScrollable_hidesBothFades() {
+        let fades = PopoverContentRules.scrollFadeVisibility(
+            contentMinY: 0,
+            contentMaxY: 108,
+            viewportHeight: 144,
+            isScrollable: false
+        )
+
+        XCTAssertFalse(fades.top)
+        XCTAssertFalse(fades.bottom)
+    }
+
+    func test_scrollFadeVisibility_atTop_hidesTopAndShowsBottomFade() {
+        let fades = PopoverContentRules.scrollFadeVisibility(
+            contentMinY: 0,
+            contentMaxY: 180,
+            viewportHeight: 144,
+            isScrollable: true
+        )
+
+        XCTAssertFalse(fades.top)
+        XCTAssertTrue(fades.bottom)
+    }
+
+    func test_scrollFadeVisibility_inMiddle_showsBothFades() {
+        let fades = PopoverContentRules.scrollFadeVisibility(
+            contentMinY: -18,
+            contentMaxY: 162,
+            viewportHeight: 144,
+            isScrollable: true
+        )
+
+        XCTAssertTrue(fades.top)
+        XCTAssertTrue(fades.bottom)
+    }
+
+    func test_scrollFadeVisibility_atBottom_showsTopAndHidesBottomFade() {
+        let fades = PopoverContentRules.scrollFadeVisibility(
+            contentMinY: -36,
+            contentMaxY: 144,
+            viewportHeight: 144,
+            isScrollable: true
+        )
+
+        XCTAssertTrue(fades.top)
+        XCTAssertFalse(fades.bottom)
+    }
+
     // MARK: - WO-009 empty state + settings gear contract (source-level audit)
 
     func test_popoverContentView_rendersEmptyStateWhenQueueIsEmpty() {
@@ -254,9 +302,16 @@ final class PopoverContentTests: XCTestCase {
         let src = readPopoverContentViewSource()
 
         XCTAssertTrue(src.contains("private struct PopoverScrollFadeMask: View"))
+        XCTAssertTrue(src.contains("let showsTopFade: Bool"))
+        XCTAssertTrue(src.contains("let showsBottomFade: Bool"))
+        XCTAssertTrue(src.contains("@State private var scrollViewportHeight: CGFloat = 0"))
+        XCTAssertTrue(src.contains("@State private var scrollContentFrame: CGRect = .zero"))
+        XCTAssertTrue(src.contains("PopoverContentRules.scrollFadeVisibility("))
         XCTAssertTrue(src.contains("let fadeHeight = GeometryTokens.popoverScrollFadeHeight"))
         XCTAssertTrue(src.contains("let isScrollable = listItems.count > GeometryTokens.popoverMaxVisibleRows"))
-        XCTAssertTrue(src.contains(".mask(PopoverScrollFadeMask(isEnabled: isScrollable))"))
+        XCTAssertTrue(src.contains(".mask(PopoverScrollFadeMask(showsTopFade: fades.top, showsBottomFade: fades.bottom))"))
+        XCTAssertTrue(src.contains("private struct PopoverScrollViewportHeightPreferenceKey: PreferenceKey"))
+        XCTAssertTrue(src.contains("private struct PopoverScrollContentFramePreferenceKey: PreferenceKey"))
     }
 
     func test_widgetPopoverController_sizingUsesPopoverGeometryTokens() {

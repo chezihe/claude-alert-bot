@@ -114,6 +114,18 @@ enum PopoverContentRules {
             rowStates[session.sessionID, default: .normal] != .normal
         }
     }
+
+    static func scrollFadeVisibility(contentMinY: CGFloat,
+                                     contentMaxY: CGFloat,
+                                     viewportHeight: CGFloat,
+                                     isScrollable: Bool) -> (top: Bool, bottom: Bool) {
+        guard isScrollable, viewportHeight > 0 else { return (false, false) }
+        let epsilon: CGFloat = 0.5
+        return (
+            top: contentMinY < -epsilon,
+            bottom: contentMaxY > viewportHeight + epsilon
+        )
+    }
 }
 
 // MARK: - SwiftUI container
@@ -140,6 +152,11 @@ struct PopoverContentView: View {
     var expandedProjects: Set<String> = []
     var onToggleGroup: (String) -> Void = { _ in }
     var everHadAlerts: Bool = false
+
+    @State private var scrollViewportHeight: CGFloat = 0
+    @State private var scrollContentFrame: CGRect = .zero
+
+    private static let scrollCoordinateSpaceName = "PopoverScrollView"
 
     private var listItems: [PopoverListItem] {
         PopoverContentRules.groupedListItems(queue, expandedProjects: expandedProjects)
@@ -171,6 +188,12 @@ struct PopoverContentView: View {
                 EmptyStateView()
             } else if !queue.isEmpty {
                 let isScrollable = listItems.count > GeometryTokens.popoverMaxVisibleRows
+                let fades = PopoverContentRules.scrollFadeVisibility(
+                    contentMinY: scrollContentFrame.minY,
+                    contentMaxY: scrollContentFrame.maxY,
+                    viewportHeight: scrollViewportHeight,
+                    isScrollable: isScrollable
+                )
                 ScrollView {
                     VStack(spacing: 0) {
                         ForEach(listItems) { item in
@@ -198,10 +221,33 @@ struct PopoverContentView: View {
                             }
                         }
                     }
+                    .background(
+                        GeometryReader { proxy in
+                            Color.clear.preference(
+                                key: PopoverScrollContentFramePreferenceKey.self,
+                                value: proxy.frame(in: .named(Self.scrollCoordinateSpaceName))
+                            )
+                        }
+                    )
                 }
                 .scrollIndicators(.hidden)
                 .frame(maxHeight: GeometryTokens.rowMinHeight * CGFloat(GeometryTokens.popoverMaxVisibleRows))
-                .mask(PopoverScrollFadeMask(isEnabled: isScrollable))
+                .coordinateSpace(name: Self.scrollCoordinateSpaceName)
+                .background(
+                    GeometryReader { proxy in
+                        Color.clear.preference(
+                            key: PopoverScrollViewportHeightPreferenceKey.self,
+                            value: proxy.size.height
+                        )
+                    }
+                )
+                .onPreferenceChange(PopoverScrollViewportHeightPreferenceKey.self) { height in
+                    scrollViewportHeight = height
+                }
+                .onPreferenceChange(PopoverScrollContentFramePreferenceKey.self) { frame in
+                    scrollContentFrame = frame
+                }
+                .mask(PopoverScrollFadeMask(showsTopFade: fades.top, showsBottomFade: fades.bottom))
             }
         }
         .frame(width: GeometryTokens.popoverWidth)
@@ -211,25 +257,48 @@ struct PopoverContentView: View {
 }
 
 private struct PopoverScrollFadeMask: View {
-    let isEnabled: Bool
+    let showsTopFade: Bool
+    let showsBottomFade: Bool
 
     var body: some View {
-        if isEnabled {
-            let fadeHeight = GeometryTokens.popoverScrollFadeHeight
-            VStack(spacing: 0) {
+        let fadeHeight = GeometryTokens.popoverScrollFadeHeight
+        VStack(spacing: 0) {
+            if showsTopFade {
                 LinearGradient(colors: [.clear, .black],
                                startPoint: .top,
                                endPoint: .bottom)
                     .frame(height: fadeHeight)
+            } else {
                 Rectangle().fill(.black)
+                    .frame(height: fadeHeight)
+            }
+            Rectangle().fill(.black)
+            if showsBottomFade {
                 LinearGradient(colors: [.black, .clear],
                                startPoint: .top,
                                endPoint: .bottom)
                     .frame(height: fadeHeight)
+            } else {
+                Rectangle().fill(.black)
+                    .frame(height: fadeHeight)
             }
-        } else {
-            Rectangle().fill(.black)
         }
+    }
+}
+
+private struct PopoverScrollViewportHeightPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
+private struct PopoverScrollContentFramePreferenceKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        value = nextValue()
     }
 }
 

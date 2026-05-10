@@ -31,6 +31,7 @@ struct WidgetIconView: View {
                     .strokeBorder(ColorTokens.accent.opacity(sonarOpacity), lineWidth: 1.5)
                     .frame(width: MotionTokens.sonarBaseDiameter, height: MotionTokens.sonarBaseDiameter)
                     .scaleEffect(sonarScale)
+                    .frame(width: 44, height: 44, alignment: .center)
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
             }

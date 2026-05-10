@@ -78,6 +78,15 @@ final class PopoverRowStateTests: XCTestCase {
         )
     }
 
+    func test_unavailableRow_usesHalfOpacity() {
+        let src = readPopoverRowViewSource()
+
+        XCTAssertTrue(
+            src.contains("session.available ? 1 : 0.5"),
+            "Unavailable rows must render at 50% opacity per SPEC.md"
+        )
+    }
+
     func test_unavailableRowAccessibility_announcesUnavailableState() {
         let src = readPopoverRowViewSource()
 

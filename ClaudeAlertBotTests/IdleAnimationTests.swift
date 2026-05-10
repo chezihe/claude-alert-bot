@@ -20,6 +20,16 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("MotionTokens.breatheAnimation"))
     }
 
+    func test_widgetIconViewSource_wiresBounceSquashScale() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("@State private var bounceScale: CGFloat = 1.0"))
+        XCTAssertTrue(src.contains(".scaleEffect(quietHoursEnabled ? 1.0 : breatheScale * bounceScale)"))
+        XCTAssertTrue(src.contains("bounceScale = 1.0"))
+        XCTAssertTrue(src.contains("bounceScale = MotionTokens.bounceStretchScale"))
+        XCTAssertTrue(src.contains("bounceScale = MotionTokens.bounceSquashScale"))
+    }
+
     func test_widgetIconViewSource_quietHoursSuppressesIdleAndKeepsPendingBadge() {
         let src = readWidgetIconViewSource()
 

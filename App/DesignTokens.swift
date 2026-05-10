@@ -73,6 +73,8 @@ enum MotionTokens {
     // SPEC.md §4 row "Bounce (idle)" — 0.45s duration, 5pt vertical, easeInOut, autoreverse, infinite.
     static let bounceDuration: TimeInterval = 0.45
     static let bounceOffset: CGFloat = 5
+    static let bounceStretchScale: CGFloat = 1.04
+    static let bounceSquashScale: CGFloat = 0.94
     // SPEC.md §4 row "Breathe" — 2.4s, autoreverse, infinite, easeInOut, scale 1.0↔1.06.
     static let breatheDuration: TimeInterval = 2.4
     static let breatheScale: CGFloat = 1.06

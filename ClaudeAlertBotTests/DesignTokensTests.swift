@@ -115,6 +115,14 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(MotionTokens.bounceOffset, 5)
     }
 
+    func test_motionTokens_bounceStretchScale_is1_04() {
+        XCTAssertEqual(MotionTokens.bounceStretchScale, 1.04, accuracy: 0.001)
+    }
+
+    func test_motionTokens_bounceSquashScale_is0_94() {
+        XCTAssertEqual(MotionTokens.bounceSquashScale, 0.94, accuracy: 0.001)
+    }
+
     func test_motionTokens_breatheDuration_is2_4() {
         XCTAssertEqual(MotionTokens.breatheDuration, 2.4, accuracy: 0.001)
     }

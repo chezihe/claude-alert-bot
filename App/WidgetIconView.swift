@@ -2,7 +2,7 @@
 // UI-SPEC: 36pt Claude Code glyph, 4pt internal padding (44pt total).
 // +N badge: 16pt × 16pt circle, systemRed fill (systemGray in Quiet Hours), white SF Pro Semibold 11pt numeral.
 // Anchored top-trailing with -4/-4 overhang per UI-SPEC.
-// Bounce: 5pt vertical, 0.45s easeInOut, autoreverse forever; suppressed when Reduce Motion is on.
+// Bounce: 5pt vertical + 1.04↔0.94 squash, 0.45s easeInOut, autoreverse forever; suppressed when Reduce Motion is on.
 // Breathe: 2.4s scale 1.0↔1.06, autoreverse forever; default idle animation for WO-012.
 import SwiftUI
 import AppKit
@@ -14,6 +14,7 @@ struct WidgetIconView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var bounceOffset: CGFloat = 0
+    @State private var bounceScale: CGFloat = 1.0
     @State private var breatheScale: CGFloat = 1.0
 
     var body: some View {
@@ -25,7 +26,7 @@ struct WidgetIconView: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 36, height: 36)
                 .frame(width: 44, height: 44)
-                .scaleEffect(quietHoursEnabled ? 1.0 : breatheScale)
+                .scaleEffect(quietHoursEnabled ? 1.0 : breatheScale * bounceScale)
                 .offset(y: quietHoursEnabled ? 0 : bounceOffset)
                 .onAppear {
                     startIdleAnimation()
@@ -33,6 +34,7 @@ struct WidgetIconView: View {
                 .onChange(of: quietHoursEnabled) { _, quiet in
                     if quiet {
                         bounceOffset = 0
+                        bounceScale = 1.0
                         breatheScale = 1.0
                     } else {
                         startIdleAnimation()
@@ -69,8 +71,10 @@ struct WidgetIconView: View {
         switch idleAnimation {
         case .bounce:
             guard let anim = MotionTokens.bounceAnimation(reduceMotion: reduceMotion) else { return }
+            bounceScale = MotionTokens.bounceStretchScale
             withAnimation(anim) {
                 bounceOffset = -MotionTokens.bounceOffset
+                bounceScale = MotionTokens.bounceSquashScale
             }
         case .breathe:
             guard let anim = MotionTokens.breatheAnimation(reduceMotion: reduceMotion) else { return }

@@ -3,7 +3,7 @@
 > **Reference prototype:** `Claude Alert Bot - Prototype v2.html`
 > The HTML file is the source of truth for visuals, motion, and interaction. This document maps it to native macOS APIs.
 >
-> **Current implementation note:** repository-level constraints in `AGENTS.md` / `CLAUDE.md` override prototype-era alternatives below. The app currently uses Claude Code hooks + Unix domain socket IPC, `NSAppleScript` for iTerm2, `AVAudioPlayer` for sound, and a floating `NSPanel` widget.
+> **Current implementation note:** repository-level constraints in `AGENTS.md` / `CLAUDE.md` override prototype-era alternatives below. The app currently uses Claude Code / Codex CLI hooks + Unix domain socket IPC, `NSAppleScript` for iTerm2, `AVAudioPlayer` for sound, and a floating `NSPanel` widget.
 
 ---
 
@@ -25,9 +25,9 @@
 
 ## 2. iTerm2 Integration
 
-The widget needs to know **(a) when a Claude Code session finishes** and **(b) how to focus that exact iTerm session** when the user clicks a row.
+The widget needs to know **(a) when a Claude Code or Codex CLI session finishes** and **(b) how to focus that exact iTerm session** when the user clicks a row.
 
-**Current implementation:** Claude Code `Stop` and `UserPromptSubmit` hooks run `Reporter/cab-report.sh`, which posts a JSON envelope to the app over a Unix domain socket. Row click focuses iTerm2 with compiled `NSAppleScript`. The iTerm2 Python API is not used in this project.
+**Current implementation:** Claude Code and Codex CLI `Stop` / `UserPromptSubmit` hooks run `Reporter/cab-report.sh`, which posts a JSON envelope to the app over a Unix domain socket. Row click focuses iTerm2 with compiled `NSAppleScript`. The iTerm2 Python API is not used in this project.
 
 Each event payload:
 
@@ -171,7 +171,7 @@ ClaudeAlertBot/
 │   ├── ITerm2Jumper.swift
 │   └── SoundPlayer.swift
 ├── Reporter/
-│   └── cab-report.sh              // Claude Code hook reporter
+│   └── cab-report.sh              // Claude Code / Codex CLI hook reporter
 ├── ClaudeAlertBotTests/
 │   └── ...                        // XCTest coverage
 └── Resources/

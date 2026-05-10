@@ -2,9 +2,9 @@
 
 ## Project Goal & Core Value
 
-Claude Alert Bot is a native macOS app that surfaces a floating Claude-icon widget when a Claude Code session finishes. Clicking the widget jumps to the exact iTerm2 tab/window where that session ran.
+Claude Alert Bot is a native macOS app that surfaces a floating Claude-icon widget when a Claude Code or Codex CLI session finishes. Clicking the widget jumps to the exact iTerm2 tab/window where that session ran.
 
-**Core value:** "When a long-running Claude Code task finishes while the user is away, they can return to *the exact terminal* without confusion." Notifications that point to the wrong session destroy the value — **session-accurate jump is non-negotiable**.
+**Core value:** "When a long-running coding-agent task finishes while the user is away, they can return to *the exact terminal* without confusion." Notifications that point to the wrong session destroy the value — **session-accurate jump is non-negotiable**.
 
 ## Hard Constraints
 
@@ -14,11 +14,11 @@ These are project axioms. Do not propose changes that violate them; if a task se
 - **Terminal:** iTerm2 only (MVP scope). Do not add Terminal.app/Warp/Ghostty support.
 - **Tech stack:** Swift / SwiftUI + AppKit interop. **Zero external Swift dependencies.** No SwiftPM packages added.
 - **Build environment:** Xcode 15.4+ is required for local development. Users receive build artifacts, not build instructions as the primary install path.
-- **External runtime requirements:** Claude Code and iTerm2 must both be installed.
+- **External runtime requirements:** Claude Code or Codex CLI as the event source, plus iTerm2 for exact terminal jumps.
 - **No App Sandbox.** Sandboxing breaks Network.framework UDS + AppleScript automation. Do not enable it.
 - **Code signing:** Ad-hoc only (`codesign --force --deep --sign -`). This is required for Apple Silicon launch. No Apple Developer Program. Do not add notarization steps.
 - **Gatekeeper:** For unsigned distribution on macOS 15+, document System Settings → Privacy & Security → "Open Anyway" or an `xattr -cr` helper. Do not rely on right-click → Open instructions.
-- **Hooks required:** Both `Stop` and `UserPromptSubmit` Claude Code hooks. Merge idempotently into `~/.claude/settings.json`.
+- **Hooks required:** Both `Stop` and `UserPromptSubmit` hooks. Merge Claude Code hooks idempotently into `~/.claude/settings.json`; when `~/.codex` exists, merge Codex hooks into `~/.codex/hooks.json` and enable `codex_hooks` in `~/.codex/config.toml`.
 - **AppleScript permission:** `NSAppleEventsUsageDescription` Info.plist key required for iTerm2 automation.
 - **Out of scope:** Sparkle auto-updater, sandboxing, App Store distribution.
 
@@ -29,7 +29,7 @@ This is a Swift macOS app generated from `project.yml` into `ClaudeAlertBot.xcod
 - `App/` contains the application source, SwiftUI/AppKit entry points, IPC listener, notification/widget logic, assets, entitlements, and `Info.plist`.
 - `ClaudeAlertBotTests/` contains XCTest unit tests, with shared test helpers in `ClaudeAlertBotTests/Fixtures/`.
 - `CabTest/` builds the `cab-test` helper tool embedded into the app bundle.
-- `Reporter/` contains `cab-report.sh`, the Claude hook reporter script.
+- `Reporter/` contains `cab-report.sh`, the Claude Code / Codex hook reporter script.
 - `scripts/` contains build, verification, and local hook-install helpers.
 - `build/` is generated output and should not be committed.
 

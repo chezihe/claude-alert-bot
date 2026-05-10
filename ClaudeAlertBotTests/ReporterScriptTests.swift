@@ -77,6 +77,143 @@ final class ReporterScriptTests: XCTestCase {
         ])
     }
 
+    func test_hookInstallerCreatesCodexHooksWhenCodexConfigExists() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+        let codexDir = tempHome.appendingPathComponent(".codex")
+        try FileManager.default.createDirectory(at: codexDir, withIntermediateDirectories: true)
+        try """
+        model = "gpt-5.5"
+        """.write(to: codexDir.appendingPathComponent("config.toml"), atomically: true, encoding: .utf8)
+
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+
+        let hooks = try loadInstalledCodexHooks()
+        XCTAssertEqual(cabCommands(in: hooks, event: "Stop"), [
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" stop"
+        ])
+        XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit"), [
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" user_prompt_submit"
+        ])
+
+        let config = try String(contentsOf: codexDir.appendingPathComponent("config.toml"), encoding: .utf8)
+        XCTAssertTrue(config.contains("[features]"))
+        XCTAssertTrue(config.contains("codex_hooks = true"))
+    }
+
+    func test_hookInstallerIsIdempotentAndPreservesOtherCodexHooks() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+        let codexDir = tempHome.appendingPathComponent(".codex")
+        try FileManager.default.createDirectory(at: codexDir, withIntermediateDirectories: true)
+        try """
+        {
+          "hooks": {
+            "Stop": [
+              {
+                "hooks": [
+                  { "type": "command", "command": "echo keep", "timeout": 1 },
+                  { "type": "command", "command": "old/ClaudeAlertBot/cab-report.sh stop", "timeout": 5 }
+                ]
+              }
+            ]
+          }
+        }
+        """.write(to: codexDir.appendingPathComponent("hooks.json"), atomically: true, encoding: .utf8)
+        try """
+        model = "gpt-5.5"
+
+        [features]
+        codex_hooks = false
+        other_feature = true
+        """.write(to: codexDir.appendingPathComponent("config.toml"), atomically: true, encoding: .utf8)
+
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+
+        let hooks = try loadInstalledCodexHooks()
+        XCTAssertEqual(otherCommands(in: hooks, event: "Stop"), ["echo keep"])
+        XCTAssertEqual(cabCommands(in: hooks, event: "Stop").count, 1)
+        XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit").count, 1)
+
+        let config = try String(contentsOf: codexDir.appendingPathComponent("config.toml"), encoding: .utf8)
+        XCTAssertTrue(config.contains("codex_hooks = true"))
+        XCTAssertFalse(config.contains("codex_hooks = false"))
+        XCTAssertTrue(config.contains("other_feature = true"))
+    }
+
+    func test_hookInstallerRemovesExistingCodexInlineCabHooks() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+        let codexDir = tempHome.appendingPathComponent(".codex")
+        try FileManager.default.createDirectory(at: codexDir, withIntermediateDirectories: true)
+        try """
+        [features]
+        codex_hooks = true
+
+        [[hooks.Stop]]
+        [[hooks.Stop.hooks]]
+        type = "command"
+        command = "old/ClaudeAlertBot/cab-report.sh stop"
+        timeout = 5
+
+        [[hooks.Stop]]
+        [[hooks.Stop.hooks]]
+        type = "command"
+        command = "echo keep"
+        timeout = 1
+
+        [[hooks.UserPromptSubmit]]
+        [[hooks.UserPromptSubmit.hooks]]
+        type = "command"
+        command = "old/ClaudeAlertBot/cab-report.sh user_prompt_submit"
+        timeout = 5
+        """.write(to: codexDir.appendingPathComponent("config.toml"), atomically: true, encoding: .utf8)
+
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: codexDir.appendingPathComponent("hooks.json").path))
+
+        let config = try String(contentsOf: codexDir.appendingPathComponent("config.toml"), encoding: .utf8)
+        XCTAssertEqual(config.components(separatedBy: "ClaudeAlertBot/cab-report.sh").count - 1, 2)
+        XCTAssertEqual(config.components(separatedBy: "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" stop").count - 1, 1)
+        XCTAssertEqual(config.components(separatedBy: "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" user_prompt_submit").count - 1, 1)
+        XCTAssertFalse(config.contains("old/ClaudeAlertBot/cab-report.sh"))
+        XCTAssertTrue(config.contains(#"command = "echo keep""#))
+    }
+
+    func test_hookInstallerUpdatesCodexFeatureInCRLFConfig() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+        let codexDir = tempHome.appendingPathComponent(".codex")
+        try FileManager.default.createDirectory(at: codexDir, withIntermediateDirectories: true)
+        let crlfConfig = "model = \"gpt-5.5\"\r\n\r\n[features]\r\ncodex_hooks = false\r\nother_feature = true\r\n"
+        try crlfConfig.write(to: codexDir.appendingPathComponent("config.toml"), atomically: true, encoding: .utf8)
+
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+
+        let config = try String(contentsOf: codexDir.appendingPathComponent("config.toml"), encoding: .utf8)
+        XCTAssertEqual(config.components(separatedBy: "[features]").count - 1, 1)
+        XCTAssertTrue(config.contains("codex_hooks = true"))
+        XCTAssertFalse(config.contains("codex_hooks = false"))
+        XCTAssertTrue(config.contains("other_feature = true"))
+    }
+
+    func test_hookInstallerDoesNotFailClaudeInstallWhenCodexHooksAreInvalid() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+        let codexDir = tempHome.appendingPathComponent(".codex")
+        try FileManager.default.createDirectory(at: codexDir, withIntermediateDirectories: true)
+        try "{broken".write(to: codexDir.appendingPathComponent("hooks.json"), atomically: true, encoding: .utf8)
+
+        XCTAssertNoThrow(try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome))
+
+        let hooks = try loadInstalledHooks()
+        XCTAssertEqual(cabCommands(in: hooks, event: "Stop").count, 1)
+        XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit").count, 1)
+    }
+
     func test_hookInstallerIsIdempotentAndPreservesOtherHooks() throws {
         let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
         try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
@@ -334,6 +471,13 @@ final class ReporterScriptTests: XCTestCase {
 
     private func loadInstalledHooks() throws -> [String: Any] {
         let settings = try loadInstalledSettings()
+        return try XCTUnwrap(settings["hooks"] as? [String: Any])
+    }
+
+    private func loadInstalledCodexHooks() throws -> [String: Any] {
+        let hooksURL = tempHome.appendingPathComponent(".codex/hooks.json")
+        let data = try Data(contentsOf: hooksURL)
+        let settings = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         return try XCTUnwrap(settings["hooks"] as? [String: Any])
     }
 

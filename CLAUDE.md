@@ -2,9 +2,9 @@
 
 **Claude Alert Bot**
 
-Claude Code 작업이 끝났을 때 macOS 화면에 클로드 아이콘 플로팅 위젯으로 알려주는 네이티브 macOS 앱. 위젯을 클릭하면 해당 작업이 실행됐던 iTerm2 탭/창으로 즉시 점프한다. 본인 사용 + 다른 macOS Claude Code 사용자에게도 배포할 목적의 도구.
+Claude Code 또는 Codex CLI 작업이 끝났을 때 macOS 화면에 클로드 아이콘 플로팅 위젯으로 알려주는 네이티브 macOS 앱. 위젯을 클릭하면 해당 작업이 실행됐던 iTerm2 탭/창으로 즉시 점프한다. 본인 사용 + 다른 macOS coding-agent 사용자에게도 배포할 목적의 도구.
 
-**Core Value:** **Claude Code 사용자가 자리를 비웠을 때, 길게 걸린 작업의 완료를 놓치지 않고 바로 그 터미널로 복귀할 수 있다.** 알림이 떠도 어느 세션 것인지 헷갈리거나 클릭이 잘못된 터미널을 여는 순간 가치가 무너진다 — "정확한 그 세션으로의 점프"가 핵심.
+**Core Value:** **Claude Code/Codex CLI 사용자가 자리를 비웠을 때, 길게 걸린 작업의 완료를 놓치지 않고 바로 그 터미널로 복귀할 수 있다.** 알림이 떠도 어느 세션 것인지 헷갈리거나 클릭이 잘못된 터미널을 여는 순간 가치가 무너진다 — "정확한 그 세션으로의 점프"가 핵심.
 
 ### Constraints
 
@@ -14,8 +14,8 @@ Claude Code 작업이 끝났을 때 macOS 화면에 클로드 아이콘 플로�
 - **빌드 환경**: Xcode 15.4+ 필요 (Mac 개발자만 빌드 가능). 사용자는 빌드 산출물만 받음
 - **서명**: Apple Developer Program 미가입. **Apple Silicon에서 실행되려면 ad-hoc 서명(`codesign --force --deep --sign -`)은 필수** (없으면 실행 자체 불가 — Gatekeeper 이전의 로드 단계 차단). Apple Developer 가입 없이 무료로 가능
 - **Gatekeeper 우회**: macOS 15+ 에서는 우클릭 → "열기" 단축이 제거됨. 사용자는 **System Settings → Privacy & Security → "Open Anyway"** 절차를 1회 거쳐야 하며, DMG에 포함된 `bypass-gatekeeper.command` 헬퍼(`xattr -cr` 실행)로 대안 제공 가능
-- **외부 의존**: Claude Code 설치 + iTerm2 설치 필수
-- **Hook 등록**: Claude Code의 `Stop` hook + `UserPromptSubmit` hook **둘 다** 필요 (시작/종료 상관으로 경과 시간 계산). App이 `~/.claude/settings.json`에 멱등 병합으로 자동 등록
+- **외부 의존**: Claude Code 또는 Codex CLI 이벤트 소스 + iTerm2 설치 필수
+- **Hook 등록**: `Stop` hook + `UserPromptSubmit` hook **둘 다** 필요 (시작/종료 상관으로 경과 시간 계산). App이 Claude Code는 `~/.claude/settings.json`, Codex는 `~/.codex/hooks.json` / `~/.codex/config.toml`에 멱등 병합으로 자동 등록
 - **AppleScript 자동화 권한**: 첫 사용 시 macOS가 "Claude Alert Bot이 iTerm2를 제어하려 합니다" 권한 다이얼로그를 띄움 — 사용자가 허용해야 함. `NSAppleEventsUsageDescription` Info.plist 키 필수
 
 ## Technology Stack
@@ -183,6 +183,7 @@ Claude Code 작업이 끝났을 때 macOS 화면에 클로드 아이콘 플로�
 - [macOS Sequasia removes the Control-click method to bypass Gatekeeper — iDownloadBlog](https://www.idownloadblog.com/2024/08/07/apple-macos-sequoia-gatekeeper-change-install-unsigned-apps-mac/) — MEDIUM
 - [Allow downloaded Apps to Open in macOS Tahoe — SwissMacUser](https://swissmacuser.ch/fix-macos-tahoe-app-is-damaged-and-cant-be-opened-move-trash/) — MEDIUM
 - [Hooks reference — Claude Code Docs](https://code.claude.com/docs/en/hooks) — HIGH (official; verified Stop hook fields and HTTP hook support)
+- [Hooks — Codex Docs](https://developers.openai.com/codex/hooks) — HIGH (official; verified Stop/UserPromptSubmit command hook shape)
 - [Claude Code Hooks: Complete Guide to All 12 Lifecycle Events — claudefa.st](https://claudefa.st/blog/tools/hooks/hooks-guide) — MEDIUM
 
 ## Conventions

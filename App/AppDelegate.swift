@@ -203,6 +203,9 @@ enum HookInstaller {
     private static let log = Logger(subsystem: "com.claudealert.bot.hook", category: "lifecycle")
     private static let cabMarker = "ClaudeAlertBot/cab-report.sh"
     private static let reporterRelativePath = "Library/Application Support/ClaudeAlertBot/cab-report.sh"
+    private static let codexDirRelativePath = ".codex"
+    private static let codexHooksRelativePath = ".codex/hooks.json"
+    private static let codexConfigRelativePath = ".codex/config.toml"
 
     static func installBundledReporterIfNeeded(bundle: Bundle = .main,
                                                 homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) {
@@ -212,9 +215,9 @@ enum HookInstaller {
         }
         do {
             try install(reporterSourceURL: reporter, homeDirectory: homeDirectory)
-            log.notice("Claude Code hooks installed")
+            log.notice("Claude Alert Bot hooks installed")
         } catch {
-            log.error("Claude Code hook install failed: \(String(describing: error), privacy: .public)")
+            log.error("Claude Alert Bot hook install failed: \(String(describing: error), privacy: .public)")
         }
     }
 
@@ -246,6 +249,49 @@ enum HookInstaller {
         let data = try JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])
         try data.write(to: settingsURL, options: [.atomic])
         try? fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: settingsURL.path)
+
+        do {
+            try installCodexHooksIfNeeded(homeDirectory: homeDirectory, fileManager: fileManager)
+        } catch {
+            log.warning("Codex hook install skipped: \(String(describing: error), privacy: .public)")
+        }
+    }
+
+    private static func installCodexHooksIfNeeded(homeDirectory: URL,
+                                                  fileManager: FileManager) throws {
+        let codexDir = homeDirectory.appendingPathComponent(codexDirRelativePath)
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: codexDir.path, isDirectory: &isDirectory),
+              isDirectory.boolValue
+        else { return }
+
+        let hooksURL = homeDirectory.appendingPathComponent(codexHooksRelativePath)
+        let configURL = homeDirectory.appendingPathComponent(codexConfigRelativePath)
+        let existingConfig = (try? String(contentsOf: configURL, encoding: .utf8)) ?? ""
+
+        if !fileManager.fileExists(atPath: hooksURL.path),
+           codexConfigHasInlineHooks(existingConfig) {
+            let updatedConfig = codexConfigEnablingHooks(existingConfig, appendInlineHooks: true)
+            guard updatedConfig != existingConfig else { return }
+            try updatedConfig.write(to: configURL, atomically: true, encoding: .utf8)
+            try? fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: configURL.path)
+            return
+        }
+
+        var settings = try loadSettings(at: hooksURL, fileManager: fileManager)
+        var hooks = settings["hooks"] as? [String: Any] ?? [:]
+        hooks["Stop"] = mergedEntries(existing: hooks["Stop"], event: "stop")
+        hooks["UserPromptSubmit"] = mergedEntries(existing: hooks["UserPromptSubmit"], event: "user_prompt_submit")
+        settings["hooks"] = hooks
+
+        let hooksData = try JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])
+        try hooksData.write(to: hooksURL, options: [.atomic])
+        try? fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: hooksURL.path)
+
+        let updatedConfig = codexConfigEnablingHooks(existingConfig)
+        guard updatedConfig != existingConfig else { return }
+        try updatedConfig.write(to: configURL, atomically: true, encoding: .utf8)
+        try? fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: configURL.path)
     }
 
     private static func loadSettings(at url: URL, fileManager: FileManager) throws -> [String: Any] {
@@ -362,6 +408,212 @@ enum HookInstaller {
                 "timeout": 5
             ]]
         ]
+    }
+
+    private static func codexConfigEnablingHooks(_ text: String,
+                                                 appendInlineHooks: Bool = false) -> String {
+        var lines = normalizedConfigLines(text)
+        lines = removingCabInlineHooks(from: lines, event: "Stop")
+        lines = removingCabInlineHooks(from: lines, event: "UserPromptSubmit")
+
+        var inFeatures = false
+        var featuresIndex: Int?
+        var didSetCodexHooks = false
+
+        for index in lines.indices {
+            let trimmed = lines[index].trimmingCharacters(in: .whitespacesAndNewlines)
+            if let header = tomlHeaderName(in: lines[index]) {
+                inFeatures = header == "features"
+                if inFeatures { featuresIndex = index }
+                continue
+            }
+            let key = trimmed.split(separator: "=", maxSplits: 1).first?
+                .trimmingCharacters(in: .whitespaces)
+            guard inFeatures, key == "codex_hooks" else { continue }
+            let indent = lines[index].prefix { $0 == " " || $0 == "\t" }
+            lines[index] = "\(indent)codex_hooks = true"
+            didSetCodexHooks = true
+            break
+        }
+
+        if !didSetCodexHooks {
+            if let featuresIndex {
+                lines.insert("codex_hooks = true", at: featuresIndex + 1)
+            } else {
+                if !lines.isEmpty && lines.last != "" {
+                    lines.append("")
+                }
+                lines.append("[features]")
+                lines.append("codex_hooks = true")
+            }
+        }
+
+        if appendInlineHooks {
+            appendCodexInlineHookEntries(to: &lines)
+        }
+
+        return didSetCodexHooks && !appendInlineHooks
+            ? joinedConfigLines(lines, preservingTrailingNewlineFrom: text)
+            : ensuringTrailingNewline(lines.joined(separator: "\n"))
+    }
+
+    private static func codexConfigHasInlineHooks(_ text: String) -> Bool {
+        normalizedConfigLines(text).contains { line in
+            guard let header = tomlHeaderName(in: line) else { return false }
+            return header == "hooks" || header.hasPrefix("hooks.")
+        }
+    }
+
+    private static func appendCodexInlineHookEntries(to lines: inout [String]) {
+        if !lines.isEmpty && lines.last != "" {
+            lines.append("")
+        }
+        lines.append(contentsOf: [
+            "[[hooks.Stop]]",
+            #"matcher = """#,
+            "[[hooks.Stop.hooks]]",
+            #"type = "command""#,
+            #"command = '"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh" stop'"#,
+            "timeout = 5",
+            "",
+            "[[hooks.UserPromptSubmit]]",
+            #"matcher = """#,
+            "[[hooks.UserPromptSubmit.hooks]]",
+            #"type = "command""#,
+            #"command = '"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh" user_prompt_submit'"#,
+            "timeout = 5"
+        ])
+    }
+
+    private static func normalizedConfigLines(_ text: String) -> [String] {
+        text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map(String.init)
+    }
+
+    private static func removingCabInlineHooks(from lines: [String], event: String) -> [String] {
+        let commandHeader = "hooks.\(event).hooks"
+        let withoutCabCommands = removingCabInlineHookCommands(from: lines, commandHeader: commandHeader)
+        return removingEmptyInlineHookEntries(from: withoutCabCommands, event: event)
+    }
+
+    private static func removingCabInlineHookCommands(from lines: [String],
+                                                      commandHeader: String) -> [String] {
+        var result: [String] = []
+        var index = 0
+
+        while index < lines.count {
+            if tomlHeaderName(in: lines[index]) == commandHeader {
+                let end = nextTomlHeaderIndex(in: lines, after: index)
+                let block = Array(lines[index..<end])
+                if blockContainsCabCommand(block) {
+                    index = end
+                    continue
+                }
+            }
+
+            result.append(lines[index])
+            index += 1
+        }
+
+        return result
+    }
+
+    private static func removingEmptyInlineHookEntries(from lines: [String], event: String) -> [String] {
+        let entryHeader = "hooks.\(event)"
+        let commandHeader = "hooks.\(event).hooks"
+        var result: [String] = []
+        var index = 0
+
+        while index < lines.count {
+            guard tomlHeaderName(in: lines[index]) == entryHeader else {
+                result.append(lines[index])
+                index += 1
+                continue
+            }
+
+            let end = inlineHookEntryEndIndex(in: lines,
+                                              after: index,
+                                              commandHeader: commandHeader)
+            let block = Array(lines[index..<end])
+            if block.dropFirst().contains(where: { tomlHeaderName(in: $0) == commandHeader }) {
+                result.append(contentsOf: block)
+            }
+            index = end
+        }
+
+        return result
+    }
+
+    private static func inlineHookEntryEndIndex(in lines: [String],
+                                                after index: Int,
+                                                commandHeader: String) -> Int {
+        var end = index + 1
+        while end < lines.count {
+            guard let header = tomlHeaderName(in: lines[end]) else {
+                end += 1
+                continue
+            }
+            if header == commandHeader {
+                end += 1
+                continue
+            }
+            break
+        }
+        return end
+    }
+
+    private static func nextTomlHeaderIndex(in lines: [String], after index: Int) -> Int {
+        var next = index + 1
+        while next < lines.count {
+            if tomlHeaderName(in: lines[next]) != nil {
+                return next
+            }
+            next += 1
+        }
+        return lines.count
+    }
+
+    private static func tomlHeaderName(in line: String) -> String? {
+        let withoutComment = line.split(separator: "#", maxSplits: 1, omittingEmptySubsequences: false).first ?? ""
+        let trimmed = withoutComment.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.hasPrefix("[[") && trimmed.hasSuffix("]]") {
+            return trimmed
+                .dropFirst(2)
+                .dropLast(2)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if trimmed.hasPrefix("[") && trimmed.hasSuffix("]") {
+            return trimmed
+                .dropFirst()
+                .dropLast()
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return nil
+    }
+
+    private static func blockContainsCabCommand(_ lines: [String]) -> Bool {
+        lines.contains { line in
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            let key = trimmed.split(separator: "=", maxSplits: 1).first?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return key == "command" && line.contains(cabMarker)
+        }
+    }
+
+    private static func joinedConfigLines(_ lines: [String],
+                                          preservingTrailingNewlineFrom original: String) -> String {
+        var result = lines.joined(separator: "\n")
+        if original.hasSuffix("\n") && !result.hasSuffix("\n") {
+            result += "\n"
+        }
+        return result
+    }
+
+    private static func ensuringTrailingNewline(_ text: String) -> String {
+        text.hasSuffix("\n") ? text : text + "\n"
     }
 }
 

@@ -64,7 +64,7 @@
 ## 5. iTerm2 연동
 
 ### 이벤트 수신
-- **방식**: Claude Code `Stop` / `UserPromptSubmit` hook이 `Reporter/cab-report.sh`를 실행
+- **방식**: Claude Code 또는 Codex CLI `Stop` / `UserPromptSubmit` hook이 `Reporter/cab-report.sh`를 실행
 - **전송**: reporter가 JSON envelope를 앱의 Unix domain socket으로 전송
 - **터미널 범위**: iTerm2 only. `TERM_PROGRAM` / `ITERM_SESSION_ID`를 capture하지만 다른 터미널 지원은 범위 밖
 

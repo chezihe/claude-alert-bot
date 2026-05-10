@@ -28,8 +28,8 @@ struct WidgetIconView: View {
         ZStack(alignment: .topTrailing) {
             if sonarOpacity > 0, !quietHoursEnabled {
                 Circle()
-                    .stroke(ColorTokens.accent.opacity(sonarOpacity), lineWidth: 1.5)
-                    .frame(width: 44, height: 44)
+                    .strokeBorder(ColorTokens.accent.opacity(sonarOpacity), lineWidth: 1.5)
+                    .frame(width: MotionTokens.sonarBaseDiameter, height: MotionTokens.sonarBaseDiameter)
                     .scaleEffect(sonarScale)
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)

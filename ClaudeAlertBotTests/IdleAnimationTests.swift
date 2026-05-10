@@ -74,6 +74,8 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("@State private var alertPulseScale: CGFloat = 1.0"))
         XCTAssertTrue(src.contains("@State private var sonarOpacity: Double = 0"))
         XCTAssertTrue(src.contains("@State private var activeAlertPulseID: Int = 0"))
+        XCTAssertTrue(src.contains(".strokeBorder(ColorTokens.accent.opacity(sonarOpacity), lineWidth: 1.5)"))
+        XCTAssertTrue(src.contains(".frame(width: MotionTokens.sonarBaseDiameter, height: MotionTokens.sonarBaseDiameter)"))
         XCTAssertTrue(src.contains(".onChange(of: alertPulseID)"))
         XCTAssertTrue(src.contains("runNewAlertPulse()"))
         XCTAssertTrue(src.contains("guard activeAlertPulseID == pulseID else { return }"))

@@ -87,6 +87,8 @@ enum MotionTokens {
     static let sonarDuration: TimeInterval = 0.75
     static let sonarStartScale: CGFloat = 0.5
     static let sonarEndScale: CGFloat = 3.0
+    // Keep the 3x sonar wave inside WidgetIconView's fixed 44pt drawable area.
+    static let sonarBaseDiameter: CGFloat = 14
     static let sonarStartOpacity: Double = 0.75
     static let reduceMotionFadeDuration: TimeInterval = 0.15
 

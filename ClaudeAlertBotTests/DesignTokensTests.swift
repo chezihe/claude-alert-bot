@@ -143,6 +143,8 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(MotionTokens.sonarDuration, 0.75, accuracy: 0.001)
         XCTAssertEqual(MotionTokens.sonarStartScale, 0.5, accuracy: 0.001)
         XCTAssertEqual(MotionTokens.sonarEndScale, 3.0, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.sonarBaseDiameter, 14, accuracy: 0.001)
+        XCTAssertLessThanOrEqual(MotionTokens.sonarBaseDiameter * MotionTokens.sonarEndScale, 44)
         XCTAssertEqual(MotionTokens.sonarStartOpacity, 0.75, accuracy: 0.001)
         XCTAssertEqual(MotionTokens.reduceMotionFadeDuration, 0.15, accuracy: 0.001)
     }

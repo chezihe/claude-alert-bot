@@ -139,6 +139,30 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertTrue(ReduceMotionPreference.reduced.effectiveReduceMotion(systemReduceMotion: true))
     }
 
+    func test_launchAtLogin_defaultIsOff() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = SettingsStore(defaults: defaults)
+
+        XCTAssertFalse(store.launchAtLoginEnabled)
+    }
+
+    func test_launchAtLogin_persistsAcrossInit() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let first = SettingsStore(defaults: defaults)
+        first.launchAtLoginEnabled = true
+
+        let second = SettingsStore(defaults: defaults)
+        XCTAssertTrue(second.launchAtLoginEnabled)
+    }
+
     func test_appDelegateSourceAppliesThemeOnLaunchAndSettingsChange() {
         let src = readAppDelegateSource()
 
@@ -146,6 +170,23 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertTrue(src.contains("applyThemeMode(SettingsStore.shared.themeMode)"))
         XCTAssertTrue(src.contains("themeCancellable = SettingsStore.shared.objectWillChange.sink"))
         XCTAssertTrue(src.contains("NSApp.appearance = mode.nsAppearance"))
+    }
+
+    func test_appDelegateSourceAppliesLaunchAtLoginPreferenceOnLaunch() {
+        let src = readAppDelegateSource()
+
+        XCTAssertTrue(src.contains("import ServiceManagement"))
+        XCTAssertTrue(src.contains("if SettingsStore.shared.launchAtLoginEnabled"))
+        XCTAssertTrue(src.contains("LoginItemController.apply(enabled: true)"))
+    }
+
+    func test_loginItemControllerSource_usesSMAppServiceMainApp() {
+        let src = readAppDelegateSource()
+
+        XCTAssertTrue(src.contains("enum LoginItemController"))
+        XCTAssertTrue(src.contains("let service = SMAppService.mainApp"))
+        XCTAssertTrue(src.contains("try service.register()"))
+        XCTAssertTrue(src.contains("try service.unregister()"))
     }
 
     func test_everHadAlerts_defaultIsFalse() {

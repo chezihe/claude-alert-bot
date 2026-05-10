@@ -21,6 +21,8 @@ struct SettingsView: View {
     static let themeLabel = "Appearance"
     static let reduceMotionHeading = "Reduce Motion"
     static let reduceMotionLabel = "Mode"
+    static let startupHeading = "Startup"
+    static let launchAtLoginToggleLabel = "Open at Login"
     static let widgetPositionHeading = "Widget Position"
     static let cornerLabel = "Corner"
     static let offsetXLabel = "Horizontal Offset"
@@ -100,6 +102,13 @@ struct SettingsView: View {
                     }
                 }
                 .pickerStyle(.menu)
+            }
+
+            Section(Self.startupHeading) {
+                Toggle(Self.launchAtLoginToggleLabel, isOn: $store.launchAtLoginEnabled)
+                    .onChange(of: store.launchAtLoginEnabled) { _, enabled in
+                        LoginItemController.apply(enabled: enabled)
+                    }
             }
 
             Section(Self.widgetPositionHeading) {

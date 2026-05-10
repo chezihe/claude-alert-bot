@@ -9,6 +9,7 @@ import AppKit
 import Foundation
 import Network
 import Combine
+import ServiceManagement
 import os
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -55,6 +56,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // strictly AFTER SessionRegistry.restore() completes — otherwise in-flight
         // events arriving in the boot window can be dropped.
         Task { @MainActor in
+            // Re-apply only the opt-in path on launch. The off path is handled
+            // immediately when the user turns the Settings toggle off.
+            if SettingsStore.shared.launchAtLoginEnabled {
+                LoginItemController.apply(enabled: true)
+            }
+
             // 6. Restore session state from disk BEFORE listener accepts events.
             await SessionRegistry.shared.restore()
 
@@ -182,5 +189,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @MainActor
     private func applyThemeMode(_ mode: ThemeMode) {
         NSApp.appearance = mode.nsAppearance
+    }
+}
+
+@MainActor
+enum LoginItemController {
+    private static let log = Logger(subsystem: "com.claudealert.bot.hook", category: "lifecycle")
+
+    static func apply(enabled: Bool) {
+        let service = SMAppService.mainApp
+        do {
+            if enabled {
+                switch service.status {
+                case .enabled:
+                    return
+                case .notRegistered, .requiresApproval, .notFound:
+                    try service.register()
+                @unknown default:
+                    try service.register()
+                }
+            } else {
+                switch service.status {
+                case .enabled, .requiresApproval:
+                    try service.unregister()
+                case .notRegistered, .notFound:
+                    return
+                @unknown default:
+                    return
+                }
+            }
+            log.notice("login item preference applied enabled=\(enabled, privacy: .public)")
+        } catch {
+            log.error("login item preference failed enabled=\(enabled, privacy: .public): \(String(describing: error), privacy: .public)")
+        }
     }
 }

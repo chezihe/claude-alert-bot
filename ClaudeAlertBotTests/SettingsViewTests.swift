@@ -45,6 +45,10 @@ extension SettingsViewTests {
         XCTAssertEqual(SettingsView.reduceMotionHeading, "Reduce Motion")
         XCTAssertEqual(SettingsView.reduceMotionLabel, "Mode")
     }
+    func test_settingsCopy_startupSection() {
+        XCTAssertEqual(SettingsView.startupHeading, "Startup")
+        XCTAssertEqual(SettingsView.launchAtLoginToggleLabel, "Open at Login")
+    }
     func test_settingsCopy_widgetPositionSection() {
         XCTAssertEqual(SettingsView.widgetPositionHeading, "Widget Position")
         XCTAssertEqual(SettingsView.cornerLabel, "Corner")
@@ -180,6 +184,14 @@ extension SettingsViewTests {
     func test_reduceMotionPreferenceLabels_areMinimalEnglish() {
         XCTAssertEqual(SettingsView.reduceMotionPreferenceName(.system), "System")
         XCTAssertEqual(SettingsView.reduceMotionPreferenceName(.reduced), "Reduced")
+    }
+
+    func test_startupSection_wiresToggleToStoreAndLoginItemController() {
+        let src = readSettingsViewSource()
+
+        XCTAssertTrue(src.contains("Toggle(Self.launchAtLoginToggleLabel, isOn: $store.launchAtLoginEnabled)"))
+        XCTAssertTrue(src.contains(".onChange(of: store.launchAtLoginEnabled)"))
+        XCTAssertTrue(src.contains("LoginItemController.apply(enabled: enabled)"))
     }
 
     /// Resolve App/SettingsView.swift relative to this test file so source-level

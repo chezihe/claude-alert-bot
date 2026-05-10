@@ -54,6 +54,7 @@ final class SettingsStore: ObservableObject {
     @AppStorage("idle_animation")    private var idleAnimationRaw: String = IdleAnimation.default.rawValue
     @AppStorage("theme_mode")        private var themeModeRaw: String = ThemeMode.default.rawValue
     @AppStorage("reduce_motion_preference") private var reduceMotionPreferenceRaw: String = ReduceMotionPreference.default.rawValue
+    @AppStorage("launch_at_login_enabled") var launchAtLoginEnabled: Bool = false
     @AppStorage("widget_corner")     private var cornerRaw: String = WidgetCorner.topRight.rawValue  // D2-26
     @AppStorage("widget_offset_x")   var offsetX: Int = 16            // D2-27
     @AppStorage("widget_offset_y")   var offsetY: Int = 16            // D2-27
@@ -130,6 +131,7 @@ final class SettingsStore: ObservableObject {
         self._idleAnimationRaw = AppStorage(wrappedValue: IdleAnimation.default.rawValue, "idle_animation", store: defaults)
         self._themeModeRaw = AppStorage(wrappedValue: ThemeMode.default.rawValue, "theme_mode", store: defaults)
         self._reduceMotionPreferenceRaw = AppStorage(wrappedValue: ReduceMotionPreference.default.rawValue, "reduce_motion_preference", store: defaults)
+        self._launchAtLoginEnabled = AppStorage(wrappedValue: false, "launch_at_login_enabled", store: defaults)
         self._cornerRaw = AppStorage(wrappedValue: WidgetCorner.topRight.rawValue, "widget_corner", store: defaults)
         self._offsetX = AppStorage(wrappedValue: 16, "widget_offset_x", store: defaults)
         self._offsetY = AppStorage(wrappedValue: 16, "widget_offset_y", store: defaults)

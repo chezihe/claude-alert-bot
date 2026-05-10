@@ -283,8 +283,21 @@ actor SessionRegistry {
     private func persist() async {
         let snap = SessionsSnapshot(schema: SessionsSnapshot.currentSchema,
                                     inFlight: inFlight,
-                                    completed: completed)
+                                    completed: completed.filter { !Self.isSyntheticTestFixture($0) })
         await persistence.save(snap)
+    }
+
+    private static func isSyntheticTestFixture(_ session: CompletedSession) -> Bool {
+        session.sessionID.hasPrefix("test-")
+            && session.projectName == "Test"
+            && session.durationSec == 31
+            && session.itermSessionID == nil
+            && session.tty == nil
+            && session.cwd == nil
+            && session.kind == .success
+            && session.exitCode == nil
+            && session.startedAt == nil
+            && session.lastOutput == nil
     }
 
     private func parseTS(_ s: String?) -> Date? {

@@ -673,6 +673,35 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertFalse(notifier.refreshCalls.contains(0))
     }
 
+    func test_injectTest_pinnedAlertStaysTransientAfterAutoDismiss() async {
+        let gate = SleepGate()
+        var clock = Clock()
+        clock.sleepNanoseconds = { _ in await gate.wait() }
+        let r = SessionRegistry(persistence: SessionStore(url: tempURL), clock: clock)
+        await bind(r)
+
+        await r.injectTest(soundEnabled: true)
+        let pre = await r.snapshotForTesting()
+        let alertID = try! XCTUnwrap(pre.completed.first?.id)
+
+        await r.togglePin(alertID: alertID)
+        await gate.release()
+
+        for _ in 0..<50 {
+            let snap = await r.snapshotForTesting()
+            if snap.completed.map(\.id) == [alertID] { break }
+            try? await Task.sleep(nanoseconds: 20_000_000) // 20ms
+        }
+        let persisted = await SessionStore(url: tempURL).load()
+        XCTAssertFalse(persisted?.completed.contains(where: { $0.id == alertID }) ?? false,
+                       "Pinned test alert must remain in memory only and never restore from disk.")
+
+        let restored = SessionRegistry(persistence: SessionStore(url: tempURL), clock: clock)
+        await restored.restore()
+        let restoredSnapshot = await restored.snapshotForTesting()
+        XCTAssertFalse(restoredSnapshot.completed.contains(where: { $0.id == alertID }))
+    }
+
     func test_injectTest_refreshesWidgetWithFullInMemoryQueue() async {
         let r = makeRegistry()
         await bind(r)

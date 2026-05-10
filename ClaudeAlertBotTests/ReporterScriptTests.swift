@@ -168,6 +168,27 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit").count, 1)
     }
 
+    func test_hookInstallerAcceptsInlineLineComments() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+        let settings = tempHome.appendingPathComponent(".claude/settings.json")
+        try FileManager.default.createDirectory(at: settings.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try """
+        {
+          "theme": "dark", // User note after a normal JSON value.
+          "hooks": {}
+        }
+        """.write(to: settings, atomically: true, encoding: .utf8)
+
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+
+        let installed = try loadInstalledSettings()
+        XCTAssertEqual(installed["theme"] as? String, "dark")
+        let hooks = try XCTUnwrap(installed["hooks"] as? [String: Any])
+        XCTAssertEqual(cabCommands(in: hooks, event: "Stop").count, 1)
+        XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit").count, 1)
+    }
+
     func test_hookInstallerAcceptsUTF16ClaudeSettings() throws {
         let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
         try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)

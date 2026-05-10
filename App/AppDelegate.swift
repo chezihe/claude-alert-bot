@@ -276,15 +276,9 @@ enum HookInstaller {
         var index = 0
         var inString = false
         var isEscaping = false
-        var lineOnlyWhitespace = true
 
         func append(_ character: Character) {
             cleaned.append(character)
-            if character == "\n" || character == "\r" {
-                lineOnlyWhitespace = true
-            } else if !character.isWhitespace {
-                lineOnlyWhitespace = false
-            }
         }
 
         while index < characters.count {
@@ -308,7 +302,7 @@ enum HookInstaller {
                 inString = true
                 append(character)
                 index += 1
-            } else if character == "/" && next == "/" && lineOnlyWhitespace {
+            } else if character == "/" && next == "/" {
                 index += 2
                 while index < characters.count,
                       characters[index] != "\n",
@@ -325,9 +319,6 @@ enum HookInstaller {
                         index += 2
                         foundTerminator = true
                         break
-                    }
-                    if characters[index] == "\n" || characters[index] == "\r" {
-                        lineOnlyWhitespace = true
                     }
                     index += 1
                 }

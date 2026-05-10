@@ -61,6 +61,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if SettingsStore.shared.launchAtLoginEnabled {
                 LoginItemController.apply(enabled: true)
             }
+            if !Self.isRunningUnitTests {
+                HookInstaller.installBundledReporterIfNeeded()
+            }
 
             // 6. Restore session state from disk BEFORE listener accepts events.
             await SessionRegistry.shared.restore()
@@ -114,6 +117,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         installSignalHandler(SIGINT)
         // NOTE: D2-29 — no NSMenu / settingsWindow / NSApp.activate. The SwiftUI
         // `Settings { … }` scene in ClaudeAlertBotApp.swift handles ⌘, automatically.
+    }
+
+    private static var isRunningUnitTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
 
     private func ensureDirectories() {
@@ -189,6 +196,90 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @MainActor
     private func applyThemeMode(_ mode: ThemeMode) {
         NSApp.appearance = mode.nsAppearance
+    }
+}
+
+enum HookInstaller {
+    private static let log = Logger(subsystem: "com.claudealert.bot.hook", category: "lifecycle")
+    private static let cabMarker = "ClaudeAlertBot/cab-report.sh"
+    private static let reporterRelativePath = "Library/Application Support/ClaudeAlertBot/cab-report.sh"
+
+    static func installBundledReporterIfNeeded(bundle: Bundle = .main,
+                                                homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) {
+        guard let reporter = bundle.url(forResource: "cab-report", withExtension: "sh") else {
+            log.error("bundled cab-report.sh missing; hook install skipped")
+            return
+        }
+        do {
+            try install(reporterSourceURL: reporter, homeDirectory: homeDirectory)
+            log.notice("Claude Code hooks installed")
+        } catch {
+            log.error("Claude Code hook install failed: \(String(describing: error), privacy: .public)")
+        }
+    }
+
+    static func install(reporterSourceURL: URL,
+                        homeDirectory: URL,
+                        fileManager: FileManager = .default) throws {
+        let reporterDest = homeDirectory.appendingPathComponent(reporterRelativePath)
+        let appSupportDir = reporterDest.deletingLastPathComponent()
+        try fileManager.createDirectory(at: appSupportDir,
+                                        withIntermediateDirectories: true,
+                                        attributes: [.posixPermissions: 0o700])
+        if fileManager.fileExists(atPath: reporterDest.path) {
+            try fileManager.removeItem(at: reporterDest)
+        }
+        try fileManager.copyItem(at: reporterSourceURL, to: reporterDest)
+        try fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: reporterDest.path)
+
+        let claudeDir = homeDirectory.appendingPathComponent(".claude")
+        try fileManager.createDirectory(at: claudeDir,
+                                        withIntermediateDirectories: true,
+                                        attributes: [.posixPermissions: 0o700])
+        let settingsURL = claudeDir.appendingPathComponent("settings.json")
+        var settings = try loadSettings(at: settingsURL, fileManager: fileManager)
+        var hooks = settings["hooks"] as? [String: Any] ?? [:]
+        hooks["Stop"] = mergedEntries(existing: hooks["Stop"], event: "stop")
+        hooks["UserPromptSubmit"] = mergedEntries(existing: hooks["UserPromptSubmit"], event: "user_prompt_submit")
+        settings["hooks"] = hooks
+
+        let data = try JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])
+        try data.write(to: settingsURL, options: [.atomic])
+        try? fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: settingsURL.path)
+    }
+
+    private static func loadSettings(at url: URL, fileManager: FileManager) throws -> [String: Any] {
+        guard fileManager.fileExists(atPath: url.path) else { return [:] }
+        let data = try Data(contentsOf: url)
+        guard !data.isEmpty else { return [:] }
+        guard let settings = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw CocoaError(.propertyListReadCorrupt)
+        }
+        return settings
+    }
+
+    private static func mergedEntries(existing: Any?, event: String) -> [[String: Any]] {
+        let existingEntries = existing as? [[String: Any]] ?? []
+        let preserved = existingEntries.filter { !containsCabCommand($0) }
+        return preserved + [entry(event: event)]
+    }
+
+    private static func containsCabCommand(_ entry: [String: Any]) -> Bool {
+        guard let hooks = entry["hooks"] as? [[String: Any]] else { return false }
+        return hooks.contains { hook in
+            (hook["command"] as? String)?.contains(cabMarker) == true
+        }
+    }
+
+    private static func entry(event: String) -> [String: Any] {
+        [
+            "matcher": "",
+            "hooks": [[
+                "type": "command",
+                "command": "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" \(event)",
+                "timeout": 5
+            ]]
+        ]
     }
 }
 

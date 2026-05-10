@@ -1,4 +1,5 @@
 import XCTest
+@testable import ClaudeAlertBot
 
 final class ReporterScriptTests: XCTestCase {
     private var tempHome: URL!
@@ -55,6 +56,72 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertEqual((envelope["last_output"] as? String)?.utf8.count, 4_096)
     }
 
+    func test_hookInstallerCopiesReporterAndCreatesClaudeHooks() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+
+        let installedReporter = tempHome
+            .appendingPathComponent("Library/Application Support/ClaudeAlertBot/cab-report.sh")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: installedReporter.path))
+        let installedMode = try FileManager.default.attributesOfItem(atPath: installedReporter.path)[.posixPermissions] as? NSNumber
+        XCTAssertEqual(installedMode?.intValue, 0o700)
+
+        let hooks = try loadInstalledHooks()
+        XCTAssertEqual(cabCommands(in: hooks, event: "Stop"), [
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" stop"
+        ])
+        XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit"), [
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" user_prompt_submit"
+        ])
+    }
+
+    func test_hookInstallerIsIdempotentAndPreservesOtherHooks() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+        let settings = tempHome.appendingPathComponent(".claude/settings.json")
+        try FileManager.default.createDirectory(at: settings.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try """
+        {
+          "theme": "dark",
+          "hooks": {
+            "Stop": [
+              {
+                "matcher": "keep",
+                "hooks": [
+                  { "type": "command", "command": "echo keep", "timeout": 1 }
+                ]
+              },
+              {
+                "matcher": "",
+                "hooks": [
+                  { "type": "command", "command": "old/ClaudeAlertBot/cab-report.sh stop", "timeout": 5 }
+                ]
+              }
+            ]
+          }
+        }
+        """.write(to: settings, atomically: true, encoding: .utf8)
+
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+
+        let installed = try loadInstalledSettings()
+        XCTAssertEqual(installed["theme"] as? String, "dark")
+        let hooks = try XCTUnwrap(installed["hooks"] as? [String: Any])
+        XCTAssertEqual(otherCommands(in: hooks, event: "Stop"), ["echo keep"])
+        XCTAssertEqual(cabCommands(in: hooks, event: "Stop").count, 1)
+        XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit").count, 1)
+    }
+
+    func test_appDelegateWiresHookInstallerOutsideUnitTests() throws {
+        let source = try readAppDelegateSource()
+
+        XCTAssertTrue(source.contains("HookInstaller.installBundledReporterIfNeeded()"))
+        XCTAssertTrue(source.contains("!Self.isRunningUnitTests"))
+    }
+
     private func runReporter(stdin: String) throws -> [String: Any] {
         let repoRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -91,5 +158,40 @@ final class ReporterScriptTests: XCTestCase {
         let data = Data(line.utf8)
         let outer = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         return try XCTUnwrap(outer["envelope"] as? [String: Any])
+    }
+
+    private func loadInstalledSettings() throws -> [String: Any] {
+        let settings = tempHome.appendingPathComponent(".claude/settings.json")
+        let data = try Data(contentsOf: settings)
+        return try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    }
+
+    private func loadInstalledHooks() throws -> [String: Any] {
+        let settings = try loadInstalledSettings()
+        return try XCTUnwrap(settings["hooks"] as? [String: Any])
+    }
+
+    private func cabCommands(in hooks: [String: Any], event: String) -> [String] {
+        commands(in: hooks, event: event).filter { $0.contains("ClaudeAlertBot/cab-report.sh") }
+    }
+
+    private func otherCommands(in hooks: [String: Any], event: String) -> [String] {
+        commands(in: hooks, event: event).filter { !$0.contains("ClaudeAlertBot/cab-report.sh") }
+    }
+
+    private func commands(in hooks: [String: Any], event: String) -> [String] {
+        guard let entries = hooks[event] as? [[String: Any]] else { return [] }
+        return entries.flatMap { entry -> [String] in
+            guard let commands = entry["hooks"] as? [[String: Any]] else { return [] }
+            return commands.compactMap { $0["command"] as? String }
+        }
+    }
+
+    private func readAppDelegateSource(_ thisFile: StaticString = #filePath) throws -> String {
+        let repoRoot = URL(fileURLWithPath: "\(thisFile)")
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/AppDelegate.swift")
+        return try String(contentsOf: target, encoding: .utf8)
     }
 }

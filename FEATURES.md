@@ -129,7 +129,7 @@ await ITerm2Jumper().jump(to: session)
 4. 행 인터랙션 — 클릭 점프 / 컨텍스트 메뉴 / mute / pin
 5. Preferences 창 + 영속성
 6. Quiet Hours / Reduce Motion / aging / grouping 폴리시
-7. 사운드 + Focus filter 통합
+7. 사운드 통합 — Focus/DnD 감지는 철회됨. 무음 처리는 Quiet Hours가 담당
 
 ---
 

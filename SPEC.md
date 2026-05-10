@@ -199,7 +199,7 @@ These exist in the HTML for demo purposes only:
 4. **Row interactions** — click-to-focus, context menu, mute/pin
 5. **Settings window** + persistence
 6. **Quiet Hours, Reduce Motion, aging** — polish pass
-7. **Sound + Focus filter integration**
+7. **Sound integration** — Focus/DnD detection was retracted; Quiet Hours is the supported mute path.
 
 ---
 

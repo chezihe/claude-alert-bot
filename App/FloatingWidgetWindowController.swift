@@ -25,6 +25,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     private var settingsCancellable: AnyCancellable?
     private var currentQueue: [CompletedSession] = []
     private var currentPendingCount: Int = 0
+    private var currentAlertPulseID: Int = 0
     weak var hoverDelegate: WidgetHoverDelegate?
 
     init() {
@@ -36,6 +37,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
         let hv = NSHostingView(rootView: WidgetIconView(
             pendingCount: 0,
             idleAnimation: SettingsStore.shared.idleAnimation,
+            alertPulseID: currentAlertPulseID,
             quietHoursEnabled: SettingsStore.shared.quietHoursEnabled
         ))
         hv.frame = initialFrame
@@ -57,6 +59,9 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
 
     func showWidget(pendingCount: Int, latest: CompletedSession?) {
         currentPendingCount = pendingCount
+        if latest != nil && !SettingsStore.shared.quietHoursEnabled {
+            currentAlertPulseID += 1
+        }
         updateRootView(pendingCount: pendingCount)
         reposition()
         if !panel.isVisible {
@@ -95,6 +100,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
         hostingView?.rootView = WidgetIconView(
             pendingCount: pendingCount,
             idleAnimation: SettingsStore.shared.idleAnimation,
+            alertPulseID: currentAlertPulseID,
             quietHoursEnabled: SettingsStore.shared.quietHoursEnabled
         )
     }

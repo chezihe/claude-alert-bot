@@ -78,6 +78,17 @@ enum MotionTokens {
     // SPEC.md §4 row "Breathe" — 2.4s, autoreverse, infinite, easeInOut, scale 1.0↔1.06.
     static let breatheDuration: TimeInterval = 2.4
     static let breatheScale: CGFloat = 1.06
+    // SPEC.md §4 rows "New-alert pulse" and "Sonar wave".
+    static let newAlertPulseDuration: TimeInterval = 0.45
+    static let newAlertPulsePeakScale: CGFloat = 1.14
+    static let newAlertPulseSquashScale: CGFloat = 0.96
+    static let newAlertPulseSettleScale: CGFloat = 1.06
+    static let newAlertPulseRotation: Double = 7
+    static let sonarDuration: TimeInterval = 0.75
+    static let sonarStartScale: CGFloat = 0.5
+    static let sonarEndScale: CGFloat = 3.0
+    static let sonarStartOpacity: Double = 0.75
+    static let reduceMotionFadeDuration: TimeInterval = 0.15
 
     /// D4 (SC#3) — uniform reduce-motion gate. Returns nil when reduce-motion is on so call-sites
     /// can `if let anim = MotionTokens.bounceAnimation(...) { withAnimation(anim) { ... } }`.

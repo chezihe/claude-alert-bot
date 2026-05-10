@@ -131,6 +131,22 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(MotionTokens.breatheScale, 1.06, accuracy: 0.001)
     }
 
+    func test_motionTokens_newAlertPulseValues_matchSpec() {
+        XCTAssertEqual(MotionTokens.newAlertPulseDuration, 0.45, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.newAlertPulsePeakScale, 1.14, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.newAlertPulseSquashScale, 0.96, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.newAlertPulseSettleScale, 1.06, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.newAlertPulseRotation, 7, accuracy: 0.001)
+    }
+
+    func test_motionTokens_sonarValues_matchSpec() {
+        XCTAssertEqual(MotionTokens.sonarDuration, 0.75, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.sonarStartScale, 0.5, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.sonarEndScale, 3.0, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.sonarStartOpacity, 0.75, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.reduceMotionFadeDuration, 0.15, accuracy: 0.001)
+    }
+
     // MARK: - MotionTokens reduce-motion gate (D4 / SC#3)
 
     func test_motionTokens_bounceAnimation_returnsNil_whenReduceMotionIsTrue() {

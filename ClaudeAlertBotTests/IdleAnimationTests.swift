@@ -24,7 +24,7 @@ final class IdleAnimationTests: XCTestCase {
         let src = readWidgetIconViewSource()
 
         XCTAssertTrue(src.contains("@State private var bounceScale: CGFloat = 1.0"))
-        XCTAssertTrue(src.contains(".scaleEffect(quietHoursEnabled ? 1.0 : breatheScale * bounceScale)"))
+        XCTAssertTrue(src.contains(".scaleEffect(quietHoursEnabled ? 1.0 : breatheScale * bounceScale * alertPulseScale)"))
         XCTAssertTrue(src.contains("bounceScale = 1.0"))
         XCTAssertTrue(src.contains("bounceScale = MotionTokens.bounceStretchScale"))
         XCTAssertTrue(src.contains("bounceScale = MotionTokens.bounceSquashScale"))
@@ -34,6 +34,14 @@ final class IdleAnimationTests: XCTestCase {
         let src = readFloatingWidgetWindowControllerSource()
 
         XCTAssertTrue(src.contains("idleAnimation: SettingsStore.shared.idleAnimation"))
+    }
+
+    func test_floatingWidgetWindowController_passesAlertPulseIDToIconView() {
+        let src = readFloatingWidgetWindowControllerSource()
+
+        XCTAssertTrue(src.contains("if latest != nil && !SettingsStore.shared.quietHoursEnabled"))
+        XCTAssertTrue(src.contains("currentAlertPulseID += 1"))
+        XCTAssertTrue(src.contains("alertPulseID: currentAlertPulseID"))
     }
 
     func test_widgetIconViewSource_restartsWhenIdleAnimationChanges() {
@@ -57,6 +65,24 @@ final class IdleAnimationTests: XCTestCase {
 
         XCTAssertTrue(src.contains(".onChange(of: reduceMotion)"))
         XCTAssertTrue(src.contains("restartIdleAnimation()"))
+    }
+
+    func test_widgetIconViewSource_runsNewAlertPulseWhenPulseIDChanges() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("var alertPulseID: Int = 0"))
+        XCTAssertTrue(src.contains("@State private var alertPulseScale: CGFloat = 1.0"))
+        XCTAssertTrue(src.contains("@State private var sonarOpacity: Double = 0"))
+        XCTAssertTrue(src.contains("@State private var activeAlertPulseID: Int = 0"))
+        XCTAssertTrue(src.contains(".onChange(of: alertPulseID)"))
+        XCTAssertTrue(src.contains("runNewAlertPulse()"))
+        XCTAssertTrue(src.contains("guard activeAlertPulseID == pulseID else { return }"))
+    }
+
+    func test_widgetIconViewSource_quietHoursSuppressesNewAlertPulse() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("guard alertPulseID > 0, alertPulseID != activeAlertPulseID, !quietHoursEnabled else { return }"))
     }
 
     func test_widgetIconViewSource_quietHoursSuppressesIdleAndKeepsPendingBadge() {

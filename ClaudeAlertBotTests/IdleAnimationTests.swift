@@ -36,6 +36,22 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("idleAnimation: SettingsStore.shared.idleAnimation"))
     }
 
+    func test_widgetIconViewSource_restartsWhenIdleAnimationChanges() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains(".onChange(of: idleAnimation)"))
+        XCTAssertTrue(src.contains("restartIdleAnimation()"))
+        XCTAssertTrue(src.contains("private func restartIdleAnimation()"))
+        guard let restartStart = src.range(of: "private func restartIdleAnimation()") else {
+            return
+        }
+        let restartBody = String(src[restartStart.lowerBound...])
+        XCTAssertTrue(restartBody.contains("bounceOffset = 0"))
+        XCTAssertTrue(restartBody.contains("bounceScale = 1.0"))
+        XCTAssertTrue(restartBody.contains("breatheScale = 1.0"))
+        XCTAssertTrue(restartBody.contains("startIdleAnimation()"))
+    }
+
     func test_widgetIconViewSource_quietHoursSuppressesIdleAndKeepsPendingBadge() {
         let src = readWidgetIconViewSource()
 

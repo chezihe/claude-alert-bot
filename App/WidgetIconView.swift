@@ -31,14 +31,11 @@ struct WidgetIconView: View {
                 .onAppear {
                     startIdleAnimation()
                 }
-                .onChange(of: quietHoursEnabled) { _, quiet in
-                    if quiet {
-                        bounceOffset = 0
-                        bounceScale = 1.0
-                        breatheScale = 1.0
-                    } else {
-                        startIdleAnimation()
-                    }
+                .onChange(of: quietHoursEnabled) { _, _ in
+                    restartIdleAnimation()
+                }
+                .onChange(of: idleAnimation) { _, _ in
+                    restartIdleAnimation()
                 }
             if pendingCount >= 2 {
                 Text("+\(pendingCount - 1)")
@@ -82,5 +79,12 @@ struct WidgetIconView: View {
                 breatheScale = MotionTokens.breatheScale
             }
         }
+    }
+
+    private func restartIdleAnimation() {
+        bounceOffset = 0
+        bounceScale = 1.0
+        breatheScale = 1.0
+        startIdleAnimation()
     }
 }

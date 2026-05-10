@@ -18,15 +18,22 @@ final class SpyWidget: WidgetControllerProtocol {
     private(set) var hideCount = 0
     private(set) var updateCalls: [UpdateCall] = []
     private(set) var queueCalls: [[String]] = []
+    private(set) var events: [String] = []
 
     func showWidget(pendingCount: Int, latest: CompletedSession?) {
+        events.append("show:\(latest?.sessionID ?? "nil")")
         showCalls.append(.init(pendingCount: pendingCount, latestID: latest?.sessionID))
     }
-    func hideWidget() { hideCount += 1 }
+    func hideWidget() {
+        events.append("hide")
+        hideCount += 1
+    }
     func updatePendingCount(_ n: Int, latest: CompletedSession?) {
+        events.append("update:\(latest?.sessionID ?? "nil")")
         updateCalls.append(.init(n: n, latestID: latest?.sessionID))
     }
     func setQueue(_ queue: [CompletedSession]) {
+        events.append("setQueue:\(queue.map(\.sessionID).joined(separator: ","))")
         queueCalls.append(queue.map(\.sessionID))
     }
 }
@@ -81,6 +88,19 @@ final class NotificationOrchestratorTests: XCTestCase {
         XCTAssertEqual(widget.showCalls.count, 1)
         XCTAssertEqual(widget.showCalls.first?.latestID, "sess-A")
         XCTAssertEqual(sound.playOnceCount, 1)
+    }
+
+    @MainActor
+    func test_present_setsWidgetQueueBeforeShowingWidget() async {
+        let widget = SpyWidget()
+        let sound = SpySoundPlayer()
+        let orch = NotificationOrchestrator(widget: widget, sound: sound)
+        let s = makeSession("sess-A")
+
+        await orch.present(session: s, playSoundOnce: false)
+
+        XCTAssertEqual(widget.queueCalls, [["sess-A"]])
+        XCTAssertEqual(widget.events.prefix(2), ["setQueue:sess-A", "show:sess-A"])
     }
 
     @MainActor

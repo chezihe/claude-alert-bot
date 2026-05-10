@@ -117,7 +117,8 @@ actor SessionRegistry {
             return
         }
         let projectName = ProjectName.derive(cwd: event.cwd, claudeProjectDir: event.claude_project_dir)
-        if await MainActor.run(body: { SettingsStore.shared.isMuted(project: projectName, now: stoppedAt) }) {
+        let muteCheckNow = clock.now()
+        if await MainActor.run(body: { SettingsStore.shared.isMuted(project: projectName, now: muteCheckNow) }) {
             log.notice("ingest_stop muted project=\(projectName, privacy: .public) session=\(sid, privacy: .public)")
             await persist()
             return

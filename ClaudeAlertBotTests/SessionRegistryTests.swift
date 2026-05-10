@@ -593,6 +593,34 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(notifier.presentCalls.count, 0)
     }
 
+    func test_ingestStop_usesCurrentTimeForMutedProjectExpiry() async {
+        let muteStart = Date(timeIntervalSince1970: 1_700_000_000)
+        let stoppedAt = muteStart.addingTimeInterval(120)
+        let arrivalNow = muteStart.addingTimeInterval(3_700)
+        var clock = Clock()
+        clock.now = { arrivalNow }
+        clock.sleepNanoseconds = { _ in }
+        let r = SessionRegistry(persistence: SessionStore(url: tempURL), clock: clock)
+        await bind(r)
+        let sid = "sid-muted-expired"
+        let project = "muted-expired-\(UUID().uuidString)"
+        SettingsStore.shared.mute(project: project, duration: 3_600, now: muteStart)
+        defer { SettingsStore.shared.unmute(project: project) }
+        await r.seedInFlightForTesting(sessionID: sid,
+                                       started: stoppedAt.addingTimeInterval(-31),
+                                       cwd: "/tmp/\(project)")
+        let stop = HookEventFactory.stop(sessionID: sid,
+                                         cwd: "/tmp/\(project)",
+                                         ts: iso(stoppedAt))
+
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.map(\.sessionID), [sid])
+        XCTAssertEqual(notifier.presentCalls.count, 1)
+    }
+
     /// Test K — D2-21: injectTest appends a test fixture and schedules auto-dismiss.
     /// With stub clock.sleepNanoseconds returning immediately, the dismiss Task fires fast.
     func test_injectTest_appendsAndScheduleAutoDismiss() async {

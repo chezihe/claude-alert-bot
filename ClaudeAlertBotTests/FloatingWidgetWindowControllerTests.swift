@@ -6,6 +6,17 @@ import AppKit
 
 @MainActor
 final class FloatingWidgetWindowControllerTests: XCTestCase {
+    func test_sourceObservesReduceMotionChangesToResizeVisibleWidget() {
+        let src = readFloatingWidgetWindowControllerSource()
+
+        XCTAssertTrue(src.contains("private var accessibilityCancellable: AnyCancellable?"))
+        XCTAssertTrue(src.contains("NSWorkspace.accessibilityDisplayOptionsDidChangeNotification"))
+        XCTAssertTrue(src.contains(".publisher(for: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification)"))
+        XCTAssertTrue(src.contains("accessibilityCancellable = NotificationCenter.default"))
+        XCTAssertTrue(src.contains("self.updateRootView(pendingCount: self.currentPendingCount)"))
+        XCTAssertTrue(src.contains("self.repositionIfVisible()"))
+    }
+
     func test_visibleWidgetRepositionsWhenWidgetCornerChanges() async throws {
         guard let screen = NSScreen.main else {
             throw XCTSkip("NSScreen.main unavailable in this test environment")
@@ -49,5 +60,16 @@ final class FloatingWidgetWindowControllerTests: XCTestCase {
         XCTAssertNotEqual(before.y, after.y, accuracy: 0.0001)
         XCTAssertEqual(after.x, expected.x, accuracy: 0.0001)
         XCTAssertEqual(after.y, expected.y, accuracy: 0.0001)
+    }
+
+    private func readFloatingWidgetWindowControllerSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/FloatingWidgetWindowController.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/FloatingWidgetWindowController.swift at \(target.path)")
+            return ""
+        }
+        return data
     }
 }

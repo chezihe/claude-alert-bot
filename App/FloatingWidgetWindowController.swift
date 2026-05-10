@@ -23,6 +23,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     private var hostingView: NSHostingView<WidgetIconView>?
     private var trackingArea: NSTrackingArea?
     private var settingsCancellable: AnyCancellable?
+    private var accessibilityCancellable: AnyCancellable?
     private var currentQueue: [CompletedSession] = []
     private var currentPendingCount: Int = 0
     private var currentAlertPulseID: Int = 0
@@ -57,6 +58,15 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
                 self.repositionIfVisible()
             }
         }
+        accessibilityCancellable = NotificationCenter.default
+            .publisher(for: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    self.updateRootView(pendingCount: self.currentPendingCount)
+                    self.repositionIfVisible()
+                }
+            }
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }

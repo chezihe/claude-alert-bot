@@ -145,7 +145,7 @@ final class AlertBotStore {
 - **Mute project:** right-click row → "Mute this project for 1h" — stores `Date().addingTimeInterval(3600)` in `mutedProjects[projectName]`. Incoming alerts for muted projects bypass the queue silently.
 - **Pin:** muted from auto-clear sweeps; persists across app restarts
 - **Quiet Hours:** glyph animation paused, quiet marker shown, badge remains visible but desaturated; alerts still queue but no sound/pulse fires
-- **Clear All:** appears only when `queue.count >= 2`
+- **Clear All / Clear Unpinned:** appears when at least 2 unpinned sessions are clearable; pinned sessions are preserved
 
 ---
 

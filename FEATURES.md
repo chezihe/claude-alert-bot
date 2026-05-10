@@ -43,7 +43,7 @@
 - **최대 4행** 표시, 그 이상은 세로 스크롤
 - **스크롤 페이드** — 상/하단 부드러운 페이드 어포던스
 - **빈 상태 온보딩** — `queue.isEmpty && !everHadAlerts` 일 때 "Listening to iTerm" 표시
-- **Clear All 버튼** — 큐 2건 이상일 때만 노출
+- **Clear All / Clear Unpinned 버튼** — 지울 수 있는 unpinned session이 2건 이상일 때만 노출, pinned session은 유지
 - **설정 톱니** — 헤더 우측, Preferences 창 오픈
 
 ### 인터랙션

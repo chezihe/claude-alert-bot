@@ -1,6 +1,6 @@
 // App/PopoverContentView.swift — Phase 2 / Plan 02-08 popover container view.
 // UI-SPEC §"Hover Popover" — fixed width, capped visible rows + ScrollView with hidden indicators,
-// top-trailing controls with "모두 지우기" visible only when rowCount>=2 (D2-07; non-destructive — no confirm).
+// top-trailing clear control visible only when at least two unpinned sessions are clearable.
 // D2-06 row display rules; D2-08 row click → SessionRegistry.shared.clearOne(...) + [would-jump session=<uuid>] log.
 // Phase 03.1 — geometry literals consume GeometryTokens.
 // PopoverContentRules is the pure-function namespace tested in PopoverContentTests.
@@ -36,8 +36,16 @@ enum PopoverContentRules {
         return age >= 0 && age <= justArrivedWindowSec
     }
 
-    /// D2-07 + UI-SPEC line 89: Clear all visible only when ≥2 rows.
-    static func shouldShowClearAll(rowCount: Int) -> Bool { rowCount >= 2 }
+    /// D2-07 + UI-SPEC line 89: Clear control visible only when ≥2 clearable sessions.
+    static func shouldShowClearAll(clearableCount: Int) -> Bool { clearableCount >= 2 }
+
+    static func clearableSessionCount(_ queue: [CompletedSession]) -> Int {
+        queue.filter { !$0.pinned }.count
+    }
+
+    static func clearAllButtonLabel(queue: [CompletedSession]) -> String {
+        queue.contains { $0.pinned } ? "Clear Unpinned" : "Clear All"
+    }
 
     static func shouldShowEmptyState(queue: [CompletedSession], everHadAlerts: Bool) -> Bool {
         queue.isEmpty && !everHadAlerts
@@ -166,12 +174,14 @@ struct PopoverContentView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 Spacer()
-                if PopoverContentRules.shouldShowClearAll(rowCount: queue.count) {
-                    Button("모두 지우기", action: onClearAll)
+                let clearableSessionCount = PopoverContentRules.clearableSessionCount(queue)
+                let clearAllLabel = PopoverContentRules.clearAllButtonLabel(queue: queue)
+                if PopoverContentRules.shouldShowClearAll(clearableCount: clearableSessionCount) {
+                    Button(clearAllLabel, action: onClearAll)
                         .buttonStyle(.plain)
                         .font(.system(size: 11))
                         .foregroundStyle(Color(NSColor.secondaryLabelColor))
-                        .accessibilityLabel("모든 알림 지우기")
+                        .accessibilityLabel(clearAllLabel)
                 }
                 Button(action: onOpenSettings) {
                     Image(systemName: "gearshape")

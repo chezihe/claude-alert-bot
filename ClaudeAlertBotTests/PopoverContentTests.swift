@@ -1,20 +1,73 @@
 // ClaudeAlertBotTests/PopoverContentTests.swift — Phase 2 / Plan 02-08 Task 1
 // Tests for PopoverContentRules pure namespace (display logic extracted from SwiftUI views).
-// Anchors: D2-06 (same-project duplicates → time suffix), D2-07 (Clear all visible at rowCount>=2),
+// Anchors: D2-06 (same-project duplicates → time suffix), D2-07 (clear control visible at clearable sessionCount>=2),
 // D2-16 (orphan ? when durationSec == nil), UI-SPEC §"Popover row states".
 import XCTest
 @testable import ClaudeAlertBot
 
 final class PopoverContentTests: XCTestCase {
 
-    // MARK: - D2-07 Clear all gating (UI-SPEC line 89 anchor)
+    // MARK: - D2-07 clear control gating (UI-SPEC line 89 anchor)
 
-    func test_clearAllVisibility_oneRow_hidden() {
-        XCTAssertFalse(PopoverContentRules.shouldShowClearAll(rowCount: 1))
+    func test_clearAllVisibility_oneClearableSession_hidden() {
+        XCTAssertFalse(PopoverContentRules.shouldShowClearAll(clearableCount: 1))
     }
 
-    func test_clearAllVisibility_twoRows_visible() {
-        XCTAssertTrue(PopoverContentRules.shouldShowClearAll(rowCount: 2))
+    func test_clearAllVisibility_twoClearableSessions_visible() {
+        XCTAssertTrue(PopoverContentRules.shouldShowClearAll(clearableCount: 2))
+    }
+
+    func test_clearableSessionCount_excludesPinnedSessions() {
+        let queue = [
+            mkSession(id: "pinned", project: "P", pinned: true),
+            mkSession(id: "unpinned", project: "P")
+        ]
+
+        XCTAssertEqual(PopoverContentRules.clearableSessionCount(queue), 1)
+    }
+
+    func test_clearAllVisibility_twoPinnedSessions_hidden() {
+        let queue = [
+            mkSession(id: "pinned-1", project: "P", pinned: true),
+            mkSession(id: "pinned-2", project: "P", pinned: true)
+        ]
+
+        XCTAssertFalse(PopoverContentRules.shouldShowClearAll(
+            clearableCount: PopoverContentRules.clearableSessionCount(queue)
+        ))
+    }
+
+    func test_clearAllVisibility_collapsedGroupWithThreeClearableSessions_visible() {
+        let queue = [
+            mkSession(id: "a1", project: "Alpha"),
+            mkSession(id: "a2", project: "Alpha"),
+            mkSession(id: "a3", project: "Alpha")
+        ]
+        let items = PopoverContentRules.groupedListItems(queue, expandedProjects: [])
+
+        XCTAssertEqual(items.count, 1)
+        XCTAssertTrue(PopoverContentRules.shouldShowClearAll(
+            clearableCount: PopoverContentRules.clearableSessionCount(queue)
+        ))
+    }
+
+    func test_clearAllButtonLabel_withoutPinnedRows_isClearAll() {
+        let queue = [
+            mkSession(id: "a", project: "P"),
+            mkSession(id: "b", project: "P")
+        ]
+
+        XCTAssertEqual(PopoverContentRules.clearAllButtonLabel(queue: queue), "Clear All")
+    }
+
+    func test_clearAllButtonLabel_withPinnedRows_isClearUnpinned() {
+        let queue = [
+            mkSession(id: "pinned", project: "P", pinned: true),
+            mkSession(id: "a", project: "P"),
+            mkSession(id: "b", project: "P")
+        ]
+
+        XCTAssertEqual(PopoverContentRules.clearAllButtonLabel(queue: queue), "Clear Unpinned")
     }
 
     // MARK: - D2-06 same-project duplicates → time suffix on those rows

@@ -25,6 +25,12 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("case roam"))
     }
 
+    func test_idleAnimationSource_includesDriftCase() {
+        let src = readIdleAnimationSource()
+
+        XCTAssertTrue(src.contains("case drift"))
+    }
+
     func test_widgetIconViewSource_wiresBreatheBranch() {
         let src = readWidgetIconViewSource()
 
@@ -53,6 +59,18 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("MotionTokens.roamAnimation"))
         XCTAssertTrue(src.contains("roamPhase = -360"))
         XCTAssertTrue(src.contains("roamPhase = 0"))
+    }
+
+    func test_widgetIconViewSource_wiresDriftBranch() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("@State private var driftOffset: CGSize = .zero"))
+        XCTAssertTrue(src.contains("@State private var driftGeneration: Int = 0"))
+        XCTAssertTrue(src.contains("case .drift:"))
+        XCTAssertTrue(src.contains("MotionTokens.driftAnimation"))
+        XCTAssertTrue(src.contains("runDriftStep(generation: driftGeneration)"))
+        XCTAssertTrue(src.contains("Double.random(in: -MotionTokens.driftRadiusX...MotionTokens.driftRadiusX)"))
+        XCTAssertTrue(src.contains("Double.random(in: -MotionTokens.driftRadiusY...MotionTokens.driftRadiusY)"))
     }
 
     func test_widgetIconViewSource_roamUsesCounterClockwiseGeometryEffect() {
@@ -121,6 +139,8 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(restartBody.contains("bounceScale = 1.0"))
         XCTAssertTrue(restartBody.contains("breatheScale = 1.0"))
         XCTAssertTrue(restartBody.contains("roamPhase = 0"))
+        XCTAssertTrue(restartBody.contains("driftOffset = .zero"))
+        XCTAssertTrue(restartBody.contains("driftGeneration += 1"))
         XCTAssertTrue(restartBody.contains("startIdleAnimation()"))
     }
 

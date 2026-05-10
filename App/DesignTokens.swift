@@ -70,7 +70,14 @@ enum GeometryTokens {
         quietHoursEnabled: Bool,
         reduceMotion: Bool
     ) -> CGSize {
-        guard idleAnimation == .roam, !quietHoursEnabled, !reduceMotion else { return widgetBaseSize }
+        guard !quietHoursEnabled, !reduceMotion else { return widgetBaseSize }
+        if idleAnimation == .drift {
+            return CGSize(
+                width: widgetBaseSize.width + MotionTokens.driftRadiusX * 2,
+                height: widgetBaseSize.height + MotionTokens.driftRadiusY * 2
+            )
+        }
+        guard idleAnimation == .roam else { return widgetBaseSize }
         return CGSize(
             width: widgetBaseSize.width + MotionTokens.roamRadiusX * 2,
             height: widgetBaseSize.height + MotionTokens.roamRadiusY * 2
@@ -98,6 +105,10 @@ enum MotionTokens {
     static let roamDuration: TimeInterval = 1.6
     static let roamRadiusX: CGFloat = 12
     static let roamRadiusY: CGFloat = 3
+    // SPEC.md §4 row "Drift" — 6s easeInOut random jitter within 14×16pt.
+    static let driftDuration: TimeInterval = 6.0
+    static let driftRadiusX: CGFloat = 7
+    static let driftRadiusY: CGFloat = 8
     // SPEC.md §4 rows "New-alert pulse" and "Sonar wave".
     static let newAlertPulseDuration: TimeInterval = 0.45
     static let newAlertPulsePeakScale: CGFloat = 1.14
@@ -138,5 +149,10 @@ enum MotionTokens {
     static func roamAnimation(reduceMotion: Bool) -> Animation? {
         guard !reduceMotion else { return nil }
         return .linear(duration: roamDuration).repeatForever(autoreverses: false)
+    }
+
+    static func driftAnimation(reduceMotion: Bool) -> Animation? {
+        guard !reduceMotion else { return nil }
+        return .easeInOut(duration: driftDuration)
     }
 }

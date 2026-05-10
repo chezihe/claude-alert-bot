@@ -126,6 +126,7 @@ extension SettingsViewTests {
     func test_idleAnimationLabels_areMinimalEnglish() {
         XCTAssertEqual(SettingsView.idleAnimationName(.bounce), "Bounce")
         XCTAssertEqual(SettingsView.idleAnimationName(.breathe), "Breathe")
+        XCTAssertEqual(SettingsView.idleAnimationName(.drift), "Drift")
     }
 
     func test_idleAnimationLabelsSource_includesRing() {
@@ -138,6 +139,12 @@ extension SettingsViewTests {
         let src = readSettingsViewSource()
 
         XCTAssertTrue(src.contains("case .roam: return \"Roam\""))
+    }
+
+    func test_idleAnimationLabelsSource_includesDrift() {
+        let src = readSettingsViewSource()
+
+        XCTAssertTrue(src.contains("case .drift: return \"Drift\""))
     }
 
     /// Resolve App/SettingsView.swift relative to this test file so source-level

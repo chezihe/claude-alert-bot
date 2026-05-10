@@ -178,6 +178,7 @@ struct SettingsView: View {
         case .breathe: return "Breathe"
         case .ring: return "Ring"
         case .roam: return "Roam"
+        case .drift: return "Drift"
         }
     }
 

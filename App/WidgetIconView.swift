@@ -6,6 +6,7 @@
 // Breathe: 2.4s scale 1.0↔1.06, autoreverse forever; default idle animation for WO-012.
 // Ring: 0.55s ±10° top-anchor rotation, autoreverse forever; suppressed when Reduce Motion is on.
 // Roam: 1.6s counter-clockwise 24×6pt ellipse, linear forever; suppressed when Reduce Motion is on.
+// Drift: 6s random jitter within 14×16pt, easeInOut forever; suppressed when Reduce Motion is on.
 // New-alert pulse: scale/rotate glyph + one sonar ring; suppressed in Quiet Hours.
 import SwiftUI
 import AppKit
@@ -22,6 +23,8 @@ struct WidgetIconView: View {
     @State private var breatheScale: CGFloat = 1.0
     @State private var idleRotation: Double = 0
     @State private var roamPhase: Double = 0
+    @State private var driftOffset: CGSize = .zero
+    @State private var driftGeneration: Int = 0
     @State private var alertPulseScale: CGFloat = 1.0
     @State private var alertPulseRotation: Double = 0
     @State private var sonarScale: CGFloat = MotionTokens.sonarStartScale
@@ -57,7 +60,10 @@ struct WidgetIconView: View {
                     .frame(width: 44, height: 44)
                     .scaleEffect(quietHoursEnabled ? 1.0 : breatheScale * bounceScale * alertPulseScale)
                     .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation + idleRotation), anchor: .top)
-                    .offset(y: quietHoursEnabled ? 0 : bounceOffset)
+                    .offset(
+                        x: quietHoursEnabled ? 0 : driftOffset.width,
+                        y: quietHoursEnabled ? 0 : bounceOffset + driftOffset.height
+                    )
                     .modifier(RoamOffsetEffect(
                         angle: roamPhase,
                         radiusX: Double(MotionTokens.roamRadiusX),
@@ -134,16 +140,45 @@ struct WidgetIconView: View {
             withAnimation(anim) {
                 roamPhase = -360
             }
+        case .drift:
+            guard MotionTokens.driftAnimation(reduceMotion: reduceMotion) != nil else { return }
+            runDriftStep(generation: driftGeneration)
         }
     }
 
     private func restartIdleAnimation() {
+        driftGeneration += 1
         bounceOffset = 0
         bounceScale = 1.0
         breatheScale = 1.0
         idleRotation = 0
         roamPhase = 0
+        driftOffset = .zero
         startIdleAnimation()
+    }
+
+    private func runDriftStep(generation: Int) {
+        guard
+            idleAnimation == .drift,
+            !quietHoursEnabled,
+            generation == driftGeneration,
+            let anim = MotionTokens.driftAnimation(reduceMotion: reduceMotion)
+        else { return }
+
+        withAnimation(anim) {
+            driftOffset = makeDriftTarget()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + MotionTokens.driftDuration) {
+            guard generation == driftGeneration else { return }
+            runDriftStep(generation: generation)
+        }
+    }
+
+    private func makeDriftTarget() -> CGSize {
+        CGSize(
+            width: CGFloat(Double.random(in: -MotionTokens.driftRadiusX...MotionTokens.driftRadiusX)),
+            height: CGFloat(Double.random(in: -MotionTokens.driftRadiusY...MotionTokens.driftRadiusY))
+        )
     }
 
     private func runNewAlertPulse() {

@@ -116,6 +116,17 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(size.height, 50)
     }
 
+    func test_geometryTokens_widgetDrawableSize_expandsForActiveDrift() {
+        let size = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .drift,
+            quietHoursEnabled: false,
+            reduceMotion: false
+        )
+
+        XCTAssertEqual(size.width, 58)
+        XCTAssertEqual(size.height, 60)
+    }
+
     func test_geometryTokens_widgetDrawableSize_keepsBaseSizeWhenRoamIsSuppressed() {
         let quietSize = GeometryTokens.widgetDrawableSize(
             idleAnimation: .roam,
@@ -132,6 +143,16 @@ final class DesignTokensTests: XCTestCase {
             quietHoursEnabled: false,
             reduceMotion: false
         )
+        let quietDriftSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .drift,
+            quietHoursEnabled: true,
+            reduceMotion: false
+        )
+        let reduceMotionDriftSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .drift,
+            quietHoursEnabled: false,
+            reduceMotion: true
+        )
 
         XCTAssertEqual(quietSize.width, 44)
         XCTAssertEqual(quietSize.height, 44)
@@ -139,6 +160,10 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(reduceMotionSize.height, 44)
         XCTAssertEqual(bounceSize.width, 44)
         XCTAssertEqual(bounceSize.height, 44)
+        XCTAssertEqual(quietDriftSize.width, 44)
+        XCTAssertEqual(quietDriftSize.height, 44)
+        XCTAssertEqual(reduceMotionDriftSize.width, 44)
+        XCTAssertEqual(reduceMotionDriftSize.height, 44)
     }
 
     // MARK: - MotionTokens (SPEC.md §4 "Motion")
@@ -183,6 +208,16 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertTrue(src.contains("static let roamRadiusY: CGFloat = 3"))
         XCTAssertTrue(src.contains("static func roamAnimation(reduceMotion: Bool) -> Animation?"))
         XCTAssertTrue(src.contains(".linear(duration: roamDuration).repeatForever(autoreverses: false)"))
+    }
+
+    func test_motionTokensSource_driftValues_matchSpec() {
+        let src = readDesignTokensSource()
+
+        XCTAssertTrue(src.contains("static let driftDuration: TimeInterval = 6.0"))
+        XCTAssertTrue(src.contains("static let driftRadiusX: CGFloat = 7"))
+        XCTAssertTrue(src.contains("static let driftRadiusY: CGFloat = 8"))
+        XCTAssertTrue(src.contains("static func driftAnimation(reduceMotion: Bool) -> Animation?"))
+        XCTAssertTrue(src.contains(".easeInOut(duration: driftDuration)"))
     }
 
     func test_motionTokens_newAlertPulseValues_matchSpec() {

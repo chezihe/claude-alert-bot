@@ -38,6 +38,7 @@ final class WorkspaceFrontmostObserver {
     private func evaluatePendingAlerts() async {
         let pending = await SessionRegistry.shared.peekPending()
         for session in pending {
+            guard !session.pinned else { continue }
             guard let target = session.itermSessionID else { continue }
             if await AppleScriptHelper.shared.frontmostMatches(itermSessionID: target) {
                 log.notice("D2-15 auto-clear session=\(session.sessionID, privacy: .public)")

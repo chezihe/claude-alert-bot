@@ -347,6 +347,25 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertTrue(notifier.refreshCalls.contains(1))
     }
 
+    func test_workspaceFrontmostObserver_autoClearSkipsPinnedSessionsBeforeMatching() {
+        let src = readWorkspaceFrontmostObserverSource()
+        guard let loopStart = src.range(of: "for session in pending {") else {
+            return XCTFail("WorkspaceFrontmostObserver must iterate pending sessions")
+        }
+        guard let matchStart = src.range(
+            of: "AppleScriptHelper.shared.frontmostMatches",
+            range: loopStart.upperBound..<src.endIndex
+        ) else {
+            return XCTFail("WorkspaceFrontmostObserver must still perform frontmost matching")
+        }
+        let beforeMatch = String(src[loopStart.upperBound..<matchStart.lowerBound])
+
+        XCTAssertTrue(beforeMatch.contains("session.pinned"),
+                      "Pinned alerts must not be auto-cleared when iTerm2 becomes frontmost.")
+        XCTAssertTrue(beforeMatch.contains("continue"),
+                      "Pinned alerts should be skipped before the AppleScript matching path.")
+    }
+
     func test_ingestStop_mutedProjectSkipsAppendAndPresent() async {
         let r = makeRegistry()
         await bind(r)
@@ -456,5 +475,16 @@ final class SessionRegistryTests: XCTestCase {
         let snap = await r.snapshotForTesting()
         XCTAssertEqual(snap.completed.map(\.sessionID), ["restored"])
         XCTAssertTrue(notifier.refreshCalls.contains(1))
+    }
+
+    private func readWorkspaceFrontmostObserverSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/WorkspaceFrontmostObserver.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/WorkspaceFrontmostObserver.swift at \(target.path)")
+            return ""
+        }
+        return data
     }
 }

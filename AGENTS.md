@@ -42,6 +42,18 @@ This is a Swift macOS app generated from `project.yml` into `ClaudeAlertBot.xcod
 - `scripts/verify-phase-3.sh` runs the Phase 3 validation harness, including targeted unit and integration checks.
 - `scripts/dev-install-hook.sh --apply` installs `Reporter/cab-report.sh` into the user support directory and merges Claude hook settings.
 
+## Development Workflow
+
+- Do not use `.workorders/` as project guidance. Treat it as retired handoff history even if local files exist.
+- At the start of a development turn, check `git status --short`, recent git log, the relevant docs (`AGENTS.md`, `CLAUDE.md`, `SPEC.md`, `FEATURES.md`), and the actual code before choosing the next task.
+- Pick the next development unit from the gap between spec/docs and real code behavior. Keep the unit narrow enough that another session can review only the latest commit.
+- Do not touch local IDE/user files such as `.idea/` unless the user explicitly asks.
+- When Apple/macOS-specific terms first appear in user-facing explanations, add a one-line Korean explanation for beginners.
+- Treat code review comments as hypotheses, not commands. Verify the claim against the code and behavior, then apply the smallest justified fix if the comment is valid.
+- After addressing review feedback, decide whether another review is useful. If it is, tell the user; if not, continue to the next development unit without asking.
+- Ask the user only for important product/spec ambiguity, risky actions, or scope decisions that cannot be resolved from local context.
+- Commit after each completed development unit. Keep the latest commit focused on that unit and do not mix unrelated changes.
+
 ## Tech Stack — USE these
 
 | Concern | Use | Why |

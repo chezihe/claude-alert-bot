@@ -131,6 +131,14 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(MotionTokens.breatheScale, 1.06, accuracy: 0.001)
     }
 
+    func test_motionTokensSource_ringValues_matchSpec() {
+        let src = readDesignTokensSource()
+
+        XCTAssertTrue(src.contains("static let ringDuration: TimeInterval = 0.55"))
+        XCTAssertTrue(src.contains("static let ringRotation: Double = 10"))
+        XCTAssertTrue(src.contains("static func ringAnimation(reduceMotion: Bool) -> Animation?"))
+    }
+
     func test_motionTokens_newAlertPulseValues_matchSpec() {
         XCTAssertEqual(MotionTokens.newAlertPulseDuration, 0.45, accuracy: 0.001)
         XCTAssertEqual(MotionTokens.newAlertPulsePeakScale, 1.14, accuracy: 0.001)
@@ -190,5 +198,16 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(actualColor?.greenComponent ?? 0, expectedColor?.greenComponent ?? 0, accuracy: 0.005, file: file, line: line)
         XCTAssertEqual(actualColor?.blueComponent ?? 0, expectedColor?.blueComponent ?? 0, accuracy: 0.005, file: file, line: line)
         XCTAssertEqual(actualColor?.alphaComponent ?? 0, expectedColor?.alphaComponent ?? 0, accuracy: 0.005, file: file, line: line)
+    }
+
+    private func readDesignTokensSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/DesignTokens.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/DesignTokens.swift at \(target.path)")
+            return ""
+        }
+        return data
     }
 }

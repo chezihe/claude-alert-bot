@@ -176,6 +176,7 @@ struct SettingsView: View {
         switch animation {
         case .bounce: return "Bounce"
         case .breathe: return "Breathe"
+        case .ring: return "Ring"
         }
     }
 

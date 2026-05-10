@@ -13,11 +13,29 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(IdleAnimation.allCases.contains(.breathe))
     }
 
+    func test_idleAnimationSource_includesRingCase() {
+        let src = readIdleAnimationSource()
+
+        XCTAssertTrue(src.contains("case ring"))
+    }
+
     func test_widgetIconViewSource_wiresBreatheBranch() {
         let src = readWidgetIconViewSource()
 
         XCTAssertTrue(src.contains("case .breathe:"))
         XCTAssertTrue(src.contains("MotionTokens.breatheAnimation"))
+    }
+
+    func test_widgetIconViewSource_wiresRingBranch() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("@State private var idleRotation: Double = 0"))
+        XCTAssertTrue(src.contains("case .ring:"))
+        XCTAssertTrue(src.contains("MotionTokens.ringAnimation"))
+        XCTAssertTrue(src.contains("idleRotation = -MotionTokens.ringRotation"))
+        XCTAssertTrue(src.contains("idleRotation = MotionTokens.ringRotation"))
+        XCTAssertTrue(src.contains("idleRotation = 0"))
+        XCTAssertTrue(src.contains("alertPulseRotation + idleRotation"))
     }
 
     func test_widgetIconViewSource_wiresBounceSquashScale() {
@@ -107,6 +125,17 @@ final class IdleAnimationTests: XCTestCase {
         let target = repoRoot.appendingPathComponent("App/WidgetIconView.swift")
         guard let data = try? String(contentsOf: target, encoding: .utf8) else {
             XCTFail("Could not read App/WidgetIconView.swift at \(target.path)")
+            return ""
+        }
+        return data
+    }
+
+    private func readIdleAnimationSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/IdleAnimation.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/IdleAnimation.swift at \(target.path)")
             return ""
         }
         return data

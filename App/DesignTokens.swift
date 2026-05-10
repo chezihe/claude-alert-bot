@@ -78,6 +78,9 @@ enum MotionTokens {
     // SPEC.md §4 row "Breathe" — 2.4s, autoreverse, infinite, easeInOut, scale 1.0↔1.06.
     static let breatheDuration: TimeInterval = 2.4
     static let breatheScale: CGFloat = 1.06
+    // SPEC.md §4 row "Ring (bell)" — 0.55s, easeInOut, rotate ±10° from top anchor.
+    static let ringDuration: TimeInterval = 0.55
+    static let ringRotation: Double = 10
     // SPEC.md §4 rows "New-alert pulse" and "Sonar wave".
     static let newAlertPulseDuration: TimeInterval = 0.45
     static let newAlertPulsePeakScale: CGFloat = 1.14
@@ -108,5 +111,10 @@ enum MotionTokens {
     static func breatheAnimation(reduceMotion: Bool) -> Animation? {
         guard !reduceMotion else { return nil }
         return .easeInOut(duration: breatheDuration).repeatForever(autoreverses: true)
+    }
+
+    static func ringAnimation(reduceMotion: Bool) -> Animation? {
+        guard !reduceMotion else { return nil }
+        return .easeInOut(duration: ringDuration).repeatForever(autoreverses: true)
     }
 }

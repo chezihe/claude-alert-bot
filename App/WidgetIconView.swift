@@ -4,6 +4,7 @@
 // Anchored top-trailing with -4/-4 overhang per UI-SPEC.
 // Bounce: 5pt vertical + 1.04↔0.94 squash, 0.45s easeInOut, autoreverse forever; suppressed when Reduce Motion is on.
 // Breathe: 2.4s scale 1.0↔1.06, autoreverse forever; default idle animation for WO-012.
+// Ring: 0.55s ±10° top-anchor rotation, autoreverse forever; suppressed when Reduce Motion is on.
 // New-alert pulse: scale/rotate glyph + one sonar ring; suppressed in Quiet Hours.
 import SwiftUI
 import AppKit
@@ -18,6 +19,7 @@ struct WidgetIconView: View {
     @State private var bounceOffset: CGFloat = 0
     @State private var bounceScale: CGFloat = 1.0
     @State private var breatheScale: CGFloat = 1.0
+    @State private var idleRotation: Double = 0
     @State private var alertPulseScale: CGFloat = 1.0
     @State private var alertPulseRotation: Double = 0
     @State private var sonarScale: CGFloat = MotionTokens.sonarStartScale
@@ -43,7 +45,7 @@ struct WidgetIconView: View {
                 .frame(width: 36, height: 36)
                 .frame(width: 44, height: 44)
                 .scaleEffect(quietHoursEnabled ? 1.0 : breatheScale * bounceScale * alertPulseScale)
-                .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation), anchor: .top)
+                .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation + idleRotation), anchor: .top)
                 .offset(y: quietHoursEnabled ? 0 : bounceOffset)
                 .onAppear {
                     startIdleAnimation()
@@ -102,6 +104,12 @@ struct WidgetIconView: View {
             withAnimation(anim) {
                 breatheScale = MotionTokens.breatheScale
             }
+        case .ring:
+            guard let anim = MotionTokens.ringAnimation(reduceMotion: reduceMotion) else { return }
+            idleRotation = -MotionTokens.ringRotation
+            withAnimation(anim) {
+                idleRotation = MotionTokens.ringRotation
+            }
         }
     }
 
@@ -109,6 +117,7 @@ struct WidgetIconView: View {
         bounceOffset = 0
         bounceScale = 1.0
         breatheScale = 1.0
+        idleRotation = 0
         startIdleAnimation()
     }
 

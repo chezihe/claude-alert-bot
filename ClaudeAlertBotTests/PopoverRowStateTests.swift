@@ -69,6 +69,15 @@ final class PopoverRowStateTests: XCTestCase {
         )
     }
 
+    func test_unavailableRow_strikesThroughProjectName() {
+        let src = readPopoverRowViewSource()
+
+        XCTAssertTrue(
+            src.contains(".strikethrough(!session.available"),
+            "Unavailable rows must strike through the project name per FEATURES.md"
+        )
+    }
+
     func test_statusDotRipple_usesJustArrivedRuleAndMotionTokens() {
         let src = readPopoverRowViewSource()
 

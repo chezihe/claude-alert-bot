@@ -68,6 +68,7 @@ struct PopoverRowView: View {
                     .foregroundStyle(state == .jumping
                                      ? Color(NSColor.tertiaryLabelColor)
                                      : Color(NSColor.labelColor))
+                    .strikethrough(!session.available, color: Color(NSColor.secondaryLabelColor))
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .rotationEffect(.degrees(rotation))     // 도리도리 effect — only animates in .missing

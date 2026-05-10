@@ -164,6 +164,17 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("restartIdleAnimation()"))
     }
 
+    func test_widgetIconViewSource_cancelsAlertPulseWhenReduceMotionChanges() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("@State private var alertPulseGeneration: Int = 0"))
+        XCTAssertTrue(src.contains("resetAlertPulse()"))
+        XCTAssertTrue(src.contains("private func resetAlertPulse()"))
+        XCTAssertTrue(src.contains("withTransaction(Transaction(animation: nil))"))
+        XCTAssertTrue(src.contains("let pulseGeneration = alertPulseGeneration"))
+        XCTAssertTrue(src.contains("alertPulseGeneration == pulseGeneration"))
+    }
+
     func test_widgetIconViewSource_runsNewAlertPulseWhenPulseIDChanges() {
         let src = readWidgetIconViewSource()
 
@@ -176,7 +187,7 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(sonarBlock(in: src).contains(".frame(width: 44, height: 44, alignment: .center)"))
         XCTAssertTrue(src.contains(".onChange(of: alertPulseID)"))
         XCTAssertTrue(src.contains("runNewAlertPulse()"))
-        XCTAssertTrue(src.contains("guard activeAlertPulseID == pulseID else { return }"))
+        XCTAssertTrue(src.contains("guard activeAlertPulseID == pulseID, alertPulseGeneration == pulseGeneration else { return }"))
     }
 
     func test_widgetIconViewSource_quietHoursSuppressesNewAlertPulse() {

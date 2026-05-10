@@ -31,6 +31,7 @@ struct WidgetIconView: View {
     @State private var sonarScale: CGFloat = MotionTokens.sonarStartScale
     @State private var sonarOpacity: Double = 0
     @State private var activeAlertPulseID: Int = 0
+    @State private var alertPulseGeneration: Int = 0
 
     private var widgetBoundsSize: CGSize {
         GeometryTokens.widgetDrawableSize(
@@ -85,6 +86,7 @@ struct WidgetIconView: View {
                         restartIdleAnimation()
                     }
                     .onChange(of: reduceMotion) { _, _ in
+                        resetAlertPulse()
                         restartIdleAnimation()
                     }
                     .onChange(of: alertPulseID) { _, _ in
@@ -208,6 +210,8 @@ struct WidgetIconView: View {
         guard alertPulseID > 0, alertPulseID != activeAlertPulseID, !quietHoursEnabled else { return }
         let pulseID = alertPulseID
         activeAlertPulseID = pulseID
+        alertPulseGeneration += 1
+        let pulseGeneration = alertPulseGeneration
         alertPulseScale = 1.0
         alertPulseRotation = 0
         sonarScale = MotionTokens.sonarStartScale
@@ -229,25 +233,35 @@ struct WidgetIconView: View {
             alertPulseRotation = MotionTokens.newAlertPulseRotation
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + MotionTokens.newAlertPulseDuration * 0.25) {
-            guard activeAlertPulseID == pulseID else { return }
+            guard activeAlertPulseID == pulseID, alertPulseGeneration == pulseGeneration else { return }
             withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
                 alertPulseScale = MotionTokens.newAlertPulseSquashScale
                 alertPulseRotation = -MotionTokens.newAlertPulseRotation
             }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + MotionTokens.newAlertPulseDuration * 0.5) {
-            guard activeAlertPulseID == pulseID else { return }
+            guard activeAlertPulseID == pulseID, alertPulseGeneration == pulseGeneration else { return }
             withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
                 alertPulseScale = MotionTokens.newAlertPulseSettleScale
                 alertPulseRotation = MotionTokens.newAlertPulseRotation * 0.5
             }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + MotionTokens.newAlertPulseDuration) {
-            guard activeAlertPulseID == pulseID else { return }
+            guard activeAlertPulseID == pulseID, alertPulseGeneration == pulseGeneration else { return }
             withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
                 alertPulseScale = 1.0
                 alertPulseRotation = 0
             }
+        }
+    }
+
+    private func resetAlertPulse() {
+        alertPulseGeneration += 1
+        withTransaction(Transaction(animation: nil)) {
+            alertPulseScale = 1.0
+            alertPulseRotation = 0
+            sonarScale = MotionTokens.sonarStartScale
+            sonarOpacity = 0
         }
     }
 }

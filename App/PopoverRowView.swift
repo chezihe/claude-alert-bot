@@ -139,7 +139,8 @@ struct PopoverRowView: View {
 
     private var rowAccessibilityLabel: String {
         let pinnedPrefix = session.pinned ? "Pinned, " : ""
-        return "\(session.projectName) \(pinnedPrefix)작업 완료, 클릭하여 정리"
+        let unavailablePrefix = session.available ? "" : "Unavailable, "
+        return "\(session.projectName) \(pinnedPrefix)\(unavailablePrefix)작업 완료, 클릭하여 정리"
     }
 
     @ViewBuilder

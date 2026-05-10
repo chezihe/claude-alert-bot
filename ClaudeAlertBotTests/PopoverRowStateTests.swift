@@ -78,6 +78,25 @@ final class PopoverRowStateTests: XCTestCase {
         )
     }
 
+    func test_unavailableRowAccessibility_announcesUnavailableState() {
+        let src = readPopoverRowViewSource()
+
+        guard let helperRange = src.range(of: "private var rowAccessibilityLabel: String") else {
+            XCTFail("PopoverRowView must define rowAccessibilityLabel")
+            return
+        }
+
+        let helperSource = String(src[helperRange.lowerBound...])
+        XCTAssertTrue(
+            helperSource.contains("session.available ? \"\" : \"Unavailable, \""),
+            "Unavailable rows must announce their unavailable state for VoiceOver users"
+        )
+        XCTAssertTrue(
+            helperSource.contains(#"return "\(session.projectName) \(pinnedPrefix)\(unavailablePrefix)"#),
+            "rowAccessibilityLabel must include unavailablePrefix in the returned label"
+        )
+    }
+
     func test_statusDotRipple_usesJustArrivedRuleAndMotionTokens() {
         let src = readPopoverRowViewSource()
 
@@ -203,7 +222,7 @@ final class PopoverRowStateTests: XCTestCase {
             "WO-011 review: rowAccessibilityLabel must branch on session.pinned"
         )
         XCTAssertTrue(
-            helperSource.contains(#"return "\(session.projectName) \(pinnedPrefix)작업 완료, 클릭하여 정리""#),
+            helperSource.contains(#"return "\(session.projectName) \(pinnedPrefix)"#),
             "WO-011 review: rowAccessibilityLabel must include pinned state in the row-level label"
         )
     }

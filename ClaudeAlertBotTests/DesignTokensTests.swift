@@ -139,6 +139,16 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertTrue(src.contains("static func ringAnimation(reduceMotion: Bool) -> Animation?"))
     }
 
+    func test_motionTokensSource_roamValues_matchSpec() {
+        let src = readDesignTokensSource()
+
+        XCTAssertTrue(src.contains("static let roamDuration: TimeInterval = 1.6"))
+        XCTAssertTrue(src.contains("static let roamRadiusX: CGFloat = 12"))
+        XCTAssertTrue(src.contains("static let roamRadiusY: CGFloat = 3"))
+        XCTAssertTrue(src.contains("static func roamAnimation(reduceMotion: Bool) -> Animation?"))
+        XCTAssertTrue(src.contains(".linear(duration: roamDuration).repeatForever(autoreverses: false)"))
+    }
+
     func test_motionTokens_newAlertPulseValues_matchSpec() {
         XCTAssertEqual(MotionTokens.newAlertPulseDuration, 0.45, accuracy: 0.001)
         XCTAssertEqual(MotionTokens.newAlertPulsePeakScale, 1.14, accuracy: 0.001)

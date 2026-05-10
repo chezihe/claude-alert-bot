@@ -19,6 +19,12 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("case ring"))
     }
 
+    func test_idleAnimationSource_includesRoamCase() {
+        let src = readIdleAnimationSource()
+
+        XCTAssertTrue(src.contains("case roam"))
+    }
+
     func test_widgetIconViewSource_wiresBreatheBranch() {
         let src = readWidgetIconViewSource()
 
@@ -36,6 +42,27 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("idleRotation = MotionTokens.ringRotation"))
         XCTAssertTrue(src.contains("idleRotation = 0"))
         XCTAssertTrue(src.contains("alertPulseRotation + idleRotation"))
+    }
+
+    func test_widgetIconViewSource_wiresRoamBranch() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("@State private var roamPhase: Double = 0"))
+        XCTAssertTrue(src.contains(".modifier(RoamOffsetEffect("))
+        XCTAssertTrue(src.contains("case .roam:"))
+        XCTAssertTrue(src.contains("MotionTokens.roamAnimation"))
+        XCTAssertTrue(src.contains("roamPhase = -360"))
+        XCTAssertTrue(src.contains("roamPhase = 0"))
+    }
+
+    func test_widgetIconViewSource_roamUsesCounterClockwiseGeometryEffect() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("private struct RoamOffsetEffect: GeometryEffect"))
+        XCTAssertTrue(src.contains("var animatableData: Double"))
+        XCTAssertTrue(src.contains("cos(radians) * radiusX"))
+        XCTAssertTrue(src.contains("sin(radians) * radiusY"))
+        XCTAssertTrue(src.contains("ProjectionTransform(CGAffineTransform(translationX: x, y: y))"))
     }
 
     func test_widgetIconViewSource_wiresBounceSquashScale() {
@@ -75,6 +102,7 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(restartBody.contains("bounceOffset = 0"))
         XCTAssertTrue(restartBody.contains("bounceScale = 1.0"))
         XCTAssertTrue(restartBody.contains("breatheScale = 1.0"))
+        XCTAssertTrue(restartBody.contains("roamPhase = 0"))
         XCTAssertTrue(restartBody.contains("startIdleAnimation()"))
     }
 

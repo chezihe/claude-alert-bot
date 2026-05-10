@@ -5,6 +5,7 @@
 // Bounce: 5pt vertical + 1.04↔0.94 squash, 0.45s easeInOut, autoreverse forever; suppressed when Reduce Motion is on.
 // Breathe: 2.4s scale 1.0↔1.06, autoreverse forever; default idle animation for WO-012.
 // Ring: 0.55s ±10° top-anchor rotation, autoreverse forever; suppressed when Reduce Motion is on.
+// Roam: 1.6s counter-clockwise 24×6pt ellipse, linear forever; suppressed when Reduce Motion is on.
 // New-alert pulse: scale/rotate glyph + one sonar ring; suppressed in Quiet Hours.
 import SwiftUI
 import AppKit
@@ -20,6 +21,7 @@ struct WidgetIconView: View {
     @State private var bounceScale: CGFloat = 1.0
     @State private var breatheScale: CGFloat = 1.0
     @State private var idleRotation: Double = 0
+    @State private var roamPhase: Double = 0
     @State private var alertPulseScale: CGFloat = 1.0
     @State private var alertPulseRotation: Double = 0
     @State private var sonarScale: CGFloat = MotionTokens.sonarStartScale
@@ -47,6 +49,12 @@ struct WidgetIconView: View {
                 .scaleEffect(quietHoursEnabled ? 1.0 : breatheScale * bounceScale * alertPulseScale)
                 .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation + idleRotation), anchor: .top)
                 .offset(y: quietHoursEnabled ? 0 : bounceOffset)
+                .modifier(RoamOffsetEffect(
+                    angle: roamPhase,
+                    radiusX: Double(MotionTokens.roamRadiusX),
+                    radiusY: Double(MotionTokens.roamRadiusY),
+                    isActive: idleAnimation == .roam && !quietHoursEnabled && !reduceMotion
+                ))
                 .onAppear {
                     startIdleAnimation()
                     runNewAlertPulse()
@@ -110,6 +118,11 @@ struct WidgetIconView: View {
             withAnimation(anim) {
                 idleRotation = MotionTokens.ringRotation
             }
+        case .roam:
+            guard let anim = MotionTokens.roamAnimation(reduceMotion: reduceMotion) else { return }
+            withAnimation(anim) {
+                roamPhase = -360
+            }
         }
     }
 
@@ -118,6 +131,7 @@ struct WidgetIconView: View {
         bounceScale = 1.0
         breatheScale = 1.0
         idleRotation = 0
+        roamPhase = 0
         startIdleAnimation()
     }
 
@@ -166,5 +180,25 @@ struct WidgetIconView: View {
                 alertPulseRotation = 0
             }
         }
+    }
+}
+
+private struct RoamOffsetEffect: GeometryEffect {
+    var angle: Double
+    let radiusX: Double
+    let radiusY: Double
+    let isActive: Bool
+
+    var animatableData: Double {
+        get { angle }
+        set { angle = newValue }
+    }
+
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        guard isActive else { return ProjectionTransform(CGAffineTransform.identity) }
+        let radians = angle * Double.pi / 180
+        let x = cos(radians) * radiusX
+        let y = sin(radians) * radiusY
+        return ProjectionTransform(CGAffineTransform(translationX: x, y: y))
     }
 }

@@ -7,6 +7,7 @@ enum IdleAnimation: String, CaseIterable {
     case bounce
     case breathe
     case ring
+    case roam
 
     static let `default`: IdleAnimation = .breathe
 }

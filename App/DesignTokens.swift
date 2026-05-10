@@ -81,6 +81,10 @@ enum MotionTokens {
     // SPEC.md §4 row "Ring (bell)" — 0.55s, easeInOut, rotate ±10° from top anchor.
     static let ringDuration: TimeInterval = 0.55
     static let ringRotation: Double = 10
+    // SPEC.md §4 row "Roam (running track)" — 1.6s linear loop on a 24×6pt ellipse.
+    static let roamDuration: TimeInterval = 1.6
+    static let roamRadiusX: CGFloat = 12
+    static let roamRadiusY: CGFloat = 3
     // SPEC.md §4 rows "New-alert pulse" and "Sonar wave".
     static let newAlertPulseDuration: TimeInterval = 0.45
     static let newAlertPulsePeakScale: CGFloat = 1.14
@@ -116,5 +120,10 @@ enum MotionTokens {
     static func ringAnimation(reduceMotion: Bool) -> Animation? {
         guard !reduceMotion else { return nil }
         return .easeInOut(duration: ringDuration).repeatForever(autoreverses: true)
+    }
+
+    static func roamAnimation(reduceMotion: Bool) -> Animation? {
+        guard !reduceMotion else { return nil }
+        return .linear(duration: roamDuration).repeatForever(autoreverses: false)
     }
 }

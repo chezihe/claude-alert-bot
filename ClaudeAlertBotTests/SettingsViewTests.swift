@@ -134,6 +134,12 @@ extension SettingsViewTests {
         XCTAssertTrue(src.contains("case .ring: return \"Ring\""))
     }
 
+    func test_idleAnimationLabelsSource_includesRoam() {
+        let src = readSettingsViewSource()
+
+        XCTAssertTrue(src.contains("case .roam: return \"Roam\""))
+    }
+
     /// Resolve App/SettingsView.swift relative to this test file so source-level
     /// audits are independent of xcodebuild's working directory.
     private func readSettingsViewSource(_ thisFile: StaticString = #filePath) -> String {

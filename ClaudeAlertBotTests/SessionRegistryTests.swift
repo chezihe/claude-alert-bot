@@ -372,6 +372,24 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertTrue(notifier.refreshCalls.contains(0))
     }
 
+    func test_injectTest_refreshesWidgetWithFullInMemoryQueue() async {
+        let r = makeRegistry()
+        await bind(r)
+        let existing = CompletedSession(sessionID: "existing", projectName: "p",
+                                        stoppedAt: Date(), durationSec: 10,
+                                        itermSessionID: nil, tty: nil, cwd: nil)
+        await r.seedCompletedForTesting(existing)
+
+        await r.injectTest(soundEnabled: true)
+
+        guard let testSessionID = notifier.presentCalls.last?.session else {
+            return XCTFail("injectTest should present the synthetic session.")
+        }
+        XCTAssertEqual(notifier.presentCalls.count, 1)
+        XCTAssertTrue(notifier.refreshCalls.contains(2))
+        XCTAssertTrue(notifier.refreshQueueCalls.contains(["existing", testSessionID]))
+    }
+
     /// Test L — D2-22: injectTest must not persist the test row to disk.
     func test_injectTest_notPersisted() async {
         let r = makeRegistry()

@@ -211,8 +211,11 @@ actor SessionRegistry {
     func injectTest(soundEnabled: Bool) async {
         let session = CompletedSession.testFixture()
         completed.append(session)   // in-memory only — NO `await persist()` (D2-22)
+        let snapshot = self.completed
+        let count = snapshot.count
         let n = self.notifier
         await n?.present(session: session, playSoundOnce: soundEnabled)
+        await n?.refreshQueueState(completed: snapshot, count: count)
         // Auto-dismiss after 30s (D2-21). Clock injection enables fast-forward in tests.
         let sid = session.sessionID
         Task { [weak self, clock = self.clock] in

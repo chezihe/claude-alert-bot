@@ -119,6 +119,8 @@ struct PopoverRowView: View {
             runWaitingDotPulseIfNeeded()
         }
         .onChange(of: reduceMotion) { _, _ in
+            resetArrivalRipple()
+            runArrivalRippleIfNeeded()
             runWaitingDotPulseIfNeeded()
         }
         .onChange(of: state) { _, newState in
@@ -163,11 +165,18 @@ struct PopoverRowView: View {
     private func runArrivalRippleIfNeeded() {
         guard session.available else { return }
         guard PopoverContentRules.isJustArrived(session: session, now: Date()) else { return }
-        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
+        guard !reduceMotion else { return }
         rippleScale = 1.0
         rippleOpacity = MotionTokens.statusDotRippleStartOpacity
         withAnimation(.easeOut(duration: MotionTokens.statusDotRippleDuration).repeatCount(MotionTokens.statusDotRippleRepeatCount, autoreverses: false)) {
             rippleScale = MotionTokens.statusDotRippleEndScale
+            rippleOpacity = 0
+        }
+    }
+
+    private func resetArrivalRipple() {
+        withTransaction(Transaction(animation: nil)) {
+            rippleScale = 1.0
             rippleOpacity = 0
         }
     }
@@ -186,7 +195,6 @@ struct PopoverRowView: View {
     // MARK: - Phase 3 D3-11 missing animation
 
     private func runMissingAnimation() {
-        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         if reduceMotion {
             // A11y: skip rotation, immediate collapse.
             withAnimation(.easeInOut(duration: 0.2), completionCriteria: .logicallyComplete) {

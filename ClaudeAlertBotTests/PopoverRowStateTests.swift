@@ -75,12 +75,33 @@ final class PopoverRowStateTests: XCTestCase {
         XCTAssertTrue(src.contains("@State private var rippleScale: CGFloat = 1.0"))
         XCTAssertTrue(src.contains("@State private var rippleOpacity: Double = 0"))
         XCTAssertTrue(src.contains("PopoverContentRules.isJustArrived(session: session, now: Date())"))
-        XCTAssertTrue(src.contains("NSWorkspace.shared.accessibilityDisplayShouldReduceMotion"))
+        XCTAssertTrue(src.contains("guard !reduceMotion else { return }"))
         XCTAssertTrue(src.contains("MotionTokens.statusDotRippleStartOpacity"))
         XCTAssertTrue(src.contains("MotionTokens.statusDotRippleEndScale"))
         XCTAssertTrue(src.contains("MotionTokens.statusDotRippleDuration"))
         XCTAssertTrue(src.contains("MotionTokens.statusDotRippleRepeatCount"))
         XCTAssertTrue(src.contains("runArrivalRippleIfNeeded()"))
+    }
+
+    func test_rowAnimations_useSwiftUIReduceMotionEnvironment() {
+        let src = readPopoverRowViewSource()
+
+        XCTAssertFalse(
+            src.contains("NSWorkspace.shared.accessibilityDisplayShouldReduceMotion"),
+            "PopoverRowView is a SwiftUI view and should use the accessibilityReduceMotion environment instead of polling NSWorkspace directly"
+        )
+        XCTAssertTrue(src.contains("@Environment(\\.accessibilityReduceMotion) private var reduceMotion"))
+        XCTAssertTrue(src.contains("resetArrivalRipple()"))
+
+        let lines = src.components(separatedBy: .newlines)
+        guard let onChangeLine = lines.firstIndex(where: { $0.contains(".onChange(of: reduceMotion)") }) else {
+            XCTFail("PopoverRowView must observe reduceMotion changes")
+            return
+        }
+        let handler = lines[onChangeLine...min(lines.count - 1, onChangeLine + 4)].joined(separator: "\n")
+        XCTAssertTrue(handler.contains("resetArrivalRipple()"))
+        XCTAssertTrue(handler.contains("runArrivalRippleIfNeeded()"))
+        XCTAssertTrue(handler.contains("runWaitingDotPulseIfNeeded()"))
     }
 
     func test_waitingStatusDot_usesAttentionPulseAndReduceMotionGate() {

@@ -91,6 +91,7 @@ actor SessionRegistry {
         if await suppressIfFrontmost(event.iterm_session_id) {
             log.notice("D2-14 pre-suppress session=\(sid, privacy: .public)")
             inFlight.removeValue(forKey: sid)
+            await persist()
             return
         }
         // AUD-01 dedupe (sound-only scope per D2-20)

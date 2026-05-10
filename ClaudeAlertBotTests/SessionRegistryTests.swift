@@ -219,6 +219,31 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(notifier.presentCalls.count, 0)
     }
 
+    func test_suppressIfFrontmost_persistsClearedInFlight() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-G2"
+        let start = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
+        let startEvent = HookEventFactory.userPromptSubmit(sessionID: sid, ts: iso(start))
+        await r.ingest(startEvent, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+        let initialPersisted = await SessionStore(url: tempURL).load()
+        XCTAssertNotNil(initialPersisted?.inFlight[sid])
+
+        let stop = HookEventFactory.stop(sessionID: sid,
+                                         iTermSessionID: "w0t0p1:X",
+                                         ts: iso(start.addingTimeInterval(31)))
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressYes)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertNil(snap.inFlight[sid])
+        XCTAssertEqual(snap.completed.count, 0)
+        let persisted = await SessionStore(url: tempURL).load()
+        XCTAssertNil(persisted?.inFlight[sid],
+                     "D2-14 suppress should persist the cleared in-flight start so it does not restore after relaunch.")
+    }
+
     /// Test H — SESS-04: runGC removes inFlight entries older than 6 hours.
     func test_runGC_removesStaleInFlight_SESS_04() async {
         let r = makeRegistry()

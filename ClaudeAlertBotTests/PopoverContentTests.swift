@@ -415,6 +415,19 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains(#"NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)"#))
     }
 
+    func test_widgetPopoverController_clearsUnavailableRowsWithoutJumping() throws {
+        let src = readWidgetPopoverControllerSource()
+        let clickRange = try XCTUnwrap(src.range(of: "private func onRowClick(alertID: String)"))
+        let clickSource = String(src[clickRange.lowerBound...])
+
+        XCTAssertTrue(clickSource.contains("guard session.available else {"))
+        XCTAssertTrue(clickSource.contains("SessionRegistry.shared.clearOne(alertID: alertID)"))
+
+        let unavailableRange = try XCTUnwrap(clickSource.range(of: "guard session.available else {"))
+        let jumpRange = try XCTUnwrap(clickSource.range(of: "jumper.jump(to: session)"))
+        XCTAssertLessThan(unavailableRange.lowerBound, jumpRange.lowerBound)
+    }
+
     // MARK: - helpers
     // Phase 3 / 03-06: removed `test_isUnavailable_membershipCheck`,
     // `test_isUnavailable_emptySet_neverUnavailable`, and

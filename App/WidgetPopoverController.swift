@@ -215,6 +215,15 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         // D3-11 + JUMP-05: short-circuit if already mid-jump for this row (defensive — row also self-debounces).
         if let s = rowStates[alertID], s != .normal { return }
 
+        guard session.available else {
+            rowStates.removeValue(forKey: alertID)
+            Task { [weak self] in
+                await SessionRegistry.shared.clearOne(alertID: alertID)
+                await MainActor.run { self?.reloadPopoverContent() }
+            }
+            return
+        }
+
         rowStates[alertID] = .jumping
         reloadPopoverContent()
 

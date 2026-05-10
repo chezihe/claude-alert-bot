@@ -97,12 +97,25 @@ final class PopoverRowStateTests: XCTestCase {
 
         let helperSource = String(src[helperRange.lowerBound...])
         XCTAssertTrue(
-            helperSource.contains("session.available ? \"\" : \"Unavailable, \""),
+            helperSource.contains("let statusText = session.available ? \"session complete\" : \"session unavailable\""),
             "Unavailable rows must announce their unavailable state for VoiceOver users"
         )
         XCTAssertTrue(
-            helperSource.contains(#"return "\(session.projectName) \(pinnedPrefix)\(unavailablePrefix)"#),
-            "rowAccessibilityLabel must include unavailablePrefix in the returned label"
+            helperSource.contains("let actionText = session.available ? \"activate to jump\" : \"activate to clear\""),
+            "Unavailable rows must announce a clear action instead of a jump action"
+        )
+        XCTAssertTrue(
+            helperSource.contains(#"return "\(session.projectName), \(pinnedPrefix)\(statusText), \(actionText)""#),
+            "rowAccessibilityLabel must include statusText and actionText in the returned label"
+        )
+    }
+
+    func test_orphanIndicatorAccessibility_usesMinimalEnglishCopy() {
+        let src = readPopoverRowViewSource()
+
+        XCTAssertTrue(
+            src.contains(".accessibilityLabel(\"Unknown Duration\")"),
+            "D2-16 orphan indicator accessibility copy should be minimal English"
         )
     }
 
@@ -231,7 +244,7 @@ final class PopoverRowStateTests: XCTestCase {
             "WO-011 review: rowAccessibilityLabel must branch on session.pinned"
         )
         XCTAssertTrue(
-            helperSource.contains(#"return "\(session.projectName) \(pinnedPrefix)"#),
+            helperSource.contains(#"return "\(session.projectName), \(pinnedPrefix)"#),
             "WO-011 review: rowAccessibilityLabel must include pinned state in the row-level label"
         )
     }

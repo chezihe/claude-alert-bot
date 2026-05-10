@@ -89,7 +89,7 @@ struct PopoverRowView: View {
                     Text("?")
                         .font(.system(size: 11))
                         .foregroundStyle(Color(NSColor.secondaryLabelColor))
-                        .accessibilityLabel("경과 시간 알 수 없음")
+                        .accessibilityLabel("Unknown Duration")
                 }
             }
             .padding(.vertical, GeometryTokens.rowVerticalPadding)
@@ -139,8 +139,9 @@ struct PopoverRowView: View {
 
     private var rowAccessibilityLabel: String {
         let pinnedPrefix = session.pinned ? "Pinned, " : ""
-        let unavailablePrefix = session.available ? "" : "Unavailable, "
-        return "\(session.projectName) \(pinnedPrefix)\(unavailablePrefix)작업 완료, 클릭하여 정리"
+        let statusText = session.available ? "session complete" : "session unavailable"
+        let actionText = session.available ? "activate to jump" : "activate to clear"
+        return "\(session.projectName), \(pinnedPrefix)\(statusText), \(actionText)"
     }
 
     @ViewBuilder

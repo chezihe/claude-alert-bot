@@ -1,8 +1,8 @@
 // App/WorkspaceFrontmostObserver.swift — Phase 2 D2-15.
 // On NSWorkspace.didActivateApplicationNotification: re-evaluate pending alerts.
-// If iTerm2 is now frontmost AND its current session matches a pending alert's iterm_session_id → clearOne.
+// If iTerm2 is now frontmost AND its current session matches a pending alert's iterm_session_id → clear unpinned.
 // Permission-aware: if AppleScriptHelper permission is denied, this observer's body silently skips
-// (the cheap-query returns false; clearOne is not invoked).
+// (the cheap-query returns false; auto-clear is not invoked).
 // CRITICAL: retain the token — otherwise it's deallocated and signals are silently ignored.
 import AppKit
 import os
@@ -42,7 +42,7 @@ final class WorkspaceFrontmostObserver {
             guard let target = session.itermSessionID else { continue }
             if await AppleScriptHelper.shared.frontmostMatches(itermSessionID: target) {
                 log.notice("D2-15 auto-clear session=\(session.sessionID, privacy: .public)")
-                await SessionRegistry.shared.clearOne(sessionID: session.sessionID)
+                await SessionRegistry.shared.clearUnpinned(sessionID: session.sessionID)
             }
         }
     }

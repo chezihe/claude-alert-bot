@@ -163,6 +163,16 @@ actor SessionRegistry {
         log.notice("clearOne session=\(sessionID, privacy: .public)")
     }
 
+    func clearUnpinned(sessionID: String) async {
+        completed.removeAll(where: { $0.sessionID == sessionID && !$0.pinned })
+        await persist()
+        let snapshot = self.completed
+        let count = snapshot.count
+        let n = self.notifier
+        await n?.refreshQueueState(completed: snapshot, count: count)
+        log.notice("clearUnpinned session=\(sessionID, privacy: .public)")
+    }
+
     func markUnavailable(sessionID: String) async {
         guard let idx = completed.firstIndex(where: { $0.sessionID == sessionID }) else {
             log.notice("markUnavailable session=\(sessionID, privacy: .public) ignored (no longer in queue)")

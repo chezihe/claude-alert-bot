@@ -278,6 +278,30 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertTrue(notifier.refreshCalls.contains(1))
     }
 
+    func test_clearUnpinned_preservesPinnedDuplicateSessionIDs() async {
+        let r = makeRegistry()
+        await bind(r)
+        let pinned = CompletedSession(sessionID: "dup", projectName: "p", stoppedAt: Date(),
+                                      durationSec: 10, itermSessionID: "target", tty: nil, cwd: nil,
+                                      pinned: true)
+        let unpinned = CompletedSession(sessionID: "dup", projectName: "p", stoppedAt: Date(),
+                                        durationSec: 11, itermSessionID: "target", tty: nil, cwd: nil)
+        await r.seedCompletedForTesting(pinned)
+        await r.seedCompletedForTesting(unpinned)
+
+        await r.clearUnpinned(sessionID: "dup")
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.count, 1)
+        XCTAssertEqual(snap.completed.first?.sessionID, "dup")
+        XCTAssertTrue(snap.completed.first?.pinned ?? false)
+        XCTAssertTrue(notifier.refreshCalls.contains(1))
+
+        let loaded = await SessionStore(url: tempURL).load()
+        XCTAssertEqual(loaded?.completed.count, 1)
+        XCTAssertTrue(loaded?.completed.first?.pinned ?? false)
+    }
+
     func test_markUnavailable_keepsRowAndRefreshes() async {
         let r = makeRegistry()
         await bind(r)
@@ -364,6 +388,10 @@ final class SessionRegistryTests: XCTestCase {
                       "Pinned alerts must not be auto-cleared when iTerm2 becomes frontmost.")
         XCTAssertTrue(beforeMatch.contains("continue"),
                       "Pinned alerts should be skipped before the AppleScript matching path.")
+        XCTAssertTrue(src.contains("SessionRegistry.shared.clearUnpinned(sessionID: session.sessionID)"),
+                      "Frontmost auto-clear must remove only unpinned rows for the matched sessionID.")
+        XCTAssertFalse(src.contains("SessionRegistry.shared.clearOne(sessionID: session.sessionID)"),
+                       "Frontmost auto-clear must not call clearOne because duplicate pinned rows can share the sessionID.")
     }
 
     func test_ingestStop_mutedProjectSkipsAppendAndPresent() async {

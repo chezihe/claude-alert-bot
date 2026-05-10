@@ -69,6 +69,20 @@ final class PopoverRowStateTests: XCTestCase {
         )
     }
 
+    func test_statusDotRipple_usesJustArrivedRuleAndMotionTokens() {
+        let src = readPopoverRowViewSource()
+
+        XCTAssertTrue(src.contains("@State private var rippleScale: CGFloat = 1.0"))
+        XCTAssertTrue(src.contains("@State private var rippleOpacity: Double = 0"))
+        XCTAssertTrue(src.contains("PopoverContentRules.isJustArrived(session: session, now: Date())"))
+        XCTAssertTrue(src.contains("NSWorkspace.shared.accessibilityDisplayShouldReduceMotion"))
+        XCTAssertTrue(src.contains("MotionTokens.statusDotRippleStartOpacity"))
+        XCTAssertTrue(src.contains("MotionTokens.statusDotRippleEndScale"))
+        XCTAssertTrue(src.contains("MotionTokens.statusDotRippleDuration"))
+        XCTAssertTrue(src.contains("MotionTokens.statusDotRippleRepeatCount"))
+        XCTAssertTrue(src.contains("runArrivalRippleIfNeeded()"))
+    }
+
     // MARK: - WO-006 context menu contract (source-level audit)
 
     func test_contextMenu_wiresPinAndMuteCallbacks() {

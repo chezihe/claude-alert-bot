@@ -44,6 +44,8 @@ struct PopoverRowView: View {
     @State private var rotation: Double = 0
     @State private var collapsed: Bool = false
     @State private var faded: Bool = false
+    @State private var rippleScale: CGFloat = 1.0
+    @State private var rippleOpacity: Double = 0
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
@@ -104,6 +106,9 @@ struct PopoverRowView: View {
         .onHover { hovering in
             isHovered = hovering
         }
+        .onAppear {
+            runArrivalRippleIfNeeded()
+        }
         .onChange(of: state) { _, newState in
             if newState == .missing {
                 runMissingAnimation()
@@ -125,11 +130,32 @@ struct PopoverRowView: View {
                 .fill(dotColor)
                 .frame(width: GeometryTokens.statusDotDiameter,
                        height: GeometryTokens.statusDotDiameter)
+                .overlay {
+                    Circle()
+                        .stroke(dotColor.opacity(rippleOpacity), lineWidth: GeometryTokens.statusDotRingStroke)
+                        .frame(width: GeometryTokens.statusDotDiameter,
+                               height: GeometryTokens.statusDotDiameter)
+                        .scaleEffect(rippleScale)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                }
         } else {
             Circle()
                 .stroke(dotColor, lineWidth: GeometryTokens.statusDotRingStroke)
                 .frame(width: GeometryTokens.statusDotDiameter,
                        height: GeometryTokens.statusDotDiameter)
+        }
+    }
+
+    private func runArrivalRippleIfNeeded() {
+        guard session.available else { return }
+        guard PopoverContentRules.isJustArrived(session: session, now: Date()) else { return }
+        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
+        rippleScale = 1.0
+        rippleOpacity = MotionTokens.statusDotRippleStartOpacity
+        withAnimation(.easeOut(duration: MotionTokens.statusDotRippleDuration).repeatCount(MotionTokens.statusDotRippleRepeatCount, autoreverses: false)) {
+            rippleScale = MotionTokens.statusDotRippleEndScale
+            rippleOpacity = 0
         }
     }
 

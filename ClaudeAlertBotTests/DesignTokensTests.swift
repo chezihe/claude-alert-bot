@@ -149,6 +149,13 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(MotionTokens.reduceMotionFadeDuration, 0.15, accuracy: 0.001)
     }
 
+    func test_motionTokens_statusDotRippleValues_matchSpec() {
+        XCTAssertEqual(MotionTokens.statusDotRippleDuration, 1.0, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.statusDotRippleEndScale, 2.4, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.statusDotRippleStartOpacity, 0.6, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.statusDotRippleRepeatCount, 3)
+    }
+
     // MARK: - MotionTokens reduce-motion gate (D4 / SC#3)
 
     func test_motionTokens_bounceAnimation_returnsNil_whenReduceMotionIsTrue() {

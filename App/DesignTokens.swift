@@ -90,6 +90,11 @@ enum MotionTokens {
     // Keep the 3x sonar wave inside WidgetIconView's fixed 44pt drawable area.
     static let sonarBaseDiameter: CGFloat = 14
     static let sonarStartOpacity: Double = 0.75
+    // SPEC.md §4 row "Status dot ripple (just-arrived)".
+    static let statusDotRippleDuration: TimeInterval = 1.0
+    static let statusDotRippleEndScale: CGFloat = 2.4
+    static let statusDotRippleStartOpacity: Double = 0.6
+    static let statusDotRippleRepeatCount: Int = 3
     static let reduceMotionFadeDuration: TimeInterval = 0.15
 
     /// D4 (SC#3) — uniform reduce-motion gate. Returns nil when reduce-motion is on so call-sites

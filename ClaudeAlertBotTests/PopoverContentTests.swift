@@ -191,6 +191,29 @@ final class PopoverContentTests: XCTestCase {
         ))
     }
 
+    // MARK: - Just-arrived ripple
+
+    func test_isJustArrived_usesThreeSecondWindow() {
+        let now = Date(timeIntervalSince1970: 10)
+
+        XCTAssertTrue(PopoverContentRules.isJustArrived(
+            session: mkSession(id: "now", project: "P", stoppedAt: now),
+            now: now
+        ))
+        XCTAssertTrue(PopoverContentRules.isJustArrived(
+            session: mkSession(id: "three-seconds", project: "P", stoppedAt: now.addingTimeInterval(-3)),
+            now: now
+        ))
+        XCTAssertFalse(PopoverContentRules.isJustArrived(
+            session: mkSession(id: "old", project: "P", stoppedAt: now.addingTimeInterval(-3.1)),
+            now: now
+        ))
+        XCTAssertFalse(PopoverContentRules.isJustArrived(
+            session: mkSession(id: "future", project: "P", stoppedAt: now.addingTimeInterval(1)),
+            now: now
+        ))
+    }
+
     // MARK: - WO-009 empty state + settings gear contract (source-level audit)
 
     func test_popoverContentView_rendersEmptyStateWhenQueueIsEmpty() {

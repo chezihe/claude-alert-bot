@@ -25,9 +25,15 @@ enum PopoverListItem: Equatable, Identifiable {
 
 enum PopoverContentRules {
     static let agingThresholdSec: TimeInterval = 60 * 60
+    static let justArrivedWindowSec: TimeInterval = 3
 
     static func isAged(session: CompletedSession, now: Date) -> Bool {
         now.timeIntervalSince(session.stoppedAt) > agingThresholdSec
+    }
+
+    static func isJustArrived(session: CompletedSession, now: Date) -> Bool {
+        let age = now.timeIntervalSince(session.stoppedAt)
+        return age >= 0 && age <= justArrivedWindowSec
     }
 
     /// D2-07 + UI-SPEC line 89: Clear all visible only when ≥2 rows.

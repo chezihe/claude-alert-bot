@@ -8,6 +8,7 @@
 import AppKit
 import Foundation
 import Network
+import Combine
 import os
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -22,12 +23,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var wakeObserver: WakeObserver?
     private var frontmostObserver: WorkspaceFrontmostObserver?
     private var gcTimer: SessionGCTimer?
+    private var themeCancellable: AnyCancellable?
 
     // D2-29: previously set in main.swift; relocated here so it lands BEFORE SwiftUI
     // realizes any scene. willFinishLaunching is the canonical Apple-blessed slot for
     // this when using SwiftUI App lifecycle. Belt-and-suspenders alongside LSUIElement=true.
     func applicationWillFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        MainActor.assumeIsolated {
+            installThemeObservation()
+        }
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -162,5 +167,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         src.resume()
         // CRITICAL: retain the source — otherwise it's deallocated and signals are silently ignored.
         signalSources.append(src)
+    }
+
+    @MainActor
+    private func installThemeObservation() {
+        applyThemeMode(SettingsStore.shared.themeMode)
+        themeCancellable = SettingsStore.shared.objectWillChange.sink { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.applyThemeMode(SettingsStore.shared.themeMode)
+            }
+        }
+    }
+
+    @MainActor
+    private func applyThemeMode(_ mode: ThemeMode) {
+        NSApp.appearance = mode.nsAppearance
     }
 }

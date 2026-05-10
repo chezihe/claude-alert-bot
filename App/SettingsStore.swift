@@ -5,6 +5,26 @@
 // D2-30 — UserDefaults access lives only inside this Store.
 import SwiftUI
 import Combine
+import AppKit
+
+enum ThemeMode: String, CaseIterable {
+    case system
+    case light
+    case dark
+
+    static let `default`: ThemeMode = .system
+
+    var nsAppearance: NSAppearance? {
+        switch self {
+        case .system:
+            return nil
+        case .light:
+            return NSAppearance(named: .aqua)
+        case .dark:
+            return NSAppearance(named: .darkAqua)
+        }
+    }
+}
 
 @MainActor
 final class SettingsStore: ObservableObject {
@@ -16,6 +36,7 @@ final class SettingsStore: ObservableObject {
     @AppStorage("quiet_hours_enabled") var quietHoursEnabled: Bool = false
     @AppStorage("ever_had_alerts")   var everHadAlerts: Bool = false
     @AppStorage("idle_animation")    private var idleAnimationRaw: String = IdleAnimation.default.rawValue
+    @AppStorage("theme_mode")        private var themeModeRaw: String = ThemeMode.default.rawValue
     @AppStorage("widget_corner")     private var cornerRaw: String = WidgetCorner.topRight.rawValue  // D2-26
     @AppStorage("widget_offset_x")   var offsetX: Int = 16            // D2-27
     @AppStorage("widget_offset_y")   var offsetY: Int = 16            // D2-27
@@ -31,6 +52,11 @@ final class SettingsStore: ObservableObject {
         set { idleAnimationRaw = newValue.rawValue; objectWillChange.send() }
     }
 
+    var themeMode: ThemeMode {
+        get { ThemeMode(rawValue: themeModeRaw) ?? .default }
+        set { themeModeRaw = newValue.rawValue; objectWillChange.send() }
+    }
+
     /// SwiftUI binding helper for the Picker (Pitfall #7 ergonomics).
     var cornerBinding: Binding<WidgetCorner> {
         Binding(get: { self.widgetCorner }, set: { self.widgetCorner = $0 })
@@ -38,6 +64,10 @@ final class SettingsStore: ObservableObject {
 
     var idleAnimationBinding: Binding<IdleAnimation> {
         Binding(get: { self.idleAnimation }, set: { self.idleAnimation = $0 })
+    }
+
+    var themeModeBinding: Binding<ThemeMode> {
+        Binding(get: { self.themeMode }, set: { self.themeMode = $0 })
     }
 
     /// D2-35/D2-36 — written by AppleScriptHelper after first cheap-query, then persisted.
@@ -72,6 +102,7 @@ final class SettingsStore: ObservableObject {
         self._quietHoursEnabled = AppStorage(wrappedValue: false, "quiet_hours_enabled", store: defaults)
         self._everHadAlerts = AppStorage(wrappedValue: false, "ever_had_alerts", store: defaults)
         self._idleAnimationRaw = AppStorage(wrappedValue: IdleAnimation.default.rawValue, "idle_animation", store: defaults)
+        self._themeModeRaw = AppStorage(wrappedValue: ThemeMode.default.rawValue, "theme_mode", store: defaults)
         self._cornerRaw = AppStorage(wrappedValue: WidgetCorner.topRight.rawValue, "widget_corner", store: defaults)
         self._offsetX = AppStorage(wrappedValue: 16, "widget_offset_x", store: defaults)
         self._offsetY = AppStorage(wrappedValue: 16, "widget_offset_y", store: defaults)

@@ -17,6 +17,8 @@ struct SettingsView: View {
     static let quietHoursToggleLabel = "Quiet Hours"
     static let idleAnimationHeading = "Idle Animation"
     static let idleAnimationLabel = "Animation"
+    static let themeHeading = "Theme"
+    static let themeLabel = "Appearance"
     static let widgetPositionHeading = "Widget Position"
     static let cornerLabel = "Corner"
     static let offsetXLabel = "Horizontal Offset"
@@ -75,6 +77,15 @@ struct SettingsView: View {
                 Picker(Self.idleAnimationLabel, selection: store.idleAnimationBinding) {
                     ForEach(IdleAnimation.allCases, id: \.self) { animation in
                         Text(Self.idleAnimationName(animation)).tag(animation)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+
+            Section(Self.themeHeading) {
+                Picker(Self.themeLabel, selection: store.themeModeBinding) {
+                    ForEach(ThemeMode.allCases, id: \.self) { mode in
+                        Text(Self.themeModeName(mode)).tag(mode)
                     }
                 }
                 .pickerStyle(.menu)
@@ -179,6 +190,14 @@ struct SettingsView: View {
         case .ring: return "Ring"
         case .roam: return "Roam"
         case .drift: return "Drift"
+        }
+    }
+
+    static func themeModeName(_ mode: ThemeMode) -> String {
+        switch mode {
+        case .system: return "System"
+        case .light: return "Light"
+        case .dark: return "Dark"
         }
     }
 

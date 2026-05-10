@@ -1,6 +1,7 @@
 // ClaudeAlertBotTests/SettingsStoreTests.swift
 // WO-003 — UserDefaults persistence for widget corner settings.
 import XCTest
+import AppKit
 @testable import ClaudeAlertBot
 
 @MainActor
@@ -77,6 +78,45 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(second.idleAnimation, .bounce)
     }
 
+    func test_themeMode_defaultIsSystem() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = SettingsStore(defaults: defaults)
+
+        XCTAssertEqual(store.themeMode, .system)
+    }
+
+    func test_themeMode_persistsAcrossInit() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let first = SettingsStore(defaults: defaults)
+        first.themeMode = .dark
+
+        let second = SettingsStore(defaults: defaults)
+        XCTAssertEqual(second.themeMode, .dark)
+    }
+
+    func test_themeModeAppearanceMapping() {
+        XCTAssertNil(ThemeMode.system.nsAppearance)
+        XCTAssertEqual(ThemeMode.light.nsAppearance?.name, .aqua)
+        XCTAssertEqual(ThemeMode.dark.nsAppearance?.name, .darkAqua)
+    }
+
+    func test_appDelegateSourceAppliesThemeOnLaunchAndSettingsChange() {
+        let src = readAppDelegateSource()
+
+        XCTAssertTrue(src.contains("private var themeCancellable: AnyCancellable?"))
+        XCTAssertTrue(src.contains("applyThemeMode(SettingsStore.shared.themeMode)"))
+        XCTAssertTrue(src.contains("themeCancellable = SettingsStore.shared.objectWillChange.sink"))
+        XCTAssertTrue(src.contains("NSApp.appearance = mode.nsAppearance"))
+    }
+
     func test_everHadAlerts_defaultIsFalse() {
         let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
@@ -144,5 +184,16 @@ final class SettingsStoreTests: XCTestCase {
 
         XCTAssertEqual(second.mutedProjects["alpha"], now.addingTimeInterval(3600))
         XCTAssertTrue(second.isMuted(project: "alpha", now: now.addingTimeInterval(3599)))
+    }
+
+    private func readAppDelegateSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/AppDelegate.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/AppDelegate.swift at \(target.path)")
+            return ""
+        }
+        return data
     }
 }

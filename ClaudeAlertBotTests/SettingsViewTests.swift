@@ -37,6 +37,10 @@ extension SettingsViewTests {
         XCTAssertEqual(SettingsView.idleAnimationHeading, "Idle Animation")
         XCTAssertEqual(SettingsView.idleAnimationLabel, "Animation")
     }
+    func test_settingsCopy_themeSection() {
+        XCTAssertEqual(SettingsView.themeHeading, "Theme")
+        XCTAssertEqual(SettingsView.themeLabel, "Appearance")
+    }
     func test_settingsCopy_widgetPositionSection() {
         XCTAssertEqual(SettingsView.widgetPositionHeading, "Widget Position")
         XCTAssertEqual(SettingsView.cornerLabel, "Corner")
@@ -145,6 +149,20 @@ extension SettingsViewTests {
         let src = readSettingsViewSource()
 
         XCTAssertTrue(src.contains("case .drift: return \"Drift\""))
+    }
+
+    func test_themeSection_wiresPickerToStore() {
+        let src = readSettingsViewSource()
+
+        XCTAssertTrue(src.contains("Picker(Self.themeLabel, selection: store.themeModeBinding)"))
+        XCTAssertTrue(src.contains("ForEach(ThemeMode.allCases, id: \\.self)"))
+        XCTAssertTrue(src.contains("Text(Self.themeModeName(mode)).tag(mode)"))
+    }
+
+    func test_themeModeLabels_areMinimalEnglish() {
+        XCTAssertEqual(SettingsView.themeModeName(.system), "System")
+        XCTAssertEqual(SettingsView.themeModeName(.light), "Light")
+        XCTAssertEqual(SettingsView.themeModeName(.dark), "Dark")
     }
 
     /// Resolve App/SettingsView.swift relative to this test file so source-level

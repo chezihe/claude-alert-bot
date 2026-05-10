@@ -88,7 +88,8 @@ actor SessionStore {
                 startedAt: c.startedAt,
                 lastOutput: c.lastOutput,
                 available: c.available,
-                pinned: c.pinned
+                pinned: c.pinned,
+                alertID: c.alertID
             )
         }
         var result = snap

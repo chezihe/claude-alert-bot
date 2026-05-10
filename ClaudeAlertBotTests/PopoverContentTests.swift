@@ -74,6 +74,20 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(showSecondTimeSuffix)
     }
 
+    func test_groupedListItems_duplicateSessionIDsHaveUniqueRowIDs() {
+        let queue = [
+            mkSession(id: "dup", project: "Alpha", stoppedAt: Date(timeIntervalSince1970: 300),
+                      pinned: true, alertID: "pinned-alert"),
+            mkSession(id: "dup", project: "Alpha", stoppedAt: Date(timeIntervalSince1970: 200),
+                      alertID: "new-alert")
+        ]
+
+        let items = PopoverContentRules.groupedListItems(queue, expandedProjects: [])
+
+        XCTAssertEqual(items.count, 2)
+        XCTAssertEqual(Set(items.map(\.id)).count, 2)
+    }
+
     func test_canCollapseProjectGroup_blocksJumpingChildRows() {
         let queue = [
             mkSession(id: "a1", project: "Alpha"),
@@ -359,7 +373,8 @@ final class PopoverContentTests: XCTestCase {
                            project: String,
                            duration: Int? = 31,
                            stoppedAt: Date = Date(),
-                           pinned: Bool = false) -> CompletedSession {
+                           pinned: Bool = false,
+                           alertID: String? = nil) -> CompletedSession {
         CompletedSession(
             sessionID: id,
             projectName: project,
@@ -368,7 +383,8 @@ final class PopoverContentTests: XCTestCase {
             itermSessionID: nil,
             tty: nil,
             cwd: nil,
-            pinned: pinned
+            pinned: pinned,
+            alertID: alertID ?? id
         )
     }
 

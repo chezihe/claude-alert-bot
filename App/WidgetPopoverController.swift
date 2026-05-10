@@ -87,18 +87,18 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         let queue = controller.queueSnapshot
         let content = PopoverContentView(
             queue: queue,
-            onRowClick: { [weak self] sid in self?.onRowClick(sessionID: sid) },
+            onRowClick: { [weak self] alertID in self?.onRowClick(alertID: alertID) },
             onClearAll: { [weak self] in self?.onClearAll() },
-            onTogglePin: { [weak self] sid in self?.onTogglePin(sessionID: sid) },
+            onTogglePin: { [weak self] alertID in self?.onTogglePin(alertID: alertID) },
             onToggleMute: { [weak self] projectName in self?.onToggleMute(projectName: projectName) },
             isProjectMuted: { projectName in
                 SettingsStore.shared.isMuted(project: projectName, now: Date())
             },
             rowStates: rowStates,
-            onRowMissingComplete: { [weak self] sid in
+            onRowMissingComplete: { [weak self] alertID in
                 guard let self else { return }
-                Task { await SessionRegistry.shared.clearOne(sessionID: sid) }
-                self.rowStates.removeValue(forKey: sid)
+                Task { await SessionRegistry.shared.clearOne(alertID: alertID) }
+                self.rowStates.removeValue(forKey: alertID)
                 self.reloadPopoverContent()
             },
             onPopoverHoverChange: { [weak self] hovering in self?.onPopoverHover(hovering) },
@@ -148,18 +148,18 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         let queue = controller.queueSnapshot
         let content = PopoverContentView(
             queue: queue,
-            onRowClick: { [weak self] sid in self?.onRowClick(sessionID: sid) },
+            onRowClick: { [weak self] alertID in self?.onRowClick(alertID: alertID) },
             onClearAll: { [weak self] in self?.onClearAll() },
-            onTogglePin: { [weak self] sid in self?.onTogglePin(sessionID: sid) },
+            onTogglePin: { [weak self] alertID in self?.onTogglePin(alertID: alertID) },
             onToggleMute: { [weak self] projectName in self?.onToggleMute(projectName: projectName) },
             isProjectMuted: { projectName in
                 SettingsStore.shared.isMuted(project: projectName, now: Date())
             },
             rowStates: rowStates,
-            onRowMissingComplete: { [weak self] sid in
+            onRowMissingComplete: { [weak self] alertID in
                 guard let self else { return }
-                Task { await SessionRegistry.shared.clearOne(sessionID: sid) }
-                self.rowStates.removeValue(forKey: sid)
+                Task { await SessionRegistry.shared.clearOne(alertID: alertID) }
+                self.rowStates.removeValue(forKey: alertID)
                 self.reloadPopoverContent()
             },
             onPopoverHoverChange: { [weak self] hovering in self?.onPopoverHover(hovering) },
@@ -206,16 +206,16 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
 
     // MARK: - actions (D2-08 + D2-07)
 
-    private func onRowClick(sessionID: String) {
+    private func onRowClick(alertID: String) {
         // Find the session for this click; if it disappeared (clearAll race), do nothing.
-        guard let session = widgetController?.queueSnapshot.first(where: { $0.sessionID == sessionID }) else {
-            log.notice("[jump-missed session=\(sessionID, privacy: .public)] (no longer in queue)")
+        guard let session = widgetController?.queueSnapshot.first(where: { $0.id == alertID }) else {
+            log.notice("[jump-missed alert=\(alertID, privacy: .public)] (no longer in queue)")
             return
         }
         // D3-11 + JUMP-05: short-circuit if already mid-jump for this row (defensive — row also self-debounces).
-        if let s = rowStates[sessionID], s != .normal { return }
+        if let s = rowStates[alertID], s != .normal { return }
 
-        rowStates[sessionID] = .jumping
+        rowStates[alertID] = .jumping
         reloadPopoverContent()
 
         Task { [weak self] in
@@ -225,21 +225,21 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
                 // ITerm2Jumper already emitted the [jump*] OSLog line. WPC's job is state + dismiss.
                 switch result {
                 case .ok:
-                    self.rowStates.removeValue(forKey: sessionID)
-                    Task { await SessionRegistry.shared.clearOne(sessionID: sessionID) }
+                    self.rowStates.removeValue(forKey: alertID)
+                    Task { await SessionRegistry.shared.clearOne(alertID: alertID) }
                     self.dismissPopover()
                 case .missing:
-                    self.rowStates.removeValue(forKey: sessionID)
+                    self.rowStates.removeValue(forKey: alertID)
                     Task { [weak self] in
-                        await SessionRegistry.shared.markUnavailable(sessionID: sessionID)
+                        await SessionRegistry.shared.markUnavailable(alertID: alertID)
                         await MainActor.run { self?.reloadPopoverContent() }
                     }
                 case .iTermNotRunning, .timeout, .otherError:
-                    self.rowStates[sessionID] = .missing
+                    self.rowStates[alertID] = .missing
                     self.reloadPopoverContent()
                     // Row's missing-animation completion will fire onRowMissingComplete → SessionRegistry.clearOne.
                 case .permissionDenied:
-                    self.rowStates[sessionID] = .missing
+                    self.rowStates[alertID] = .missing
                     self.reloadPopoverContent()
                     PermissionDeepLink.openAutomationPreferences()
                     // Row's missing animation still runs → row clears from queue.
@@ -255,9 +255,9 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         dismissPopover()
     }
 
-    private func onTogglePin(sessionID: String) {
+    private func onTogglePin(alertID: String) {
         Task { [weak self] in
-            await SessionRegistry.shared.togglePin(sessionID: sessionID)
+            await SessionRegistry.shared.togglePin(alertID: alertID)
             await MainActor.run { self?.reloadPopoverContent() }
         }
     }

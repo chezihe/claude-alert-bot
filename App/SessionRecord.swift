@@ -46,6 +46,7 @@ struct InFlightStart: Codable, Equatable {
 
 /// Completed-but-unclicked alert. Stored in SessionRegistry.completed FIFO + sessions.json.
 struct CompletedSession: Codable, Equatable, Identifiable {
+    let alertID: String            // unique row/action identity for one queued alert
     let sessionID: String          // matches HookEvent.session_id
     let projectName: String         // ProjectName.derive(...) result — D2-06
     let stoppedAt: Date
@@ -60,7 +61,7 @@ struct CompletedSession: Codable, Equatable, Identifiable {
     var available: Bool             // false = iTerm session gone
     var pinned: Bool
 
-    var id: String { sessionID }    // for SwiftUI ForEach in popover
+    var id: String { alertID }      // for SwiftUI ForEach + row-scoped actions in popover
 
     init(sessionID: String,
          projectName: String,
@@ -74,7 +75,9 @@ struct CompletedSession: Codable, Equatable, Identifiable {
          startedAt: Date? = nil,
          lastOutput: String? = nil,
          available: Bool = true,
-         pinned: Bool = false) {
+         pinned: Bool = false,
+         alertID: String = UUID().uuidString) {
+        self.alertID = alertID
         self.sessionID = sessionID
         self.projectName = projectName
         self.stoppedAt = stoppedAt
@@ -91,6 +94,7 @@ struct CompletedSession: Codable, Equatable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
+        case alertID
         case sessionID
         case projectName
         case stoppedAt
@@ -108,6 +112,7 @@ struct CompletedSession: Codable, Equatable, Identifiable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.alertID = try container.decodeIfPresent(String.self, forKey: .alertID) ?? UUID().uuidString
         self.sessionID = try container.decode(String.self, forKey: .sessionID)
         self.projectName = try container.decode(String.self, forKey: .projectName)
         self.stoppedAt = try container.decode(Date.self, forKey: .stoppedAt)
@@ -125,6 +130,7 @@ struct CompletedSession: Codable, Equatable, Identifiable {
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(alertID, forKey: .alertID)
         try container.encode(sessionID, forKey: .sessionID)
         try container.encode(projectName, forKey: .projectName)
         try container.encode(stoppedAt, forKey: .stoppedAt)

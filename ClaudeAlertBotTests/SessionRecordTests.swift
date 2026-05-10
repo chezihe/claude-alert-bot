@@ -36,6 +36,30 @@ final class SessionRecordTests: XCTestCase {
         XCTAssertEqual(nilDecoded, nilCase)
     }
 
+    func test_completedSession_identifiableIDIsUniquePerAlert() {
+        let first = CompletedSession(
+            sessionID: "same-claude-session",
+            projectName: "claude_alert_bot",
+            stoppedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            durationSec: 45,
+            itermSessionID: nil,
+            tty: nil,
+            cwd: nil
+        )
+        let second = CompletedSession(
+            sessionID: "same-claude-session",
+            projectName: "claude_alert_bot",
+            stoppedAt: Date(timeIntervalSince1970: 1_700_000_100),
+            durationSec: 30,
+            itermSessionID: nil,
+            tty: nil,
+            cwd: nil
+        )
+
+        XCTAssertEqual(first.sessionID, second.sessionID)
+        XCTAssertNotEqual(first.id, second.id)
+    }
+
     func test_completedSession_decodesMissingAvailableAsTrue() throws {
         let json = """
         {

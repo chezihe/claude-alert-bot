@@ -331,6 +331,45 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertTrue(loaded?.completed.first?.pinned ?? false)
     }
 
+    func test_clearOneByAlertID_preservesPinnedDuplicateSessionID() async {
+        let r = makeRegistry()
+        await bind(r)
+        let pinned = CompletedSession(sessionID: "dup", projectName: "p", stoppedAt: Date(),
+                                      durationSec: 10, itermSessionID: "target", tty: nil, cwd: nil,
+                                      pinned: true, alertID: "pinned-alert")
+        let unpinned = CompletedSession(sessionID: "dup", projectName: "p", stoppedAt: Date(),
+                                        durationSec: 11, itermSessionID: "target", tty: nil, cwd: nil,
+                                        alertID: "new-alert")
+        await r.seedCompletedForTesting(pinned)
+        await r.seedCompletedForTesting(unpinned)
+
+        await r.clearOne(alertID: "new-alert")
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.map(\.id), ["pinned-alert"])
+        XCTAssertTrue(snap.completed.first?.pinned ?? false)
+        XCTAssertTrue(notifier.refreshCalls.contains(1))
+    }
+
+    func test_togglePinByAlertID_targetsOnlyMatchingDuplicateSessionID() async {
+        let r = makeRegistry()
+        await bind(r)
+        let pinned = CompletedSession(sessionID: "dup", projectName: "p", stoppedAt: Date(),
+                                      durationSec: 10, itermSessionID: "target", tty: nil, cwd: nil,
+                                      pinned: true, alertID: "pinned-alert")
+        let unpinned = CompletedSession(sessionID: "dup", projectName: "p", stoppedAt: Date(),
+                                        durationSec: 11, itermSessionID: "target", tty: nil, cwd: nil,
+                                        alertID: "new-alert")
+        await r.seedCompletedForTesting(pinned)
+        await r.seedCompletedForTesting(unpinned)
+
+        await r.togglePin(alertID: "new-alert")
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.map(\.id), ["pinned-alert", "new-alert"])
+        XCTAssertEqual(snap.completed.map(\.pinned), [true, true])
+    }
+
     func test_markUnavailable_keepsRowAndRefreshes() async {
         let r = makeRegistry()
         await bind(r)
@@ -344,6 +383,25 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(snap.completed.map(\.sessionID), ["a"])
         XCTAssertFalse(snap.completed.first?.available ?? true)
         XCTAssertTrue(notifier.refreshCalls.contains(1))
+    }
+
+    func test_markUnavailableByAlertID_targetsOnlyMatchingDuplicateSessionID() async {
+        let r = makeRegistry()
+        await bind(r)
+        let pinned = CompletedSession(sessionID: "dup", projectName: "p", stoppedAt: Date(),
+                                      durationSec: 10, itermSessionID: "target", tty: nil, cwd: nil,
+                                      pinned: true, alertID: "pinned-alert")
+        let unpinned = CompletedSession(sessionID: "dup", projectName: "p", stoppedAt: Date(),
+                                        durationSec: 11, itermSessionID: "target", tty: nil, cwd: nil,
+                                        alertID: "new-alert")
+        await r.seedCompletedForTesting(pinned)
+        await r.seedCompletedForTesting(unpinned)
+
+        await r.markUnavailable(alertID: "new-alert")
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.map(\.available), [true, false])
+        XCTAssertTrue(notifier.refreshCalls.contains(2))
     }
 
     /// Test J — clearAll empties the queue and broadcasts count=0.

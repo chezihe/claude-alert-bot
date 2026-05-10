@@ -163,6 +163,16 @@ actor SessionRegistry {
         log.notice("clearOne session=\(sessionID, privacy: .public)")
     }
 
+    func clearOne(alertID: String) async {
+        completed.removeAll(where: { $0.id == alertID })
+        await persist()
+        let snapshot = self.completed
+        let count = snapshot.count
+        let n = self.notifier
+        await n?.refreshQueueState(completed: snapshot, count: count)
+        log.notice("clearOne alert=\(alertID, privacy: .public)")
+    }
+
     func clearUnpinned(sessionID: String) async {
         completed.removeAll(where: { $0.sessionID == sessionID && !$0.pinned })
         await persist()
@@ -187,6 +197,20 @@ actor SessionRegistry {
         log.notice("markUnavailable session=\(sessionID, privacy: .public)")
     }
 
+    func markUnavailable(alertID: String) async {
+        guard let idx = completed.firstIndex(where: { $0.id == alertID }) else {
+            log.notice("markUnavailable alert=\(alertID, privacy: .public) ignored (no longer in queue)")
+            return
+        }
+        completed[idx].available = false
+        await persist()
+        let snapshot = self.completed
+        let count = snapshot.count
+        let n = self.notifier
+        await n?.refreshQueueState(completed: snapshot, count: count)
+        log.notice("markUnavailable alert=\(alertID, privacy: .public)")
+    }
+
     func togglePin(sessionID: String) async {
         guard let idx = completed.firstIndex(where: { $0.sessionID == sessionID }) else {
             log.notice("togglePin session=\(sessionID, privacy: .public) ignored (no longer in queue)")
@@ -200,6 +224,21 @@ actor SessionRegistry {
         let n = self.notifier
         await n?.refreshQueueState(completed: snapshot, count: count)
         log.notice("togglePin session=\(sessionID, privacy: .public) pinned=\(pinned, privacy: .public)")
+    }
+
+    func togglePin(alertID: String) async {
+        guard let idx = completed.firstIndex(where: { $0.id == alertID }) else {
+            log.notice("togglePin alert=\(alertID, privacy: .public) ignored (no longer in queue)")
+            return
+        }
+        completed[idx].pinned.toggle()
+        let pinned = completed[idx].pinned
+        await persist()
+        let snapshot = self.completed
+        let count = snapshot.count
+        let n = self.notifier
+        await n?.refreshQueueState(completed: snapshot, count: count)
+        log.notice("togglePin alert=\(alertID, privacy: .public) pinned=\(pinned, privacy: .public)")
     }
 
     /// Read-only snapshot of pending completed sessions. Used by 02-09 WorkspaceFrontmostObserver (D2-15).

@@ -7,7 +7,7 @@
 // - state owned by parent (WidgetPopoverController, wired in 03-07) — leaf View per CONTEXT D3-11.
 // - Click handler short-circuits when state != .normal (JUMP-05 row-level self-debounce).
 // - .missing transitions trigger 도리도리(±12° 1 round-trip, 0..0.3s) → collapse+fade(0.3..0.7s)
-//   → onMissingComplete() callback so the parent can call SessionRegistry.clearOne(sessionID:).
+//   → onMissingComplete() callback so the parent can clear the row by alertID.
 // - Reduced-motion fallback skips rotation, collapses immediately
 //   (mirrors FloatingWidgetWindowController.swift lines 113-115).
 // - D3-12: animation IS the message — no copy strings, no sound, no system notifications.
@@ -36,7 +36,7 @@ struct PopoverRowView: View {
     var onTogglePin: () -> Void = {}
     var onToggleMute: () -> Void = {}
     /// Phase 3 D3-11 — fired after the missing-collapse animation completes; parent should
-    /// then call `SessionRegistry.shared.clearOne(sessionID:)`. No-op default for call sites
+    /// then clear this row by alertID. No-op default for call sites
     /// that pin state to `.normal` and will never reach the failure branch.
     var onMissingComplete: () -> Void = {}
 

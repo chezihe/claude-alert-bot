@@ -18,7 +18,7 @@ enum PopoverListItem: Equatable, Identifiable {
         case .group(let projectName, _, _):
             return "group:\(projectName)"
         case .session(let session, _):
-            return "session:\(session.sessionID)"
+            return "session:\(session.id)"
         }
     }
 }
@@ -111,7 +111,7 @@ enum PopoverContentRules {
                                         rowStates: [String: RowState]) -> Bool {
         !queue.contains { session in
             session.projectName == projectName &&
-            rowStates[session.sessionID, default: .normal] != .normal
+            rowStates[session.id, default: .normal] != .normal
         }
     }
 
@@ -132,7 +132,7 @@ enum PopoverContentRules {
 
 struct PopoverContentView: View {
     let queue: [CompletedSession]
-    let onRowClick: (String) -> Void   // sessionID
+    let onRowClick: (String) -> Void   // alertID
     let onClearAll: () -> Void
     var onTogglePin: (String) -> Void = { _ in }
     var onToggleMute: (String) -> Void = { _ in }
@@ -141,7 +141,7 @@ struct PopoverContentView: View {
     /// Owned by WidgetPopoverController (03-07); content view stays pure (no @State).
     var rowStates: [String: RowState] = [:]
     /// Phase 3 D3-11 — fired after a row's `.missing` collapse animation completes.
-    /// Forwarded to `SessionRegistry.shared.clearOne(sessionID:)` by the parent.
+    /// Forwarded to `SessionRegistry.shared.clearOne(alertID:)` by the parent.
     var onRowMissingComplete: (String) -> Void = { _ in }
     /// Phase 3 03-09 fix — hover state change for the popover surface itself.
     /// Parent (WidgetPopoverController) cancels its widget-exit dismiss timer while
@@ -211,12 +211,12 @@ struct PopoverContentView: View {
                                 PopoverRowView(
                                     session: session,
                                     showTimeSuffix: showTimeSuffix,
-                                    state: rowStates[session.sessionID, default: .normal],
+                                    state: rowStates[session.id, default: .normal],
                                     isMuted: isProjectMuted(session.projectName),
-                                    onClick: { onRowClick(session.sessionID) },
-                                    onTogglePin: { onTogglePin(session.sessionID) },
+                                    onClick: { onRowClick(session.id) },
+                                    onTogglePin: { onTogglePin(session.id) },
                                     onToggleMute: { onToggleMute(session.projectName) },
-                                    onMissingComplete: { onRowMissingComplete(session.sessionID) }
+                                    onMissingComplete: { onRowMissingComplete(session.id) }
                                 )
                             }
                         }

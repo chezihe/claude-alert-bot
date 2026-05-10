@@ -344,15 +344,22 @@ enum HookInstaller {
 
     private static func mergedEntries(existing: Any?, event: String) -> [[String: Any]] {
         let existingEntries = existing as? [[String: Any]] ?? []
-        let preserved = existingEntries.filter { !containsCabCommand($0) }
+        let preserved = existingEntries.compactMap(removingCabCommands)
         return preserved + [entry(event: event)]
     }
 
-    private static func containsCabCommand(_ entry: [String: Any]) -> Bool {
-        guard let hooks = entry["hooks"] as? [[String: Any]] else { return false }
-        return hooks.contains { hook in
-            (hook["command"] as? String)?.contains(cabMarker) == true
-        }
+    private static func removingCabCommands(from entry: [String: Any]) -> [String: Any]? {
+        guard let hooks = entry["hooks"] as? [[String: Any]] else { return entry }
+        let filteredHooks = hooks.filter { !isCabCommand($0) }
+        guard filteredHooks.count != hooks.count else { return entry }
+        guard !filteredHooks.isEmpty else { return nil }
+        var filteredEntry = entry
+        filteredEntry["hooks"] = filteredHooks
+        return filteredEntry
+    }
+
+    private static func isCabCommand(_ hook: [String: Any]) -> Bool {
+        (hook["command"] as? String)?.contains(cabMarker) == true
     }
 
     private static func entry(event: String) -> [String: Any] {

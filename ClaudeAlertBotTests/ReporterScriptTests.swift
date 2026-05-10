@@ -115,6 +115,34 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit").count, 1)
     }
 
+    func test_hookInstallerPreservesOtherHooksInSameMatcherEntry() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
+        let settings = tempHome.appendingPathComponent(".claude/settings.json")
+        try FileManager.default.createDirectory(at: settings.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try """
+        {
+          "hooks": {
+            "Stop": [
+              {
+                "matcher": "",
+                "hooks": [
+                  { "type": "command", "command": "echo keep", "timeout": 1 },
+                  { "type": "command", "command": "old/ClaudeAlertBot/cab-report.sh stop", "timeout": 5 }
+                ]
+              }
+            ]
+          }
+        }
+        """.write(to: settings, atomically: true, encoding: .utf8)
+
+        try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
+
+        let hooks = try loadInstalledHooks()
+        XCTAssertEqual(otherCommands(in: hooks, event: "Stop"), ["echo keep"])
+        XCTAssertEqual(cabCommands(in: hooks, event: "Stop").count, 1)
+    }
+
     func test_hookInstallerAcceptsCommentedClaudeSettings() throws {
         let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
         try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)

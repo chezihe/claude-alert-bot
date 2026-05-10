@@ -12,7 +12,7 @@ final class FloatingWidgetWindowControllerTests: XCTestCase {
         XCTAssertTrue(src.contains("private var accessibilityCancellable: AnyCancellable?"))
         XCTAssertTrue(src.contains("NSWorkspace.accessibilityDisplayOptionsDidChangeNotification"))
         XCTAssertTrue(src.contains(".publisher(for: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification)"))
-        XCTAssertTrue(src.contains("accessibilityCancellable = NotificationCenter.default"))
+        XCTAssertTrue(src.contains("accessibilityCancellable = NSWorkspace.shared.notificationCenter"))
         XCTAssertTrue(src.contains("self.updateRootView(pendingCount: self.currentPendingCount)"))
         XCTAssertTrue(src.contains("self.repositionIfVisible()"))
     }

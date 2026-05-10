@@ -58,7 +58,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
                 self.repositionIfVisible()
             }
         }
-        accessibilityCancellable = NotificationCenter.default
+        accessibilityCancellable = NSWorkspace.shared.notificationCenter
             .publisher(for: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification)
             .sink { [weak self] _ in
                 Task { @MainActor [weak self] in

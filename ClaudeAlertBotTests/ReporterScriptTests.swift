@@ -214,6 +214,183 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit").count, 1)
     }
 
+    func test_devInstallHookApplyCreatesCodexHooksWhenCodexConfigExists() throws {
+        let codexDir = tempHome.appendingPathComponent(".codex")
+        try FileManager.default.createDirectory(at: codexDir, withIntermediateDirectories: true)
+        try """
+        model = "gpt-5.5"
+        """.write(to: codexDir.appendingPathComponent("config.toml"), atomically: true, encoding: .utf8)
+
+        try runDevInstallHook("--apply")
+
+        let hooks = try loadInstalledCodexHooks()
+        XCTAssertEqual(cabCommands(in: hooks, event: "Stop"), [
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" stop"
+        ])
+        XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit"), [
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" user_prompt_submit"
+        ])
+
+        let config = try String(contentsOf: codexDir.appendingPathComponent("config.toml"), encoding: .utf8)
+        XCTAssertTrue(config.contains("[features]"))
+        XCTAssertTrue(config.contains("codex_hooks = true"))
+    }
+
+    func test_devInstallHookApplyIsIdempotentAndPreservesOtherCodexHooks() throws {
+        let codexDir = tempHome.appendingPathComponent(".codex")
+        try FileManager.default.createDirectory(at: codexDir, withIntermediateDirectories: true)
+        try """
+        {
+          "hooks": {
+            "Stop": [
+              {
+                "hooks": [
+                  { "type": "command", "command": "echo keep", "timeout": 1 },
+                  { "type": "command", "command": "old/ClaudeAlertBot/cab-report.sh stop", "timeout": 5 }
+                ]
+              }
+            ]
+          }
+        }
+        """.write(to: codexDir.appendingPathComponent("hooks.json"), atomically: true, encoding: .utf8)
+        try """
+        [features]
+        codex_hooks = false
+        other_feature = true
+        """.write(to: codexDir.appendingPathComponent("config.toml"), atomically: true, encoding: .utf8)
+
+        try runDevInstallHook("--apply")
+        try runDevInstallHook("--apply")
+
+        let hooks = try loadInstalledCodexHooks()
+        XCTAssertEqual(otherCommands(in: hooks, event: "Stop"), ["echo keep"])
+        XCTAssertEqual(cabCommands(in: hooks, event: "Stop").count, 1)
+        XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit").count, 1)
+
+        let config = try String(contentsOf: codexDir.appendingPathComponent("config.toml"), encoding: .utf8)
+        XCTAssertTrue(config.contains("codex_hooks = true"))
+        XCTAssertFalse(config.contains("codex_hooks = false"))
+        XCTAssertTrue(config.contains("other_feature = true"))
+    }
+
+    func test_devInstallHookApplyPreservesCodexCommandsContainingCommentMarkers() throws {
+        let codexDir = tempHome.appendingPathComponent(".codex")
+        try FileManager.default.createDirectory(at: codexDir, withIntermediateDirectories: true)
+        try """
+        {
+          "hooks": {
+            "Stop": [
+              {
+                "hooks": [
+                  { "type": "command", "command": "echo /* keep me */", "timeout": 1 },
+                  { "type": "command", "command": "echo // keep me", "timeout": 1 }
+                ]
+              }
+            ]
+          }
+        }
+        """.write(to: codexDir.appendingPathComponent("hooks.json"), atomically: true, encoding: .utf8)
+
+        try runDevInstallHook("--apply")
+
+        let hooks = try loadInstalledCodexHooks()
+        let commands = otherCommands(in: hooks, event: "Stop")
+        XCTAssertTrue(commands.contains("echo /* keep me */"))
+        XCTAssertTrue(commands.contains("echo // keep me"))
+    }
+
+    func test_devInstallHookApplyRejectsCodexBlockCommentBetweenNumberTokensWithoutRewritingHooks() throws {
+        let codexDir = tempHome.appendingPathComponent(".codex")
+        try FileManager.default.createDirectory(at: codexDir, withIntermediateDirectories: true)
+        let hooksURL = codexDir.appendingPathComponent("hooks.json")
+        let original = """
+        {
+          "hooks": {
+            "Stop": [
+              {
+                "hooks": [
+                  { "type": "command", "command": "echo keep", "timeout": 1/*x*/2 }
+                ]
+              }
+            ]
+          }
+        }
+        """
+        try original.write(to: hooksURL, atomically: true, encoding: .utf8)
+
+        let output = try runDevInstallHook("--apply")
+
+        let rewritten = try String(contentsOf: hooksURL, encoding: .utf8)
+        XCTAssertEqual(rewritten, original)
+        XCTAssertTrue(output.contains("warning: could not parse"))
+    }
+
+    func test_devInstallHookApplyIgnoresInvalidCodexHooksAfterClaudeInstall() throws {
+        let codexDir = tempHome.appendingPathComponent(".codex")
+        try FileManager.default.createDirectory(at: codexDir, withIntermediateDirectories: true)
+        try "{broken".write(to: codexDir.appendingPathComponent("hooks.json"), atomically: true, encoding: .utf8)
+
+        let output = try runDevInstallHook("--apply")
+
+        let hooks = try loadInstalledHooks()
+        XCTAssertEqual(cabCommands(in: hooks, event: "Stop").count, 1)
+        XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit").count, 1)
+        XCTAssertTrue(output.contains("warning: could not parse"))
+    }
+
+    func test_devInstallHookCheckShowsCodexHooksWithoutClaudeSettings() throws {
+        let codexDir = tempHome.appendingPathComponent(".codex")
+        try FileManager.default.createDirectory(at: codexDir, withIntermediateDirectories: true)
+        try """
+        {
+          "hooks": {
+            "Stop": [
+              {
+                "hooks": [
+                  { "type": "command", "command": "echo codex", "timeout": 1 }
+                ]
+              }
+            ]
+          }
+        }
+        """.write(to: codexDir.appendingPathComponent("hooks.json"), atomically: true, encoding: .utf8)
+
+        let output = try runDevInstallHook("--check")
+
+        XCTAssertTrue(output.contains("--- Codex hooks from"))
+        XCTAssertTrue(output.contains("echo codex"))
+    }
+
+    func test_devInstallHookApplyIsIdempotentWithInlineCodexHooks() throws {
+        let codexDir = tempHome.appendingPathComponent(".codex")
+        try FileManager.default.createDirectory(at: codexDir, withIntermediateDirectories: true)
+        try """
+        [features]
+        codex_hooks = true
+
+        [[hooks.Stop]]
+        matcher = ""
+        [[hooks.Stop.hooks]]
+        type = "command"
+        command = "echo keep"
+        timeout = 1
+        [[hooks.Stop.hooks]]
+        type = "command"
+        command = "old/ClaudeAlertBot/cab-report.sh stop"
+        timeout = 5
+        """.write(to: codexDir.appendingPathComponent("config.toml"), atomically: true, encoding: .utf8)
+
+        try runDevInstallHook("--apply")
+        try runDevInstallHook("--apply")
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: codexDir.appendingPathComponent("hooks.json").path))
+        let config = try String(contentsOf: codexDir.appendingPathComponent("config.toml"), encoding: .utf8)
+        XCTAssertEqual(config.components(separatedBy: "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" stop").count - 1, 1)
+        XCTAssertEqual(config.components(separatedBy: "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" user_prompt_submit").count - 1, 1)
+        XCTAssertFalse(config.contains("old/ClaudeAlertBot/cab-report.sh"))
+        XCTAssertTrue(config.contains(#"command = "echo keep""#))
+    }
+
     func test_hookInstallerIsIdempotentAndPreservesOtherHooks() throws {
         let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
         try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
@@ -426,9 +603,7 @@ final class ReporterScriptTests: XCTestCase {
     }
 
     private func runReporter(stdin: String) throws -> [String: Any] {
-        let repoRoot = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
+        let repoRoot = repoRootURL()
         let reporter = repoRoot.appendingPathComponent("Reporter/cab-report.sh")
 
         let process = Process()
@@ -461,6 +636,30 @@ final class ReporterScriptTests: XCTestCase {
         let data = Data(line.utf8)
         let outer = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         return try XCTUnwrap(outer["envelope"] as? [String: Any])
+    }
+
+    @discardableResult
+    private func runDevInstallHook(_ arguments: String...) throws -> String {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/bash")
+        process.arguments = [repoRootURL().appendingPathComponent("scripts/dev-install-hook.sh").path] + arguments
+        process.currentDirectoryURL = repoRootURL()
+        var environment = ProcessInfo.processInfo.environment
+        environment["HOME"] = tempHome.path
+        process.environment = environment
+
+        let stdout = Pipe()
+        let stderr = Pipe()
+        process.standardOutput = stdout
+        process.standardError = stderr
+
+        try process.run()
+        process.waitUntilExit()
+
+        let output = String(data: stdout.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        let error = String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        XCTAssertEqual(process.terminationStatus, 0, output + error)
+        return output + error
     }
 
     private func loadInstalledSettings() throws -> [String: Any] {
@@ -503,5 +702,11 @@ final class ReporterScriptTests: XCTestCase {
             .deletingLastPathComponent()
         let target = repoRoot.appendingPathComponent("App/AppDelegate.swift")
         return try String(contentsOf: target, encoding: .utf8)
+    }
+
+    private func repoRootURL(_ thisFile: StaticString = #filePath) -> URL {
+        URL(fileURLWithPath: "\(thisFile)")
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
     }
 }

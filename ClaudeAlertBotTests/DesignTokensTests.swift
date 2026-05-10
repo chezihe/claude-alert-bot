@@ -105,6 +105,10 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(GeometryTokens.popoverMaxVisibleRows, 4)
     }
 
+    func test_geometryTokens_popoverScrollFadeHeight_is12() {
+        XCTAssertEqual(GeometryTokens.popoverScrollFadeHeight, 12)
+    }
+
     func test_geometryTokens_widgetDrawableSize_expandsForActiveRoam() {
         let size = GeometryTokens.widgetDrawableSize(
             idleAnimation: .roam,

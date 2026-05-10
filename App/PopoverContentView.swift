@@ -170,6 +170,7 @@ struct PopoverContentView: View {
             if PopoverContentRules.shouldShowEmptyState(queue: queue, everHadAlerts: everHadAlerts) {
                 EmptyStateView()
             } else if !queue.isEmpty {
+                let isScrollable = listItems.count > GeometryTokens.popoverMaxVisibleRows
                 ScrollView {
                     VStack(spacing: 0) {
                         ForEach(listItems) { item in
@@ -200,11 +201,35 @@ struct PopoverContentView: View {
                 }
                 .scrollIndicators(.hidden)
                 .frame(maxHeight: GeometryTokens.rowMinHeight * CGFloat(GeometryTokens.popoverMaxVisibleRows))
+                .mask(PopoverScrollFadeMask(isEnabled: isScrollable))
             }
         }
         .frame(width: GeometryTokens.popoverWidth)
         .background(PopoverMaterialBackground())
         .onHover { hovering in onPopoverHoverChange(hovering) }
+    }
+}
+
+private struct PopoverScrollFadeMask: View {
+    let isEnabled: Bool
+
+    var body: some View {
+        if isEnabled {
+            let fadeHeight = GeometryTokens.popoverScrollFadeHeight
+            VStack(spacing: 0) {
+                LinearGradient(colors: [.clear, .black],
+                               startPoint: .top,
+                               endPoint: .bottom)
+                    .frame(height: fadeHeight)
+                Rectangle().fill(.black)
+                LinearGradient(colors: [.black, .clear],
+                               startPoint: .top,
+                               endPoint: .bottom)
+                    .frame(height: fadeHeight)
+            }
+        } else {
+            Rectangle().fill(.black)
+        }
     }
 }
 

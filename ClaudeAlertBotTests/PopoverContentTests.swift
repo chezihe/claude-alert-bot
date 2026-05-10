@@ -250,6 +250,15 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertFalse(src.contains(".background(.thinMaterial)"))
     }
 
+    func test_popoverContentView_usesScrollFadeMaskOnlyWhenScrollable() {
+        let src = readPopoverContentViewSource()
+
+        XCTAssertTrue(src.contains("private struct PopoverScrollFadeMask: View"))
+        XCTAssertTrue(src.contains("let fadeHeight = GeometryTokens.popoverScrollFadeHeight"))
+        XCTAssertTrue(src.contains("let isScrollable = listItems.count > GeometryTokens.popoverMaxVisibleRows"))
+        XCTAssertTrue(src.contains(".mask(PopoverScrollFadeMask(isEnabled: isScrollable))"))
+    }
+
     func test_widgetPopoverController_sizingUsesPopoverGeometryTokens() {
         let src = readWidgetPopoverControllerSource()
 

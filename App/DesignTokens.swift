@@ -63,6 +63,8 @@ enum GeometryTokens {
     static let statusDotRingStroke: CGFloat = 1.5
     // FEATURES.md §3 row "최대 4행 표시" — WO-009 enforces; rows beyond scroll vertically.
     static let popoverMaxVisibleRows: Int = 4
+    // FEATURES.md §3 panel "스크롤 페이드" — applied only when the list exceeds max visible rows.
+    static let popoverScrollFadeHeight: CGFloat = 12
     static let widgetBaseSize = CGSize(width: 44, height: 44)
 
     static func widgetDrawableSize(

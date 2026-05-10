@@ -28,69 +28,80 @@ struct WidgetIconView: View {
     @State private var sonarOpacity: Double = 0
     @State private var activeAlertPulseID: Int = 0
 
+    private var widgetBoundsSize: CGSize {
+        GeometryTokens.widgetDrawableSize(
+            idleAnimation: idleAnimation,
+            quietHoursEnabled: quietHoursEnabled,
+            reduceMotion: reduceMotion
+        )
+    }
+
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            if sonarOpacity > 0, !quietHoursEnabled {
-                Circle()
-                    .strokeBorder(ColorTokens.accent.opacity(sonarOpacity), lineWidth: 1.5)
-                    .frame(width: MotionTokens.sonarBaseDiameter, height: MotionTokens.sonarBaseDiameter)
-                    .scaleEffect(sonarScale)
-                    .frame(width: 44, height: 44, alignment: .center)
-                    .allowsHitTesting(false)
-                    .accessibilityHidden(true)
+        ZStack(alignment: .center) {
+            ZStack(alignment: .topTrailing) {
+                if sonarOpacity > 0, !quietHoursEnabled {
+                    Circle()
+                        .strokeBorder(ColorTokens.accent.opacity(sonarOpacity), lineWidth: 1.5)
+                        .frame(width: MotionTokens.sonarBaseDiameter, height: MotionTokens.sonarBaseDiameter)
+                        .scaleEffect(sonarScale)
+                        .frame(width: 44, height: 44, alignment: .center)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                }
+                // Non-SPEC literals retained per Finding F-2 (see 03.1-01-SUMMARY.md):
+                // floating-widget topology differs from SPEC §3 NSStatusItem 22pt-in-28pt + badge offsets.
+                Image("ClaudeCodeIcon")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
+                    .scaleEffect(quietHoursEnabled ? 1.0 : breatheScale * bounceScale * alertPulseScale)
+                    .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation + idleRotation), anchor: .top)
+                    .offset(y: quietHoursEnabled ? 0 : bounceOffset)
+                    .modifier(RoamOffsetEffect(
+                        angle: roamPhase,
+                        radiusX: Double(MotionTokens.roamRadiusX),
+                        radiusY: Double(MotionTokens.roamRadiusY),
+                        isActive: idleAnimation == .roam && !quietHoursEnabled && !reduceMotion
+                    ))
+                    .onAppear {
+                        startIdleAnimation()
+                        runNewAlertPulse()
+                    }
+                    .onChange(of: quietHoursEnabled) { _, _ in
+                        restartIdleAnimation()
+                    }
+                    .onChange(of: idleAnimation) { _, _ in
+                        restartIdleAnimation()
+                    }
+                    .onChange(of: reduceMotion) { _, _ in
+                        restartIdleAnimation()
+                    }
+                    .onChange(of: alertPulseID) { _, _ in
+                        runNewAlertPulse()
+                    }
+                if pendingCount >= 2 {
+                    Text("+\(pendingCount - 1)")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 16, height: 16)
+                        .background(
+                            Circle().fill(quietHoursEnabled ? Color(NSColor.systemGray) : Color(NSColor.systemRed))
+                        )
+                        .offset(x: 4, y: -4)        // top-trailing -4/-4 overhang
+                        .accessibilityHidden(true)  // count is announced via the parent label
+                }
+                if quietHoursEnabled {
+                    Text("Zzz")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(Color(NSColor.secondaryLabelColor))
+                        .offset(x: 5, y: pendingCount >= 2 ? 11 : -6)
+                        .accessibilityHidden(true)
+                }
             }
-            // Non-SPEC literals retained per Finding F-2 (see 03.1-01-SUMMARY.md):
-            // floating-widget topology differs from SPEC §3 NSStatusItem 22pt-in-28pt + badge offsets.
-            Image("ClaudeCodeIcon")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 36, height: 36)
-                .frame(width: 44, height: 44)
-                .scaleEffect(quietHoursEnabled ? 1.0 : breatheScale * bounceScale * alertPulseScale)
-                .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation + idleRotation), anchor: .top)
-                .offset(y: quietHoursEnabled ? 0 : bounceOffset)
-                .modifier(RoamOffsetEffect(
-                    angle: roamPhase,
-                    radiusX: Double(MotionTokens.roamRadiusX),
-                    radiusY: Double(MotionTokens.roamRadiusY),
-                    isActive: idleAnimation == .roam && !quietHoursEnabled && !reduceMotion
-                ))
-                .onAppear {
-                    startIdleAnimation()
-                    runNewAlertPulse()
-                }
-                .onChange(of: quietHoursEnabled) { _, _ in
-                    restartIdleAnimation()
-                }
-                .onChange(of: idleAnimation) { _, _ in
-                    restartIdleAnimation()
-                }
-                .onChange(of: reduceMotion) { _, _ in
-                    restartIdleAnimation()
-                }
-                .onChange(of: alertPulseID) { _, _ in
-                    runNewAlertPulse()
-                }
-            if pendingCount >= 2 {
-                Text("+\(pendingCount - 1)")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 16, height: 16)
-                    .background(
-                        Circle().fill(quietHoursEnabled ? Color(NSColor.systemGray) : Color(NSColor.systemRed))
-                    )
-                    .offset(x: 4, y: -4)        // top-trailing -4/-4 overhang
-                    .accessibilityHidden(true)  // count is announced via the parent label
-            }
-            if quietHoursEnabled {
-                Text("Zzz")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(Color(NSColor.secondaryLabelColor))
-                    .offset(x: 5, y: pendingCount >= 2 ? 11 : -6)
-                    .accessibilityHidden(true)
-            }
+            .frame(width: 44, height: 44, alignment: .center)
         }
-        .frame(width: 44, height: 44, alignment: .center)
+        .frame(width: widgetBoundsSize.width, height: widgetBoundsSize.height, alignment: .center)
         .accessibilityElement()
         .accessibilityLabel("Claude 작업 완료 알림. 보류 중 \(pendingCount)건")
         .accessibilityAddTraits(.isButton)

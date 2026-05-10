@@ -81,6 +81,24 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("idleAnimation: SettingsStore.shared.idleAnimation"))
     }
 
+    func test_floatingWidgetWindowController_resizesHostToWidgetDrawableSize() {
+        let src = readFloatingWidgetWindowControllerSource()
+
+        XCTAssertTrue(src.contains("GeometryTokens.widgetDrawableSize("))
+        XCTAssertTrue(src.contains("resizeContent(to: size)"))
+        XCTAssertTrue(src.contains("panel.setFrame(frame, display: true)"))
+        XCTAssertTrue(src.contains("hostingView?.frame = NSRect(origin: .zero, size: size)"))
+    }
+
+    func test_widgetIconViewSource_usesExpandedDrawableBoundsForRoam() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("private var widgetBoundsSize: CGSize"))
+        XCTAssertTrue(src.contains("GeometryTokens.widgetDrawableSize("))
+        XCTAssertTrue(src.contains(".frame(width: 44, height: 44, alignment: .center)"))
+        XCTAssertTrue(src.contains(".frame(width: widgetBoundsSize.width, height: widgetBoundsSize.height, alignment: .center)"))
+    }
+
     func test_floatingWidgetWindowController_passesAlertPulseIDToIconView() {
         let src = readFloatingWidgetWindowControllerSource()
 

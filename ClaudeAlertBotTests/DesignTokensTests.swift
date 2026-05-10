@@ -105,6 +105,42 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(GeometryTokens.popoverMaxVisibleRows, 4)
     }
 
+    func test_geometryTokens_widgetDrawableSize_expandsForActiveRoam() {
+        let size = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .roam,
+            quietHoursEnabled: false,
+            reduceMotion: false
+        )
+
+        XCTAssertEqual(size.width, 68)
+        XCTAssertEqual(size.height, 50)
+    }
+
+    func test_geometryTokens_widgetDrawableSize_keepsBaseSizeWhenRoamIsSuppressed() {
+        let quietSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .roam,
+            quietHoursEnabled: true,
+            reduceMotion: false
+        )
+        let reduceMotionSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .roam,
+            quietHoursEnabled: false,
+            reduceMotion: true
+        )
+        let bounceSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .bounce,
+            quietHoursEnabled: false,
+            reduceMotion: false
+        )
+
+        XCTAssertEqual(quietSize.width, 44)
+        XCTAssertEqual(quietSize.height, 44)
+        XCTAssertEqual(reduceMotionSize.width, 44)
+        XCTAssertEqual(reduceMotionSize.height, 44)
+        XCTAssertEqual(bounceSize.width, 44)
+        XCTAssertEqual(bounceSize.height, 44)
+    }
+
     // MARK: - MotionTokens (SPEC.md §4 "Motion")
 
     func test_motionTokens_bounceDuration_is0_45() {

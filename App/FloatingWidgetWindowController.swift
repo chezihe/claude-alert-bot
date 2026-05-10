@@ -29,7 +29,13 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     weak var hoverDelegate: WidgetHoverDelegate?
 
     init() {
-        let initialFrame = NSRect(x: 0, y: 0, width: 44, height: 44)
+        let store = SettingsStore.shared
+        let initialSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: store.idleAnimation,
+            quietHoursEnabled: store.quietHoursEnabled,
+            reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        )
+        let initialFrame = NSRect(origin: .zero, size: initialSize)
         let p = FloatingWidgetPanel(contentRect: initialFrame)
         self.panel = p
         super.init(window: p)
@@ -97,12 +103,27 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     // MARK: - private
 
     private func updateRootView(pendingCount: Int) {
+        let store = SettingsStore.shared
+        let size = GeometryTokens.widgetDrawableSize(
+            idleAnimation: store.idleAnimation,
+            quietHoursEnabled: store.quietHoursEnabled,
+            reduceMotion: reducedMotion
+        )
+        resizeContent(to: size)
         hostingView?.rootView = WidgetIconView(
             pendingCount: pendingCount,
             idleAnimation: SettingsStore.shared.idleAnimation,
             alertPulseID: currentAlertPulseID,
             quietHoursEnabled: SettingsStore.shared.quietHoursEnabled
         )
+    }
+
+    private func resizeContent(to size: CGSize) {
+        guard panel.frame.size != size else { return }
+        var frame = panel.frame
+        frame.size = size
+        panel.setFrame(frame, display: true)
+        hostingView?.frame = NSRect(origin: .zero, size: size)
     }
 
     private func repositionIfVisible() {

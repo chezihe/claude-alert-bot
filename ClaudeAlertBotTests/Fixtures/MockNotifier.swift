@@ -7,13 +7,13 @@ import Foundation
 
 @MainActor
 final class MockNotifier {
-    struct PresentCall { let session: String; let playSound: Bool }
+    struct PresentCall { let session: String; let pendingQueue: [String]; let playSound: Bool }
     private(set) var presentCalls: [PresentCall] = []
     private(set) var refreshCalls: [Int] = []
     private(set) var refreshQueueCalls: [[String]] = []
 
-    func present(sessionID: String, playSound: Bool) {
-        presentCalls.append(.init(session: sessionID, playSound: playSound))
+    func present(sessionID: String, pendingQueue: [String], playSound: Bool) {
+        presentCalls.append(.init(session: sessionID, pendingQueue: pendingQueue, playSound: playSound))
     }
 
     func refresh(count: Int, completedSessionIDs: [String] = []) {

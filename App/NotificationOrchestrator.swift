@@ -65,11 +65,12 @@ final class NotificationOrchestrator: NotifierProtocol {
 
     // MARK: - NotifierProtocol
 
-    func present(session: CompletedSession, playSoundOnce: Bool) async {
+    func present(session: CompletedSession, pendingQueue: [CompletedSession], playSoundOnce: Bool) async {
         let store = settings()
-        widget?.setQueue([session])
+        let queue = pendingQueue.isEmpty ? [session] : pendingQueue
+        widget?.setQueue(queue)
         store.everHadAlerts = true
-        widget?.showWidget(pendingCount: 1, latest: session)
+        widget?.showWidget(pendingCount: queue.count, latest: session)
         if playSoundOnce && store.soundEnabled && !store.quietHoursEnabled {
             sound.playOnce()
             log.notice("present session=\(session.sessionID, privacy: .public) sound=on")

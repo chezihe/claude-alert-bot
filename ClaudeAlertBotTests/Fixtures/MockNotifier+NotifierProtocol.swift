@@ -8,9 +8,11 @@ import Foundation
 
 @MainActor
 extension MockNotifier: NotifierProtocol {
-    func present(session: CompletedSession, playSoundOnce: Bool) async {
+    func present(session: CompletedSession, pendingQueue: [CompletedSession], playSoundOnce: Bool) async {
         // Forward to the original Wave-0 recording API (sessionID-based).
-        present(sessionID: session.sessionID, playSound: playSoundOnce)
+        present(sessionID: session.sessionID,
+                pendingQueue: pendingQueue.map(\.sessionID),
+                playSound: playSoundOnce)
     }
     func refreshQueueState(completed: [CompletedSession], count: Int) async {
         refresh(count: count, completedSessionIDs: completed.map(\.sessionID))

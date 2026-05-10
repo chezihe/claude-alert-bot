@@ -234,6 +234,7 @@ final class SessionRegistryTests: XCTestCase {
                        suppressIfFrontmost: suppressNo)
 
         XCTAssertEqual(notifier.presentCalls.map(\.session), [sid])
+        XCTAssertEqual(notifier.presentCalls.first?.pendingQueue, ["existing", sid])
         XCTAssertEqual(notifier.refreshCalls.last, 2)
         XCTAssertEqual(notifier.refreshQueueCalls.last, ["existing", sid])
     }

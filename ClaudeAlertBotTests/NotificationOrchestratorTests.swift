@@ -83,7 +83,7 @@ final class NotificationOrchestratorTests: XCTestCase {
         let orch = NotificationOrchestrator(widget: widget, sound: sound)
         let s = makeSession("sess-A")
 
-        await orch.present(session: s, playSoundOnce: true)
+        await orch.present(session: s, pendingQueue: [s], playSoundOnce: true)
 
         XCTAssertEqual(widget.showCalls.count, 1)
         XCTAssertEqual(widget.showCalls.first?.latestID, "sess-A")
@@ -97,10 +97,28 @@ final class NotificationOrchestratorTests: XCTestCase {
         let orch = NotificationOrchestrator(widget: widget, sound: sound)
         let s = makeSession("sess-A")
 
-        await orch.present(session: s, playSoundOnce: false)
+        await orch.present(session: s, pendingQueue: [s], playSoundOnce: false)
 
         XCTAssertEqual(widget.queueCalls, [["sess-A"]])
         XCTAssertEqual(widget.events.prefix(2), ["setQueue:sess-A", "show:sess-A"])
+    }
+
+    @MainActor
+    func test_present_usesFullPendingQueueForInitialWidgetState() async {
+        let widget = SpyWidget()
+        let sound = SpySoundPlayer()
+        let orch = NotificationOrchestrator(widget: widget, sound: sound)
+        let existing = makeSession("sess-existing")
+        let latest = makeSession("sess-latest")
+
+        await orch.present(session: latest,
+                           pendingQueue: [existing, latest],
+                           playSoundOnce: false)
+
+        XCTAssertEqual(widget.queueCalls, [["sess-existing", "sess-latest"]])
+        XCTAssertEqual(widget.showCalls.first?.pendingCount, 2)
+        XCTAssertEqual(widget.showCalls.first?.latestID, "sess-latest")
+        XCTAssertEqual(widget.events.prefix(2), ["setQueue:sess-existing,sess-latest", "show:sess-latest"])
     }
 
     @MainActor
@@ -109,7 +127,8 @@ final class NotificationOrchestratorTests: XCTestCase {
         let sound = SpySoundPlayer()
         let orch = NotificationOrchestrator(widget: widget, sound: sound)
 
-        await orch.present(session: makeSession(), playSoundOnce: false)
+        let s = makeSession()
+        await orch.present(session: s, pendingQueue: [s], playSoundOnce: false)
 
         XCTAssertTrue(SettingsStore.shared.everHadAlerts)
     }
@@ -121,7 +140,8 @@ final class NotificationOrchestratorTests: XCTestCase {
         let sound = SpySoundPlayer()
         let orch = NotificationOrchestrator(widget: widget, sound: sound)
 
-        await orch.present(session: makeSession(), playSoundOnce: true)
+        let s = makeSession()
+        await orch.present(session: s, pendingQueue: [s], playSoundOnce: true)
 
         XCTAssertEqual(widget.showCalls.count, 1, "Widget must still show")
         XCTAssertEqual(sound.playOnceCount, 0, "AUD-02: sound MUST NOT play when toggle off")
@@ -135,7 +155,8 @@ final class NotificationOrchestratorTests: XCTestCase {
         let sound = SpySoundPlayer()
         let orch = NotificationOrchestrator(widget: widget, sound: sound)
 
-        await orch.present(session: makeSession(), playSoundOnce: true)
+        let s = makeSession()
+        await orch.present(session: s, pendingQueue: [s], playSoundOnce: true)
 
         XCTAssertEqual(widget.showCalls.count, 1, "Quiet Hours must still queue/show the widget")
         XCTAssertEqual(sound.playOnceCount, 0, "Quiet Hours must suppress sound")
@@ -148,7 +169,8 @@ final class NotificationOrchestratorTests: XCTestCase {
         let sound = SpySoundPlayer()
         let orch = NotificationOrchestrator(widget: widget, sound: sound)
 
-        await orch.present(session: makeSession(), playSoundOnce: false)
+        let s = makeSession()
+        await orch.present(session: s, pendingQueue: [s], playSoundOnce: false)
 
         XCTAssertEqual(widget.showCalls.count, 1)
         XCTAssertEqual(sound.playOnceCount, 0,

@@ -6,7 +6,7 @@ import Foundation
 import os
 
 @MainActor protocol NotifierProtocol: AnyObject {
-    func present(session: CompletedSession, playSoundOnce: Bool) async
+    func present(session: CompletedSession, pendingQueue: [CompletedSession], playSoundOnce: Bool) async
     func refreshQueueState(completed: [CompletedSession], count: Int) async
 }
 
@@ -141,7 +141,7 @@ actor SessionRegistry {
         let snapshot = self.completed
         let count = snapshot.count
         let n = self.notifier
-        await n?.present(session: session, playSoundOnce: soundEnabled && !isDup)
+        await n?.present(session: session, pendingQueue: snapshot, playSoundOnce: soundEnabled && !isDup)
         await n?.refreshQueueState(completed: snapshot, count: count)
     }
 
@@ -268,7 +268,7 @@ actor SessionRegistry {
         let snapshot = self.completed
         let count = snapshot.count
         let n = self.notifier
-        await n?.present(session: session, playSoundOnce: soundEnabled)
+        await n?.present(session: session, pendingQueue: snapshot, playSoundOnce: soundEnabled)
         await n?.refreshQueueState(completed: snapshot, count: count)
         // Auto-dismiss after 30s (D2-21). Clock injection enables fast-forward in tests.
         let sid = session.sessionID

@@ -215,6 +215,18 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains(#".accessibilityLabel("Open Settings")"#))
     }
 
+    func test_popoverContentView_usesNativePopoverMaterialBackground() {
+        let src = readPopoverContentViewSource()
+
+        XCTAssertTrue(src.contains("private struct PopoverMaterialBackground: NSViewRepresentable"))
+        XCTAssertTrue(src.contains("NSVisualEffectView"))
+        XCTAssertTrue(src.contains("view.material = .popover"))
+        XCTAssertTrue(src.contains("view.blendingMode = .behindWindow"))
+        XCTAssertTrue(src.contains("view.state = .active"))
+        XCTAssertTrue(src.contains(".background(PopoverMaterialBackground())"))
+        XCTAssertFalse(src.contains(".background(.thinMaterial)"))
+    }
+
     func test_widgetPopoverController_sizingUsesPopoverGeometryTokens() {
         let src = readWidgetPopoverControllerSource()
 

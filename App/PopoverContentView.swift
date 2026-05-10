@@ -197,8 +197,24 @@ struct PopoverContentView: View {
             }
         }
         .frame(width: GeometryTokens.popoverWidth)
-        .background(.thinMaterial)
+        .background(PopoverMaterialBackground())
         .onHover { hovering in onPopoverHoverChange(hovering) }
+    }
+}
+
+private struct PopoverMaterialBackground: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = .popover
+        view.blendingMode = .behindWindow
+        view.state = .active
+        return view
+    }
+
+    func updateNSView(_ view: NSVisualEffectView, context: Context) {
+        view.material = .popover
+        view.blendingMode = .behindWindow
+        view.state = .active
     }
 }
 

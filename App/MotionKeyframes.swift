@@ -13,6 +13,11 @@ struct BounceKeyframe: Equatable {
     let scaleY: CGFloat
 }
 
+struct HeartKeyframe: Equatable {
+    let percent: Double   // 0...100 along the cycle
+    let scale: CGFloat
+}
+
 enum MotionKeyframes {
     // HTML bounce-cute is 0.9s ease-in-out infinite (Prototype v2 line 101).
     static let bouncePeriod: TimeInterval = 0.9
@@ -25,5 +30,19 @@ enum MotionKeyframes {
         BounceKeyframe(percent:  50, translateY: -5, scaleX: 0.97, scaleY: 1.05),
         BounceKeyframe(percent:  82, translateY: -2, scaleX: 1.01, scaleY: 0.99),
         BounceKeyframe(percent: 100, translateY:  0, scaleX: 1.04, scaleY: 0.94),
+    ]
+
+    // HTML heartbeat is 1.4s ease-in-out infinite (Prototype v2 line 106).
+    static let heartPeriod: TimeInterval = 1.4
+
+    // HTML @keyframes heartbeat (Prototype v2 lines 147–153).
+    // Double-pulse: peak 1 at 14% (1.14), peak 2 at 42% (1.08), then idle.
+    static let heartCycle: [HeartKeyframe] = [
+        HeartKeyframe(percent:   0, scale: 1.00),
+        HeartKeyframe(percent:  14, scale: 1.14),
+        HeartKeyframe(percent:  28, scale: 1.00),
+        HeartKeyframe(percent:  42, scale: 1.08),
+        HeartKeyframe(percent:  56, scale: 1.00),
+        HeartKeyframe(percent: 100, scale: 1.00),
     ]
 }

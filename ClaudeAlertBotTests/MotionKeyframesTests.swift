@@ -50,4 +50,45 @@ final class MotionKeyframesTests: XCTestCase {
             XCTAssertEqual(kf.scaleY,     exp.3, accuracy: 0.0001)
         }
     }
+
+    // MARK: - Heart cycle
+
+    func test_heartPeriod_matchesPrototype_1_4s() {
+        XCTAssertEqual(MotionKeyframes.heartPeriod, 1.4, accuracy: 0.0001)
+    }
+
+    func test_heartCycle_startsAtPercent0_endsAtPercent100() {
+        XCTAssertEqual(MotionKeyframes.heartCycle.first?.percent, 0)
+        XCTAssertEqual(MotionKeyframes.heartCycle.last?.percent, 100)
+    }
+
+    func test_heartCycle_percentIsMonotonicallyIncreasing() {
+        let percents = MotionKeyframes.heartCycle.map(\.percent)
+        for i in 1..<percents.count {
+            XCTAssertGreaterThan(percents[i], percents[i - 1])
+        }
+    }
+
+    func test_heartCycle_isLoopContinuous() {
+        let first = MotionKeyframes.heartCycle.first
+        let last = MotionKeyframes.heartCycle.last
+        XCTAssertEqual(first?.scale, last?.scale)
+    }
+
+    func test_heartCycle_matchesPrototypeKeyframesExactly() {
+        // HTML @keyframes heartbeat (Claude Alert Bot - Prototype v2.html:147–153).
+        let expected: [(Double, CGFloat)] = [
+            (0,   1.00),
+            (14,  1.14),
+            (28,  1.00),
+            (42,  1.08),
+            (56,  1.00),
+            (100, 1.00),
+        ]
+        XCTAssertEqual(MotionKeyframes.heartCycle.count, expected.count)
+        for (kf, exp) in zip(MotionKeyframes.heartCycle, expected) {
+            XCTAssertEqual(kf.percent, exp.0, accuracy: 0.0001)
+            XCTAssertEqual(kf.scale,   exp.1, accuracy: 0.0001)
+        }
+    }
 }

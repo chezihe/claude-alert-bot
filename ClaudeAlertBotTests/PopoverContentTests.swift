@@ -205,6 +205,24 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertEqual(visible.map(\.sessionID), ["a1"])
     }
 
+    func test_popoverHeight_clampsRowsAndIncludesHeaderOnlyWhenRendered() {
+        let queue = [
+            mkSession(id: "a1", project: "Alpha"),
+            mkSession(id: "a2", project: "Beta"),
+            mkSession(id: "a3", project: "Gamma"),
+            mkSession(id: "a4", project: "Delta"),
+            mkSession(id: "a5", project: "Epsilon")
+        ]
+
+        let height = PopoverContentRules.popoverHeight(
+            queue: queue,
+            expandedProjects: [],
+            everHadAlerts: true
+        )
+
+        XCTAssertEqual(height, GeometryTokens.rowMinHeight * 4 + 32)
+    }
+
     func test_timeSuffix_format_hhmm() {
         var comps = DateComponents()
         comps.year = 2026; comps.month = 5; comps.day = 7
@@ -396,11 +414,16 @@ final class PopoverContentTests: XCTestCase {
     func test_widgetPopoverController_sizingUsesPopoverGeometryTokens() {
         let src = readWidgetPopoverControllerSource()
 
-        XCTAssertTrue(src.contains("PopoverContentRules.displayRowCount(queue, expandedProjects: expandedProjects)"))
-        XCTAssertTrue(src.contains("let rowsClamped = min(rows, GeometryTokens.popoverMaxVisibleRows)"))
-        XCTAssertTrue(src.contains("GeometryTokens.rowMinHeight * CGFloat(rowsClamped)"))
-        XCTAssertTrue(src.contains("let chromeHeight: CGFloat = 32"))
-        XCTAssertTrue(src.contains("NSSize(width: GeometryTokens.popoverWidth, height: bodyHeight + chromeHeight)"))
+        XCTAssertTrue(src.contains("PopoverContentRules.popoverHeight("))
+        XCTAssertTrue(src.contains("NSSize(width: GeometryTokens.popoverWidth, height: height)"))
+    }
+
+    func test_popoverContentViewPinsRootHeightBeforeFirstShow() {
+        let src = readPopoverContentViewSource()
+
+        XCTAssertTrue(src.contains("height: PopoverContentRules.popoverHeight("))
+        XCTAssertTrue(src.contains("queue: visibleQueue"))
+        XCTAssertTrue(src.contains("everHadAlerts: everHadAlerts"))
     }
 
     func test_widgetPopoverController_wiresProjectGroupExpansion() {

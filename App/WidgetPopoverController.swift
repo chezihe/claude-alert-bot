@@ -256,13 +256,12 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate, NSPopoverDel
     }
 
     private func resizePopover(_ pop: NSPopover, queue: [CompletedSession]) {
-        let rows = max(1, PopoverContentRules.displayRowCount(queue, expandedProjects: expandedProjects))
-        let rowsClamped = min(rows, GeometryTokens.popoverMaxVisibleRows)
-        let bodyHeight: CGFloat = queue.isEmpty && !SettingsStore.shared.everHadAlerts
-            ? 48  // matches EmptyStateView natural height (text 12pt + .padding(.vertical, 16))
-            : (queue.isEmpty ? 0 : GeometryTokens.rowMinHeight * CGFloat(rowsClamped))
-        let chromeHeight: CGFloat = 32  // header always visible (gear + optional Clear All)
-        pop.contentSize = NSSize(width: GeometryTokens.popoverWidth, height: bodyHeight + chromeHeight)
+        let height = PopoverContentRules.popoverHeight(
+            queue: queue,
+            expandedProjects: expandedProjects,
+            everHadAlerts: SettingsStore.shared.everHadAlerts
+        )
+        pop.contentSize = NSSize(width: GeometryTokens.popoverWidth, height: height)
     }
 
     /// UI-SPEC: popover slides away from the widget's corner.

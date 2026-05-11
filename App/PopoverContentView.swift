@@ -123,6 +123,18 @@ enum PopoverContentRules {
         groupedListItems(queue, expandedProjects: expandedProjects).count
     }
 
+    static func popoverHeight(queue: [CompletedSession],
+                              expandedProjects: Set<String>,
+                              everHadAlerts: Bool) -> CGFloat {
+        let rows = max(1, displayRowCount(queue, expandedProjects: expandedProjects))
+        let rowsClamped = min(rows, GeometryTokens.popoverMaxVisibleRows)
+        let bodyHeight: CGFloat = shouldShowEmptyState(queue: queue, everHadAlerts: everHadAlerts)
+            ? 48
+            : (queue.isEmpty ? 0 : GeometryTokens.rowMinHeight * CGFloat(rowsClamped))
+        let chromeHeight: CGFloat = shouldShowClearAll(clearableCount: clearableSessionCount(queue)) ? 32 : 0
+        return bodyHeight + chromeHeight
+    }
+
     static func canCollapseProjectGroup(projectName: String,
                                         queue: [CompletedSession],
                                         rowStates: [String: RowState]) -> Bool {
@@ -315,7 +327,14 @@ struct PopoverContentView: View {
                 displayQueue = newQueue
             }
         }
-        .frame(width: GeometryTokens.popoverWidth)
+        .frame(
+            width: GeometryTokens.popoverWidth,
+            height: PopoverContentRules.popoverHeight(
+                queue: visibleQueue,
+                expandedProjects: expandedProjects,
+                everHadAlerts: everHadAlerts
+            )
+        )
         .background(PopoverMaterialBackground())
         .onHover { hovering in onPopoverHoverChange(hovering) }
     }

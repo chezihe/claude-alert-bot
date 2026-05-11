@@ -92,19 +92,12 @@ enum EffectTokens {
 }
 
 enum MotionTokens {
-    // SPEC.md §4 row "Bounce (idle)" — 0.45s duration, 5pt vertical, easeInOut, autoreverse, infinite.
-    static let bounceDuration: TimeInterval = 0.45
-    static let bounceOffset: CGFloat = 5
-    static let bounceStretchScale: CGFloat = 1.04
-    static let bounceSquashScale: CGFloat = 0.94
+    // Bounce and Heart now live in MotionKeyframes (keyframe-based, HTML-faithful);
+    // see App/MotionKeyframes.swift. Removed legacy single-scalar tokens here.
+
     // SPEC.md §4 row "Breathe" — 2.4s, autoreverse, infinite, easeInOut, scale 1.0↔1.06.
     static let breatheDuration: TimeInterval = 2.4
     static let breatheScale: CGFloat = 1.06
-    // FEATURES.md §1 row "Heart" — prototype heartbeat double-pulse at 14/28/42/56% of 1.4s.
-    static let heartDuration: TimeInterval = 1.4
-    static let heartBeatStepDuration: TimeInterval = heartDuration * 0.14
-    static let heartPeakScale: CGFloat = 1.14
-    static let heartSecondScale: CGFloat = 1.08
     // SPEC.md §4 row "Ring (bell)" — 0.55s, easeInOut, rotate ±10° from top anchor.
     static let ringDuration: TimeInterval = 0.55
     static let ringRotation: Double = 10
@@ -139,21 +132,11 @@ enum MotionTokens {
     static let reduceMotionFadeDuration: TimeInterval = 0.15
 
     /// D4 (SC#3) — uniform reduce-motion gate. Returns nil when reduce-motion is on so call-sites
-    /// can `if let anim = MotionTokens.bounceAnimation(...) { withAnimation(anim) { ... } }`.
+    /// can `if let anim = MotionTokens.breatheAnimation(...) { withAnimation(anim) { ... } }`.
     /// Caller passes the Bool from whichever native API is natural (SwiftUI Environment / NSWorkspace).
-    static func bounceAnimation(reduceMotion: Bool) -> Animation? {
-        guard !reduceMotion else { return nil }
-        return .easeInOut(duration: bounceDuration).repeatForever(autoreverses: true)
-    }
-
     static func breatheAnimation(reduceMotion: Bool) -> Animation? {
         guard !reduceMotion else { return nil }
         return .easeInOut(duration: breatheDuration).repeatForever(autoreverses: true)
-    }
-
-    static func heartBeatAnimation(reduceMotion: Bool) -> Animation? {
-        guard !reduceMotion else { return nil }
-        return .easeInOut(duration: heartBeatStepDuration)
     }
 
     static func ringAnimation(reduceMotion: Bool) -> Animation? {

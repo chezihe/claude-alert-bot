@@ -172,38 +172,12 @@ final class DesignTokensTests: XCTestCase {
 
     // MARK: - MotionTokens (SPEC.md §4 "Motion")
 
-    func test_motionTokens_bounceDuration_is0_45() {
-        XCTAssertEqual(MotionTokens.bounceDuration, 0.45, accuracy: 0.001)
-    }
-
-    func test_motionTokens_bounceOffset_is5() {
-        XCTAssertEqual(MotionTokens.bounceOffset, 5)
-    }
-
-    func test_motionTokens_bounceStretchScale_is1_04() {
-        XCTAssertEqual(MotionTokens.bounceStretchScale, 1.04, accuracy: 0.001)
-    }
-
-    func test_motionTokens_bounceSquashScale_is0_94() {
-        XCTAssertEqual(MotionTokens.bounceSquashScale, 0.94, accuracy: 0.001)
-    }
-
     func test_motionTokens_breatheDuration_is2_4() {
         XCTAssertEqual(MotionTokens.breatheDuration, 2.4, accuracy: 0.001)
     }
 
     func test_motionTokens_breatheScale_is1_06() {
         XCTAssertEqual(MotionTokens.breatheScale, 1.06, accuracy: 0.001)
-    }
-
-    func test_motionTokensSource_heartValues_matchPrototype() {
-        let src = readDesignTokensSource()
-
-        XCTAssertTrue(src.contains("static let heartDuration: TimeInterval = 1.4"))
-        XCTAssertTrue(src.contains("static let heartBeatStepDuration: TimeInterval = heartDuration * 0.14"))
-        XCTAssertTrue(src.contains("static let heartPeakScale: CGFloat = 1.14"))
-        XCTAssertTrue(src.contains("static let heartSecondScale: CGFloat = 1.08"))
-        XCTAssertTrue(src.contains("static func heartBeatAnimation(reduceMotion: Bool) -> Animation?"))
     }
 
     func test_motionTokensSource_ringValues_matchSpec() {
@@ -266,18 +240,8 @@ final class DesignTokensTests: XCTestCase {
 
     // MARK: - MotionTokens reduce-motion gate (D4 / SC#3)
 
-    func test_motionTokens_bounceAnimation_returnsNil_whenReduceMotionIsTrue() {
-        // D4: token namespace owns the uniform reduce-motion gate.
-        XCTAssertNil(MotionTokens.bounceAnimation(reduceMotion: true))
-    }
-
-    func test_motionTokens_bounceAnimation_returnsNonNil_whenReduceMotionIsFalse() {
-        // We cannot inspect Animation internals across SwiftUI versions; non-nil + the
-        // reduce-motion=true → nil pair above is sufficient drift-guard.
-        XCTAssertNotNil(MotionTokens.bounceAnimation(reduceMotion: false))
-    }
-
     func test_motionTokens_breatheAnimation_returnsNil_whenReduceMotionIsTrue() {
+        // D4: token namespace owns the uniform reduce-motion gate.
         XCTAssertNil(MotionTokens.breatheAnimation(reduceMotion: true))
     }
 

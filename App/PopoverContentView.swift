@@ -210,7 +210,7 @@ struct PopoverContentView: View {
 
             if PopoverContentRules.shouldShowEmptyState(queue: displayQueue, everHadAlerts: everHadAlerts) {
                 EmptyStateView()
-            } else if !displayQueue.isEmpty {
+            } else {
                 let isScrollable = listItems.count > GeometryTokens.popoverMaxVisibleRows
                 let fades = PopoverContentRules.scrollFadeVisibility(
                     contentMinY: scrollContentFrame.minY,
@@ -260,7 +260,8 @@ struct PopoverContentView: View {
                         }
                     )
                 }
-                .scrollIndicators(.hidden)
+                .scrollIndicators(.never)
+                .background(HideScrollerIntrospector())
                 .frame(maxHeight: GeometryTokens.rowMinHeight * CGFloat(GeometryTokens.popoverMaxVisibleRows))
                 .coordinateSpace(name: Self.scrollCoordinateSpaceName)
                 .background(
@@ -343,6 +344,25 @@ private struct PopoverScrollContentFramePreferenceKey: PreferenceKey {
     static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
         value = nextValue()
     }
+}
+
+/// Walks up the AppKit hierarchy from the SwiftUI ScrollView's content view to
+/// find the enclosing NSScrollView and disable its scrollers outright. `.scrollIndicators(.never)`
+/// alone is not always respected on macOS — system "Show scroll bars" preference can
+/// reintroduce overlay indicators. Setting `hasVerticalScroller/hasHorizontalScroller = false`
+/// is a hard override.
+private struct HideScrollerIntrospector: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let probe = NSView(frame: .zero)
+        DispatchQueue.main.async { [weak probe] in
+            guard let scrollView = probe?.enclosingScrollView else { return }
+            scrollView.hasVerticalScroller = false
+            scrollView.hasHorizontalScroller = false
+            scrollView.autohidesScrollers = true
+        }
+        return probe
+    }
+    func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
 private struct PopoverMaterialBackground: NSViewRepresentable {

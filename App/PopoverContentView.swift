@@ -210,7 +210,7 @@ struct PopoverContentView: View {
 
             if PopoverContentRules.shouldShowEmptyState(queue: displayQueue, everHadAlerts: everHadAlerts) {
                 EmptyStateView()
-            } else {
+            } else if !displayQueue.isEmpty {
                 let isScrollable = listItems.count > GeometryTokens.popoverMaxVisibleRows
                 let fades = PopoverContentRules.scrollFadeVisibility(
                     contentMinY: scrollContentFrame.minY,
@@ -220,6 +220,8 @@ struct PopoverContentView: View {
                 )
                 ScrollView {
                     VStack(spacing: 0) {
+                        HideScrollerIntrospector()
+                            .frame(width: 0, height: 0)
                         ForEach(listItems) { item in
                             Group {
                                 switch item {
@@ -261,8 +263,10 @@ struct PopoverContentView: View {
                     )
                 }
                 .scrollIndicators(.never)
-                .background(HideScrollerIntrospector())
-                .frame(maxHeight: GeometryTokens.rowMinHeight * CGFloat(GeometryTokens.popoverMaxVisibleRows))
+                .frame(maxHeight: CGFloat(min(
+                    PopoverContentRules.displayRowCount(displayQueue, expandedProjects: expandedProjects),
+                    GeometryTokens.popoverMaxVisibleRows
+                )) * GeometryTokens.rowMinHeight)
                 .coordinateSpace(name: Self.scrollCoordinateSpaceName)
                 .background(
                     GeometryReader { proxy in

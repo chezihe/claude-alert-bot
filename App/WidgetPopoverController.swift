@@ -13,7 +13,7 @@ import SwiftUI
 import os
 
 @MainActor
-final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
+final class WidgetPopoverController: NSObject, WidgetHoverDelegate, NSPopoverDelegate {
     private let log = Logger(subsystem: "com.claudealert.bot.hook", category: "widget")
     private weak var widgetController: FloatingWidgetWindowController?
     private var entryWorkItem: DispatchWorkItem?
@@ -119,6 +119,7 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         } else {
             pop = NSPopover()
             pop.behavior = .transient
+            pop.delegate = self
             popover = pop
         }
         // Phase 3 03-09 fix — reuse the NSHostingController so SwiftUI sees a rootView
@@ -195,12 +196,63 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
     /// internal radius cannot be queried; clipping the hosting view to the same
     /// radius the SPEC documents (14pt) keeps the SwiftUI content aligned with
     /// the visible panel edge across macOS 14+ revisions.
+    /// NSPopover frame radius — macOS 14–26 measure ≈ 12pt around the panel
+    /// edge (the SPEC's 14pt is conceptual; AppKit overrides it). Matching this
+    /// value keeps SwiftUI row backgrounds flush with the visible panel corner.
+    private static let nsPopoverFrameCornerRadius: CGFloat = 12
+
     private func applyHostCornerRadius(_ pop: NSPopover) {
         guard let view = pop.contentViewController?.view else { return }
         view.wantsLayer = true
-        view.layer?.cornerRadius = GeometryTokens.popoverCornerRadius
+        view.layer?.cornerRadius = Self.nsPopoverFrameCornerRadius
         view.layer?.cornerCurve = .continuous
         view.layer?.masksToBounds = true
+        // The SwiftUI .background(HideScrollerIntrospector()) probe sometimes
+        // attaches outside the NSScrollView subtree, so its enclosingScrollView
+        // is nil. Walk the actual AppKit view tree the popover hosts and force
+        // every NSScrollView's drawsBackground off — that is what was painting
+        // the faint blue strips above/below the row. Defer one runloop tick so
+        // NSHostingController has materialised the SwiftUI content into AppKit.
+        DispatchQueue.main.async { [weak view] in
+            guard let view else { return }
+            Self.flattenScrollViews(in: view)
+        }
+    }
+
+    // MARK: - NSPopoverDelegate
+
+    nonisolated func popoverDidShow(_ notification: Notification) {
+        // NSScrollView is materialised lazily after `show(relativeTo:...)` returns,
+        // so the async tick scheduled inside applyHostCornerRadius can fire too early
+        // (introspector finds no NSScrollView in the subtree) — leaving the panel
+        // with default `drawsBackground=true` and the faint blue strips visible.
+        // popoverDidShow is dispatched after the hosted view tree is on-screen and
+        // its NSScrollView children exist; repeat the sweep here as a guaranteed
+        // second pass.
+        Task { @MainActor in
+            guard let pop = notification.object as? NSPopover,
+                  let view = pop.contentViewController?.view else { return }
+            Self.flattenScrollViews(in: view)
+        }
+    }
+
+    private static func flattenScrollViews(in view: NSView) {
+        if let scrollView = view as? NSScrollView {
+            scrollView.hasVerticalScroller = false
+            scrollView.hasHorizontalScroller = false
+            scrollView.autohidesScrollers = true
+            scrollView.drawsBackground = false
+            scrollView.backgroundColor = .clear
+            scrollView.borderType = .noBorder
+            scrollView.contentView.drawsBackground = false
+            scrollView.wantsLayer = true
+            scrollView.layer?.backgroundColor = NSColor.clear.cgColor
+            scrollView.contentView.wantsLayer = true
+            scrollView.contentView.layer?.backgroundColor = NSColor.clear.cgColor
+        }
+        for subview in view.subviews {
+            flattenScrollViews(in: subview)
+        }
     }
 
     private func resizePopover(_ pop: NSPopover, queue: [CompletedSession]) {

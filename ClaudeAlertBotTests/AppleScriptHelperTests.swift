@@ -117,7 +117,7 @@ final class AppleScriptHelperTests: XCTestCase {
                        "Cross-Space jump must not activate iTerm2 before AccessibilityRaiser raises the exact target window")
     }
 
-    func test_runJumpByUUID_doesNotIgnoreAccessibilityRaiseResult() throws {
+    func test_runJumpByUUID_attemptsAccessibilityRaiseWithoutMarkingMatchedSessionMissing() throws {
         let testFile = URL(fileURLWithPath: #filePath)
         let projectRoot = testFile
             .deletingLastPathComponent()
@@ -129,11 +129,19 @@ final class AppleScriptHelperTests: XCTestCase {
         XCTAssertFalse(src.isEmpty, "Could not read App/AppleScriptHelper.swift at \(helperURL.path)")
         XCTAssertFalse(
             src.contains("_ = AccessibilityRaiser.raise"),
-            "runJumpByUUID must not report success after ignoring a failed exact-window AX raise"
+            "runJumpByUUID must still record the AX raise result for diagnostics"
         )
         XCTAssertTrue(
+            src.contains("let raised = AccessibilityRaiser.raise"),
+            "runJumpByUUID should attempt AX raise after AppleScript matches a target session"
+        )
+        XCTAssertTrue(
+            src.contains("if !raised"),
+            "AX raise failure after a session match should be handled explicitly"
+        )
+        XCTAssertFalse(
             src.contains("guard AccessibilityRaiser.raise"),
-            "runJumpByUUID must require AX raise success before returning .ok"
+            "A matched iTerm session must not be marked missing only because AX raise could not confirm activation"
         )
     }
 

@@ -189,8 +189,7 @@ actor AppleScriptHelper {
     }
 
     /// D3-06 — jump to the iTerm2 session matching `uuid`.
-    /// Returns .ok on match-and-activate; .missing when the loop fell through (no UUID match)
-    /// or Accessibility could not raise the exact matched window.
+    /// Returns .ok on UUID match; .missing when the loop fell through (no UUID match).
     /// Returns .permissionDenied / .timeout / .otherError per AppleScript classify result.
     /// SECURITY (T-INJECTION-01): rejects any non-UUID input via iTermSessionID.isValid before substitution.
     func runJumpByUUID(_ uuid: String) async -> JumpResult {
@@ -199,6 +198,7 @@ actor AppleScriptHelper {
             return .otherError(0)
         }
         let source = String(format: Self.jumpByUUIDTemplate, uuid)
+        let log = self.log
         let result: JumpResult = await withCheckedContinuation { (cont: CheckedContinuation<JumpResult, Never>) in
             queue.async {
                 guard let script = NSAppleScript(source: source) else {
@@ -214,20 +214,18 @@ actor AppleScriptHelper {
                 let value = script.executeAndReturnError(&runErr)
                 let s = value.stringValue ?? ""
                 let r = Self.classify(error: runErr, result: s)
-                // D3-21 — cross-Space raise via Accessibility API. AppleScript can
-                // select the target session, but AX kAXRaiseAction is the exact-window
-                // activation gate. If AX cannot raise that window, do not report .ok:
-                // treating this as success clears the row while macOS may leave a
-                // different iTerm2 window visible in the current Space.
+                // D3-21 — cross-Space raise via Accessibility API. AppleScript has
+                // already selected the UUID match; AX is a best-effort exact-window
+                // activation boost, not evidence that the session disappeared.
                 if case .success(let payload) = r, !payload.isEmpty {
                     guard let (winID, title) = Self.parseJumpPayload(payload),
                           let pid = AccessibilityRaiser.itermPID() else {
                         cont.resume(returning: .missing)
                         return
                     }
-                    guard AccessibilityRaiser.raise(itermPID: pid, windowID: winID, title: title) else {
-                        cont.resume(returning: .missing)
-                        return
+                    let raised = AccessibilityRaiser.raise(itermPID: pid, windowID: winID, title: title)
+                    if !raised {
+                        log.warning("runJumpByUUID matched session but AX raise did not confirm activation")
                     }
                     cont.resume(returning: .ok)
                     return

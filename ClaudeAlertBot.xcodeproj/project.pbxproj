@@ -25,6 +25,7 @@
 		399D2EA67DA5BAF6E5600AD5 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1285336F5A35E2874B0371E /* EmptyStateView.swift */; };
 		3E34F876C0E5EE6646F97A2A /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4659AB687A21FAB2AB35ECE /* DesignTokens.swift */; };
 		4E99FC14F6F4031060A09E36 /* MutedProjectsRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94F900B4D713937E545B390C /* MutedProjectsRulesTests.swift */; };
+		50395090002C98C70B03D693 /* MotionKeyframesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A323BB2411675DC8255249 /* MotionKeyframesTests.swift */; };
 		67297E2D444E24FE063D63F5 /* SessionRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50B23882ED554CD89626EEA0 /* SessionRecord.swift */; };
 		6D860F2F4A5F204144F1FC3E /* WidgetPopoverController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EC061914D2B7ECEB85B1014 /* WidgetPopoverController.swift */; };
 		7569503AF85CCD1ED620F61A /* PositioningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F846DC70533456E49CAC49C5 /* PositioningTests.swift */; };
@@ -50,6 +51,7 @@
 		AE06704A525B5DDE625A26FD /* iTermSessionIDTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09884DA38C8ABC43B43A4C15 /* iTermSessionIDTests.swift */; };
 		BAC90EB131673B372DBA2C88 /* SessionRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E982CB48D46A37C9DDD56AA /* SessionRegistryTests.swift */; };
 		BEFFBBB2C70821502EA1465F /* ReporterScriptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06B6F2CA27C6DFDE9C8B8F6C /* ReporterScriptTests.swift */; };
+		C02DC451F4F35D0CBA472652 /* MotionKeyframes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607EF570071738D59CDD1266 /* MotionKeyframes.swift */; };
 		C2E97DBA3A369EDCD3C83066 /* PermissionDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4727020E044B4D9690900BC4 /* PermissionDeepLink.swift */; };
 		C4488CFEBDE80820E8D541D6 /* ITerm2Jumper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 448CBA41A1B75922D5F85801 /* ITerm2Jumper.swift */; };
 		C45C96766C5267557278EABB /* IdleAnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CA41D38B7C594A1BEF806E /* IdleAnimationTests.swift */; };
@@ -108,6 +110,7 @@
 		1D54D1C911C95F984BA6C8A1 /* HookListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookListener.swift; sourceTree = "<group>"; };
 		22B1AABE29B040176423CE0A /* SettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStoreTests.swift; sourceTree = "<group>"; };
 		2F0532EA5559479069D65C1F /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		31A323BB2411675DC8255249 /* MotionKeyframesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionKeyframesTests.swift; sourceTree = "<group>"; };
 		36BDD5D1C291C8C40FA6F82D /* NotificationOrchestratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOrchestratorTests.swift; sourceTree = "<group>"; };
 		3AD080323016E4B964B92C69 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		422669922C84673FA026FD1E /* HookEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookEvent.swift; sourceTree = "<group>"; };
@@ -122,6 +125,7 @@
 		5486D21A0C5465A9F1319450 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		5D0B0A11E7A8D1588546D213 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		5EF5D9778A789F1B7E663648 /* FloatingWidgetWindowControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingWidgetWindowControllerTests.swift; sourceTree = "<group>"; };
+		607EF570071738D59CDD1266 /* MotionKeyframes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionKeyframes.swift; sourceTree = "<group>"; };
 		62D8CC37BBF74C6D6DCAEADF /* ClaudeAlertBotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClaudeAlertBotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		650DBF68BEBAABAE7F7A198D /* WakeObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeObserver.swift; sourceTree = "<group>"; };
 		6B78D85FFDFAD8C99CF5951D /* SocketPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocketPaths.swift; sourceTree = "<group>"; };
@@ -174,6 +178,7 @@
 				E9CA41D38B7C594A1BEF806E /* IdleAnimationTests.swift */,
 				135F84C6B3B261E51AAD624D /* ITerm2JumperTests.swift */,
 				09884DA38C8ABC43B43A4C15 /* iTermSessionIDTests.swift */,
+				31A323BB2411675DC8255249 /* MotionKeyframesTests.swift */,
 				94F900B4D713937E545B390C /* MutedProjectsRulesTests.swift */,
 				36BDD5D1C291C8C40FA6F82D /* NotificationOrchestratorTests.swift */,
 				A2492431EE9304DB1FF24B55 /* PermissionDeepLinkTests.swift */,
@@ -223,6 +228,7 @@
 				C52574E53A8FD6995A80B23B /* Info.plist */,
 				448CBA41A1B75922D5F85801 /* ITerm2Jumper.swift */,
 				DBB92DF8ECD2021AD37F1AAC /* iTermSessionID.swift */,
+				607EF570071738D59CDD1266 /* MotionKeyframes.swift */,
 				DB9089AAD782186DEE08C823 /* MutedProjectsRules.swift */,
 				12F78A117E749843C430D7FA /* NotificationOrchestrator.swift */,
 				061CE1E19FDE7AD807A94BD1 /* PermissionBannerView.swift */,
@@ -454,6 +460,7 @@
 				967FA8420333A8A7FC015774 /* MockNotifier+NotifierProtocol.swift in Sources */,
 				A8F29327F7881CB4C3E7D507 /* MockNotifier.swift in Sources */,
 				C8F82E4C8E04670D6473A5D6 /* MockTerminalJumper.swift in Sources */,
+				50395090002C98C70B03D693 /* MotionKeyframesTests.swift in Sources */,
 				4E99FC14F6F4031060A09E36 /* MutedProjectsRulesTests.swift in Sources */,
 				F668B43833BA6E3356C2A326 /* NotificationOrchestratorTests.swift in Sources */,
 				F5E04AAFC38DE8839E8D8DC4 /* PermissionDeepLinkTests.swift in Sources */,
@@ -488,6 +495,7 @@
 				8ECAB8E9D4C43DADEF756A7A /* HookListener.swift in Sources */,
 				C4488CFEBDE80820E8D541D6 /* ITerm2Jumper.swift in Sources */,
 				35B1E7ACE04BF0602EE14448 /* IdleAnimation.swift in Sources */,
+				C02DC451F4F35D0CBA472652 /* MotionKeyframes.swift in Sources */,
 				A96D0C5D318154CD39615272 /* MutedProjectsRules.swift in Sources */,
 				36C9FE5D269DBAA20CEADDB3 /* NotificationOrchestrator.swift in Sources */,
 				208C4F34607652159DBF7783 /* PermissionBannerView.swift in Sources */,

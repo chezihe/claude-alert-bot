@@ -112,6 +112,31 @@ final class AppleScriptHelperTests: XCTestCase {
                       "RESEARCH Pattern 1 sdef-verified UUID equality match")
     }
 
+    func test_jumpByUUIDTemplate_defersActivationToAccessibilityRaiser() {
+        XCTAssertFalse(AppleScriptHelper.jumpRawTemplate.contains("activate"),
+                       "Cross-Space jump must not activate iTerm2 before AccessibilityRaiser raises the exact target window")
+    }
+
+    func test_runJumpByUUID_doesNotIgnoreAccessibilityRaiseResult() throws {
+        let testFile = URL(fileURLWithPath: #filePath)
+        let projectRoot = testFile
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let helperURL = projectRoot
+            .appendingPathComponent("App")
+            .appendingPathComponent("AppleScriptHelper.swift")
+        let src = (try? String(contentsOf: helperURL, encoding: .utf8)) ?? ""
+        XCTAssertFalse(src.isEmpty, "Could not read App/AppleScriptHelper.swift at \(helperURL.path)")
+        XCTAssertFalse(
+            src.contains("_ = AccessibilityRaiser.raise"),
+            "runJumpByUUID must not report success after ignoring a failed exact-window AX raise"
+        )
+        XCTAssertTrue(
+            src.contains("guard AccessibilityRaiser.raise"),
+            "runJumpByUUID must require AX raise success before returning .ok"
+        )
+    }
+
     func test_focusFrontmostSource_containsAppleScriptTimeout() {
         XCTAssertTrue(AppleScriptHelper.focusFrontmostRawSource.contains("with timeout of 3 seconds"),
                       "JUMP-04 inheritance: focus-frontmost must also declare 3-second hard timeout")

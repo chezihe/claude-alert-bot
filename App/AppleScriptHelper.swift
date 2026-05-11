@@ -50,6 +50,11 @@ actor AppleScriptHelper {
     ///   D: 2-step (UUID list → Swift match → select-by-index) = REJECTED (violates "by UUID, never by index").
     ///
     /// Per-call compile cost = 1-5ms (RESEARCH cited measurement) — sub-perceptual.
+    /// Returns "<windowID>|<windowTitle>" on success (e.g. "12345|fish — myproject"),
+    /// empty string when no session matches. The windowID + title are consumed by
+    /// AccessibilityRaiser to cross-Space-raise the window — AppleScript prepares
+    /// the target selection but must not activate iTerm2 before AX raises the exact
+    /// window, otherwise macOS can surface a different iTerm2 Space/window.
     private static let jumpByUUIDTemplate: String = """
     with timeout of 3 seconds
         tell application "iTerm2"
@@ -61,8 +66,7 @@ actor AppleScriptHelper {
                             tell s to select
                             tell t to select
                             tell w to set index to 1
-                            activate
-                            return "ok"
+                            return ((id of w) as string) & "|" & (name of w)
                         end if
                     end repeat
                 end repeat
@@ -185,7 +189,8 @@ actor AppleScriptHelper {
     }
 
     /// D3-06 — jump to the iTerm2 session matching `uuid`.
-    /// Returns .ok on match-and-activate; .missing when the loop fell through (no UUID match).
+    /// Returns .ok on match-and-activate; .missing when the loop fell through (no UUID match)
+    /// or Accessibility could not raise the exact matched window.
     /// Returns .permissionDenied / .timeout / .otherError per AppleScript classify result.
     /// SECURITY (T-INJECTION-01): rejects any non-UUID input via iTermSessionID.isValid before substitution.
     func runJumpByUUID(_ uuid: String) async -> JumpResult {
@@ -209,6 +214,24 @@ actor AppleScriptHelper {
                 let value = script.executeAndReturnError(&runErr)
                 let s = value.stringValue ?? ""
                 let r = Self.classify(error: runErr, result: s)
+                // D3-21 — cross-Space raise via Accessibility API. AppleScript can
+                // select the target session, but AX kAXRaiseAction is the exact-window
+                // activation gate. If AX cannot raise that window, do not report .ok:
+                // treating this as success clears the row while macOS may leave a
+                // different iTerm2 window visible in the current Space.
+                if case .success(let payload) = r, !payload.isEmpty {
+                    guard let (winID, title) = Self.parseJumpPayload(payload),
+                          let pid = AccessibilityRaiser.itermPID() else {
+                        cont.resume(returning: .missing)
+                        return
+                    }
+                    guard AccessibilityRaiser.raise(itermPID: pid, windowID: winID, title: title) else {
+                        cont.resume(returning: .missing)
+                        return
+                    }
+                    cont.resume(returning: .ok)
+                    return
+                }
                 cont.resume(returning: Self.scriptResultToJump(r, emptyMeans: .missing))
             }
         }
@@ -292,6 +315,18 @@ actor AppleScriptHelper {
                 cont.resume(returning: Self.classify(error: errInfo, result: value))
             }
         }
+    }
+
+    /// Parse "<windowID>|<title>" payload from jumpByUUIDTemplate. Returns nil if
+    /// the windowID portion is non-numeric (defensive — iTerm could theoretically
+    /// change its AppleScript `id` representation across versions).
+    static func parseJumpPayload(_ payload: String) -> (CGWindowID?, String?)? {
+        let parts = payload.split(separator: "|", maxSplits: 1, omittingEmptySubsequences: false)
+        guard let first = parts.first else { return nil }
+        let winID: CGWindowID? = UInt32(first)
+        let title = parts.count > 1 ? String(parts[1]) : nil
+        guard winID != nil || (title?.isEmpty == false) else { return nil }
+        return (winID, title)
     }
 
     /// Pure classification — extracted for unit testing without live AppleScript.

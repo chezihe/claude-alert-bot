@@ -10,6 +10,7 @@
 		003B98084B11309FF52AFBE3 /* SessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12CE8E75E63CBC95D6D3C0F3 /* SessionStoreTests.swift */; };
 		0536835EBF9ED126642336F4 /* HookEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D0E5FF61663BD940052B098 /* HookEventTests.swift */; };
 		05594CE07D57F8773968D7F1 /* AppleScriptHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A672A85EF635E98BBCBD52 /* AppleScriptHelper.swift */; };
+		5F40AB0979E64F69ABEC6504 /* AccessibilityRaiser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9701D85257904055A38A56E2 /* AccessibilityRaiser.swift */; };
 		061BE16CB87556492A84EC67 /* PopoverContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD87652FF46DACEA294E54A6 /* PopoverContentView.swift */; };
 		0FD47850BE7EA040C6B323E9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3AD080323016E4B964B92C69 /* Assets.xcassets */; };
 		12B4AD96D68F218C0C6BCC1E /* ClaudeAlertBotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */; };
@@ -93,6 +94,7 @@
 
 /* Begin PBXFileReference section */
 		05A672A85EF635E98BBCBD52 /* AppleScriptHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleScriptHelper.swift; sourceTree = "<group>"; };
+		9701D85257904055A38A56E2 /* AccessibilityRaiser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityRaiser.swift; sourceTree = "<group>"; };
 		061CE1E19FDE7AD807A94BD1 /* PermissionBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionBannerView.swift; sourceTree = "<group>"; };
 		06B6F2CA27C6DFDE9C8B8F6C /* ReporterScriptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReporterScriptTests.swift; sourceTree = "<group>"; };
 		09884DA38C8ABC43B43A4C15 /* iTermSessionIDTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermSessionIDTests.swift; sourceTree = "<group>"; };
@@ -214,6 +216,7 @@
 			isa = PBXGroup;
 			children = (
 				8A714300C48D443F40C0A625 /* AppDelegate.swift */,
+				9701D85257904055A38A56E2 /* AccessibilityRaiser.swift */,
 				05A672A85EF635E98BBCBD52 /* AppleScriptHelper.swift */,
 				3AD080323016E4B964B92C69 /* Assets.xcassets */,
 				D699217A41C1D86EBB145BC3 /* ClaudeAlertBot.entitlements */,
@@ -485,6 +488,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				25A5F43CD41AC83F13E587D9 /* AppDelegate.swift in Sources */,
+				5F40AB0979E64F69ABEC6504 /* AccessibilityRaiser.swift in Sources */,
 				05594CE07D57F8773968D7F1 /* AppleScriptHelper.swift in Sources */,
 				D4F0BAE2D982705E01F8E9CF /* ClaudeAlertBotApp.swift in Sources */,
 				3E34F876C0E5EE6646F97A2A /* DesignTokens.swift in Sources */,

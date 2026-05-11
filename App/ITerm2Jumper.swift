@@ -4,9 +4,10 @@
 // fallback (D3-08) — v1 borrows no code.
 //
 // PITFALL #1 regression guard (D3-10): NEVER call `NSApp.activate(...)` in this file.
-// iTerm2 activation lives entirely inside AppleScript-side `tell application "iTerm2"
-// to activate`. NSApp.activate would activate Claude Alert Bot itself, defeating
-// LSUIElement=true and surfacing the app in Cmd-Tab. Verifier 03-09 enforces this:
+// iTerm2 activation lives downstream in AppleScriptHelper: AppleScript selects the
+// target session, then Accessibility raises the exact iTerm2 window. NSApp.activate
+// would activate Claude Alert Bot itself, defeating LSUIElement=true and surfacing
+// the app in Cmd-Tab. Verifier 03-09 enforces this:
 //     grep -v '^\s*//' App/ITerm2Jumper.swift App/AppleScriptHelper.swift | grep -c 'NSApp\.activate'  → MUST be 0
 //
 // PATTERNS §ITerm2Jumper: paradigm match with NotificationOrchestrator —

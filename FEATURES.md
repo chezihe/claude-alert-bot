@@ -51,7 +51,6 @@
 |---|---|
 | 행 클릭 | `ITerm2Jumper`가 AppleScript로 해당 iTerm 세션에 점프, 행 제거 |
 | 행 우클릭 | 컨텍스트 메뉴: **Mute this project for 1h** / **Pin alert (don't auto-clear)** |
-| Esc | 팝오버 닫기 |
 | 외부 클릭 | 팝오버 닫기 |
 
 ## 4. 동작 모드 / 환경설정

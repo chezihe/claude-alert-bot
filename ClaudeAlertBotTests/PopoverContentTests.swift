@@ -415,30 +415,6 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains(#"NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)"#))
     }
 
-    func test_widgetPopoverController_dismissesPopoverOnEscapeKey() throws {
-        let src = readWidgetPopoverControllerSource()
-        let installRange = try XCTUnwrap(src.range(of: "private func installEscapeKeyMonitor()"))
-        let removeRange = try XCTUnwrap(src.range(of: "private func removeEscapeKeyMonitor()"))
-        let installSource = String(src[installRange.lowerBound..<removeRange.lowerBound])
-
-        XCTAssertTrue(src.contains("WidgetHoverDelegate, NSPopoverDelegate"))
-        XCTAssertTrue(src.contains("pop.delegate = self"))
-        XCTAssertTrue(src.contains("private var escapeKeyMonitor: Any?"))
-        XCTAssertTrue(installSource.contains("NSEvent.addLocalMonitorForEvents(matching: .keyDown)"))
-        XCTAssertTrue(installSource.contains("event.keyCode == 53"))
-        XCTAssertTrue(installSource.contains("dismissPopover()"))
-        XCTAssertTrue(src.contains("NSEvent.removeMonitor(monitor)"))
-    }
-
-    func test_widgetPopoverController_removesEscapeMonitorWhenTransientPopoverCloses() throws {
-        let src = readWidgetPopoverControllerSource()
-        let closeRange = try XCTUnwrap(src.range(of: "func popoverDidClose(_ notification: Notification)"))
-        let reloadRange = try XCTUnwrap(src.range(of: "private func reloadPopoverContent()"))
-        let closeSource = String(src[closeRange.lowerBound..<reloadRange.lowerBound])
-
-        XCTAssertTrue(closeSource.contains("removeEscapeKeyMonitor()"))
-    }
-
     func test_widgetPopoverController_clearsUnavailableRowsWithoutJumping() throws {
         let src = readWidgetPopoverControllerSource()
         let clickRange = try XCTUnwrap(src.range(of: "private func onRowClick(alertID: String)"))

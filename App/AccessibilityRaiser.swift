@@ -50,10 +50,12 @@ enum AccessibilityRaiser {
         let appElement = AXUIElementCreateApplication(itermPID)
         var windowsRef: CFTypeRef?
         let copyErr = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsRef)
-        guard copyErr == .success, let axWindows = windowsRef as? [AXUIElement] else {
+        guard copyErr == .success else {
             log.warning("[ax-error reason=copy-windows code=\(copyErr.rawValue, privacy: .public)]")
             return false
         }
+        var axWindows = (windowsRef as? [AXUIElement]) ?? []
+        axWindows.append(contentsOf: fallbackWindows(appElement))
 
         let target = matchWindow(axWindows, windowID: windowID, title: title)
         guard let win = target else {
@@ -116,5 +118,18 @@ enum AccessibilityRaiser {
             }
         }
         return nil
+    }
+
+    private static func fallbackWindows(_ appElement: AXUIElement) -> [AXUIElement] {
+        [kAXFocusedWindowAttribute as CFString, kAXMainWindowAttribute as CFString].compactMap { attribute in
+            var windowRef: CFTypeRef?
+            guard AXUIElementCopyAttributeValue(appElement, attribute, &windowRef) == .success else {
+                return nil
+            }
+            guard let windowRef else {
+                return nil
+            }
+            return (windowRef as! AXUIElement)
+        }
     }
 }

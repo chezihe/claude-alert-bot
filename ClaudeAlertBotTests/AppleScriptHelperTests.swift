@@ -137,6 +137,26 @@ final class AppleScriptHelperTests: XCTestCase {
         )
     }
 
+    func test_accessibilityRaiser_fallsBackToFocusedOrMainWindowWhenWindowListIsEmpty() throws {
+        let testFile = URL(fileURLWithPath: #filePath)
+        let projectRoot = testFile
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let raiserURL = projectRoot
+            .appendingPathComponent("App")
+            .appendingPathComponent("AccessibilityRaiser.swift")
+        let src = (try? String(contentsOf: raiserURL, encoding: .utf8)) ?? ""
+        XCTAssertFalse(src.isEmpty, "Could not read App/AccessibilityRaiser.swift at \(raiserURL.path)")
+        XCTAssertTrue(
+            src.contains("kAXFocusedWindowAttribute"),
+            "iTerm2 can expose an empty kAXWindowsAttribute list; raise must fall back to the focused AX window"
+        )
+        XCTAssertTrue(
+            src.contains("kAXMainWindowAttribute"),
+            "iTerm2 can expose an empty kAXWindowsAttribute list; raise must also try the main AX window"
+        )
+    }
+
     func test_focusFrontmostSource_containsAppleScriptTimeout() {
         XCTAssertTrue(AppleScriptHelper.focusFrontmostRawSource.contains("with timeout of 3 seconds"),
                       "JUMP-04 inheritance: focus-frontmost must also declare 3-second hard timeout")

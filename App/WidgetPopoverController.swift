@@ -107,6 +107,7 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
                 NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
             },
             expandedProjects: expandedProjects,
+            widgetCorner: SettingsStore.shared.widgetCorner,
             onToggleGroup: { [weak self] projectName in
                 self?.onToggleGroup(projectName: projectName)
             },
@@ -168,6 +169,7 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
                 NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
             },
             expandedProjects: expandedProjects,
+            widgetCorner: SettingsStore.shared.widgetCorner,
             onToggleGroup: { [weak self] projectName in
                 self?.onToggleGroup(projectName: projectName)
             },

@@ -456,6 +456,17 @@ final class PopoverContentTests: XCTestCase {
 
     // MARK: - Row dismiss slide (Phase 2 motion rework)
 
+    func test_popoverContentViewSource_runsSpringEntryAnimation() {
+        let src = readPopoverContentViewSource()
+
+        XCTAssertTrue(src.contains("@State private var hasAppeared: Bool = false"))
+        XCTAssertTrue(src.contains("var widgetCorner: WidgetCorner"))
+        XCTAssertTrue(src.contains("withAnimation(.spring(response: 0.35, dampingFraction: 0.6))"))
+        XCTAssertTrue(src.contains("hasAppeared = true"))
+        // Anchor scales toward the corner the widget lives in.
+        XCTAssertTrue(src.contains("entryAnchor"))
+    }
+
     func test_popoverContentViewSource_mirrorsQueueForRowDismissTransition() {
         let src = readPopoverContentViewSource()
 

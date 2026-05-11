@@ -158,12 +158,25 @@ struct PopoverContentView: View {
     var onPopoverHoverChange: (Bool) -> Void = { _ in }
     var onOpenSettings: () -> Void = {}
     var expandedProjects: Set<String> = []
+    var widgetCorner: WidgetCorner = .topRight
     var onToggleGroup: (String) -> Void = { _ in }
     var everHadAlerts: Bool = false
 
     @State private var displayQueue: [CompletedSession] = []
+    @State private var hasAppeared: Bool = false
     @State private var scrollViewportHeight: CGFloat = 0
     @State private var scrollContentFrame: CGRect = .zero
+
+    /// Anchor for the spring entry scale. The popover should appear to
+    /// expand outward from the widget glyph that triggered it.
+    private var entryAnchor: UnitPoint {
+        switch widgetCorner {
+        case .topLeft:     return .topLeading
+        case .topRight:    return .topTrailing
+        case .bottomLeft:  return .bottomLeading
+        case .bottomRight: return .bottomTrailing
+        }
+    }
 
     private static let scrollCoordinateSpaceName = "PopoverScrollView"
 
@@ -267,8 +280,13 @@ struct PopoverContentView: View {
                 .mask(PopoverScrollFadeMask(showsTopFade: fades.top, showsBottomFade: fades.bottom))
             }
         }
+        .scaleEffect(hasAppeared ? 1.0 : 0.85, anchor: entryAnchor)
+        .opacity(hasAppeared ? 1.0 : 0.0)
         .onAppear {
             displayQueue = queue
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) {
+                hasAppeared = true
+            }
         }
         .onChange(of: queue) { _, newQueue in
             withAnimation(.easeIn(duration: 0.32)) {

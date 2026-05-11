@@ -145,6 +145,27 @@ final class AppleScriptHelperTests: XCTestCase {
         )
     }
 
+    func test_runJumpByUUID_fallsBackToITermActivationWhenAccessibilityRaiseFails() throws {
+        let testFile = URL(fileURLWithPath: #filePath)
+        let projectRoot = testFile
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let helperURL = projectRoot
+            .appendingPathComponent("App")
+            .appendingPathComponent("AppleScriptHelper.swift")
+        let src = (try? String(contentsOf: helperURL, encoding: .utf8)) ?? ""
+        XCTAssertFalse(src.isEmpty, "Could not read App/AppleScriptHelper.swift at \(helperURL.path)")
+
+        XCTAssertTrue(
+            src.contains("let activated = AccessibilityRaiser.activateITerm"),
+            "When AX raise cannot confirm activation, runJumpByUUID must still activate iTerm after selecting the matched session"
+        )
+        XCTAssertTrue(
+            src.contains("if !activated"),
+            "Fallback activation failure should be handled explicitly for diagnostics"
+        )
+    }
+
     func test_accessibilityRaiser_fallsBackToFocusedOrMainWindowWhenWindowListIsEmpty() throws {
         let testFile = URL(fileURLWithPath: #filePath)
         let projectRoot = testFile

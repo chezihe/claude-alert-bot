@@ -90,6 +90,18 @@ enum AccessibilityRaiser {
             .processIdentifier
     }
 
+    /// Best-effort foreground activation after AppleScript has selected a matched session.
+    /// Does not require Accessibility permission, but may not cross every Space layout.
+    static func activateITerm(itermPID: pid_t) -> Bool {
+        guard let app = NSRunningApplication(processIdentifier: itermPID) else {
+            log.notice("[activate-miss reason=no-running-app]")
+            return false
+        }
+        app.activate()
+        log.notice("[activate-fallback]")
+        return true
+    }
+
     // MARK: - private
 
     private static func matchWindow(_ axWindows: [AXUIElement], windowID: CGWindowID?, title: String?) -> AXUIElement? {

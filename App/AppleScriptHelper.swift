@@ -226,6 +226,10 @@ actor AppleScriptHelper {
                     let raised = AccessibilityRaiser.raise(itermPID: pid, windowID: winID, title: title)
                     if !raised {
                         log.warning("runJumpByUUID matched session but AX raise did not confirm activation")
+                        let activated = AccessibilityRaiser.activateITerm(itermPID: pid)
+                        if !activated {
+                            log.warning("runJumpByUUID matched session but fallback iTerm activation failed")
+                        }
                     }
                     cont.resume(returning: .ok)
                     return

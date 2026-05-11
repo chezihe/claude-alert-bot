@@ -50,6 +50,23 @@ final class PopoverRowStateTests: XCTestCase {
         )
     }
 
+    func test_missingAnimation_dismissesRowWithSpecHorizontalOffset() throws {
+        let src = readPopoverRowViewSource()
+        let missingRange = try XCTUnwrap(src.range(of: "private func runMissingAnimation()"))
+        let missingSource = String(src[missingRange.lowerBound...])
+        let reduceMotionRange = try XCTUnwrap(missingSource.range(of: "if reduceMotion {"))
+        let reduceMotionReturnRange = try XCTUnwrap(
+            missingSource.range(of: "return", range: reduceMotionRange.lowerBound..<missingSource.endIndex)
+        )
+        let reduceMotionSource = String(missingSource[reduceMotionRange.lowerBound..<reduceMotionReturnRange.upperBound])
+        let fullMotionSource = String(missingSource[reduceMotionReturnRange.upperBound...])
+
+        XCTAssertTrue(src.contains("@State private var dismissOffset: CGFloat = 0"))
+        XCTAssertTrue(src.contains(".offset(x: dismissOffset)"))
+        XCTAssertFalse(reduceMotionSource.contains("dismissOffset"))
+        XCTAssertTrue(fullMotionSource.contains("dismissOffset = 8"))
+    }
+
     // MARK: - WO-005 status dot rendering contract (source-level audit)
 
     func test_statusDot_usesAlertKindColorForFillAndUnavailableRing() {

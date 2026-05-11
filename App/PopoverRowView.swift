@@ -6,7 +6,7 @@
 // Phase 3 / Plan 03-06 (D3-11/12/14): RowState integration.
 // - state owned by parent (WidgetPopoverController, wired in 03-07) — leaf View per CONTEXT D3-11.
 // - Click handler short-circuits when state != .normal (JUMP-05 row-level self-debounce).
-// - .missing transitions trigger 도리도리(±12° 1 round-trip, 0..0.3s) → collapse+fade(0.3..0.7s)
+// - .missing transitions trigger 도리도리(±12° 1 round-trip, 0..0.3s) → translate+collapse+fade(0.3..0.7s)
 //   → onMissingComplete() callback so the parent can clear the row by alertID.
 // - Reduced-motion fallback skips rotation, collapses immediately
 //   (mirrors FloatingWidgetWindowController.swift lines 113-115).
@@ -44,6 +44,7 @@ struct PopoverRowView: View {
     @State private var rotation: Double = 0
     @State private var collapsed: Bool = false
     @State private var faded: Bool = false
+    @State private var dismissOffset: CGFloat = 0
     @State private var rippleScale: CGFloat = 1.0
     @State private var rippleOpacity: Double = 0
     @State private var waitingDotOpacity: Double = 1.0
@@ -100,6 +101,7 @@ struct PopoverRowView: View {
                 isHovered ? ColorTokens.rowHover(colorScheme: colorScheme) : Color.clear
             )
             .opacity(faded ? 0 : (session.available ? 1 : 0.5))
+            .offset(x: dismissOffset)
             .saturation(PopoverContentRules.isAged(session: session, now: Date()) ? EffectTokens.agedSaturation : 1.0)
             .animation(.easeInOut(duration: 0.12), value: isHovered)
             .clipped()
@@ -221,10 +223,11 @@ struct PopoverRowView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 // settle to 0 (no animation — instant) and chain to phase 2.
                 rotation = 0
-                // Phase 2 (0.3..0.7s): collapse + fade.
+                // Phase 2 (0.3..0.7s): translate + collapse + fade.
                 withAnimation(.easeInOut(duration: 0.4), completionCriteria: .logicallyComplete) {
                     collapsed = true
                     faded = true
+                    dismissOffset = 8
                 } completion: {
                     onMissingComplete()
                 }

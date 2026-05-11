@@ -335,7 +335,7 @@ final class PopoverContentTests: XCTestCase {
         let src = readPopoverContentViewSource()
 
         XCTAssertTrue(src.contains("var everHadAlerts: Bool = false"))
-        XCTAssertTrue(src.contains("PopoverContentRules.shouldShowEmptyState(queue: queue, everHadAlerts: everHadAlerts)"))
+        XCTAssertTrue(src.contains("PopoverContentRules.shouldShowEmptyState(queue: displayQueue, everHadAlerts: everHadAlerts)"))
         XCTAssertTrue(src.contains("EmptyStateView()"))
     }
 
@@ -452,6 +452,18 @@ final class PopoverContentTests: XCTestCase {
             pinned: pinned,
             alertID: alertID ?? id
         )
+    }
+
+    // MARK: - Row dismiss slide (Phase 2 motion rework)
+
+    func test_popoverContentViewSource_mirrorsQueueForRowDismissTransition() {
+        let src = readPopoverContentViewSource()
+
+        XCTAssertTrue(src.contains("@State private var displayQueue: [CompletedSession]"))
+        XCTAssertTrue(src.contains(".onChange(of: queue)"))
+        XCTAssertTrue(src.contains("withAnimation(.easeIn(duration: 0.32))"))
+        XCTAssertTrue(src.contains(".transition(.asymmetric("))
+        XCTAssertTrue(src.contains(".move(edge: .trailing)"))
     }
 
     private func readPopoverContentViewSource(_ thisFile: StaticString = #filePath) -> String {

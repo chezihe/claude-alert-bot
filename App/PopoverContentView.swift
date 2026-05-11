@@ -161,21 +161,22 @@ struct PopoverContentView: View {
     var onToggleGroup: (String) -> Void = { _ in }
     var everHadAlerts: Bool = false
 
+    @State private var displayQueue: [CompletedSession] = []
     @State private var scrollViewportHeight: CGFloat = 0
     @State private var scrollContentFrame: CGRect = .zero
 
     private static let scrollCoordinateSpaceName = "PopoverScrollView"
 
     private var listItems: [PopoverListItem] {
-        PopoverContentRules.groupedListItems(queue, expandedProjects: expandedProjects)
+        PopoverContentRules.groupedListItems(displayQueue, expandedProjects: expandedProjects)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 Spacer()
-                let clearableSessionCount = PopoverContentRules.clearableSessionCount(queue)
-                let clearAllLabel = PopoverContentRules.clearAllButtonLabel(queue: queue)
+                let clearableSessionCount = PopoverContentRules.clearableSessionCount(displayQueue)
+                let clearAllLabel = PopoverContentRules.clearAllButtonLabel(queue: displayQueue)
                 if PopoverContentRules.shouldShowClearAll(clearableCount: clearableSessionCount) {
                     Button(clearAllLabel, action: onClearAll)
                         .buttonStyle(.plain)
@@ -194,9 +195,9 @@ struct PopoverContentView: View {
             .padding(.horizontal, 12)
             .padding(.top, 8)
 
-            if PopoverContentRules.shouldShowEmptyState(queue: queue, everHadAlerts: everHadAlerts) {
+            if PopoverContentRules.shouldShowEmptyState(queue: displayQueue, everHadAlerts: everHadAlerts) {
                 EmptyStateView()
-            } else if !queue.isEmpty {
+            } else if !displayQueue.isEmpty {
                 let isScrollable = listItems.count > GeometryTokens.popoverMaxVisibleRows
                 let fades = PopoverContentRules.scrollFadeVisibility(
                     contentMinY: scrollContentFrame.minY,
@@ -207,28 +208,34 @@ struct PopoverContentView: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         ForEach(listItems) { item in
-                            switch item {
-                            case .group(let projectName, let count, let isExpanded):
-                                ProjectGroupHeaderView(
-                                    projectName: projectName,
-                                    count: count,
-                                    isExpanded: isExpanded,
-                                    isMuted: isProjectMuted(projectName),
-                                    onClick: { onToggleGroup(projectName) },
-                                    onToggleMute: { onToggleMute(projectName) }
-                                )
-                            case .session(let session, let showTimeSuffix):
-                                PopoverRowView(
-                                    session: session,
-                                    showTimeSuffix: showTimeSuffix,
-                                    state: rowStates[session.id, default: .normal],
-                                    isMuted: isProjectMuted(session.projectName),
-                                    onClick: { onRowClick(session.id) },
-                                    onTogglePin: { onTogglePin(session.id) },
-                                    onToggleMute: { onToggleMute(session.projectName) },
-                                    onMissingComplete: { onRowMissingComplete(session.id) }
-                                )
+                            Group {
+                                switch item {
+                                case .group(let projectName, let count, let isExpanded):
+                                    ProjectGroupHeaderView(
+                                        projectName: projectName,
+                                        count: count,
+                                        isExpanded: isExpanded,
+                                        isMuted: isProjectMuted(projectName),
+                                        onClick: { onToggleGroup(projectName) },
+                                        onToggleMute: { onToggleMute(projectName) }
+                                    )
+                                case .session(let session, let showTimeSuffix):
+                                    PopoverRowView(
+                                        session: session,
+                                        showTimeSuffix: showTimeSuffix,
+                                        state: rowStates[session.id, default: .normal],
+                                        isMuted: isProjectMuted(session.projectName),
+                                        onClick: { onRowClick(session.id) },
+                                        onTogglePin: { onTogglePin(session.id) },
+                                        onToggleMute: { onToggleMute(session.projectName) },
+                                        onMissingComplete: { onRowMissingComplete(session.id) }
+                                    )
+                                }
                             }
+                            .transition(.asymmetric(
+                                insertion: .opacity,
+                                removal: .move(edge: .trailing).combined(with: .opacity)
+                            ))
                         }
                     }
                     .background(
@@ -258,6 +265,14 @@ struct PopoverContentView: View {
                     scrollContentFrame = frame
                 }
                 .mask(PopoverScrollFadeMask(showsTopFade: fades.top, showsBottomFade: fades.bottom))
+            }
+        }
+        .onAppear {
+            displayQueue = queue
+        }
+        .onChange(of: queue) { _, newQueue in
+            withAnimation(.easeIn(duration: 0.32)) {
+                displayQueue = newQueue
             }
         }
         .frame(width: GeometryTokens.popoverWidth)

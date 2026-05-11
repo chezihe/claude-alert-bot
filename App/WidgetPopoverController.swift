@@ -13,7 +13,7 @@ import SwiftUI
 import os
 
 @MainActor
-final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
+final class WidgetPopoverController: NSObject, WidgetHoverDelegate, NSPopoverDelegate {
     private let log = Logger(subsystem: "com.claudealert.bot.hook", category: "widget")
     private weak var widgetController: FloatingWidgetWindowController?
     private var entryWorkItem: DispatchWorkItem?
@@ -21,6 +21,7 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
 
     // Pattern 8 — NSPopover. (Pattern 8a sibling-NSPanel branch retired by 02-01 spike verdict.)
     private var popover: NSPopover?
+    private var escapeKeyMonitor: Any?
 
     /// Phase 3 D-ADAPTER — TerminalJumper injected via init (default: ITerm2Jumper).
     private let jumper: any TerminalJumper
@@ -118,6 +119,7 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         } else {
             pop = NSPopover()
             pop.behavior = .transient
+            pop.delegate = self
             popover = pop
         }
         // Phase 3 03-09 fix — reuse the NSHostingController so SwiftUI sees a rootView
@@ -131,12 +133,18 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         }
         resizePopover(pop, queue: queue)
         pop.show(relativeTo: anchor.bounds, of: anchor, preferredEdge: cornerToEdge())
+        installEscapeKeyMonitor()
         log.notice("popover shown rows=\(queue.count, privacy: .public)")
     }
 
     private func dismissPopover() {
+        removeEscapeKeyMonitor()
         popover?.performClose(nil)
         log.notice("popover dismissed")
+    }
+
+    func popoverDidClose(_ notification: Notification) {
+        removeEscapeKeyMonitor()
     }
 
     /// Re-render the popover with the current rowStates dict.
@@ -202,6 +210,21 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         case .topRight, .topLeft: return .minY
         case .bottomRight, .bottomLeft: return .maxY
         }
+    }
+
+    private func installEscapeKeyMonitor() {
+        guard escapeKeyMonitor == nil else { return }
+        escapeKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard event.keyCode == 53, self?.popover?.isShown == true else { return event }
+            self?.dismissPopover()
+            return nil
+        }
+    }
+
+    private func removeEscapeKeyMonitor() {
+        guard let monitor = escapeKeyMonitor else { return }
+        NSEvent.removeMonitor(monitor)
+        escapeKeyMonitor = nil
     }
 
     // MARK: - actions (D2-08 + D2-07)

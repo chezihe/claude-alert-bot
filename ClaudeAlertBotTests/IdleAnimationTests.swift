@@ -44,17 +44,14 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("MotionTokens.breatheAnimation"))
     }
 
-    func test_widgetIconViewSource_wiresHeartBranch() {
+    func test_widgetIconViewSource_wiresHeartKeyframeAnimator() {
         let src = readWidgetIconViewSource()
 
-        XCTAssertTrue(src.contains("@State private var heartScale: CGFloat = 1.0"))
-        XCTAssertTrue(src.contains("@State private var heartGeneration: Int = 0"))
-        XCTAssertTrue(src.contains("case .heart:"))
-        XCTAssertTrue(src.contains("startHeartAnimation()"))
-        XCTAssertTrue(src.contains("MotionTokens.heartBeatAnimation"))
-        XCTAssertTrue(src.contains("heartScale = MotionTokens.heartPeakScale"))
-        XCTAssertTrue(src.contains("scale: MotionTokens.heartSecondScale"))
-        XCTAssertTrue(src.contains("heartScale = 1.0"))
+        XCTAssertTrue(src.contains("MotionKeyframes.heartCycle"))
+        XCTAssertTrue(src.contains("MotionKeyframes.heartPeriod"))
+        XCTAssertTrue(src.contains("HeartAnimatorValue"))
+        // Anchor at center — HTML transform-origin: 50% 50% for heartbeat.
+        XCTAssertTrue(src.contains("anchor: .center"))
     }
 
     func test_widgetIconViewSource_wiresRingBranch() {
@@ -175,8 +172,6 @@ final class IdleAnimationTests: XCTestCase {
         }
         let restartBody = String(src[restartStart.lowerBound...])
         XCTAssertTrue(restartBody.contains("breatheScale = 1.0"))
-        XCTAssertTrue(restartBody.contains("heartScale = 1.0"))
-        XCTAssertTrue(restartBody.contains("heartGeneration += 1"))
         XCTAssertTrue(restartBody.contains("roamPhase = 0"))
         XCTAssertTrue(restartBody.contains("driftOffset = .zero"))
         XCTAssertTrue(restartBody.contains("driftGeneration += 1"))

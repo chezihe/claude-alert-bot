@@ -5,7 +5,8 @@
 // Bounce: 0.9s HTML-faithful KeyframeAnimator (translateY + scaleX + scaleY 3-track).
 //         Mirrors @keyframes bounce-cute squash-and-stretch; suppressed when Reduce Motion / Quiet Hours.
 // Breathe: 2.4s scale 1.0↔1.06, autoreverse forever; default idle animation for WO-012.
-// Heart: HTML-faithful KeyframeAnimator (single scale track), double-pulse at 14% / 42%.
+// Heart: 1.4s HTML-faithful KeyframeAnimator (single scale track) anchored at center.
+//        Mirrors @keyframes heartbeat double-pulse at 14% / 42%; suppressed in Quiet Hours / Reduce Motion.
 // Ring: 0.55s ±10° top-anchor rotation, autoreverse forever; suppressed when Reduce Motion is on.
 // Roam: 1.6s counter-clockwise 24×6pt ellipse, linear forever; suppressed when Reduce Motion is on.
 // Drift: 6s random jitter within 14×16pt, easeInOut forever; suppressed when Reduce Motion is on.
@@ -22,8 +23,6 @@ struct WidgetIconView: View {
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @State private var breatheScale: CGFloat = 1.0
-    @State private var heartScale: CGFloat = 1.0
-    @State private var heartGeneration: Int = 0
     @State private var idleRotation: Double = 0
     @State private var roamPhase: Double = 0
     @State private var driftOffset: CGSize = .zero
@@ -52,6 +51,10 @@ struct WidgetIconView: View {
         idleAnimation == .bounce && !quietHoursEnabled && !reduceMotion
     }
 
+    private var heartAnimatorActive: Bool {
+        idleAnimation == .heart && !quietHoursEnabled && !reduceMotion
+    }
+
     var body: some View {
         ZStack(alignment: .center) {
             ZStack(alignment: .topTrailing) {
@@ -71,7 +74,7 @@ struct WidgetIconView: View {
                         initialValue: BounceAnimatorValue(),
                         repeating: true
                     ) { value in
-                        glyph(bounceValue: value)
+                        glyph(bounceValue: value, heartScale: 1.0)
                     } keyframes: { _ in
                         KeyframeTrack(\.translateY) {
                             CubicKeyframe(MotionKeyframes.bounceCycle[1].translateY,
@@ -104,8 +107,28 @@ struct WidgetIconView: View {
                                           duration: MotionKeyframes.bouncePeriod * 0.18)
                         }
                     }
+                } else if heartAnimatorActive {
+                    KeyframeAnimator(
+                        initialValue: HeartAnimatorValue(),
+                        repeating: true
+                    ) { value in
+                        glyph(bounceValue: BounceAnimatorValue(), heartScale: value.scale)
+                    } keyframes: { _ in
+                        KeyframeTrack(\.scale) {
+                            CubicKeyframe(MotionKeyframes.heartCycle[1].scale,
+                                          duration: MotionKeyframes.heartPeriod * 0.14)
+                            CubicKeyframe(MotionKeyframes.heartCycle[2].scale,
+                                          duration: MotionKeyframes.heartPeriod * 0.14)
+                            CubicKeyframe(MotionKeyframes.heartCycle[3].scale,
+                                          duration: MotionKeyframes.heartPeriod * 0.14)
+                            CubicKeyframe(MotionKeyframes.heartCycle[4].scale,
+                                          duration: MotionKeyframes.heartPeriod * 0.14)
+                            CubicKeyframe(MotionKeyframes.heartCycle[5].scale,
+                                          duration: MotionKeyframes.heartPeriod * 0.44)
+                        }
+                    }
                 } else {
-                    glyph(bounceValue: BounceAnimatorValue())
+                    glyph(bounceValue: BounceAnimatorValue(), heartScale: 1.0)
                 }
                 if pendingCount >= 2 {
                     Text("+\(pendingCount - 1)")
@@ -135,7 +158,7 @@ struct WidgetIconView: View {
     }
 
     @ViewBuilder
-    private func glyph(bounceValue: BounceAnimatorValue) -> some View {
+    private func glyph(bounceValue: BounceAnimatorValue, heartScale: CGFloat) -> some View {
         Image("ClaudeCodeIcon")
             .resizable()
             .aspectRatio(contentMode: .fit)
@@ -146,7 +169,7 @@ struct WidgetIconView: View {
                 y: quietHoursEnabled ? 1.0 : bounceValue.scaleY,
                 anchor: .bottom
             )
-            .scaleEffect(quietHoursEnabled ? 1.0 : heartScale * breatheScale * alertPulseScale)
+            .scaleEffect(quietHoursEnabled ? 1.0 : heartScale * breatheScale * alertPulseScale, anchor: .center)
             .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation + idleRotation), anchor: .top)
             .offset(
                 x: quietHoursEnabled ? 0 : driftOffset.width,
@@ -164,7 +187,6 @@ struct WidgetIconView: View {
             }
             .onDisappear {
                 stopDriftAnimation()
-                stopHeartAnimation()
             }
             .onChange(of: quietHoursEnabled) { _, _ in
                 resetAlertPulse()
@@ -202,7 +224,8 @@ struct WidgetIconView: View {
                 breatheScale = MotionTokens.breatheScale
             }
         case .heart:
-            startHeartAnimation()
+            // Heart is driven by the KeyframeAnimator wrapper around the glyph.
+            return
         case .ring:
             guard let anim = MotionTokens.ringAnimation(reduceMotion: reduceMotion) else { return }
             idleRotation = -MotionTokens.ringRotation
@@ -222,52 +245,10 @@ struct WidgetIconView: View {
 
     private func restartIdleAnimation() {
         stopDriftAnimation()
-        stopHeartAnimation()
         breatheScale = 1.0
-        heartScale = 1.0
         idleRotation = 0
         roamPhase = 0
         startIdleAnimation()
-    }
-
-    private func startHeartAnimation() {
-        heartGeneration += 1
-        runHeartBeat(generation: heartGeneration)
-    }
-
-    private func stopHeartAnimation() {
-        heartGeneration += 1
-        heartScale = 1.0
-    }
-
-    private func runHeartBeat(generation: Int) {
-        guard
-            idleAnimation == .heart,
-            !quietHoursEnabled,
-            generation == heartGeneration,
-            let anim = MotionTokens.heartBeatAnimation(reduceMotion: reduceMotion)
-        else { return }
-
-        withAnimation(anim) {
-            heartScale = MotionTokens.heartPeakScale
-        }
-        scheduleHeartBeat(after: MotionTokens.heartBeatStepDuration, generation: generation, scale: 1.0)
-        scheduleHeartBeat(after: MotionTokens.heartBeatStepDuration * 2, generation: generation, scale: MotionTokens.heartSecondScale)
-        scheduleHeartBeat(after: MotionTokens.heartBeatStepDuration * 3, generation: generation, scale: 1.0)
-        DispatchQueue.main.asyncAfter(deadline: .now() + MotionTokens.heartDuration) {
-            guard generation == heartGeneration else { return }
-            runHeartBeat(generation: generation)
-        }
-    }
-
-    private func scheduleHeartBeat(after delay: TimeInterval, generation: Int, scale: CGFloat) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-            guard generation == heartGeneration else { return }
-            guard let anim = MotionTokens.heartBeatAnimation(reduceMotion: reduceMotion) else { return }
-            withAnimation(anim) {
-                heartScale = scale
-            }
-        }
     }
 
     private func startDriftAnimation() {
@@ -378,6 +359,10 @@ struct BounceAnimatorValue {
     var translateY: CGFloat = MotionKeyframes.bounceCycle[0].translateY
     var scaleX: CGFloat = MotionKeyframes.bounceCycle[0].scaleX
     var scaleY: CGFloat = MotionKeyframes.bounceCycle[0].scaleY
+}
+
+struct HeartAnimatorValue {
+    var scale: CGFloat = MotionKeyframes.heartCycle[0].scale
 }
 
 private struct RoamOffsetEffect: GeometryEffect {

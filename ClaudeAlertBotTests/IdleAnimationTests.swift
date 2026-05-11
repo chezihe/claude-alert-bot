@@ -115,14 +115,15 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("ProjectionTransform(CGAffineTransform(translationX: x, y: y))"))
     }
 
-    func test_widgetIconViewSource_wiresBounceSquashScale() {
+    func test_widgetIconViewSource_wiresBounceKeyframeAnimator() {
         let src = readWidgetIconViewSource()
 
-        XCTAssertTrue(src.contains("@State private var bounceScale: CGFloat = 1.0"))
-        XCTAssertTrue(src.contains(".scaleEffect(quietHoursEnabled ? 1.0 : heartScale * breatheScale * bounceScale * alertPulseScale)"))
-        XCTAssertTrue(src.contains("bounceScale = 1.0"))
-        XCTAssertTrue(src.contains("bounceScale = MotionTokens.bounceStretchScale"))
-        XCTAssertTrue(src.contains("bounceScale = MotionTokens.bounceSquashScale"))
+        XCTAssertTrue(src.contains("KeyframeAnimator"))
+        XCTAssertTrue(src.contains("MotionKeyframes.bounceCycle"))
+        XCTAssertTrue(src.contains("MotionKeyframes.bouncePeriod"))
+        XCTAssertTrue(src.contains("BounceAnimatorValue"))
+        // Anchor at bottom — HTML transform-origin: 50% 100% for bounce-cute.
+        XCTAssertTrue(src.contains("anchor: .bottom"))
     }
 
     func test_floatingWidgetWindowController_passesSelectedIdleAnimationToIconView() {
@@ -173,8 +174,6 @@ final class IdleAnimationTests: XCTestCase {
             return
         }
         let restartBody = String(src[restartStart.lowerBound...])
-        XCTAssertTrue(restartBody.contains("bounceOffset = 0"))
-        XCTAssertTrue(restartBody.contains("bounceScale = 1.0"))
         XCTAssertTrue(restartBody.contains("breatheScale = 1.0"))
         XCTAssertTrue(restartBody.contains("heartScale = 1.0"))
         XCTAssertTrue(restartBody.contains("heartGeneration += 1"))

@@ -2,9 +2,10 @@
 // UI-SPEC: 36pt Claude Code glyph, 4pt internal padding (44pt total).
 // +N badge: 16pt × 16pt circle, systemRed fill (systemGray in Quiet Hours), white SF Pro Semibold 11pt numeral.
 // Anchored top-trailing with -4/-4 overhang per UI-SPEC.
-// Bounce: 5pt vertical + 1.04↔0.94 squash, 0.45s easeInOut, autoreverse forever; suppressed when Reduce Motion is on.
+// Bounce: 0.9s HTML-faithful KeyframeAnimator (translateY + scaleX + scaleY 3-track).
+//         Mirrors @keyframes bounce-cute squash-and-stretch; suppressed when Reduce Motion / Quiet Hours.
 // Breathe: 2.4s scale 1.0↔1.06, autoreverse forever; default idle animation for WO-012.
-// Heart: 1.4s double-pulse scale 1.14 then 1.08; suppressed when Reduce Motion is on.
+// Heart: HTML-faithful KeyframeAnimator (single scale track), double-pulse at 14% / 42%.
 // Ring: 0.55s ±10° top-anchor rotation, autoreverse forever; suppressed when Reduce Motion is on.
 // Roam: 1.6s counter-clockwise 24×6pt ellipse, linear forever; suppressed when Reduce Motion is on.
 // Drift: 6s random jitter within 14×16pt, easeInOut forever; suppressed when Reduce Motion is on.
@@ -20,8 +21,6 @@ struct WidgetIconView: View {
     var reduceMotionPreference: ReduceMotionPreference = .system
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
-    @State private var bounceOffset: CGFloat = 0
-    @State private var bounceScale: CGFloat = 1.0
     @State private var breatheScale: CGFloat = 1.0
     @State private var heartScale: CGFloat = 1.0
     @State private var heartGeneration: Int = 0
@@ -49,6 +48,10 @@ struct WidgetIconView: View {
         )
     }
 
+    private var bounceAnimatorActive: Bool {
+        idleAnimation == .bounce && !quietHoursEnabled && !reduceMotion
+    }
+
     var body: some View {
         ZStack(alignment: .center) {
             ZStack(alignment: .topTrailing) {
@@ -63,45 +66,47 @@ struct WidgetIconView: View {
                 }
                 // Non-SPEC literals retained per Finding F-2 (see 03.1-01-SUMMARY.md):
                 // floating-widget topology differs from SPEC §3 NSStatusItem 22pt-in-28pt + badge offsets.
-                Image("ClaudeCodeIcon")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 36, height: 36)
-                    .frame(width: 44, height: 44)
-                    .scaleEffect(quietHoursEnabled ? 1.0 : heartScale * breatheScale * bounceScale * alertPulseScale)
-                    .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation + idleRotation), anchor: .top)
-                    .offset(
-                        x: quietHoursEnabled ? 0 : driftOffset.width,
-                        y: quietHoursEnabled ? 0 : bounceOffset + driftOffset.height
-                    )
-                    .modifier(RoamOffsetEffect(
-                        angle: roamPhase,
-                        radiusX: Double(MotionTokens.roamRadiusX),
-                        radiusY: Double(MotionTokens.roamRadiusY),
-                        isActive: idleAnimation == .roam && !quietHoursEnabled && !reduceMotion
-                    ))
-                    .onAppear {
-                        startIdleAnimation()
-                        runNewAlertPulse()
+                if bounceAnimatorActive {
+                    KeyframeAnimator(
+                        initialValue: BounceAnimatorValue(),
+                        repeating: true
+                    ) { value in
+                        glyph(bounceValue: value)
+                    } keyframes: { _ in
+                        KeyframeTrack(\.translateY) {
+                            CubicKeyframe(MotionKeyframes.bounceCycle[1].translateY,
+                                          duration: MotionKeyframes.bouncePeriod * 0.18)
+                            CubicKeyframe(MotionKeyframes.bounceCycle[2].translateY,
+                                          duration: MotionKeyframes.bouncePeriod * 0.32)
+                            CubicKeyframe(MotionKeyframes.bounceCycle[3].translateY,
+                                          duration: MotionKeyframes.bouncePeriod * 0.32)
+                            CubicKeyframe(MotionKeyframes.bounceCycle[4].translateY,
+                                          duration: MotionKeyframes.bouncePeriod * 0.18)
+                        }
+                        KeyframeTrack(\.scaleX) {
+                            CubicKeyframe(MotionKeyframes.bounceCycle[1].scaleX,
+                                          duration: MotionKeyframes.bouncePeriod * 0.18)
+                            CubicKeyframe(MotionKeyframes.bounceCycle[2].scaleX,
+                                          duration: MotionKeyframes.bouncePeriod * 0.32)
+                            CubicKeyframe(MotionKeyframes.bounceCycle[3].scaleX,
+                                          duration: MotionKeyframes.bouncePeriod * 0.32)
+                            CubicKeyframe(MotionKeyframes.bounceCycle[4].scaleX,
+                                          duration: MotionKeyframes.bouncePeriod * 0.18)
+                        }
+                        KeyframeTrack(\.scaleY) {
+                            CubicKeyframe(MotionKeyframes.bounceCycle[1].scaleY,
+                                          duration: MotionKeyframes.bouncePeriod * 0.18)
+                            CubicKeyframe(MotionKeyframes.bounceCycle[2].scaleY,
+                                          duration: MotionKeyframes.bouncePeriod * 0.32)
+                            CubicKeyframe(MotionKeyframes.bounceCycle[3].scaleY,
+                                          duration: MotionKeyframes.bouncePeriod * 0.32)
+                            CubicKeyframe(MotionKeyframes.bounceCycle[4].scaleY,
+                                          duration: MotionKeyframes.bouncePeriod * 0.18)
+                        }
                     }
-                    .onDisappear {
-                        stopDriftAnimation()
-                        stopHeartAnimation()
-                    }
-                    .onChange(of: quietHoursEnabled) { _, _ in
-                        resetAlertPulse()
-                        restartIdleAnimation()
-                    }
-                    .onChange(of: idleAnimation) { _, _ in
-                        restartIdleAnimation()
-                    }
-                    .onChange(of: reduceMotion) { _, _ in
-                        resetAlertPulse()
-                        restartIdleAnimation()
-                    }
-                    .onChange(of: alertPulseID) { _, _ in
-                        runNewAlertPulse()
-                    }
+                } else {
+                    glyph(bounceValue: BounceAnimatorValue())
+                }
                 if pendingCount >= 2 {
                     Text("+\(pendingCount - 1)")
                         .font(.system(size: 11, weight: .semibold))
@@ -129,6 +134,54 @@ struct WidgetIconView: View {
         .accessibilityAddTraits(.isButton)
     }
 
+    @ViewBuilder
+    private func glyph(bounceValue: BounceAnimatorValue) -> some View {
+        Image("ClaudeCodeIcon")
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: 36, height: 36)
+            .frame(width: 44, height: 44)
+            .scaleEffect(
+                x: quietHoursEnabled ? 1.0 : bounceValue.scaleX,
+                y: quietHoursEnabled ? 1.0 : bounceValue.scaleY,
+                anchor: .bottom
+            )
+            .scaleEffect(quietHoursEnabled ? 1.0 : heartScale * breatheScale * alertPulseScale)
+            .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation + idleRotation), anchor: .top)
+            .offset(
+                x: quietHoursEnabled ? 0 : driftOffset.width,
+                y: quietHoursEnabled ? 0 : bounceValue.translateY + driftOffset.height
+            )
+            .modifier(RoamOffsetEffect(
+                angle: roamPhase,
+                radiusX: Double(MotionTokens.roamRadiusX),
+                radiusY: Double(MotionTokens.roamRadiusY),
+                isActive: idleAnimation == .roam && !quietHoursEnabled && !reduceMotion
+            ))
+            .onAppear {
+                startIdleAnimation()
+                runNewAlertPulse()
+            }
+            .onDisappear {
+                stopDriftAnimation()
+                stopHeartAnimation()
+            }
+            .onChange(of: quietHoursEnabled) { _, _ in
+                resetAlertPulse()
+                restartIdleAnimation()
+            }
+            .onChange(of: idleAnimation) { _, _ in
+                restartIdleAnimation()
+            }
+            .onChange(of: reduceMotion) { _, _ in
+                resetAlertPulse()
+                restartIdleAnimation()
+            }
+            .onChange(of: alertPulseID) { _, _ in
+                runNewAlertPulse()
+            }
+    }
+
     private var widgetAccessibilityLabel: String {
         let sessionCount = pendingCount == 1 ? "1 pending session" : "\(pendingCount) pending sessions"
         let quietSuffix = quietHoursEnabled ? ". Quiet Hours" : ""
@@ -140,12 +193,9 @@ struct WidgetIconView: View {
         // Phase 03.1: consume MotionTokens (SC#1, SC#3 uniform reduce-motion gate).
         switch idleAnimation {
         case .bounce:
-            guard let anim = MotionTokens.bounceAnimation(reduceMotion: reduceMotion) else { return }
-            bounceScale = MotionTokens.bounceStretchScale
-            withAnimation(anim) {
-                bounceOffset = -MotionTokens.bounceOffset
-                bounceScale = MotionTokens.bounceSquashScale
-            }
+            // Bounce is driven by the KeyframeAnimator wrapper around the glyph
+            // (see `body`). startIdleAnimation has nothing to set up here.
+            return
         case .breathe:
             guard let anim = MotionTokens.breatheAnimation(reduceMotion: reduceMotion) else { return }
             withAnimation(anim) {
@@ -173,8 +223,6 @@ struct WidgetIconView: View {
     private func restartIdleAnimation() {
         stopDriftAnimation()
         stopHeartAnimation()
-        bounceOffset = 0
-        bounceScale = 1.0
         breatheScale = 1.0
         heartScale = 1.0
         idleRotation = 0
@@ -324,6 +372,12 @@ struct WidgetIconView: View {
             sonarOpacity = 0
         }
     }
+}
+
+struct BounceAnimatorValue {
+    var translateY: CGFloat = MotionKeyframes.bounceCycle[0].translateY
+    var scaleX: CGFloat = MotionKeyframes.bounceCycle[0].scaleX
+    var scaleY: CGFloat = MotionKeyframes.bounceCycle[0].scaleY
 }
 
 private struct RoamOffsetEffect: GeometryEffect {

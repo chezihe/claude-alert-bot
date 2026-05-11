@@ -157,6 +157,25 @@ final class AppleScriptHelperTests: XCTestCase {
         )
     }
 
+    func test_accessibilityRaiser_doesNotPromptFromJumpPath() throws {
+        let testFile = URL(fileURLWithPath: #filePath)
+        let projectRoot = testFile
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let raiserURL = projectRoot
+            .appendingPathComponent("App")
+            .appendingPathComponent("AccessibilityRaiser.swift")
+        let src = (try? String(contentsOf: raiserURL, encoding: .utf8)) ?? ""
+        XCTAssertFalse(src.isEmpty, "Could not read App/AccessibilityRaiser.swift at \(raiserURL.path)")
+        let raiseRange = try XCTUnwrap(src.range(of: "static func raise"))
+        let raiseSource = String(src[raiseRange.lowerBound...])
+
+        XCTAssertFalse(
+            raiseSource.contains("requestTrust()"),
+            "Row click jump path must not repeatedly prompt for Accessibility permission"
+        )
+    }
+
     func test_focusFrontmostSource_containsAppleScriptTimeout() {
         XCTAssertTrue(AppleScriptHelper.focusFrontmostRawSource.contains("with timeout of 3 seconds"),
                       "JUMP-04 inheritance: focus-frontmost must also declare 3-second hard timeout")

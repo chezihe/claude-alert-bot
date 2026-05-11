@@ -38,12 +38,9 @@ enum AccessibilityRaiser {
 
     /// Raise the iTerm2 window matching `windowID` (preferred) or `title` (fallback).
     /// Returns true if a raise action was performed. Silently returns false if AX
-    /// permission is not granted or no matching window is found — caller treats this
-    /// as "AppleScript path is the only fallback" and does nothing extra.
+    /// permission is not granted or no matching window is found.
     static func raise(itermPID: pid_t, windowID: CGWindowID?, title: String?) -> Bool {
         guard isTrusted() else {
-            // Fire-and-forget prompt — see requestTrust() docstring for cadence.
-            requestTrust()
             log.notice("[ax-skip reason=not-trusted]")
             return false
         }

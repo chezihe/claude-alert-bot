@@ -90,20 +90,28 @@ Lift these directly from the HTML.
 
 ## 4. Motion
 
-Each animation in the prototype maps to a Core Animation timing curve.
+Each animation maps to the HTML prototype's `@keyframes` block (the visual source of truth) and a matching SwiftUI primitive.
 
 | Animation | Duration | Curve | Notes |
 |---|---|---|---|
-| Bounce (idle) | 0.45s, autoreverse, infinite | `easeInOut` | 5pt vertical + scale 1.04↔0.94 squash |
+| Bounce (idle) | 0.9s, infinite | easeInOut, 5-keyframe | 2-axis squash-and-stretch. Bottom (0%, 100%): scale(1.04, 0.94) translateY 0. Apex (50%): scale(0.97, 1.05) translateY -5pt. Mid (18%, 82%): scale(1.01, 0.99) translateY -2pt. Source: HTML `@keyframes bounce-cute`. |
 | Breathe | 2.4s, autoreverse, infinite | `easeInOut` | scale 1.0↔1.06 |
-| Ring (bell) | 0.55s | `easeInOut` | rotate ±10° from top anchor |
+| Heart (idle) | 1.4s, infinite | easeInOut, 6-keyframe | Double-pulse: 14% scale 1.14, 28% 1.0, 42% 1.08, 56% 1.0, 56→100% idle. Source: HTML `@keyframes heartbeat`. |
+| Ring (bell) | 1.4s, autoreverse, infinite | `easeInOut` | rotate ±15° from top anchor. Source: HTML `@keyframes ring`. Note: current Swift uses 0.55s ±10° — divergent; see divergence notes below. |
 | Roam (running track) | 1.6s, infinite, **linear** | linear | 24×6pt elliptical path, counter-clockwise |
 | Drift | 6s, infinite | `easeInOut` | random jitter within 14×16pt |
-| New-alert pulse | 0.45s | spring (response 0.3, damping 0.5) | scale 1.14 → 0.96 → 1.06 → 1, rotate ±7° |
-| Sonar wave | 0.75s | `easeOut` | ring scales 0.5 → 3.0, opacity 0.75 → 0 |
+| New-alert pulse | 0.45s | spring (response 0.3, damping 0.5) | scale 1.14 → 0.96 → 1.06 → 1, rotate ±7°. HTML prototype uses `cubic-bezier(.4, 1.5, .5, 1)`; Swift uses chained springs. Treated as equivalent. |
+| Sonar wave | 0.75s | `easeOut` | ring scales 0.5 → 3.0, opacity 0.75 → 0. Base 14pt → peak 42pt. **Known divergence:** widget drawable is 44pt so the peak brushes the panel edge; HTML host is 56pt. Deferred — see divergence notes below. |
 | Status dot ripple (just-arrived) | 1s × 3 cycles | `easeOut` | secondary ring scale 1 → 2.4, opacity 0.6 → 0 |
-| Row dismiss | 0.32s | `easeIn` | translateX(8pt) + opacity + height collapse |
-| Popover open | 0.45s | spring | from widget origin, slight overshoot |
+| Row dismiss | 0.32s | `easeIn` | translateX(8pt) + opacity + height collapse. Implemented via SwiftUI `.transition(.asymmetric(...))` on ForEach children, driven by a `displayQueue` `@State` mirror inside `PopoverContentView`. |
+| Popover open | spring (response 0.35, damping 0.6) | spring with mild overshoot | NSPopover's stock alpha fade plus a content-level scale 0.85→1.0 anchored at the widget corner. Not a window-level spring (NSPopover does not expose one); the content scale is the dominant motion. |
+
+### Known motion divergences (acknowledged, deferred)
+
+- **Sonar drawable.** HTML widget host is 56×56pt giving the 42pt peak sonar 7pt of margin per side. The native widget panel is 44×44pt, so the peak sonar tail brushes the panel edge. Widening `GeometryTokens.widgetBaseSize` would cascade into badge offset, hover hit-test area, and corner-snap geometry — out of scope for a motion-only sweep. Revisit if users report the clipping is visible.
+- **Ring keyframe period and amplitude.** Swift uses 0.55s and ±10°; HTML uses 1.4s and ±15°. The current Swift values match the original SPEC table; the HTML prototype diverged later. No user-visible complaint yet — reconcile if Ring is selected as the user's idle animation and the difference is flagged.
+- **New-alert pulse curve.** HTML applies a single `cubic-bezier(.4, 1.5, .5, 1)` over 0.45s; Swift chains four `spring(response: 0.3, damping: 0.5)` calls at 0%, 25%, 50%, and 100% of the same window. End shape is close. Refactor to a `KeyframeAnimator` if the spring chain ever produces visible jitter.
+- **Popover open spring.** Window-level spring is not achievable through `NSPopover.show(relativeTo:)` — the stock alpha fade is always applied. Approximated via a content-level scale spring anchored at the widget corner. Migrating to a custom `NSPanel`-based popover would unlock a true window-level spring but is a much larger change.
 
 **Reduce Motion (Accessibility):** when `NSWorkspace.shared.accessibilityDisplayShouldReduceMotion == true`, disable all infinite loops, replace springs with linear 0.15s fades.
 

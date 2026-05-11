@@ -51,6 +51,15 @@ enum PopoverContentRules {
         queue.isEmpty && !everHadAlerts
     }
 
+    static func visibleQueue(displayQueue: [CompletedSession],
+                             incomingQueue: [CompletedSession],
+                             hasAppeared: Bool) -> [CompletedSession] {
+        if !hasAppeared && displayQueue.isEmpty {
+            return incomingQueue
+        }
+        return displayQueue
+    }
+
     /// D2-06: same-project duplicates → time suffix on those rows only.
     /// Returns the set of project names that appear ≥2 times in the queue.
     static func projectsWithDuplicates(_ queue: [CompletedSession]) -> Set<String> {
@@ -180,8 +189,16 @@ struct PopoverContentView: View {
 
     private static let scrollCoordinateSpaceName = "PopoverScrollView"
 
+    private var visibleQueue: [CompletedSession] {
+        PopoverContentRules.visibleQueue(
+            displayQueue: displayQueue,
+            incomingQueue: queue,
+            hasAppeared: hasAppeared
+        )
+    }
+
     private var listItems: [PopoverListItem] {
-        PopoverContentRules.groupedListItems(displayQueue, expandedProjects: expandedProjects)
+        PopoverContentRules.groupedListItems(visibleQueue, expandedProjects: expandedProjects)
     }
 
     var body: some View {
@@ -208,9 +225,9 @@ struct PopoverContentView: View {
             .padding(.horizontal, 12)
             .padding(.top, 8)
 
-            if PopoverContentRules.shouldShowEmptyState(queue: displayQueue, everHadAlerts: everHadAlerts) {
+            if PopoverContentRules.shouldShowEmptyState(queue: visibleQueue, everHadAlerts: everHadAlerts) {
                 EmptyStateView()
-            } else if !displayQueue.isEmpty {
+            } else if !visibleQueue.isEmpty {
                 let isScrollable = listItems.count > GeometryTokens.popoverMaxVisibleRows
                 let fades = PopoverContentRules.scrollFadeVisibility(
                     contentMinY: scrollContentFrame.minY,
@@ -264,7 +281,7 @@ struct PopoverContentView: View {
                 }
                 .scrollIndicators(.never)
                 .frame(maxHeight: CGFloat(min(
-                    PopoverContentRules.displayRowCount(displayQueue, expandedProjects: expandedProjects),
+                    PopoverContentRules.displayRowCount(visibleQueue, expandedProjects: expandedProjects),
                     GeometryTokens.popoverMaxVisibleRows
                 )) * GeometryTokens.rowMinHeight)
                 .coordinateSpace(name: Self.scrollCoordinateSpaceName)

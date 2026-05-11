@@ -193,6 +193,18 @@ final class PopoverContentTests: XCTestCase {
         ))
     }
 
+    func test_visibleQueue_beforeOnAppearUsesIncomingQueueToAvoidBlankFirstFrame() {
+        let incoming = [mkSession(id: "a1", project: "Alpha")]
+
+        let visible = PopoverContentRules.visibleQueue(
+            displayQueue: [],
+            incomingQueue: incoming,
+            hasAppeared: false
+        )
+
+        XCTAssertEqual(visible.map(\.sessionID), ["a1"])
+    }
+
     func test_timeSuffix_format_hhmm() {
         var comps = DateComponents()
         comps.year = 2026; comps.month = 5; comps.day = 7
@@ -335,7 +347,7 @@ final class PopoverContentTests: XCTestCase {
         let src = readPopoverContentViewSource()
 
         XCTAssertTrue(src.contains("var everHadAlerts: Bool = false"))
-        XCTAssertTrue(src.contains("PopoverContentRules.shouldShowEmptyState(queue: displayQueue, everHadAlerts: everHadAlerts)"))
+        XCTAssertTrue(src.contains("PopoverContentRules.shouldShowEmptyState(queue: visibleQueue, everHadAlerts: everHadAlerts)"))
         XCTAssertTrue(src.contains("EmptyStateView()"))
     }
 

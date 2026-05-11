@@ -296,8 +296,6 @@ struct PopoverContentView: View {
         }
         .frame(width: GeometryTokens.popoverWidth)
         .background(PopoverMaterialBackground())
-        .clipShape(RoundedRectangle(cornerRadius: GeometryTokens.popoverCornerRadius,
-                                    style: .continuous))
         .onHover { hovering in onPopoverHoverChange(hovering) }
     }
 }
@@ -349,10 +347,10 @@ private struct PopoverScrollContentFramePreferenceKey: PreferenceKey {
 }
 
 /// Walks up the AppKit hierarchy from the SwiftUI ScrollView's content view to
-/// find the enclosing NSScrollView and disable its scrollers outright. `.scrollIndicators(.never)`
-/// alone is not always respected on macOS — system "Show scroll bars" preference can
-/// reintroduce overlay indicators. Setting `hasVerticalScroller/hasHorizontalScroller = false`
-/// is a hard override.
+/// find the enclosing NSScrollView and (a) disable its scrollers outright and
+/// (b) make its background fully transparent so the popover's material shows
+/// through. `.scrollIndicators(.never)` and SwiftUI's clear background do not
+/// reliably handle either on macOS.
 private struct HideScrollerIntrospector: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
         let probe = NSView(frame: .zero)
@@ -361,6 +359,10 @@ private struct HideScrollerIntrospector: NSViewRepresentable {
             scrollView.hasVerticalScroller = false
             scrollView.hasHorizontalScroller = false
             scrollView.autohidesScrollers = true
+            scrollView.drawsBackground = false
+            scrollView.backgroundColor = .clear
+            scrollView.borderType = .noBorder
+            scrollView.contentView.drawsBackground = false
         }
         return probe
     }

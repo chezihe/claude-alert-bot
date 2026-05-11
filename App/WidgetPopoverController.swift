@@ -130,6 +130,7 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         } else {
             pop.contentViewController = NSHostingController(rootView: content)
         }
+        applyHostCornerRadius(pop)
         resizePopover(pop, queue: queue)
         pop.show(relativeTo: anchor.bounds, of: anchor, preferredEdge: cornerToEdge())
         log.notice("popover shown rows=\(queue.count, privacy: .public)")
@@ -183,7 +184,23 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         } else {
             pop.contentViewController = NSHostingController(rootView: content)
         }
+        applyHostCornerRadius(pop)
         resizePopover(pop, queue: queue)
+    }
+
+    /// Apply the panel corner radius directly to the hosting view's layer so
+    /// SwiftUI row backgrounds (especially hover fills) are clipped flush with
+    /// the NSPopover frame's rounded edges instead of bleeding into the panel's
+    /// curved corner gutter. NSPopover's frame view is drawn by AppKit and its
+    /// internal radius cannot be queried; clipping the hosting view to the same
+    /// radius the SPEC documents (14pt) keeps the SwiftUI content aligned with
+    /// the visible panel edge across macOS 14+ revisions.
+    private func applyHostCornerRadius(_ pop: NSPopover) {
+        guard let view = pop.contentViewController?.view else { return }
+        view.wantsLayer = true
+        view.layer?.cornerRadius = GeometryTokens.popoverCornerRadius
+        view.layer?.cornerCurve = .continuous
+        view.layer?.masksToBounds = true
     }
 
     private func resizePopover(_ pop: NSPopover, queue: [CompletedSession]) {

@@ -37,12 +37,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        guard Self.shouldContinueLaunch() else {
-            log.error("accessibility permission missing — requested trust and terminating")
-            NSApp.terminate(nil)
-            return
-        }
-
         // === Phase 1 steps (preserved verbatim) ===
         // 1. Validate socket path length (Pitfall #6)
         guard SocketPaths.validateSocketPathLength() else {
@@ -123,19 +117,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         installSignalHandler(SIGINT)
         // NOTE: D2-29 — no NSMenu / settingsWindow / NSApp.activate. The SwiftUI
         // `Settings { … }` scene in ClaudeAlertBotApp.swift handles ⌘, automatically.
-    }
-
-    static func shouldContinueLaunch(
-        isRunningUnitTests: Bool = AppDelegate.isRunningUnitTests,
-        isAccessibilityTrusted: () -> Bool = AccessibilityRaiser.isTrusted,
-        requestAccessibilityTrust: () -> Bool = AccessibilityRaiser.requestTrust
-    ) -> Bool {
-        guard !isRunningUnitTests else { return true }
-        guard isAccessibilityTrusted() else {
-            _ = requestAccessibilityTrust()
-            return false
-        }
-        return true
     }
 
     private static var isRunningUnitTests: Bool {

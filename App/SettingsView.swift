@@ -50,6 +50,8 @@ struct SettingsView: View {
     @State private var connectionTestResult: JumpResult? = nil
     @State private var connectionTestResultAt: Date = Date()
     @State private var hideResultTask: Task<Void, Never>? = nil
+    @State private var accessibilityTrusted = true
+    @State private var hasCheckedAccessibilityTrust = false
     @State private var isCheckingAutomationPermission = false
     @State private var automationPermissionCheckTask: Task<Void, Never>? = nil
 
@@ -59,6 +61,13 @@ struct SettingsView: View {
             if store.applescriptPermission == .denied && !isCheckingAutomationPermission {
                 Section {
                     PermissionBannerView()
+                }
+            }
+
+            // D3-21 — Accessibility permission banner. Cross-Space window raise requires AX.
+            if hasCheckedAccessibilityTrust && !accessibilityTrusted {
+                Section {
+                    AccessibilityPermissionBannerView()
                 }
             }
 
@@ -186,14 +195,21 @@ struct SettingsView: View {
         .padding(.vertical, 32)
         .padding(.horizontal, 24)
         .onAppear {
+            refreshAccessibilityTrust()
             refreshAutomationPermissionIfNeeded()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            refreshAccessibilityTrust()
             refreshAutomationPermissionIfNeeded()
         }
     }
 
     // MARK: - SET-05 helpers (D3-15..20)
+
+    private func refreshAccessibilityTrust() {
+        accessibilityTrusted = AccessibilityRaiser.isTrusted()
+        hasCheckedAccessibilityTrust = true
+    }
 
     private func refreshAutomationPermissionIfNeeded() {
         guard automationPermissionCheckTask == nil else { return }

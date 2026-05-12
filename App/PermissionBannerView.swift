@@ -38,3 +38,41 @@ struct PermissionBannerView: View {
         )
     }
 }
+
+/// D3-21 — Accessibility permission banner, shown when AX is not trusted. Required
+/// for cross-Space iTerm2 window raising (full-screen iTerm windows in separate
+/// Mission Control Spaces).
+struct AccessibilityPermissionBannerView: View {
+    static let headlineCopy = "손쉬운 사용 권한이 필요해요"
+    static let bodyCopy = "전체화면 Space의 iTerm 창으로 점프하려면 필요합니다."
+    static let buttonCopy = "시스템 설정 열기"
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "accessibility")
+                .foregroundStyle(Color(NSColor.systemBlue))
+                .font(.system(size: 16))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(Self.headlineCopy)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(Self.bodyCopy)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color(NSColor.secondaryLabelColor))
+            }
+            Spacer()
+            Button(Self.buttonCopy) {
+                AccessibilityRaiser.requestTrust()
+                PermissionDeepLink.openAccessibilityPreferences()
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(NSColor.systemBlue).opacity(0.10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color(NSColor.systemBlue).opacity(0.35), lineWidth: 1)
+                )
+        )
+    }
+}

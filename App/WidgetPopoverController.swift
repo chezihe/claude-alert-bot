@@ -400,7 +400,7 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
 }
 
 enum WidgetPopoverPositioning {
-    private static let widgetGap: CGFloat = 14
+    private static let widgetGap: CGFloat = 8
 
     static func origin(widgetFrame: NSRect,
                        panelSize: NSSize,

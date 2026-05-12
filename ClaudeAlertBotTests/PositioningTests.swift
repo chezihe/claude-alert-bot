@@ -80,4 +80,25 @@ final class PositioningTests: XCTestCase {
         // bottom safe 18 > offset 16 → use 18.
         XCTAssertEqual(origin.y, 0 + 18, accuracy: 0.0001)
     }
+
+    func test_widgetPopoverPositioning_usesTightArrowlessGap() {
+        let widgetFrame = NSRect(x: 1500, y: 800, width: 44, height: 44)
+        let popoverSize = NSSize(width: 270, height: 200)
+
+        let topOrigin = WidgetPopoverPositioning.origin(
+            widgetFrame: widgetFrame,
+            panelSize: popoverSize,
+            visibleFrame: visibleFrame,
+            corner: .topRight
+        )
+        let bottomOrigin = WidgetPopoverPositioning.origin(
+            widgetFrame: widgetFrame,
+            panelSize: popoverSize,
+            visibleFrame: visibleFrame,
+            corner: .bottomRight
+        )
+
+        XCTAssertEqual(topOrigin.y, widgetFrame.minY - 8 - popoverSize.height, accuracy: 0.0001)
+        XCTAssertEqual(bottomOrigin.y, widgetFrame.maxY + 8, accuracy: 0.0001)
+    }
 }

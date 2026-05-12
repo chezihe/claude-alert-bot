@@ -431,6 +431,16 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertFalse(src.contains(".show(relativeTo:"))
     }
 
+    func test_widgetPopoverController_clearsHostedContentOnDismissToAvoidStaleOpenState() throws {
+        let src = readWidgetPopoverControllerSource()
+        let dismissRange = try XCTUnwrap(src.range(of: "private func dismissPopover()"))
+        let reloadRange = try XCTUnwrap(src.range(of: "private func reloadPopoverContent()"))
+        let dismissSource = String(src[dismissRange.lowerBound..<reloadRange.lowerBound])
+
+        XCTAssertTrue(dismissSource.contains("popoverHostView = nil"))
+        XCTAssertTrue(dismissSource.contains("popoverPanel?.contentView = nil"))
+    }
+
     func test_popoverContentViewPinsRootHeightBeforeFirstShow() {
         let src = readPopoverContentViewSource()
 

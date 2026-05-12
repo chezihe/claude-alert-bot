@@ -142,6 +142,8 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
 
     private func dismissPopover() {
         popoverPanel?.orderOut(nil)
+        popoverPanel?.contentView = nil
+        popoverHostView = nil
         removeEventMonitors()
         log.notice("popover dismissed")
     }

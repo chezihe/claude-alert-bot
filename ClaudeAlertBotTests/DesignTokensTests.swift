@@ -177,6 +177,24 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertTrue(src.contains(".linear(duration: roamDuration).repeatForever(autoreverses: false)"))
     }
 
+    func test_motionTokens_roamDustValues_matchPrototype() {
+        XCTAssertEqual(MotionTokens.roamDustPuffSize.width, 6, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.roamDustPuffSize.height, 4, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.roamDustBottomInset, 2, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.roamDustRise, -5, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.roamDustStartScale, 0.4, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.roamDustEndScale, 2.4, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.roamDustPeakOpacity, 0.65, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.roamDustAnchorFractions.count, 3)
+        XCTAssertEqual(MotionTokens.roamDustAnchorFractions[0], 0.32, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.roamDustAnchorFractions[1], 0.50, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.roamDustAnchorFractions[2], 0.68, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.roamDustDelays.count, 3)
+        XCTAssertEqual(MotionTokens.roamDustDelays[0], 0.0, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.roamDustDelays[1], 0.4, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.roamDustDelays[2], 0.8, accuracy: 0.001)
+    }
+
 
     func test_motionTokens_newAlertPulseValues_matchSpec() {
         XCTAssertEqual(MotionTokens.newAlertPulseDuration, 0.45, accuracy: 0.001)

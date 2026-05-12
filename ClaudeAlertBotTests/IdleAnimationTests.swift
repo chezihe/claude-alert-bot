@@ -51,6 +51,21 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("roamPhase = 0"))
     }
 
+    func test_widgetIconViewSource_wiresRoamDustCloud() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("@Environment(\\.colorScheme) private var colorScheme"))
+        XCTAssertTrue(src.contains("private var roamDustActive: Bool"))
+        XCTAssertTrue(src.contains("idleAnimation == .roam && !quietHoursEnabled && !reduceMotion"))
+        XCTAssertTrue(src.contains("if roamDustActive {"))
+        XCTAssertTrue(src.contains("RoamDustCloudView(colorScheme: colorScheme)"))
+        XCTAssertTrue(src.contains("private struct RoamDustCloudView: View"))
+        XCTAssertTrue(src.contains("TimelineView(.animation"))
+        XCTAssertTrue(src.contains("MotionTokens.roamDustDelays"))
+        XCTAssertTrue(src.contains("MotionTokens.roamDustPeakOpacity"))
+        XCTAssertTrue(src.contains(".accessibilityHidden(true)"))
+    }
+
     func test_widgetIconViewSource_wiresRageKeyframeAnimator() {
         let src = readWidgetIconViewSource()
 

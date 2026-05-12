@@ -13,24 +13,6 @@ final class SettingsViewTests: XCTestCase {
         XCTAssertEqual(PermissionBannerView.buttonCopy, "시스템 설정 열기")
     }
 
-    func test_accessibilityBannerCopy_locked() {
-        XCTAssertEqual(AccessibilityPermissionBannerView.headlineCopy, "손쉬운 사용 권한이 필요해요")
-        XCTAssertEqual(AccessibilityPermissionBannerView.bodyCopy, "전체화면 Space의 iTerm 창으로 점프하려면 필요합니다.")
-        XCTAssertEqual(AccessibilityPermissionBannerView.buttonCopy, "시스템 설정 열기")
-        XCTAssertFalse(AccessibilityPermissionBannerView.bodyCopy.contains("재시작"))
-    }
-
-    func test_accessibilityBannerButtonRequestsCurrentAppTrustBeforeOpeningSettings() {
-        let src = readPermissionBannerViewSource()
-        guard let bannerStart = src.range(of: "struct AccessibilityPermissionBannerView") else {
-            XCTFail("Could not find AccessibilityPermissionBannerView")
-            return
-        }
-        let bannerSource = String(src[bannerStart.lowerBound...])
-
-        XCTAssertTrue(bannerSource.contains("AccessibilityRaiser.requestTrust()"))
-        XCTAssertTrue(bannerSource.contains("PermissionDeepLink.openAccessibilityPreferences()"))
-    }
     // (Task 2 appends more tests below this point)
 }
 
@@ -172,6 +154,54 @@ extension SettingsViewTests {
         XCTAssertFalse(popoverSource.contains(#"NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)"#))
     }
 
+    func test_appDelegateLaunchGateRequestsAccessibilityAndStopsLaunchWhenMissing() {
+        var requestedTrust = false
+
+        let shouldContinue = AppDelegate.shouldContinueLaunch(
+            isRunningUnitTests: false,
+            isAccessibilityTrusted: { false },
+            requestAccessibilityTrust: {
+                requestedTrust = true
+                return false
+            }
+        )
+
+        XCTAssertFalse(shouldContinue)
+        XCTAssertTrue(requestedTrust)
+    }
+
+    func test_appDelegateLaunchGateContinuesWhenAccessibilityTrusted() {
+        var requestedTrust = false
+
+        let shouldContinue = AppDelegate.shouldContinueLaunch(
+            isRunningUnitTests: false,
+            isAccessibilityTrusted: { true },
+            requestAccessibilityTrust: {
+                requestedTrust = true
+                return true
+            }
+        )
+
+        XCTAssertTrue(shouldContinue)
+        XCTAssertFalse(requestedTrust)
+    }
+
+    func test_appDelegateLaunchGateSkipsDuringUnitTests() {
+        var requestedTrust = false
+
+        let shouldContinue = AppDelegate.shouldContinueLaunch(
+            isRunningUnitTests: true,
+            isAccessibilityTrusted: { false },
+            requestAccessibilityTrust: {
+                requestedTrust = true
+                return false
+            }
+        )
+
+        XCTAssertTrue(shouldContinue)
+        XCTAssertFalse(requestedTrust)
+    }
+
     func test_settingsWindowPresenterBringsSettingsWindowToFront() {
         let src = readSettingsWindowPresenterSource()
 
@@ -185,13 +215,13 @@ extension SettingsViewTests {
         XCTAssertFalse(src.contains("window.isVisible && !(window is NSPanel)"))
     }
 
-    func test_settingsViewRefreshesAccessibilityPermissionWhenAppBecomesActive() {
+    func test_settingsViewDoesNotShowAccessibilityBanner() {
         let src = readSettingsViewSource()
 
-        XCTAssertTrue(src.contains("@State private var accessibilityTrusted = true"))
-        XCTAssertTrue(src.contains("if hasCheckedAccessibilityTrust && !accessibilityTrusted"))
-        XCTAssertTrue(src.contains(".onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification))"))
-        XCTAssertTrue(src.contains("refreshAccessibilityTrust()"))
+        XCTAssertFalse(src.contains("AccessibilityPermissionBannerView()"))
+        XCTAssertFalse(src.contains("accessibilityTrusted"))
+        XCTAssertFalse(src.contains("hasCheckedAccessibilityTrust"))
+        XCTAssertFalse(src.contains("refreshAccessibilityTrust()"))
     }
 
     func test_settingsViewRechecksAutomationPermissionBeforeShowingDeniedBanner() {
@@ -204,14 +234,6 @@ extension SettingsViewTests {
         XCTAssertTrue(src.contains("await AppleScriptHelper.shared.triggerPermissionPrompt()"))
     }
 
-    func test_settingsViewShowsAccessibilityBannerOnlyAfterTrustCheck() {
-        let src = readSettingsViewSource()
-
-        XCTAssertTrue(src.contains("@State private var hasCheckedAccessibilityTrust = false"))
-        XCTAssertTrue(src.contains("if hasCheckedAccessibilityTrust && !accessibilityTrusted"))
-        XCTAssertTrue(src.contains("hasCheckedAccessibilityTrust = true"))
-    }
-
     /// Resolve App/SettingsView.swift relative to this test file so source-level
     /// audits are independent of xcodebuild's working directory.
     private func readSettingsViewSource(_ thisFile: StaticString = #filePath) -> String {
@@ -220,17 +242,6 @@ extension SettingsViewTests {
         let target = repoRoot.appendingPathComponent("App/SettingsView.swift")
         guard let data = try? String(contentsOf: target, encoding: .utf8) else {
             XCTFail("Could not read App/SettingsView.swift at \(target.path)")
-            return ""
-        }
-        return data
-    }
-
-    private func readPermissionBannerViewSource(_ thisFile: StaticString = #filePath) -> String {
-        let here = URL(fileURLWithPath: "\(thisFile)")
-        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
-        let target = repoRoot.appendingPathComponent("App/PermissionBannerView.swift")
-        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
-            XCTFail("Could not read App/PermissionBannerView.swift at \(target.path)")
             return ""
         }
         return data

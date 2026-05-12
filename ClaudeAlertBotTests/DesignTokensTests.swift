@@ -159,12 +159,12 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(MotionTokens.rageWindupDuration, 0.95, accuracy: 0.001)
     }
 
-    func test_motionTokensSource_ringValues_matchSpec() {
+    func test_motionTokensSource_ringValues_movedToMotionKeyframes() {
         let src = readDesignTokensSource()
 
-        XCTAssertTrue(src.contains("static let ringDuration: TimeInterval = 0.55"))
-        XCTAssertTrue(src.contains("static let ringRotation: Double = 10"))
-        XCTAssertTrue(src.contains("static func ringAnimation(reduceMotion: Bool) -> Animation?"))
+        XCTAssertFalse(src.contains("static let ringDuration"))
+        XCTAssertFalse(src.contains("static let ringRotation"))
+        XCTAssertFalse(src.contains("static func ringAnimation"))
     }
 
     func test_motionTokensSource_roamValues_matchSpec() {
@@ -209,15 +209,6 @@ final class DesignTokensTests: XCTestCase {
     }
 
     // MARK: - MotionTokens reduce-motion gate (D4 / SC#3)
-
-    func test_motionTokens_ringAnimation_returnsNil_whenReduceMotionIsTrue() {
-        // D4: token namespace owns the uniform reduce-motion gate.
-        XCTAssertNil(MotionTokens.ringAnimation(reduceMotion: true))
-    }
-
-    func test_motionTokens_ringAnimation_returnsNonNil_whenReduceMotionIsFalse() {
-        XCTAssertNotNil(MotionTokens.ringAnimation(reduceMotion: false))
-    }
 
     // MARK: - EffectTokens (WO-010 aging)
 

@@ -1,7 +1,7 @@
 // App/MotionKeyframes.swift — Phase 1 motion rework.
 // Pure keyframe data (no view code). Source of truth: HTML prototype
-// `Claude Alert Bot - Prototype v2.html` @keyframes bounce-cute (117–123)
-// and @keyframes heartbeat (147–153). Loop-continuous; consumed by
+// `Claude Alert Bot - Prototype v2.html` @keyframes bounce-cute (117–123),
+// heartbeat (147–153), and ring (154–162). Loop-continuous; consumed by
 // WidgetIconView's KeyframeAnimator multi-track wiring.
 import CoreGraphics
 import Foundation
@@ -16,6 +16,11 @@ struct BounceKeyframe: Equatable {
 struct HeartKeyframe: Equatable {
     let percent: Double   // 0...100 along the cycle
     let scale: CGFloat
+}
+
+struct RingKeyframe: Equatable {
+    let percent: Double   // 0...100 along the cycle
+    let rotation: Double  // degrees, anchored near glyph top (0.5, 0.1)
 }
 
 struct RageKeyframe: Equatable {
@@ -52,6 +57,22 @@ enum MotionKeyframes {
         HeartKeyframe(percent:  42, scale: 1.08),
         HeartKeyframe(percent:  56, scale: 1.00),
         HeartKeyframe(percent: 100, scale: 1.00),
+    ]
+
+    // HTML ring is 1.4s ease-in-out infinite (Prototype v2 line 107).
+    static let ringPeriod: TimeInterval = 1.4
+
+    // HTML @keyframes ring (Prototype v2 lines 154–162).
+    // Damped bell swing; starts and ends at 0 so the loop does not snap.
+    static let ringCycle: [RingKeyframe] = [
+        RingKeyframe(percent:   0, rotation:   0),
+        RingKeyframe(percent:  10, rotation: -14),
+        RingKeyframe(percent:  20, rotation:  12),
+        RingKeyframe(percent:  30, rotation:  -9),
+        RingKeyframe(percent:  40, rotation:   7),
+        RingKeyframe(percent:  50, rotation:  -4),
+        RingKeyframe(percent:  60, rotation:   2),
+        RingKeyframe(percent: 100, rotation:   0),
     ]
 
     // HTML throw-windup is 950ms cubic-bezier(.5, 0, .3, 1) (Prototype v2 line 655),

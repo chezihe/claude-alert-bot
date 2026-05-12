@@ -7,7 +7,7 @@
 // Breathe: 2.4s scale 1.0↔1.06, autoreverse forever; default idle animation for WO-012.
 // Heart: 1.4s HTML-faithful KeyframeAnimator (single scale track) anchored at center.
 //        Mirrors @keyframes heartbeat double-pulse at 14% / 42%; suppressed in Quiet Hours / Reduce Motion.
-// Ring: 0.55s ±10° top-anchor rotation, autoreverse forever; suppressed when Reduce Motion is on.
+// Ring: 1.4s HTML-faithful damped bell swing from near-top anchor; suppressed when Reduce Motion is on.
 // Roam: 1.6s counter-clockwise 24×6pt ellipse, linear forever; suppressed when Reduce Motion is on.
 // Drift: 6s random jitter within 14×16pt, easeInOut forever; suppressed when Reduce Motion is on.
 // New-alert pulse: scale/rotate glyph + one sonar ring; suppressed in Quiet Hours.
@@ -185,10 +185,8 @@ struct WidgetIconView: View {
                         }
                     }
                 } else if ringAnimatorActive {
-                    // HTML @keyframes ring (Prototype v2 lines 154–162) is a 1.4s ease-in-out
-                    // sequence; SPEC.md §4 keeps a 0.55s ±10° approximation. KeyframeAnimator
-                    // owns its own lifecycle, so switching idle to anything else removes this
-                    // branch and the rotation snaps back to 0 (no leaked `.repeatForever`).
+                    // KeyframeAnimator owns its own lifecycle, so switching idle to anything else
+                    // removes this branch and the rotation snaps back to 0 (no leaked `.repeatForever`).
                     KeyframeAnimator(
                         initialValue: RingAnimatorValue(),
                         repeating: true
@@ -196,8 +194,13 @@ struct WidgetIconView: View {
                         glyph(bounceValue: BounceAnimatorValue(), heartScale: 1.0, rageValue: RageAnimatorValue(), ringRotation: value.rotation)
                     } keyframes: { (_: RingAnimatorValue) in
                         KeyframeTrack(\.rotation) {
-                            CubicKeyframe(MotionTokens.ringRotation, duration: MotionTokens.ringDuration)
-                            CubicKeyframe(-MotionTokens.ringRotation, duration: MotionTokens.ringDuration)
+                            CubicKeyframe(MotionKeyframes.ringCycle[1].rotation, duration: MotionKeyframes.ringPeriod * 0.10)
+                            CubicKeyframe(MotionKeyframes.ringCycle[2].rotation, duration: MotionKeyframes.ringPeriod * 0.10)
+                            CubicKeyframe(MotionKeyframes.ringCycle[3].rotation, duration: MotionKeyframes.ringPeriod * 0.10)
+                            CubicKeyframe(MotionKeyframes.ringCycle[4].rotation, duration: MotionKeyframes.ringPeriod * 0.10)
+                            CubicKeyframe(MotionKeyframes.ringCycle[5].rotation, duration: MotionKeyframes.ringPeriod * 0.10)
+                            CubicKeyframe(MotionKeyframes.ringCycle[6].rotation, duration: MotionKeyframes.ringPeriod * 0.10)
+                            CubicKeyframe(MotionKeyframes.ringCycle[7].rotation, duration: MotionKeyframes.ringPeriod * 0.40)
                         }
                     }
                 } else {
@@ -235,7 +238,7 @@ struct WidgetIconView: View {
                 anchor: .bottom
             )
             .scaleEffect(quietHoursEnabled ? 1.0 : heartScale * alertPulseScale, anchor: .center)
-            .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation + ringRotation), anchor: .top)
+            .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation + ringRotation), anchor: UnitPoint(x: 0.5, y: 0.1))
             .offset(
                 x: Self.fixedGlyphOffset.width,
                 y: (quietHoursEnabled ? 0 : bounceValue.translateY) + Self.fixedGlyphOffset.height

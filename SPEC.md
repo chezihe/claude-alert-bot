@@ -97,7 +97,7 @@ Each animation maps to the HTML prototype's `@keyframes` block (the visual sourc
 | Bounce (idle) | 0.9s, infinite | easeInOut, 5-keyframe | 2-axis squash-and-stretch. Bottom (0%, 100%): scale(1.04, 0.94) translateY 0. Apex (50%): scale(0.97, 1.05) translateY -5pt. Mid (18%, 82%): scale(1.01, 0.99) translateY -2pt. Source: HTML `@keyframes bounce-cute`. |
 | Breathe | 2.4s, autoreverse, infinite | `easeInOut` | scale 1.0↔1.06 |
 | Heart (idle) | 1.4s, infinite | easeInOut, 6-keyframe | Double-pulse: 14% scale 1.14, 28% 1.0, 42% 1.08, 56% 1.0, 56→100% idle. Source: HTML `@keyframes heartbeat`. |
-| Ring (bell) | 1.4s, autoreverse, infinite | `easeInOut` | rotate ±15° from top anchor. Source: HTML `@keyframes ring`. Note: current Swift uses 0.55s ±10° — divergent; see divergence notes below. |
+| Ring (bell) | 1.4s, infinite | `easeInOut` | Damped top-anchor swing: 0° → -14° → 12° → -9° → 7° → -4° → 2° → 0°. Source: HTML `@keyframes ring`. |
 | Roam (running track) | 1.6s, infinite, **linear** | linear | 24×6pt elliptical path, counter-clockwise |
 | Drift | 6s, infinite | `easeInOut` | random jitter within 14×16pt |
 | New-alert pulse | 0.45s | spring (response 0.3, damping 0.5) | scale 1.14 → 0.96 → 1.06 → 1, rotate ±7°. HTML prototype uses `cubic-bezier(.4, 1.5, .5, 1)`; Swift uses chained springs. Treated as equivalent. |
@@ -109,7 +109,6 @@ Each animation maps to the HTML prototype's `@keyframes` block (the visual sourc
 ### Known motion divergences (acknowledged, deferred)
 
 - **Sonar drawable.** HTML widget host is 56×56pt giving the 42pt peak sonar 7pt of margin per side. The native widget panel is 44×44pt, so the peak sonar tail brushes the panel edge. Widening `GeometryTokens.widgetBaseSize` would cascade into badge offset, hover hit-test area, and corner-snap geometry — out of scope for a motion-only sweep. Revisit if users report the clipping is visible.
-- **Ring keyframe period and amplitude.** Swift uses 0.55s and ±10°; HTML uses 1.4s and ±15°. The current Swift values match the original SPEC table; the HTML prototype diverged later. No user-visible complaint yet — reconcile if Ring is selected as the user's idle animation and the difference is flagged.
 - **New-alert pulse curve.** HTML applies a single `cubic-bezier(.4, 1.5, .5, 1)` over 0.45s; Swift chains four `spring(response: 0.3, damping: 0.5)` calls at 0%, 25%, 50%, and 100% of the same window. End shape is close. Refactor to a `KeyframeAnimator` if the spring chain ever produces visible jitter.
 - **Popover open spring.** Window-level spring is not achievable through `NSPopover.show(relativeTo:)` — the stock alpha fade is always applied. Approximated via a content-level scale spring anchored at the widget corner. Migrating to a custom `NSPanel`-based popover would unlock a true window-level spring but is a much larger change.
 

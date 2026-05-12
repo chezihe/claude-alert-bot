@@ -88,12 +88,9 @@ enum EffectTokens {
 }
 
 enum MotionTokens {
-    // Bounce, Heart, and Rage live in MotionKeyframes (keyframe-based, HTML-faithful);
+    // Bounce, Heart, Ring, and Rage live in MotionKeyframes (keyframe-based, HTML-faithful);
     // see App/MotionKeyframes.swift. Removed legacy single-scalar tokens here.
 
-    // SPEC.md §4 row "Ring (bell)" — 0.55s, easeInOut, rotate ±10° from top anchor.
-    static let ringDuration: TimeInterval = 0.55
-    static let ringRotation: Double = 10
     // SPEC.md §4 row "Roam (running track)" — 1.6s linear loop on a 24×6pt ellipse.
     static let roamDuration: TimeInterval = 1.6
     static let roamRadiusX: CGFloat = 12
@@ -122,14 +119,6 @@ enum MotionTokens {
     static let waitingDotPulseDuration: TimeInterval = 1.6
     static let waitingDotPulseMinOpacity: Double = 0.5
     static let reduceMotionFadeDuration: TimeInterval = 0.15
-
-    /// D4 (SC#3) — uniform reduce-motion gate. Returns nil when reduce-motion is on so call-sites
-    /// can `if let anim = MotionTokens.ringAnimation(...) { withAnimation(anim) { ... } }`.
-    /// Caller passes the Bool from whichever native API is natural (SwiftUI Environment / NSWorkspace).
-    static func ringAnimation(reduceMotion: Bool) -> Animation? {
-        guard !reduceMotion else { return nil }
-        return .easeInOut(duration: ringDuration).repeatForever(autoreverses: true)
-    }
 
     static func roamAnimation(reduceMotion: Bool) -> Animation? {
         guard !reduceMotion else { return nil }

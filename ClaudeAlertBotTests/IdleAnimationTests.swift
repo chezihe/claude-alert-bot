@@ -35,9 +35,10 @@ final class IdleAnimationTests: XCTestCase {
 
         XCTAssertTrue(src.contains("ringAnimatorActive"))
         XCTAssertTrue(src.contains("RingAnimatorValue"))
-        XCTAssertTrue(src.contains("MotionTokens.ringRotation"))
-        XCTAssertTrue(src.contains("MotionTokens.ringDuration"))
+        XCTAssertTrue(src.contains("MotionKeyframes.ringCycle"))
+        XCTAssertTrue(src.contains("MotionKeyframes.ringPeriod"))
         XCTAssertTrue(src.contains("alertPulseRotation + ringRotation"))
+        XCTAssertTrue(src.contains("anchor: UnitPoint(x: 0.5, y: 0.1)"))
     }
 
     func test_widgetIconViewSource_wiresRoamBranch() {

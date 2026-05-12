@@ -1,6 +1,6 @@
 // MotionKeyframesTests.swift — Phase 1 motion rework.
-// Drift-guard for App/MotionKeyframes.swift. Bounce cycle mirrors
-// `Claude Alert Bot - Prototype v2.html` @keyframes bounce-cute (lines 117–123).
+// Drift-guard for App/MotionKeyframes.swift. Bounce / Heart / Ring cycles mirror
+// `Claude Alert Bot - Prototype v2.html` @keyframes blocks.
 import XCTest
 @testable import ClaudeAlertBot
 
@@ -89,6 +89,49 @@ final class MotionKeyframesTests: XCTestCase {
         for (kf, exp) in zip(MotionKeyframes.heartCycle, expected) {
             XCTAssertEqual(kf.percent, exp.0, accuracy: 0.0001)
             XCTAssertEqual(kf.scale,   exp.1, accuracy: 0.0001)
+        }
+    }
+
+    // MARK: - Ring cycle
+
+    func test_ringPeriod_matchesPrototype_1_4s() {
+        XCTAssertEqual(MotionKeyframes.ringPeriod, 1.4, accuracy: 0.0001)
+    }
+
+    func test_ringCycle_startsAtPercent0_endsAtPercent100() {
+        XCTAssertEqual(MotionKeyframes.ringCycle.first?.percent, 0)
+        XCTAssertEqual(MotionKeyframes.ringCycle.last?.percent, 100)
+    }
+
+    func test_ringCycle_percentIsMonotonicallyIncreasing() {
+        let percents = MotionKeyframes.ringCycle.map(\.percent)
+        for i in 1..<percents.count {
+            XCTAssertGreaterThan(percents[i], percents[i - 1])
+        }
+    }
+
+    func test_ringCycle_isLoopContinuous() {
+        let first = MotionKeyframes.ringCycle.first
+        let last = MotionKeyframes.ringCycle.last
+        XCTAssertEqual(first?.rotation, last?.rotation)
+    }
+
+    func test_ringCycle_matchesPrototypeKeyframesExactly() {
+        // HTML @keyframes ring (Claude Alert Bot - Prototype v2.html:154–162).
+        let expected: [(Double, Double)] = [
+            (0,     0),
+            (10,  -14),
+            (20,   12),
+            (30,   -9),
+            (40,    7),
+            (50,   -4),
+            (60,    2),
+            (100,   0),
+        ]
+        XCTAssertEqual(MotionKeyframes.ringCycle.count, expected.count)
+        for (kf, exp) in zip(MotionKeyframes.ringCycle, expected) {
+            XCTAssertEqual(kf.percent,   exp.0, accuracy: 0.0001)
+            XCTAssertEqual(kf.rotation,  exp.1, accuracy: 0.0001)
         }
     }
 }

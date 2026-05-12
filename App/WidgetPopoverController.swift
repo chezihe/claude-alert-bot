@@ -1,7 +1,6 @@
 // App/WidgetPopoverController.swift — Phase 2 / Plan 02-08 Task 2 popover surface.
-// Topology per 02-01-SPIKE-RESULT.md verdict: Pattern 8 (NSPopover with .transient behavior).
-// Spike on macOS 26.4.1 confirmed NSPopover does NOT pollute Cmd-Tab or steal focus from a
-// .nonactivatingPanel parent — A1 risk from RESEARCH §Pitfall #2 empirically disproven.
+// The prototype panel has no native popover arrow, so this controller presents a borderless
+// sibling NSPanel and keeps the SwiftUI content responsible for the panel body.
 // Conforms to WidgetHoverDelegate (declared in App/FloatingWidgetWindowController.swift, 02-07).
 // Hover-intent timing: 150ms entry delay before show, 250ms exit grace before dismiss
 // (UI-SPEC §"Floating Widget" hover row — owned by 02-08 per 02-07 SUMMARY).
@@ -13,14 +12,16 @@ import SwiftUI
 import os
 
 @MainActor
-final class WidgetPopoverController: NSObject, WidgetHoverDelegate, NSPopoverDelegate {
+final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
     private let log = Logger(subsystem: "com.claudealert.bot.hook", category: "widget")
     private weak var widgetController: FloatingWidgetWindowController?
     private var entryWorkItem: DispatchWorkItem?
     private var exitWorkItem: DispatchWorkItem?
 
-    // Pattern 8 — NSPopover. (Pattern 8a sibling-NSPanel branch retired by 02-01 spike verdict.)
-    private var popover: NSPopover?
+    private var popoverPanel: NSPanel?
+    private var popoverHostView: NSHostingView<PopoverContentView>?
+    private var globalEventMonitor: Any?
+    private var localEventMonitor: Any?
 
     /// Phase 3 D-ADAPTER — TerminalJumper injected via init (default: ITerm2Jumper).
     private let jumper: any TerminalJumper
@@ -78,12 +79,11 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate, NSPopoverDel
         }
     }
 
-    // MARK: - present / dismiss (Pattern 8)
+    // MARK: - present / dismiss
 
     private func showPopover() {
         guard let controller = widgetController,
-              let panel = controller.window,
-              let anchor = panel.contentView else { return }
+              let widgetPanel = controller.window else { return }
         let queue = controller.queueSnapshot
         let content = PopoverContentView(
             queue: queue,
@@ -113,40 +113,44 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate, NSPopoverDel
             },
             everHadAlerts: SettingsStore.shared.everHadAlerts
         )
-        let pop: NSPopover
-        if let existing = popover {
-            pop = existing
-        } else {
-            pop = NSPopover()
-            pop.behavior = .transient
-            pop.delegate = self
-            popover = pop
-        }
-        // Phase 3 03-09 fix — reuse the NSHostingController so SwiftUI sees a rootView
+        let panel = popoverPanel ?? makePopoverPanel()
+        popoverPanel = panel
+        // Phase 3 03-09 fix — reuse the NSHostingView so SwiftUI sees a rootView
         // update instead of a brand-new view tree. Otherwise PopoverRowView's @State
         // (rotation/collapsed/faded) resets on every reload, and `.onChange(of: state)`
         // never fires for rows that mount with state: .missing — breaking SC#2 도리도리.
-        if let host = pop.contentViewController as? NSHostingController<PopoverContentView> {
+        if let host = popoverHostView {
             host.rootView = content
         } else {
-            pop.contentViewController = NSHostingController(rootView: content)
+            let host = NSHostingView(rootView: content)
+            popoverHostView = host
+            panel.contentView = host
         }
-        applyHostCornerRadius(pop)
-        resizePopover(pop, queue: queue)
-        pop.show(relativeTo: anchor.bounds, of: anchor, preferredEdge: cornerToEdge())
+        if panel.parent == nil {
+            widgetPanel.addChildWindow(panel, ordered: .above)
+        }
+        guard let host = popoverHostView else { return }
+        applyHostCornerRadius(host)
+        resizePopover(panel, hostView: host, queue: queue)
+        panel.orderFront(nil)
+        installEventMonitors()
+        DispatchQueue.main.async { [weak host] in
+            guard let host else { return }
+            Self.flattenScrollViews(in: host)
+        }
         log.notice("popover shown rows=\(queue.count, privacy: .public)")
     }
 
     private func dismissPopover() {
-        popover?.performClose(nil)
+        popoverPanel?.orderOut(nil)
+        removeEventMonitors()
         log.notice("popover dismissed")
     }
 
     /// Re-render the popover with the current rowStates dict.
-    /// NSHostingController's contentViewController reassignment is the existing
-    /// reload primitive (Phase 2 02-08 line 67).
     private func reloadPopoverContent() {
-        guard let pop = popover, pop.isShown else { return }
+        guard let panel = popoverPanel, panel.isVisible else { return }
+        guard let host = popoverHostView else { return }
         guard let controller = widgetController else { return }
         let queue = controller.queueSnapshot
         let content = PopoverContentView(
@@ -180,31 +184,37 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate, NSPopoverDel
         // Phase 3 03-09 fix — same pattern as showPopover. Update rootView in place
         // so SwiftUI sees a diff (rowStates change) instead of a new tree, preserving
         // PopoverRowView @State and letting `.onChange(of: state)` fire SC#2 도리도리.
-        if let host = pop.contentViewController as? NSHostingController<PopoverContentView> {
-            host.rootView = content
-        } else {
-            pop.contentViewController = NSHostingController(rootView: content)
-        }
-        applyHostCornerRadius(pop)
-        resizePopover(pop, queue: queue)
+        host.rootView = content
+        applyHostCornerRadius(host)
+        resizePopover(panel, hostView: host, queue: queue)
+    }
+
+    private func makePopoverPanel() -> NSPanel {
+        let panel = NSPanel(
+            contentRect: .zero,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        panel.level = .floating
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        panel.becomesKeyOnlyIfNeeded = true
+        panel.hidesOnDeactivate = false
+        panel.isMovableByWindowBackground = false
+        panel.hasShadow = true
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.acceptsMouseMovedEvents = true
+        panel.isRestorable = false
+        return panel
     }
 
     /// Apply the panel corner radius directly to the hosting view's layer so
     /// SwiftUI row backgrounds (especially hover fills) are clipped flush with
-    /// the NSPopover frame's rounded edges instead of bleeding into the panel's
-    /// curved corner gutter. NSPopover's frame view is drawn by AppKit and its
-    /// internal radius cannot be queried; clipping the hosting view to the same
-    /// radius the SPEC documents (14pt) keeps the SwiftUI content aligned with
-    /// the visible panel edge across macOS 14+ revisions.
-    /// NSPopover frame radius — macOS 14–26 measure ≈ 12pt around the panel
-    /// edge (the SPEC's 14pt is conceptual; AppKit overrides it). Matching this
-    /// value keeps SwiftUI row backgrounds flush with the visible panel corner.
-    private static let nsPopoverFrameCornerRadius: CGFloat = 12
-
-    private func applyHostCornerRadius(_ pop: NSPopover) {
-        guard let view = pop.contentViewController?.view else { return }
+    /// the panel's rounded edges instead of bleeding into the corner gutter.
+    private func applyHostCornerRadius(_ view: NSView) {
         view.wantsLayer = true
-        view.layer?.cornerRadius = Self.nsPopoverFrameCornerRadius
+        view.layer?.cornerRadius = GeometryTokens.popoverCornerRadius
         view.layer?.cornerCurve = .continuous
         view.layer?.masksToBounds = true
         // The SwiftUI .background(HideScrollerIntrospector()) probe sometimes
@@ -215,23 +225,6 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate, NSPopoverDel
         // NSHostingController has materialised the SwiftUI content into AppKit.
         DispatchQueue.main.async { [weak view] in
             guard let view else { return }
-            Self.flattenScrollViews(in: view)
-        }
-    }
-
-    // MARK: - NSPopoverDelegate
-
-    nonisolated func popoverDidShow(_ notification: Notification) {
-        // NSScrollView is materialised lazily after `show(relativeTo:...)` returns,
-        // so the async tick scheduled inside applyHostCornerRadius can fire too early
-        // (introspector finds no NSScrollView in the subtree) — leaving the panel
-        // with default `drawsBackground=true` and the faint blue strips visible.
-        // popoverDidShow is dispatched after the hosted view tree is on-screen and
-        // its NSScrollView children exist; repeat the sweep here as a guaranteed
-        // second pass.
-        Task { @MainActor in
-            guard let pop = notification.object as? NSPopover,
-                  let view = pop.contentViewController?.view else { return }
             Self.flattenScrollViews(in: view)
         }
     }
@@ -255,22 +248,61 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate, NSPopoverDel
         }
     }
 
-    private func resizePopover(_ pop: NSPopover, queue: [CompletedSession]) {
+    private func resizePopover(_ panel: NSPanel,
+                               hostView: NSHostingView<PopoverContentView>,
+                               queue: [CompletedSession]) {
         let height = PopoverContentRules.popoverHeight(
             queue: queue,
             expandedProjects: expandedProjects,
             everHadAlerts: SettingsStore.shared.everHadAlerts
         )
-        pop.contentSize = NSSize(width: GeometryTokens.popoverWidth, height: height)
+        let size = NSSize(width: GeometryTokens.popoverWidth, height: height)
+        guard let widgetPanel = widgetController?.window,
+              let screen = widgetPanel.screen ?? NSScreen.main else {
+            panel.setContentSize(size)
+            hostView.frame = NSRect(origin: .zero, size: size)
+            return
+        }
+        let origin = WidgetPopoverPositioning.origin(
+            widgetFrame: widgetPanel.frame,
+            panelSize: size,
+            visibleFrame: screen.visibleFrame,
+            corner: SettingsStore.shared.widgetCorner
+        )
+        panel.setFrame(NSRect(origin: origin, size: size), display: true)
+        hostView.frame = NSRect(origin: .zero, size: size)
     }
 
-    /// UI-SPEC: popover slides away from the widget's corner.
-    /// Top-half corners → popover lives below the widget (.minY).
-    /// Bottom-half corners → popover lives above the widget (.maxY).
-    private func cornerToEdge() -> NSRectEdge {
-        switch SettingsStore.shared.widgetCorner {
-        case .topRight, .topLeft: return .minY
-        case .bottomRight, .bottomLeft: return .maxY
+    private func installEventMonitors() {
+        guard globalEventMonitor == nil, localEventMonitor == nil else { return }
+        let popoverWindowNumber = popoverPanel?.windowNumber
+        let widgetWindowNumber = widgetController?.window?.windowNumber
+        globalEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.dismissPopover() }
+        }
+        localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .keyDown]) { [weak self] event in
+            if event.type == .keyDown && event.keyCode == 53 {
+                Task { @MainActor [weak self] in self?.dismissPopover() }
+                return nil
+            }
+            guard event.type == .leftMouseDown || event.type == .rightMouseDown else { return event }
+            let eventWindowNumber = event.window?.windowNumber
+            if eventWindowNumber == popoverWindowNumber || eventWindowNumber == widgetWindowNumber {
+                return event
+            }
+            Task { @MainActor [weak self] in self?.dismissPopover() }
+            return event
+        }
+    }
+
+    private func removeEventMonitors() {
+        if let monitor = globalEventMonitor {
+            NSEvent.removeMonitor(monitor)
+            globalEventMonitor = nil
+        }
+        if let monitor = localEventMonitor {
+            NSEvent.removeMonitor(monitor)
+            localEventMonitor = nil
         }
     }
 
@@ -364,5 +396,40 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate, NSPopoverDel
             expandedProjects.insert(projectName)
         }
         reloadPopoverContent()
+    }
+}
+
+enum WidgetPopoverPositioning {
+    private static let widgetGap: CGFloat = 14
+
+    static func origin(widgetFrame: NSRect,
+                       panelSize: NSSize,
+                       visibleFrame: NSRect,
+                       corner: WidgetCorner) -> NSPoint {
+        let x: CGFloat
+        switch corner {
+        case .topRight, .bottomRight:
+            x = widgetFrame.maxX - panelSize.width
+        case .topLeft, .bottomLeft:
+            x = widgetFrame.minX
+        }
+
+        let y: CGFloat
+        switch corner {
+        case .topRight, .topLeft:
+            y = widgetFrame.minY - widgetGap - panelSize.height
+        case .bottomRight, .bottomLeft:
+            y = widgetFrame.maxY + widgetGap
+        }
+
+        return NSPoint(
+            x: clamp(x, lower: visibleFrame.minX, upper: visibleFrame.maxX - panelSize.width),
+            y: clamp(y, lower: visibleFrame.minY, upper: visibleFrame.maxY - panelSize.height)
+        )
+    }
+
+    private static func clamp(_ value: CGFloat, lower: CGFloat, upper: CGFloat) -> CGFloat {
+        guard upper >= lower else { return lower }
+        return min(max(value, lower), upper)
     }
 }

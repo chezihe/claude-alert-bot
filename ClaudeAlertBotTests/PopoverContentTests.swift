@@ -418,6 +418,16 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains("NSSize(width: GeometryTokens.popoverWidth, height: height)"))
     }
 
+    func test_widgetPopoverController_usesArrowlessPanelInsteadOfNativePopover() {
+        let src = readWidgetPopoverControllerSource()
+
+        XCTAssertTrue(src.contains("private var popoverPanel: NSPanel?"))
+        XCTAssertTrue(src.contains("styleMask: [.borderless, .nonactivatingPanel]"))
+        XCTAssertTrue(src.contains("WidgetPopoverPositioning.origin("))
+        XCTAssertFalse(src.contains("NSPopover()"))
+        XCTAssertFalse(src.contains(".show(relativeTo:"))
+    }
+
     func test_popoverContentViewPinsRootHeightBeforeFirstShow() {
         let src = readPopoverContentViewSource()
 

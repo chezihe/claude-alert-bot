@@ -206,8 +206,7 @@ final class IdleAnimationTests: XCTestCase {
         // Badge now uses HTML-proto accent-dark fill (#B8492C) with a Quiet-mode gray (#6B6B75).
         XCTAssertTrue(src.contains("Color(red: 0x6B/255, green: 0x6B/255, blue: 0x75/255)"))
         XCTAssertTrue(src.contains(": ColorTokens.accentDark"))
-        XCTAssertTrue(src.contains("y: pendingCount >= 2 ? 11 : -6"))
-        XCTAssertTrue(src.contains(#"Text("Zzz")"#))
+        XCTAssertFalse(src.contains(#"Text("Zzz")"#))
     }
 
     func test_widgetIconViewSource_keepsPendingBadgeInsidePanelBounds() {

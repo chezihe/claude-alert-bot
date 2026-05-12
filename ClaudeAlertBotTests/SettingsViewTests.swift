@@ -143,6 +143,27 @@ extension SettingsViewTests {
         XCTAssertTrue(src.contains("LoginItemController.applyFromSettings(enabled: enabled)"))
     }
 
+    func test_settingsOpenPathsUsePresenterToRaiseWindow() {
+        let appSource = readClaudeAlertBotAppSource()
+        let popoverSource = readWidgetPopoverControllerSource()
+
+        XCTAssertTrue(appSource.contains("Button(\"Settings…\") { SettingsWindowPresenter.open() }"))
+        XCTAssertFalse(appSource.contains("@Environment(\\.openSettings)"))
+        XCTAssertTrue(popoverSource.contains("onOpenSettings: {\n                SettingsWindowPresenter.open()\n            }"))
+        XCTAssertFalse(popoverSource.contains(#"NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)"#))
+    }
+
+    func test_settingsWindowPresenterBringsSettingsWindowToFront() {
+        let src = readSettingsWindowPresenterSource()
+
+        XCTAssertTrue(src.contains("NSApp.activate(ignoringOtherApps: true)"))
+        XCTAssertTrue(src.contains(#"NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)"#))
+        XCTAssertTrue(src.contains("DispatchQueue.main.async"))
+        XCTAssertTrue(src.contains("window.makeKeyAndOrderFront(nil)"))
+        XCTAssertTrue(src.contains("window.orderFrontRegardless()"))
+        XCTAssertTrue(src.contains("!(window is NSPanel)"))
+    }
+
     /// Resolve App/SettingsView.swift relative to this test file so source-level
     /// audits are independent of xcodebuild's working directory.
     private func readSettingsViewSource(_ thisFile: StaticString = #filePath) -> String {
@@ -151,6 +172,39 @@ extension SettingsViewTests {
         let target = repoRoot.appendingPathComponent("App/SettingsView.swift")
         guard let data = try? String(contentsOf: target, encoding: .utf8) else {
             XCTFail("Could not read App/SettingsView.swift at \(target.path)")
+            return ""
+        }
+        return data
+    }
+
+    private func readClaudeAlertBotAppSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/ClaudeAlertBotApp.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/ClaudeAlertBotApp.swift at \(target.path)")
+            return ""
+        }
+        return data
+    }
+
+    private func readWidgetPopoverControllerSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/WidgetPopoverController.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/WidgetPopoverController.swift at \(target.path)")
+            return ""
+        }
+        return data
+    }
+
+    private func readSettingsWindowPresenterSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/SettingsWindowPresenter.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/SettingsWindowPresenter.swift at \(target.path)")
             return ""
         }
         return data

@@ -459,8 +459,7 @@ final class PopoverContentTests: XCTestCase {
         let src = readWidgetPopoverControllerSource()
 
         XCTAssertTrue(src.contains("onOpenSettings: {"))
-        XCTAssertTrue(src.contains("NSApp.activate(ignoringOtherApps: true)"))
-        XCTAssertTrue(src.contains(#"NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)"#))
+        XCTAssertTrue(src.contains("SettingsWindowPresenter.open()"))
     }
 
     func test_widgetPopoverController_clearsUnavailableRowsWithoutJumping() throws {

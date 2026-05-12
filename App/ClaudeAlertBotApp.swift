@@ -28,9 +28,8 @@ struct ClaudeAlertBotApp: App {
 }
 
 private struct MenuBarMenuContent: View {
-    @Environment(\.openSettings) private var openSettings
     var body: some View {
-        Button("Settings…") { openSettings() }
+        Button("Settings…") { SettingsWindowPresenter.open() }
         Divider()
         Button("Quit") { NSApp.terminate(nil) }
     }

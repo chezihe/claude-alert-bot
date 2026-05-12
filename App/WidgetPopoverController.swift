@@ -103,8 +103,7 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             },
             onPopoverHoverChange: { [weak self] hovering in self?.onPopoverHover(hovering) },
             onOpenSettings: {
-                NSApp.activate(ignoringOtherApps: true)
-                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                SettingsWindowPresenter.open()
             },
             expandedProjects: expandedProjects,
             widgetCorner: SettingsStore.shared.widgetCorner,
@@ -171,8 +170,7 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             },
             onPopoverHoverChange: { [weak self] hovering in self?.onPopoverHover(hovering) },
             onOpenSettings: {
-                NSApp.activate(ignoringOtherApps: true)
-                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                SettingsWindowPresenter.open()
             },
             expandedProjects: expandedProjects,
             widgetCorner: SettingsStore.shared.widgetCorner,

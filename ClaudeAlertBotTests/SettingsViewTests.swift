@@ -176,10 +176,28 @@ extension SettingsViewTests {
     func test_settingsViewRefreshesAccessibilityPermissionWhenAppBecomesActive() {
         let src = readSettingsViewSource()
 
-        XCTAssertTrue(src.contains("@State private var accessibilityTrusted = AccessibilityRaiser.isTrusted()"))
-        XCTAssertTrue(src.contains("if !accessibilityTrusted"))
+        XCTAssertTrue(src.contains("@State private var accessibilityTrusted = true"))
+        XCTAssertTrue(src.contains("if hasCheckedAccessibilityTrust && !accessibilityTrusted"))
         XCTAssertTrue(src.contains(".onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification))"))
         XCTAssertTrue(src.contains("refreshAccessibilityTrust()"))
+    }
+
+    func test_settingsViewRechecksAutomationPermissionBeforeShowingDeniedBanner() {
+        let src = readSettingsViewSource()
+
+        XCTAssertTrue(src.contains("@State private var isCheckingAutomationPermission = false"))
+        XCTAssertTrue(src.contains("if store.applescriptPermission == .denied && !isCheckingAutomationPermission"))
+        XCTAssertTrue(src.contains("refreshAutomationPermissionIfNeeded()"))
+        XCTAssertTrue(src.contains("guard store.applescriptPermission != .granted else"))
+        XCTAssertTrue(src.contains("await AppleScriptHelper.shared.triggerPermissionPrompt()"))
+    }
+
+    func test_settingsViewShowsAccessibilityBannerOnlyAfterTrustCheck() {
+        let src = readSettingsViewSource()
+
+        XCTAssertTrue(src.contains("@State private var hasCheckedAccessibilityTrust = false"))
+        XCTAssertTrue(src.contains("if hasCheckedAccessibilityTrust && !accessibilityTrusted"))
+        XCTAssertTrue(src.contains("hasCheckedAccessibilityTrust = true"))
     }
 
     /// Resolve App/SettingsView.swift relative to this test file so source-level

@@ -3,7 +3,7 @@
 // D2-29: SwiftUI Settings { ... } scene + @AppStorage; zero external deps.
 // D2-30: View → Store → Registry/Helper single-direction.
 // D2-21: Test button → SessionRegistry.shared.injectTest (in-memory, NOT persisted).
-// D2-35 Path A: .onAppear → if permission == .unknown, trigger TCC dialog via cheap-query.
+// D2-35 Path A: .onAppear → verify Apple Events permission via cheap-query.
 import SwiftUI
 import AppKit
 
@@ -50,19 +50,22 @@ struct SettingsView: View {
     @State private var connectionTestResult: JumpResult? = nil
     @State private var connectionTestResultAt: Date = Date()
     @State private var hideResultTask: Task<Void, Never>? = nil
-    @State private var accessibilityTrusted = AccessibilityRaiser.isTrusted()
+    @State private var accessibilityTrusted = true
+    @State private var hasCheckedAccessibilityTrust = false
+    @State private var isCheckingAutomationPermission = false
+    @State private var automationPermissionCheckTask: Task<Void, Never>? = nil
 
     var body: some View {
         Form {
             // Permission banner (D2-36 — visible only when denied)
-            if store.applescriptPermission == .denied {
+            if store.applescriptPermission == .denied && !isCheckingAutomationPermission {
                 Section {
                     PermissionBannerView()
                 }
             }
 
             // D3-21 — Accessibility permission banner. Cross-Space window raise requires AX.
-            if !accessibilityTrusted {
+            if hasCheckedAccessibilityTrust && !accessibilityTrusted {
                 Section {
                     AccessibilityPermissionBannerView()
                 }
@@ -193,14 +196,11 @@ struct SettingsView: View {
         .padding(.horizontal, 24)
         .onAppear {
             refreshAccessibilityTrust()
-            // D2-35 Path A — trigger Apple Events permission dialog when user explicitly opens Settings.
-            // The cheap-query is a no-op result; what matters is that macOS displays the TCC dialog.
-            if store.applescriptPermission == .unknown {
-                Task { await AppleScriptHelper.shared.triggerPermissionPrompt() }
-            }
+            refreshAutomationPermissionIfNeeded()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             refreshAccessibilityTrust()
+            refreshAutomationPermissionIfNeeded()
         }
     }
 
@@ -208,6 +208,23 @@ struct SettingsView: View {
 
     private func refreshAccessibilityTrust() {
         accessibilityTrusted = AccessibilityRaiser.isTrusted()
+        hasCheckedAccessibilityTrust = true
+    }
+
+    private func refreshAutomationPermissionIfNeeded() {
+        guard automationPermissionCheckTask == nil else { return }
+        guard store.applescriptPermission != .granted else {
+            isCheckingAutomationPermission = false
+            return
+        }
+        isCheckingAutomationPermission = true
+        automationPermissionCheckTask = Task {
+            await AppleScriptHelper.shared.triggerPermissionPrompt()
+            await MainActor.run {
+                isCheckingAutomationPermission = false
+                automationPermissionCheckTask = nil
+            }
+        }
     }
 
     static func widgetCornerLabel(_ corner: WidgetCorner) -> String {

@@ -19,7 +19,7 @@ enum SettingsWindowPresenter {
     }
 
     private static func bringSettingsWindowToFront() {
-        for window in NSApp.windows where window.isVisible && !(window is NSPanel) {
+        for window in NSApp.windows where !(window is NSPanel) {
             window.makeKeyAndOrderFront(nil)
             window.orderFrontRegardless()
         }

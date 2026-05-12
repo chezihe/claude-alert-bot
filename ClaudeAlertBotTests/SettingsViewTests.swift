@@ -162,6 +162,8 @@ extension SettingsViewTests {
         XCTAssertTrue(src.contains("window.makeKeyAndOrderFront(nil)"))
         XCTAssertTrue(src.contains("window.orderFrontRegardless()"))
         XCTAssertTrue(src.contains("!(window is NSPanel)"))
+        XCTAssertTrue(src.contains("for window in NSApp.windows where !(window is NSPanel)"))
+        XCTAssertFalse(src.contains("window.isVisible && !(window is NSPanel)"))
     }
 
     /// Resolve App/SettingsView.swift relative to this test file so source-level

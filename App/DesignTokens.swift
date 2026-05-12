@@ -49,6 +49,8 @@ enum ColorTokens {
 enum GeometryTokens {
     // SPEC.md §3 row "Popover: 270pt wide" — WO-009 reconciles code/spec.
     static let popoverWidth: CGFloat = 270
+    // Spec-inspired fixed chrome row for quick controls and optional clear action.
+    static let popoverQuickControlsHeight: CGFloat = 32
     // SPEC.md §3 row "Popover: 14pt corner radius"
     static let popoverCornerRadius: CGFloat = 14
     // SPEC.md §3 row "Row: 36pt min height"

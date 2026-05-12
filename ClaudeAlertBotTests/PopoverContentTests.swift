@@ -472,6 +472,33 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains("SettingsWindowPresenter.open()"))
     }
 
+    func test_popoverContentView_quickControlsExposeAccessibleState() {
+        let src = readPopoverContentViewSource()
+
+        XCTAssertTrue(src.contains(#".accessibilityLabel("Notification Sound")"#))
+        XCTAssertTrue(src.contains(#".accessibilityValue(store.soundEnabled ? "On" : "Off")"#))
+        XCTAssertTrue(src.contains(#".accessibilityLabel("Quiet Hours")"#))
+        XCTAssertTrue(src.contains(#".accessibilityValue(store.quietHoursEnabled ? "On" : "Off")"#))
+    }
+
+    func test_quietHoursQuickControlNotifiesPopoverControllerForGeometryChange() {
+        let popoverSource = readPopoverContentViewSource()
+        let controllerSource = readWidgetPopoverControllerSource()
+
+        XCTAssertTrue(popoverSource.contains("var onWidgetGeometryChange: () -> Void = {}"))
+        XCTAssertTrue(popoverSource.contains("onWidgetGeometryChange()"))
+        XCTAssertTrue(controllerSource.contains("onWidgetGeometryChange: { [weak self] in"))
+        XCTAssertTrue(controllerSource.contains("refreshPopoverPositionAfterWidgetGeometryChange()"))
+    }
+
+    func test_widgetPopoverControllerDefersGeometryRefreshUntilWidgetResizes() {
+        let src = readWidgetPopoverControllerSource()
+
+        XCTAssertTrue(src.contains("private func refreshPopoverPositionAfterWidgetGeometryChange()"))
+        XCTAssertTrue(src.contains("await Task.yield()"))
+        XCTAssertTrue(src.contains("resizePopover(panel, hostView: host, queue: controller.queueSnapshot)"))
+    }
+
     func test_widgetPopoverController_clearsUnavailableRowsWithoutJumping() throws {
         let src = readWidgetPopoverControllerSource()
         let clickRange = try XCTUnwrap(src.range(of: "private func onRowClick(alertID: String)"))

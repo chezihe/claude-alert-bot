@@ -64,4 +64,30 @@ enum HookEventFactory {
         let data = try! JSONSerialization.data(withJSONObject: dict, options: [])
         return try! JSONDecoder().decode(HookEvent.self, from: data)
     }
+
+    static func notification(sessionID: String,
+                             iTermSessionID: String? = "w0t0p1:TEST-UUID",
+                             cwd: String? = "/Users/test/project",
+                             ts: String = ISO8601DateFormatter().string(from: Date()),
+                             termProgram: String? = nil,
+                             kind: AlertKind? = nil,
+                             lastOutput: String? = nil) -> HookEvent {
+        var dict: [String: Any] = [
+            "schema_version": 1,
+            "event": "notification",
+            "session_id": sessionID,
+            "transcript_path": "/tmp/t.jsonl",
+            "cwd": cwd ?? "",
+            "iterm_session_id": iTermSessionID ?? "",
+            "tty": "/dev/ttys001",
+            "ppid": 1234,
+            "claude_project_dir": cwd ?? "",
+            "ts": ts
+        ]
+        if let tp = termProgram { dict["term_program"] = tp }
+        if let kind { dict["kind"] = kind.rawValue }
+        if let lastOutput { dict["last_output"] = lastOutput }
+        let data = try! JSONSerialization.data(withJSONObject: dict, options: [])
+        return try! JSONDecoder().decode(HookEvent.self, from: data)
+    }
 }

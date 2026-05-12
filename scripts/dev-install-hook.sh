@@ -38,7 +38,7 @@ copy_reporter() {
 }
 
 snippet() {
-    # The exact block from RESEARCH Pitfall #10 + extended for UserPromptSubmit.
+    # The exact block from RESEARCH Pitfall #10 + extended for UserPromptSubmit/Notification.
     # Note: \$HOME is escaped so the JSON contains the literal string "$HOME/...".
     # Claude Code's hook runner expands $HOME itself per code.claude.com/docs/en/hooks.
     cat <<JSON
@@ -59,6 +59,14 @@ snippet() {
           { "type": "command", "command": "\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" user_prompt_submit", "timeout": 5 }
         ]
       }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt|elicitation_dialog",
+        "hooks": [
+          { "type": "command", "command": "\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" notification", "timeout": 5 }
+        ]
+      }
     ]
   }
 }
@@ -72,7 +80,7 @@ apply() {
         echo "Created $SETTINGS"
         return
     fi
-    # Idempotent merge — only replace OUR Stop / UserPromptSubmit entries; preserve other user hooks.
+    # Idempotent merge — only replace OUR Stop / UserPromptSubmit / Notification entries; preserve other user hooks.
     # Use python3 for safe JSON manipulation.
     SNIPPET="$(snippet)" SETTINGS_PATH="$SETTINGS" /usr/bin/python3 - <<'PY'
 import json, os, sys, re
@@ -116,6 +124,7 @@ def merge_event(name):
 
 merge_event("Stop")
 merge_event("UserPromptSubmit")
+merge_event("Notification")
 
 with open(settings_path, "w") as f:
     json.dump(existing, f, indent=2)

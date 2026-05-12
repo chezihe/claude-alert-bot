@@ -66,6 +66,7 @@ actor SessionRegistry {
         }
         switch event.event {
         case "user_prompt_submit": await handleStart(event)
+        case "notification": await handleNotification(event, soundEnabled: soundEnabled)
         case "stop": await handleStop(event,
                                      thresholdSeconds: thresholdSeconds,
                                      soundEnabled: soundEnabled,
@@ -94,6 +95,7 @@ actor SessionRegistry {
                             soundEnabled: Bool,
                             suppressIfFrontmost: @Sendable (String?) async -> Bool) async {
         guard let sid = event.session_id, let stoppedAt = parseTS(event.ts) else { return }
+        clearUnpinnedWaitingAlert(sessionID: sid)
         // D2-14 cheap-query (only relevant when permission granted — caller decides via closure)
         if await suppressIfFrontmost(event.iterm_session_id) {
             log.notice("D2-14 pre-suppress session=\(sid, privacy: .public)")
@@ -136,6 +138,39 @@ actor SessionRegistry {
             tty: event.tty,
             cwd: event.cwd,
             kind: event.kind ?? .success,
+            exitCode: event.exit_code,
+            startedAt: event.started_at,
+            lastOutput: event.last_output
+        )
+        completed.append(session)
+        await persist()
+        let snapshot = self.completed
+        let n = self.notifier
+        await n?.present(session: session, pendingQueue: snapshot, playSoundOnce: soundEnabled && !isDup)
+        let refreshedSnapshot = self.completed
+        await n?.refreshQueueState(completed: refreshedSnapshot, count: refreshedSnapshot.count)
+    }
+
+    private func handleNotification(_ event: HookEvent, soundEnabled: Bool) async {
+        guard let sid = event.session_id, let notifiedAt = parseTS(event.ts) else { return }
+        let projectName = ProjectName.derive(cwd: event.cwd, claudeProjectDir: event.claude_project_dir)
+        let muteCheckNow = clock.now()
+        if await MainActor.run(body: { SettingsStore.shared.isMuted(project: projectName, now: muteCheckNow) }) {
+            log.notice("ingest_notification muted project=\(projectName, privacy: .public) session=\(sid, privacy: .public)")
+            return
+        }
+        let key = DedupeKey.from(sessionID: sid, at: notifiedAt)
+        let isDup = !dedupeSet.insert(key).inserted
+        clearUnpinnedWaitingAlert(sessionID: sid)
+        let session = CompletedSession(
+            sessionID: sid,
+            projectName: projectName,
+            stoppedAt: notifiedAt,
+            durationSec: nil,
+            itermSessionID: iTermSessionID.uuid(fromRaw: event.iterm_session_id),
+            tty: event.tty,
+            cwd: event.cwd,
+            kind: event.kind ?? .waiting,
             exitCode: event.exit_code,
             startedAt: event.started_at,
             lastOutput: event.last_output
@@ -289,6 +324,10 @@ actor SessionRegistry {
                                     inFlight: inFlight,
                                     completed: completed.filter { !Self.isSyntheticTestFixture($0) })
         await persistence.save(snap)
+    }
+
+    private func clearUnpinnedWaitingAlert(sessionID: String) {
+        completed.removeAll(where: { $0.sessionID == sessionID && $0.kind == .waiting && !$0.pinned })
     }
 
     private static func isSyntheticTestFixture(_ session: CompletedSession) -> Bool {

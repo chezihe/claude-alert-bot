@@ -1,6 +1,6 @@
 #!/bin/sh
 # Reporter/cab-report.sh — Claude Alert Bot Phase 1
-# Triggered as Claude Code Stop hook (and UserPromptSubmit hook in Phase 2).
+# Triggered as Claude Code Stop, UserPromptSubmit, and Notification hooks.
 # Hard contract: ALWAYS exit 0 (HOOK-03 / D-02). Never write to stdout/stderr (Pitfall #3).
 
 set -u                                  # error on unset vars
@@ -12,7 +12,7 @@ SOCK="$APP_DIR/sock"
 LOG_DIR="$HOME/Library/Logs/ClaudeAlertBot"
 LOG="$LOG_DIR/hook.log"
 
-# Event name from $1 (callers pass "stop" or "user_prompt_submit"); default "stop"
+# Event name from $1 (callers pass "stop", "user_prompt_submit", or "notification"); default "stop"
 EVENT="${1:-stop}"
 
 # Ensure log dir (Pitfall #7)
@@ -122,11 +122,13 @@ if started_at is None:
 if started_at is not None:
     envelope["started_at"] = started_at
 kind = parsed.get("kind")
+if not isinstance(kind, str) and env("EVENT") == "notification":
+    kind = "waiting"
 if isinstance(kind, str):
     envelope["kind"] = kind
 last_output = parsed.get("last_output")
 if not isinstance(last_output, str):
-    for key in ("output", "result", "summary"):
+    for key in ("message", "output", "result", "summary"):
         if isinstance(parsed.get(key), str):
             last_output = parsed.get(key)
             break

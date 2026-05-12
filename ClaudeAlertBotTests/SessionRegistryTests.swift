@@ -301,6 +301,50 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(session?.lastOutput, "tail output")
     }
 
+    func test_ingest_notification_emitsWaitingAlert() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-notification"
+        let notifiedAt = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
+        let notification = HookEventFactory.notification(
+            sessionID: sid,
+            ts: iso(notifiedAt),
+            termProgram: "iTerm.app",
+            lastOutput: "Claude needs your permission to use Bash"
+        )
+
+        await r.ingest(notification, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let session = await r.snapshotForTesting().completed.first
+        XCTAssertEqual(session?.sessionID, sid)
+        XCTAssertEqual(session?.kind, .waiting)
+        XCTAssertNil(session?.durationSec)
+        XCTAssertEqual(session?.lastOutput, "Claude needs your permission to use Bash")
+        XCTAssertEqual(notifier.presentCalls.map(\.session), [sid])
+        XCTAssertEqual(notifier.refreshCalls.last, 1)
+    }
+
+    func test_ingest_stop_replacesUnpinnedWaitingAlertForSameSession() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-notification-stop"
+        let waiting = CompletedSession(sessionID: sid, projectName: "p",
+                                       stoppedAt: Date(), durationSec: nil,
+                                       itermSessionID: nil, tty: nil, cwd: nil,
+                                       kind: .waiting)
+        await r.seedCompletedForTesting(waiting)
+        let stop = HookEventFactory.stop(sessionID: sid, ts: iso(Date()))
+
+        await r.ingest(stop, thresholdSeconds: 0, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let completed = await r.snapshotForTesting().completed
+        XCTAssertEqual(completed.count, 1)
+        XCTAssertEqual(completed.first?.sessionID, sid)
+        XCTAssertEqual(completed.first?.kind, .success)
+    }
+
     /// Test F — AUD-01 dedupe: same (sid, ts/2s bucket) twice → second present.playSound=false.
     func test_AUD_01_dedupe_sameKey_secondCallNoSound() async {
         let r = makeRegistry()

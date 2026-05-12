@@ -44,6 +44,21 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertNil(envelope["last_output"])
     }
 
+    func test_reporterMapsNotificationToWaitingKind() throws {
+        let envelope = try runReporter(event: "notification", stdin: """
+        {
+          "session_id": "sid-reporter",
+          "cwd": "/tmp/project",
+          "message": "Claude needs your permission to use Bash",
+          "notification_type": "permission_prompt"
+        }
+        """)
+
+        XCTAssertEqual(envelope["event"] as? String, "notification")
+        XCTAssertEqual(envelope["kind"] as? String, "waiting")
+        XCTAssertEqual(envelope["last_output"] as? String, "Claude needs your permission to use Bash")
+    }
+
     func test_reporterCapsLastOutputTo4KB() throws {
         let output = String(repeating: "x", count: 5_000)
         let payloadData = try JSONSerialization.data(withJSONObject: [
@@ -74,6 +89,12 @@ final class ReporterScriptTests: XCTestCase {
         ])
         XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit"), [
             "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" user_prompt_submit"
+        ])
+        XCTAssertEqual(cabCommands(in: hooks, event: "Notification"), [
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" notification"
+        ])
+        XCTAssertEqual(matchers(in: hooks, event: "Notification"), [
+            "permission_prompt|elicitation_dialog"
         ])
     }
 
@@ -234,6 +255,18 @@ final class ReporterScriptTests: XCTestCase {
         let config = try String(contentsOf: codexDir.appendingPathComponent("config.toml"), encoding: .utf8)
         XCTAssertTrue(config.contains("[features]"))
         XCTAssertTrue(config.contains("codex_hooks = true"))
+    }
+
+    func test_devInstallHookApplyCreatesClaudeNotificationHook() throws {
+        try runDevInstallHook("--apply")
+
+        let hooks = try loadInstalledHooks()
+        XCTAssertEqual(cabCommands(in: hooks, event: "Notification"), [
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" notification"
+        ])
+        XCTAssertEqual(matchers(in: hooks, event: "Notification"), [
+            "permission_prompt|elicitation_dialog"
+        ])
     }
 
     func test_devInstallHookApplyIsIdempotentAndPreservesOtherCodexHooks() throws {
@@ -602,13 +635,13 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertTrue(source.contains("!Self.isRunningUnitTests"))
     }
 
-    private func runReporter(stdin: String) throws -> [String: Any] {
+    private func runReporter(event: String = "stop", stdin: String) throws -> [String: Any] {
         let repoRoot = repoRootURL()
         let reporter = repoRoot.appendingPathComponent("Reporter/cab-report.sh")
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
-        process.arguments = [reporter.path, "stop"]
+        process.arguments = [reporter.path, event]
         process.currentDirectoryURL = repoRoot
         var environment = ProcessInfo.processInfo.environment
         environment["HOME"] = tempHome.path
@@ -686,6 +719,11 @@ final class ReporterScriptTests: XCTestCase {
 
     private func otherCommands(in hooks: [String: Any], event: String) -> [String] {
         commands(in: hooks, event: event).filter { !$0.contains("ClaudeAlertBot/cab-report.sh") }
+    }
+
+    private func matchers(in hooks: [String: Any], event: String) -> [String] {
+        guard let entries = hooks[event] as? [[String: Any]] else { return [] }
+        return entries.compactMap { $0["matcher"] as? String }
     }
 
     private func commands(in hooks: [String: Any], event: String) -> [String] {

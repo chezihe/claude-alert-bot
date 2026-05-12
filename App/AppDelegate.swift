@@ -244,6 +244,9 @@ enum HookInstaller {
         var hooks = settings["hooks"] as? [String: Any] ?? [:]
         hooks["Stop"] = mergedEntries(existing: hooks["Stop"], event: "stop")
         hooks["UserPromptSubmit"] = mergedEntries(existing: hooks["UserPromptSubmit"], event: "user_prompt_submit")
+        hooks["Notification"] = mergedEntries(existing: hooks["Notification"],
+                                              event: "notification",
+                                              matcher: "permission_prompt|elicitation_dialog")
         settings["hooks"] = hooks
 
         let data = try JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])
@@ -379,10 +382,10 @@ enum HookInstaller {
         return cleaned
     }
 
-    private static func mergedEntries(existing: Any?, event: String) -> [[String: Any]] {
+    private static func mergedEntries(existing: Any?, event: String, matcher: String = "") -> [[String: Any]] {
         let existingEntries = existing as? [[String: Any]] ?? []
         let preserved = existingEntries.compactMap(removingCabCommands)
-        return preserved + [entry(event: event)]
+        return preserved + [entry(event: event, matcher: matcher)]
     }
 
     private static func removingCabCommands(from entry: [String: Any]) -> [String: Any]? {
@@ -399,9 +402,9 @@ enum HookInstaller {
         (hook["command"] as? String)?.contains(cabMarker) == true
     }
 
-    private static func entry(event: String) -> [String: Any] {
+    private static func entry(event: String, matcher: String) -> [String: Any] {
         [
-            "matcher": "",
+            "matcher": matcher,
             "hooks": [[
                 "type": "command",
                 "command": "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" \(event)",

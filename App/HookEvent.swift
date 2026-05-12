@@ -7,7 +7,7 @@ import Foundation
 
 struct HookEvent: Decodable {
     let schema_version: Int
-    let event: String                      // "stop" | "user_prompt_submit"
+    let event: String                      // "stop" | "user_prompt_submit" | "notification"
     let session_id: String?
     let transcript_path: String?
     let cwd: String?

@@ -10,6 +10,7 @@ final class PositioningTests: XCTestCase {
     private let panelSize = NSSize(width: 44, height: 44)
     private let visibleFrame = NSRect(x: 0, y: 0, width: 1920, height: 1080)
     private let zeroSafe = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+    private let topBadgeClearance: CGFloat = 2
 
     func test_topRight_offset_basic() {
         let origin = WidgetPositioning.origin(
@@ -20,7 +21,7 @@ final class PositioningTests: XCTestCase {
             panelSize: panelSize
         )
         XCTAssertEqual(origin.x, 1920 - 44 - 16, accuracy: 0.0001) // 1860
-        XCTAssertEqual(origin.y, 1080 - 44 - 16, accuracy: 0.0001) // 1020
+        XCTAssertEqual(origin.y, 1080 - 44 - 16 - topBadgeClearance, accuracy: 0.0001) // 1018
     }
 
     func test_topRight_safeAreaWiderThanOffset() {
@@ -36,7 +37,7 @@ final class PositioningTests: XCTestCase {
         // Right inset 20 wider than offset 16 → use 20.
         XCTAssertEqual(origin.x, 1920 - 44 - 20, accuracy: 0.0001) // 1856
         // Top inset 38 wider than offset 16 → use 38.
-        XCTAssertEqual(origin.y, 1080 - 44 - 38, accuracy: 0.0001) // 998
+        XCTAssertEqual(origin.y, 1080 - 44 - 38 - topBadgeClearance, accuracy: 0.0001) // 996
     }
 
     func test_bottomLeft_basic() {
@@ -63,7 +64,7 @@ final class PositioningTests: XCTestCase {
         // left safe 12 > offset 8 → use 12.
         XCTAssertEqual(origin.x, 0 + 12, accuracy: 0.0001)
         // top safe 38 > offset 8 → use 38.
-        XCTAssertEqual(origin.y, 1080 - 44 - 38, accuracy: 0.0001) // 998
+        XCTAssertEqual(origin.y, 1080 - 44 - 38 - topBadgeClearance, accuracy: 0.0001) // 996
     }
 
     func test_bottomRight_safeAreaApplied() {
@@ -79,6 +80,28 @@ final class PositioningTests: XCTestCase {
         XCTAssertEqual(origin.x, 1920 - 44 - 22, accuracy: 0.0001)
         // bottom safe 18 > offset 16 → use 18.
         XCTAssertEqual(origin.y, 0 + 18, accuracy: 0.0001)
+    }
+
+    func test_topCornerBadgeClearanceDoesNotChangeBottomCornerOffset() {
+        let topOrigin = WidgetPositioning.origin(
+            visibleFrame: visibleFrame,
+            safeAreaInsets: zeroSafe,
+            corner: .topRight,
+            offsetX: 16,
+            offsetY: 16,
+            panelSize: panelSize
+        )
+        let bottomOrigin = WidgetPositioning.origin(
+            visibleFrame: visibleFrame,
+            safeAreaInsets: zeroSafe,
+            corner: .bottomRight,
+            offsetX: 16,
+            offsetY: 16,
+            panelSize: panelSize
+        )
+
+        XCTAssertEqual(topOrigin.y, 1080 - 44 - 16 - topBadgeClearance, accuracy: 0.0001)
+        XCTAssertEqual(bottomOrigin.y, 16, accuracy: 0.0001)
     }
 
     func test_widgetPopoverPositioning_usesTightArrowlessGap() {

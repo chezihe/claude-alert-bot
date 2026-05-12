@@ -39,6 +39,8 @@ final class FloatingWidgetPanel: NSPanel {
 /// Pure positioning function — extracted for unit testing (PATTERNS.md "no analog" + RESEARCH Pattern 9).
 /// No NSScreen dependency in test mode; caller passes visibleFrame + safeAreaInsets.
 enum WidgetPositioning {
+    private static let topBadgeClearance: CGFloat = 2
+
     /// Compute panel origin given screen frame, safe area insets, corner, offset, and panel size.
     /// Pure function — no side effects. WIDG-06 (4 corners + offset) + WIDG-07 (safe-area clamp).
     static func origin(
@@ -56,10 +58,10 @@ enum WidgetPositioning {
         switch corner {
         case .topRight:
             return NSPoint(x: f.maxX - panelSize.width  - max(ox, safe.right),
-                           y: f.maxY - panelSize.height - max(oy, safe.top))
+                           y: f.maxY - panelSize.height - max(oy, safe.top) - topBadgeClearance)
         case .topLeft:
             return NSPoint(x: f.minX + max(ox, safe.left),
-                           y: f.maxY - panelSize.height - max(oy, safe.top))
+                           y: f.maxY - panelSize.height - max(oy, safe.top) - topBadgeClearance)
         case .bottomRight:
             return NSPoint(x: f.maxX - panelSize.width  - max(ox, safe.right),
                            y: f.minY + max(oy, safe.bottom))

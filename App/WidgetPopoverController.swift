@@ -163,22 +163,8 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             onToggleGroup: { [weak self] projectName in
                 self?.onToggleGroup(projectName: projectName)
             },
-            onWidgetGeometryChange: { [weak self] in
-                self?.refreshPopoverPositionAfterWidgetGeometryChange()
-            },
             everHadAlerts: SettingsStore.shared.everHadAlerts
         )
-    }
-
-    private func refreshPopoverPositionAfterWidgetGeometryChange() {
-        Task { @MainActor [weak self] in
-            await Task.yield()
-            guard let self else { return }
-            guard let panel = self.popoverPanel, panel.isVisible else { return }
-            guard let host = self.popoverHostView else { return }
-            guard let controller = self.widgetController else { return }
-            self.resizePopover(panel, hostView: host, queue: controller.queueSnapshot)
-        }
     }
 
     private func makePopoverPanel() -> NSPanel {

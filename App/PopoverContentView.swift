@@ -131,7 +131,7 @@ enum PopoverContentRules {
         let bodyHeight: CGFloat = shouldShowEmptyState(queue: queue, everHadAlerts: everHadAlerts)
             ? 48
             : (queue.isEmpty ? 0 : GeometryTokens.rowMinHeight * CGFloat(rowsClamped))
-        let chromeHeight: CGFloat = GeometryTokens.popoverQuickControlsHeight
+        let chromeHeight: CGFloat = GeometryTokens.popoverToolbarHeight
         return bodyHeight + chromeHeight
     }
 
@@ -181,10 +181,8 @@ struct PopoverContentView: View {
     var expandedProjects: Set<String> = []
     var widgetCorner: WidgetCorner = .topRight
     var onToggleGroup: (String) -> Void = { _ in }
-    var onWidgetGeometryChange: () -> Void = {}
     var everHadAlerts: Bool = false
 
-    @ObservedObject private var store = SettingsStore.shared
     @State private var displayQueue: [CompletedSession] = []
     @State private var hasAppeared: Bool = false
     @State private var scrollViewportHeight: CGFloat = 0
@@ -223,7 +221,6 @@ struct PopoverContentView: View {
         VStack(alignment: .leading, spacing: 0) {
             let clearableSessionCount = PopoverContentRules.clearableSessionCount(visibleQueue)
             let clearAllLabel = PopoverContentRules.clearAllButtonLabel(queue: visibleQueue)
-            // Quick controls stay visible even with short queues so common toggles are one-click.
             HStack(spacing: 8) {
                 Button(action: onOpenSettings) {
                     Image(systemName: "gearshape")
@@ -232,32 +229,6 @@ struct PopoverContentView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Open Settings")
-
-                Divider()
-                    .frame(height: 15)
-
-                Button(action: { store.soundEnabled.toggle() }) {
-                    Image(systemName: store.soundEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(store.soundEnabled ? Color(NSColor.labelColor) : Color(NSColor.secondaryLabelColor))
-                }
-                .buttonStyle(.plain)
-                .help("알림 사운드")
-                .accessibilityLabel("Notification Sound")
-                .accessibilityValue(store.soundEnabled ? "On" : "Off")
-
-                Button(action: {
-                    store.quietHoursEnabled.toggle()
-                    onWidgetGeometryChange()
-                }) {
-                    Image(systemName: store.quietHoursEnabled ? "moon.fill" : "moon")
-                        .font(.system(size: 12))
-                        .foregroundStyle(store.quietHoursEnabled ? Color(NSColor.labelColor) : Color(NSColor.secondaryLabelColor))
-                }
-                .buttonStyle(.plain)
-                .help("Quiet Hours")
-                .accessibilityLabel("Quiet Hours")
-                .accessibilityValue(store.quietHoursEnabled ? "On" : "Off")
 
                 Spacer()
 

@@ -205,7 +205,7 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertEqual(visible.map(\.sessionID), ["a1"])
     }
 
-    func test_popoverHeight_clampsRowsAndIncludesQuickControlsChrome() {
+    func test_popoverHeight_clampsRowsAndIncludesToolbarChrome() {
         let queue = [
             mkSession(id: "a1", project: "Alpha"),
             mkSession(id: "a2", project: "Beta"),
@@ -220,7 +220,7 @@ final class PopoverContentTests: XCTestCase {
             everHadAlerts: true
         )
 
-        XCTAssertEqual(height, GeometryTokens.rowMinHeight * 4 + GeometryTokens.popoverQuickControlsHeight)
+        XCTAssertEqual(height, GeometryTokens.rowMinHeight * 4 + GeometryTokens.popoverToolbarHeight)
     }
 
     func test_timeSuffix_format_hhmm() {
@@ -375,7 +375,7 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains("everHadAlerts: SettingsStore.shared.everHadAlerts"))
     }
 
-    func test_popoverContentView_rendersQuickControlsWithSettingsGear() {
+    func test_popoverContentView_rendersToolbarWithSettingsGear() {
         let src = readPopoverContentViewSource()
 
         XCTAssertTrue(src.contains("var onOpenSettings: () -> Void = {}"))
@@ -471,31 +471,24 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains("SettingsWindowPresenter.open()"))
     }
 
-    func test_popoverContentView_quickControlsExposeAccessibleState() {
+    func test_popoverContentView_doesNotRenderSoundOrQuietHoursQuickControls() {
         let src = readPopoverContentViewSource()
 
-        XCTAssertTrue(src.contains(#".accessibilityLabel("Notification Sound")"#))
-        XCTAssertTrue(src.contains(#".accessibilityValue(store.soundEnabled ? "On" : "Off")"#))
-        XCTAssertTrue(src.contains(#".accessibilityLabel("Quiet Hours")"#))
-        XCTAssertTrue(src.contains(#".accessibilityValue(store.quietHoursEnabled ? "On" : "Off")"#))
+        XCTAssertFalse(src.contains(#"Image(systemName: store.soundEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")"#))
+        XCTAssertFalse(src.contains(#"Image(systemName: store.quietHoursEnabled ? "moon.fill" : "moon")"#))
+        XCTAssertFalse(src.contains(#".accessibilityLabel("Notification Sound")"#))
+        XCTAssertFalse(src.contains(#".accessibilityLabel("Quiet Hours")"#))
+        XCTAssertFalse(src.contains("@ObservedObject private var store = SettingsStore.shared"))
     }
 
-    func test_quietHoursQuickControlNotifiesPopoverControllerForGeometryChange() {
+    func test_widgetPopoverControllerDoesNotWireQuickControlGeometryRefresh() {
         let popoverSource = readPopoverContentViewSource()
         let controllerSource = readWidgetPopoverControllerSource()
 
-        XCTAssertTrue(popoverSource.contains("var onWidgetGeometryChange: () -> Void = {}"))
-        XCTAssertTrue(popoverSource.contains("onWidgetGeometryChange()"))
-        XCTAssertTrue(controllerSource.contains("onWidgetGeometryChange: { [weak self] in"))
-        XCTAssertTrue(controllerSource.contains("refreshPopoverPositionAfterWidgetGeometryChange()"))
-    }
-
-    func test_widgetPopoverControllerDefersGeometryRefreshUntilWidgetResizes() {
-        let src = readWidgetPopoverControllerSource()
-
-        XCTAssertTrue(src.contains("private func refreshPopoverPositionAfterWidgetGeometryChange()"))
-        XCTAssertTrue(src.contains("await Task.yield()"))
-        XCTAssertTrue(src.contains("resizePopover(panel, hostView: host, queue: controller.queueSnapshot)"))
+        XCTAssertFalse(popoverSource.contains("var onWidgetGeometryChange: () -> Void = {}"))
+        XCTAssertFalse(popoverSource.contains("onWidgetGeometryChange()"))
+        XCTAssertFalse(controllerSource.contains("onWidgetGeometryChange: { [weak self] in"))
+        XCTAssertFalse(controllerSource.contains("refreshPopoverPositionAfterWidgetGeometryChange()"))
     }
 
     func test_widgetPopoverController_clearsUnavailableRowsWithoutJumping() throws {

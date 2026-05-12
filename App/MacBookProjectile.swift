@@ -3,7 +3,7 @@
 //   @keyframes mb-fly   (lines 679–685) — 1.05s flight, translate (-300, +240), rotate -900°
 //   @keyframes mb-impact (lines 695–699) — 600ms scale-rotate fade at landing point
 //
-// Implementation: a transient borderless NSPanel hosting an SF Symbol or emoji glyph
+// Implementation: a transient borderless NSPanel hosting a small vector MacBook glyph
 // is briefly raised, animated via CoreAnimation, then torn down. No desktop "shake"
 // (HTML uses a fake desktop element; macOS has no equivalent surface to shake).
 import AppKit
@@ -37,7 +37,7 @@ final class MacBookProjectileLauncher {
     }
 }
 
-/// 32×22pt MacBook glyph. Uses `laptopcomputer` SF Symbol with a hint of drop shadow,
+/// 32×22pt MacBook glyph. Draws the HTML prototype laptop shape with a hint of drop shadow,
 /// matching HTML's `.macbook-projectile` filter (drop-shadow(0 4px 6px rgba(0,0,0,0.35))).
 private final class ProjectilePanel: NSPanel {
     init(originPoint: NSPoint) {
@@ -59,16 +59,7 @@ private final class ProjectilePanel: NSPanel {
         self.isReleasedWhenClosed = false
         self.becomesKeyOnlyIfNeeded = true
 
-        let glyphView = NSImageView(frame: NSRect(origin: .zero, size: size))
-        glyphView.image = NSImage(systemSymbolName: "laptopcomputer", accessibilityDescription: nil)
-        glyphView.contentTintColor = .secondaryLabelColor
-        glyphView.imageScaling = .scaleProportionallyUpOrDown
-        glyphView.wantsLayer = true
-        glyphView.layer?.shadowColor = NSColor.black.cgColor
-        glyphView.layer?.shadowOpacity = 0.35
-        glyphView.layer?.shadowRadius = 6
-        glyphView.layer?.shadowOffset = CGSize(width: 0, height: -4)
-        self.contentView = glyphView
+        self.contentView = MacBookGlyphView(frame: NSRect(origin: .zero, size: size))
     }
 
     override var canBecomeKey: Bool { false }
@@ -100,6 +91,71 @@ private final class ProjectilePanel: NSPanel {
             let center = NSPoint(x: landing.x + 16, y: landing.y + 11)
             completion(center)
         })
+    }
+}
+
+private final class MacBookGlyphView: NSView {
+    private static let macBookLidColor = NSColor(red: 0xCF/255, green: 0xD2/255, blue: 0xD8/255, alpha: 1)
+    private static let macBookScreenColor = NSColor(red: 0x10/255, green: 0x10/255, blue: 0x15/255, alpha: 1)
+    private static let macBookAccentColor = NSColor(red: 0xD9/255, green: 0x77/255, blue: 0x57/255, alpha: 0.85)
+    private static let macBookBaseColor = NSColor(red: 0xAE/255, green: 0xB2/255, blue: 0xBC/255, alpha: 1)
+    private static let macBookStrokeColor = NSColor(red: 0x6E/255, green: 0x72/255, blue: 0x80/255, alpha: 1)
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        layer?.masksToBounds = false
+        layer?.shadowColor = NSColor.black.cgColor
+        layer?.shadowOpacity = 0.35
+        layer?.shadowRadius = 6
+        layer?.shadowOffset = CGSize(width: 0, height: -4)
+    }
+
+    required init?(coder: NSCoder) {
+        return nil
+    }
+
+    override var isFlipped: Bool { true }
+
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+
+        drawRoundedRect(NSRect(x: 3, y: 1.5, width: 26, height: 15.5),
+                        radius: 1.4,
+                        fill: Self.macBookLidColor,
+                        stroke: Self.macBookStrokeColor,
+                        lineWidth: 0.6)
+        drawRoundedRect(NSRect(x: 4.5, y: 3, width: 23, height: 12.5),
+                        radius: 0.4,
+                        fill: Self.macBookScreenColor)
+
+        Self.macBookAccentColor.setFill()
+        NSBezierPath(ovalIn: NSRect(x: 13.9, y: 7.1, width: 4.2, height: 4.2)).fill()
+
+        drawRoundedRect(NSRect(x: 0.5, y: 16.5, width: 31, height: 3.4),
+                        radius: 0.7,
+                        fill: Self.macBookBaseColor,
+                        stroke: Self.macBookStrokeColor,
+                        lineWidth: 0.6)
+        drawRoundedRect(NSRect(x: 12, y: 16.4, width: 8, height: 0.8),
+                        radius: 0.4,
+                        fill: Self.macBookStrokeColor)
+    }
+
+    private func drawRoundedRect(_ rect: NSRect,
+                                 radius: CGFloat,
+                                 fill: NSColor,
+                                 stroke: NSColor? = nil,
+                                 lineWidth: CGFloat = 0) {
+        let path = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
+        fill.setFill()
+        path.fill()
+
+        if let stroke, lineWidth > 0 {
+            stroke.setStroke()
+            path.lineWidth = lineWidth
+            path.stroke()
+        }
     }
 }
 

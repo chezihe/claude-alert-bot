@@ -86,6 +86,18 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("MacBookProjectileLauncher.shared.launchFromWidget()"))
     }
 
+    func test_macBookProjectileSource_drawsPrototypeLaptopGlyph() {
+        let src = readMacBookProjectileSource()
+
+        XCTAssertTrue(src.contains("private final class MacBookGlyphView: NSView"))
+        XCTAssertTrue(src.contains("macBookLidColor"))
+        XCTAssertTrue(src.contains("macBookScreenColor"))
+        XCTAssertTrue(src.contains("macBookAccentColor"))
+        XCTAssertTrue(src.contains("NSRect(x: 3, y: 1.5, width: 26, height: 15.5)"))
+        XCTAssertTrue(src.contains("NSRect(x: 0.5, y: 16.5, width: 31, height: 3.4)"))
+        XCTAssertFalse(src.contains(#"NSImage(systemSymbolName: "laptopcomputer""#))
+    }
+
     func test_widgetIconViewSource_roamUsesCounterClockwiseGeometryEffect() {
         let src = readWidgetIconViewSource()
 
@@ -305,6 +317,17 @@ final class IdleAnimationTests: XCTestCase {
         let target = repoRoot.appendingPathComponent("App/FloatingWidgetWindowController.swift")
         guard let data = try? String(contentsOf: target, encoding: .utf8) else {
             XCTFail("Could not read App/FloatingWidgetWindowController.swift at \(target.path)")
+            return ""
+        }
+        return data
+    }
+
+    private func readMacBookProjectileSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/MacBookProjectile.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/MacBookProjectile.swift at \(target.path)")
             return ""
         }
         return data

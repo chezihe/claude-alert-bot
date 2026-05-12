@@ -24,6 +24,8 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     private var trackingArea: NSTrackingArea?
     private var settingsCancellable: AnyCancellable?
     private var accessibilityCancellable: AnyCancellable?
+    private var activeAppCancellable: AnyCancellable?
+    private var activeScreenEventMonitor: Any?
     private var currentQueue: [CompletedSession] = []
     private var currentPendingCount: Int = 0
     private var currentAlertPulseID: Int = 0
@@ -70,9 +72,29 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
                     self.repositionIfVisible()
                 }
             }
+        activeAppCancellable = NSWorkspace.shared.notificationCenter
+            .publisher(for: NSWorkspace.didActivateApplicationNotification)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    self.scheduleActiveScreenReposition(preferMouseLocation: false)
+                }
+            }
+        activeScreenEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.scheduleActiveScreenReposition(preferMouseLocation: true)
+            }
+        }
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
+
+    deinit {
+        if let activeScreenEventMonitor {
+            NSEvent.removeMonitor(activeScreenEventMonitor)
+        }
+    }
 
     // MARK: - WidgetControllerProtocol
 
@@ -140,13 +162,21 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
         hostingView?.frame = NSRect(origin: .zero, size: size)
     }
 
-    private func repositionIfVisible() {
+    private func scheduleActiveScreenReposition(preferMouseLocation: Bool) {
         guard panel.isVisible else { return }
-        reposition()
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            self?.repositionIfVisible(preferMouseLocation: preferMouseLocation)
+        }
     }
 
-    private func reposition() {
-        guard let screen = WidgetScreenSelection.activeScreen() else { return }
+    private func repositionIfVisible(preferMouseLocation: Bool = false) {
+        guard panel.isVisible else { return }
+        reposition(preferMouseLocation: preferMouseLocation)
+    }
+
+    private func reposition(preferMouseLocation: Bool = false) {
+        guard let screen = WidgetScreenSelection.activeScreen(preferMouseLocation: preferMouseLocation) else { return }
         let store = SettingsStore.shared
         let origin = WidgetPositioning.origin(
             visibleFrame: screen.visibleFrame,

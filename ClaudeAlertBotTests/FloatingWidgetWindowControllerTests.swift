@@ -25,6 +25,18 @@ final class FloatingWidgetWindowControllerTests: XCTestCase {
         XCTAssertTrue(src.contains("reduceMotion: reducedMotion"))
     }
 
+    func test_sourceTracksFocusScreenChangesWhileWidgetIsVisible() {
+        let src = readFloatingWidgetWindowControllerSource()
+
+        XCTAssertTrue(src.contains("private var activeAppCancellable: AnyCancellable?"))
+        XCTAssertTrue(src.contains("private var activeScreenEventMonitor: Any?"))
+        XCTAssertTrue(src.contains("NSWorkspace.didActivateApplicationNotification"))
+        XCTAssertTrue(src.contains("NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown])"))
+        XCTAssertTrue(src.contains("self.scheduleActiveScreenReposition(preferMouseLocation: false)"))
+        XCTAssertTrue(src.contains("self.scheduleActiveScreenReposition(preferMouseLocation: true)"))
+        XCTAssertTrue(src.contains("NSEvent.removeMonitor(activeScreenEventMonitor)"))
+    }
+
     func test_visibleWidgetRepositionsWhenWidgetCornerChanges() async throws {
         guard let screen = WidgetScreenSelection.activeScreen() else {
             throw XCTSkip("No active screen available in this test environment")

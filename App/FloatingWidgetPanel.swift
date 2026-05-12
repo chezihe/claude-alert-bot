@@ -75,7 +75,7 @@ enum WidgetPositioning {
 
 enum WidgetScreenSelection {
     @MainActor
-    static func activeScreen() -> NSScreen? {
+    static func activeScreen(preferMouseLocation: Bool = false) -> NSScreen? {
         let screens = NSScreen.screens
         guard !screens.isEmpty else { return NSScreen.main }
 
@@ -88,7 +88,8 @@ enum WidgetScreenSelection {
             windowBounds: frontmostWindow,
             mouseLocation: NSEvent.mouseLocation,
             screenFrames: screens.map(\.frame),
-            fallbackIndex: fallbackIndex
+            fallbackIndex: fallbackIndex,
+            preferMouseLocation: preferMouseLocation
         )
 
         return index.map { screens[$0] } ?? fallback
@@ -98,8 +99,15 @@ enum WidgetScreenSelection {
         windowBounds: NSRect?,
         mouseLocation: NSPoint?,
         screenFrames: [NSRect],
-        fallbackIndex: Int?
+        fallbackIndex: Int?,
+        preferMouseLocation: Bool = false
     ) -> Int? {
+        if preferMouseLocation,
+           let mouseLocation,
+           let index = screenFrames.firstIndex(where: { $0.contains(mouseLocation) }) {
+            return index
+        }
+
         if let windowBounds,
            let index = screenFrames.indices.max(by: {
                intersectionArea(windowBounds, screenFrames[$0]) < intersectionArea(windowBounds, screenFrames[$1])

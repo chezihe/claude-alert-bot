@@ -287,7 +287,7 @@ struct WidgetIconView: View {
         let fill = quietHoursEnabled
             ? Color(red: 0x6B/255, green: 0x6B/255, blue: 0x75/255)
             : ColorTokens.accentDark
-        Text("+\(pendingCount - 1)")
+        Text("+\(pendingCount)")
             .font(.system(size: 9.5))
             .foregroundStyle(Color(red: 0xFF/255, green: 0xF4/255, blue: 0xEC/255))
             .padding(.horizontal, 4)

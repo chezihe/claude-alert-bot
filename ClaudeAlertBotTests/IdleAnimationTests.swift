@@ -232,6 +232,13 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertFalse(src.contains(".offset(x: 5, y: -6)"))
     }
 
+    func test_widgetIconViewSource_badgeShowsTotalPendingSessionCount() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains(#"Text("+\(pendingCount)")"#))
+        XCTAssertFalse(src.contains("pendingCount - 1"))
+    }
+
     func test_widgetIconViewSource_keepsGlyphPositionFixedWhenPendingBadgeIsVisible() {
         let src = readWidgetIconViewSource()
 

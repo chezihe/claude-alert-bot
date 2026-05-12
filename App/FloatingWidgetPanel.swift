@@ -4,6 +4,7 @@
 // UI-SPEC §"Floating Widget" — NSPanel + .hudWindow material + 14pt rounded body
 // (NSVisualEffectView in contentView, controlled by WindowController).
 import AppKit
+import CoreGraphics
 
 final class FloatingWidgetPanel: NSPanel {
     init(contentRect: NSRect) {
@@ -69,5 +70,95 @@ enum WidgetPositioning {
             return NSPoint(x: f.minX + max(ox, safe.left),
                            y: f.minY + max(oy, safe.bottom))
         }
+    }
+}
+
+enum WidgetScreenSelection {
+    @MainActor
+    static func activeScreen() -> NSScreen? {
+        let screens = NSScreen.screens
+        guard !screens.isEmpty else { return NSScreen.main }
+
+        let fallback = NSScreen.main
+        let fallbackIndex = fallback.flatMap { fallbackScreen in
+            screens.firstIndex { $0.frame == fallbackScreen.frame }
+        }
+        let frontmostWindow = frontmostWindowBounds(mainScreenFrame: screens[0].frame)
+        let index = preferredScreenIndex(
+            windowBounds: frontmostWindow,
+            mouseLocation: NSEvent.mouseLocation,
+            screenFrames: screens.map(\.frame),
+            fallbackIndex: fallbackIndex
+        )
+
+        return index.map { screens[$0] } ?? fallback
+    }
+
+    static func preferredScreenIndex(
+        windowBounds: NSRect?,
+        mouseLocation: NSPoint?,
+        screenFrames: [NSRect],
+        fallbackIndex: Int?
+    ) -> Int? {
+        if let windowBounds,
+           let index = screenFrames.indices.max(by: {
+               intersectionArea(windowBounds, screenFrames[$0]) < intersectionArea(windowBounds, screenFrames[$1])
+           }),
+           intersectionArea(windowBounds, screenFrames[index]) > 0 {
+            return index
+        }
+
+        if let mouseLocation,
+           let index = screenFrames.firstIndex(where: { $0.contains(mouseLocation) }) {
+            return index
+        }
+
+        return fallbackIndex ?? screenFrames.indices.first
+    }
+
+    private static func frontmostWindowBounds(mainScreenFrame: NSRect) -> NSRect? {
+        guard let frontmostApp = NSWorkspace.shared.frontmostApplication,
+              frontmostApp.bundleIdentifier != Bundle.main.bundleIdentifier,
+              let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
+                                                       kCGNullWindowID) as? [[String: Any]] else {
+            return nil
+        }
+
+        let frontmostPID = Int(frontmostApp.processIdentifier)
+        for window in windows {
+            guard let ownerPID = window[kCGWindowOwnerPID as String] as? Int,
+                  ownerPID == frontmostPID,
+                  let layer = window[kCGWindowLayer as String] as? Int,
+                  layer == 0,
+                  let boundsDictionary = window[kCGWindowBounds as String] as? NSDictionary else {
+                continue
+            }
+
+            var bounds = CGRect.zero
+            guard CGRectMakeWithDictionaryRepresentation(boundsDictionary as CFDictionary, &bounds),
+                  bounds.width > 0,
+                  bounds.height > 0 else {
+                continue
+            }
+
+            return appKitRect(fromQuartzBounds: bounds, mainScreenFrame: mainScreenFrame)
+        }
+
+        return nil
+    }
+
+    private static func appKitRect(fromQuartzBounds bounds: CGRect, mainScreenFrame: NSRect) -> NSRect {
+        NSRect(
+            x: bounds.minX,
+            y: mainScreenFrame.maxY - bounds.maxY,
+            width: bounds.width,
+            height: bounds.height
+        )
+    }
+
+    private static func intersectionArea(_ lhs: NSRect, _ rhs: NSRect) -> CGFloat {
+        let intersection = lhs.intersection(rhs)
+        guard !intersection.isNull, !intersection.isEmpty else { return 0 }
+        return intersection.width * intersection.height
     }
 }

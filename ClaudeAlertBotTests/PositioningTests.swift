@@ -104,6 +104,35 @@ final class PositioningTests: XCTestCase {
         XCTAssertEqual(bottomOrigin.y, 16, accuracy: 0.0001)
     }
 
+    func test_widgetScreenSelection_prefersFocusedWindowScreenOverFallback() {
+        let primary = NSRect(x: 0, y: 0, width: 1440, height: 900)
+        let secondary = NSRect(x: 1440, y: 0, width: 1440, height: 900)
+        let focusedWindow = NSRect(x: 1560, y: 240, width: 600, height: 420)
+
+        let index = WidgetScreenSelection.preferredScreenIndex(
+            windowBounds: focusedWindow,
+            mouseLocation: NSPoint(x: 100, y: 100),
+            screenFrames: [primary, secondary],
+            fallbackIndex: 0
+        )
+
+        XCTAssertEqual(index, 1)
+    }
+
+    func test_widgetScreenSelection_usesMouseScreenWhenFocusedWindowMissing() {
+        let primary = NSRect(x: 0, y: 0, width: 1440, height: 900)
+        let secondary = NSRect(x: 1440, y: 0, width: 1440, height: 900)
+
+        let index = WidgetScreenSelection.preferredScreenIndex(
+            windowBounds: nil,
+            mouseLocation: NSPoint(x: 1600, y: 300),
+            screenFrames: [primary, secondary],
+            fallbackIndex: 0
+        )
+
+        XCTAssertEqual(index, 1)
+    }
+
     func test_widgetPopoverPositioning_usesTightArrowlessGap() {
         let widgetFrame = NSRect(x: 1500, y: 800, width: 44, height: 44)
         let popoverSize = NSSize(width: 270, height: 200)

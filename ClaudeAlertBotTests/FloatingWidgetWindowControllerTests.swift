@@ -26,8 +26,8 @@ final class FloatingWidgetWindowControllerTests: XCTestCase {
     }
 
     func test_visibleWidgetRepositionsWhenWidgetCornerChanges() async throws {
-        guard let screen = NSScreen.main else {
-            throw XCTSkip("NSScreen.main unavailable in this test environment")
+        guard let screen = WidgetScreenSelection.activeScreen() else {
+            throw XCTSkip("No active screen available in this test environment")
         }
 
         let store = SettingsStore.shared

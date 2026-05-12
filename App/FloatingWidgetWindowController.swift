@@ -146,7 +146,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     }
 
     private func reposition() {
-        guard let screen = NSScreen.main else { return }
+        guard let screen = WidgetScreenSelection.activeScreen() else { return }
         let store = SettingsStore.shared
         let origin = WidgetPositioning.origin(
             visibleFrame: screen.visibleFrame,

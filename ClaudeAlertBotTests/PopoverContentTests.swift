@@ -396,6 +396,12 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertFalse(src.contains(".background(.thinMaterial)"))
     }
 
+    func test_popoverContentView_clipsRowsToPanelCornerRadius() {
+        let src = readPopoverContentViewSource()
+
+        XCTAssertTrue(src.contains(".clipShape(RoundedRectangle(cornerRadius: GeometryTokens.popoverCornerRadius, style: .continuous))"))
+    }
+
     func test_popoverContentView_usesScrollFadeMaskOnlyWhenScrollable() {
         let src = readPopoverContentViewSource()
 

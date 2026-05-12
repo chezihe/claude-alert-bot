@@ -344,6 +344,7 @@ struct PopoverContentView: View {
             )
         )
         .background(PopoverMaterialBackground())
+        .clipShape(RoundedRectangle(cornerRadius: GeometryTokens.popoverCornerRadius, style: .continuous))
         .onHover { hovering in onPopoverHoverChange(hovering) }
     }
 }

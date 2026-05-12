@@ -22,7 +22,6 @@ struct WidgetIconView: View {
     var reduceMotionPreference: ReduceMotionPreference = .system
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
-    @Environment(\.colorScheme) private var colorScheme
     @State private var roamPhase: Double = 0
     @State private var rageGeneration: Int = 0
     @State private var rageActive: Bool = false
@@ -288,9 +287,7 @@ struct WidgetIconView: View {
         let fill = quietHoursEnabled
             ? Color(red: 0x6B/255, green: 0x6B/255, blue: 0x75/255)
             : ColorTokens.accentDark
-        let ringColor = colorScheme == .dark
-            ? Color.black.opacity(0.55)
-            : Color.white.opacity(0.85)
+        let ringColor = Color.white.opacity(0.85)
         Text("+\(pendingCount - 1)")
             .font(.system(size: 9.5))
             .foregroundStyle(Color(red: 0xFF/255, green: 0xF4/255, blue: 0xEC/255))

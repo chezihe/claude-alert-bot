@@ -85,36 +85,7 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         guard let controller = widgetController,
               let widgetPanel = controller.window else { return }
         let queue = controller.queueSnapshot
-        let content = PopoverContentView(
-            queue: queue,
-            onRowClick: { [weak self] alertID in self?.onRowClick(alertID: alertID) },
-            onClearAll: { [weak self] in self?.onClearAll() },
-            onTogglePin: { [weak self] alertID in self?.onTogglePin(alertID: alertID) },
-            onToggleMute: { [weak self] projectName in self?.onToggleMute(projectName: projectName) },
-            isProjectMuted: { projectName in
-                SettingsStore.shared.isMuted(project: projectName, now: Date())
-            },
-            rowStates: rowStates,
-            onRowMissingComplete: { [weak self] alertID in
-                guard let self else { return }
-                Task { await SessionRegistry.shared.clearOne(alertID: alertID) }
-                self.rowStates.removeValue(forKey: alertID)
-                self.reloadPopoverContent()
-            },
-            onPopoverHoverChange: { [weak self] hovering in self?.onPopoverHover(hovering) },
-            onOpenSettings: {
-                SettingsWindowPresenter.open()
-            },
-            expandedProjects: expandedProjects,
-            widgetCorner: SettingsStore.shared.widgetCorner,
-            onToggleGroup: { [weak self] projectName in
-                self?.onToggleGroup(projectName: projectName)
-            },
-            onWidgetGeometryChange: { [weak self] in
-                self?.refreshPopoverPositionAfterWidgetGeometryChange()
-            },
-            everHadAlerts: SettingsStore.shared.everHadAlerts
-        )
+        let content = makePopoverContent(queue: queue)
         let panel = popoverPanel ?? makePopoverPanel()
         popoverPanel = panel
         // Phase 3 03-09 fix — reuse the NSHostingView so SwiftUI sees a rootView
@@ -157,7 +128,17 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         guard let host = popoverHostView else { return }
         guard let controller = widgetController else { return }
         let queue = controller.queueSnapshot
-        let content = PopoverContentView(
+        let content = makePopoverContent(queue: queue)
+        // Phase 3 03-09 fix — same pattern as showPopover. Update rootView in place
+        // so SwiftUI sees a diff (rowStates change) instead of a new tree, preserving
+        // PopoverRowView @State and letting `.onChange(of: state)` fire SC#2 도리도리.
+        host.rootView = content
+        applyHostCornerRadius(host)
+        resizePopover(panel, hostView: host, queue: queue)
+    }
+
+    private func makePopoverContent(queue: [CompletedSession]) -> PopoverContentView {
+        PopoverContentView(
             queue: queue,
             onRowClick: { [weak self] alertID in self?.onRowClick(alertID: alertID) },
             onClearAll: { [weak self] in self?.onClearAll() },
@@ -187,12 +168,6 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             },
             everHadAlerts: SettingsStore.shared.everHadAlerts
         )
-        // Phase 3 03-09 fix — same pattern as showPopover. Update rootView in place
-        // so SwiftUI sees a diff (rowStates change) instead of a new tree, preserving
-        // PopoverRowView @State and letting `.onChange(of: state)` fire SC#2 도리도리.
-        host.rootView = content
-        applyHostCornerRadius(host)
-        resizePopover(panel, hostView: host, queue: queue)
     }
 
     private func refreshPopoverPositionAfterWidgetGeometryChange() {

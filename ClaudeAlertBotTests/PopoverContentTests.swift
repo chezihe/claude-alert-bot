@@ -205,7 +205,7 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertEqual(visible.map(\.sessionID), ["a1"])
     }
 
-    func test_popoverHeight_clampsRowsAndIncludesHeaderOnlyWhenRendered() {
+    func test_popoverHeight_clampsRowsAndIncludesQuickControlsChrome() {
         let queue = [
             mkSession(id: "a1", project: "Alpha"),
             mkSession(id: "a2", project: "Beta"),
@@ -220,7 +220,7 @@ final class PopoverContentTests: XCTestCase {
             everHadAlerts: true
         )
 
-        XCTAssertEqual(height, GeometryTokens.rowMinHeight * 4 + 32)
+        XCTAssertEqual(height, GeometryTokens.rowMinHeight * 4 + GeometryTokens.popoverQuickControlsHeight)
     }
 
     func test_timeSuffix_format_hhmm() {
@@ -375,11 +375,9 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains("everHadAlerts: SettingsStore.shared.everHadAlerts"))
     }
 
-    func test_popoverContentView_rendersHeaderWithSettingsGearWhenClearable() {
+    func test_popoverContentView_rendersQuickControlsWithSettingsGear() {
         let src = readPopoverContentViewSource()
 
-        // Prototype `.clear-row`: gear + Clear All rendered together only when queue.length >= 2.
-        // Settings stays reachable via the menu bar item when the popover header is hidden.
         XCTAssertTrue(src.contains("var onOpenSettings: () -> Void = {}"))
         XCTAssertTrue(src.contains(#"Image(systemName: "gearshape")"#))
         XCTAssertTrue(src.contains(#".accessibilityLabel("Open Settings")"#))
@@ -468,6 +466,7 @@ final class PopoverContentTests: XCTestCase {
     func test_widgetPopoverController_wiresOpenSettingsCallback() {
         let src = readWidgetPopoverControllerSource()
 
+        XCTAssertTrue(src.contains("private func makePopoverContent(queue: [CompletedSession]) -> PopoverContentView"))
         XCTAssertTrue(src.contains("onOpenSettings: {"))
         XCTAssertTrue(src.contains("SettingsWindowPresenter.open()"))
     }

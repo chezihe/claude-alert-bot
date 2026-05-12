@@ -242,6 +242,7 @@ struct PopoverContentView: View {
             }
             .padding(.horizontal, 10)
             .padding(.top, 9)
+            .frame(height: GeometryTokens.popoverToolbarHeight, alignment: .top)
 
             if PopoverContentRules.shouldShowEmptyState(queue: visibleQueue, everHadAlerts: everHadAlerts) {
                 EmptyStateView()

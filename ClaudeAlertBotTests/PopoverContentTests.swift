@@ -384,6 +384,12 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains("PopoverContentRules.shouldShowClearAll(clearableCount: clearableSessionCount)"))
     }
 
+    func test_popoverContentView_toolbarConsumesFixedChromeHeight() {
+        let src = readPopoverContentViewSource()
+
+        XCTAssertTrue(src.contains(".frame(height: GeometryTokens.popoverToolbarHeight, alignment: .top)"))
+    }
+
     func test_popoverContentView_usesNativePopoverMaterialBackground() {
         let src = readPopoverContentViewSource()
 

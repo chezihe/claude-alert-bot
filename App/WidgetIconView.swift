@@ -1,7 +1,7 @@
 // App/WidgetIconView.swift — Phase 2 WIDG-03 (icon + project name location).
 // UI-SPEC: 36pt Claude Code glyph, 4pt internal padding (44pt total).
 // +N badge: 16pt × 16pt circle, systemRed fill (systemGray in Quiet Hours), white SF Pro Semibold 11pt numeral.
-// Anchored top-trailing with -4/-4 overhang per UI-SPEC.
+// Anchored top-trailing inside the panel bounds to avoid clipping at screen edges.
 // Bounce: 0.9s HTML-faithful KeyframeAnimator (translateY + scaleX + scaleY 3-track).
 //         Mirrors @keyframes bounce-cute squash-and-stretch; suppressed when Reduce Motion / Quiet Hours.
 // Breathe: 2.4s scale 1.0↔1.06, autoreverse forever; default idle animation for WO-012.
@@ -22,18 +22,22 @@ struct WidgetIconView: View {
     var reduceMotionPreference: ReduceMotionPreference = .system
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
-    @State private var breatheScale: CGFloat = 1.0
-    @State private var idleRotation: Double = 0
+    @Environment(\.colorScheme) private var colorScheme
     @State private var roamPhase: Double = 0
-    @State private var driftOffset: CGSize = .zero
-    @State private var driftGeneration: Int = 0
-    @State private var driftWorkItem: DispatchWorkItem?
+    @State private var rageGeneration: Int = 0
+    @State private var rageActive: Bool = false
+    @State private var rageWorkItem: DispatchWorkItem?
     @State private var alertPulseScale: CGFloat = 1.0
     @State private var alertPulseRotation: Double = 0
     @State private var sonarScale: CGFloat = MotionTokens.sonarStartScale
     @State private var sonarOpacity: Double = 0
     @State private var activeAlertPulseID: Int = 0
     @State private var alertPulseGeneration: Int = 0
+    @State private var badgePopScale: CGFloat = 1.0
+    @State private var lastBadgeKey: Int = -1
+
+    private static let badgeOffset = CGSize(width: 0, height: 0)
+    private static let fixedGlyphOffset = CGSize(width: 0, height: 6)
 
     private var reduceMotion: Bool {
         reduceMotionPreference.effectiveReduceMotion(systemReduceMotion: systemReduceMotion)
@@ -55,6 +59,14 @@ struct WidgetIconView: View {
         idleAnimation == .heart && !quietHoursEnabled && !reduceMotion
     }
 
+    private var rageAnimatorActive: Bool {
+        idleAnimation == .rage && !quietHoursEnabled && !reduceMotion
+    }
+
+    private var ringAnimatorActive: Bool {
+        idleAnimation == .ring && !quietHoursEnabled && !reduceMotion
+    }
+
     var body: some View {
         ZStack(alignment: .center) {
             ZStack(alignment: .topTrailing) {
@@ -63,7 +75,7 @@ struct WidgetIconView: View {
                         .strokeBorder(ColorTokens.accent.opacity(sonarOpacity), lineWidth: 1.5)
                         .frame(width: MotionTokens.sonarBaseDiameter, height: MotionTokens.sonarBaseDiameter)
                         .scaleEffect(sonarScale)
-                        .frame(width: 44, height: 44, alignment: .center)
+                        .frame(width: GeometryTokens.widgetBaseSize.width, height: GeometryTokens.widgetBaseSize.height, alignment: .center)
                         .allowsHitTesting(false)
                         .accessibilityHidden(true)
                 }
@@ -74,7 +86,7 @@ struct WidgetIconView: View {
                         initialValue: BounceAnimatorValue(),
                         repeating: true
                     ) { value in
-                        glyph(bounceValue: value, heartScale: 1.0)
+                        glyph(bounceValue: value, heartScale: 1.0, rageValue: RageAnimatorValue())
                     } keyframes: { _ in
                         KeyframeTrack(\.translateY) {
                             CubicKeyframe(MotionKeyframes.bounceCycle[1].translateY,
@@ -112,7 +124,7 @@ struct WidgetIconView: View {
                         initialValue: HeartAnimatorValue(),
                         repeating: true
                     ) { value in
-                        glyph(bounceValue: BounceAnimatorValue(), heartScale: value.scale)
+                        glyph(bounceValue: BounceAnimatorValue(), heartScale: value.scale, rageValue: RageAnimatorValue())
                     } keyframes: { _ in
                         KeyframeTrack(\.scale) {
                             CubicKeyframe(MotionKeyframes.heartCycle[1].scale,
@@ -127,19 +139,73 @@ struct WidgetIconView: View {
                                           duration: MotionKeyframes.heartPeriod * 0.44)
                         }
                     }
+                } else if rageAnimatorActive {
+                    KeyframeAnimator(
+                        initialValue: RageAnimatorValue(),
+                        repeating: true
+                    ) { value in
+                        glyph(bounceValue: BounceAnimatorValue(), heartScale: 1.0, rageValue: value)
+                    } keyframes: { (_: RageAnimatorValue) in
+                        // 7 throw-windup keyframes (0–100%) spread across 0.95s,
+                        // followed by a 1.45s hold at identity so the cycle loops at HTML's 2.4s rage interval.
+                        KeyframeTrack(\.rotation) {
+                            CubicKeyframe(MotionKeyframes.rageCycle[1].rotation, duration: MotionKeyframes.rageWindupDuration * 0.18)
+                            CubicKeyframe(MotionKeyframes.rageCycle[2].rotation, duration: MotionKeyframes.rageWindupDuration * 0.12)
+                            CubicKeyframe(MotionKeyframes.rageCycle[3].rotation, duration: MotionKeyframes.rageWindupDuration * 0.14)
+                            CubicKeyframe(MotionKeyframes.rageCycle[4].rotation, duration: MotionKeyframes.rageWindupDuration * 0.14)
+                            CubicKeyframe(MotionKeyframes.rageCycle[5].rotation, duration: MotionKeyframes.rageWindupDuration * 0.20)
+                            CubicKeyframe(MotionKeyframes.rageCycle[6].rotation, duration: MotionKeyframes.rageWindupDuration * 0.22)
+                            CubicKeyframe(MotionKeyframes.rageCycle[6].rotation, duration: MotionKeyframes.rageHoldDuration)
+                        }
+                        KeyframeTrack(\.translateX) {
+                            CubicKeyframe(MotionKeyframes.rageCycle[1].translateX, duration: MotionKeyframes.rageWindupDuration * 0.18)
+                            CubicKeyframe(MotionKeyframes.rageCycle[2].translateX, duration: MotionKeyframes.rageWindupDuration * 0.12)
+                            CubicKeyframe(MotionKeyframes.rageCycle[3].translateX, duration: MotionKeyframes.rageWindupDuration * 0.14)
+                            CubicKeyframe(MotionKeyframes.rageCycle[4].translateX, duration: MotionKeyframes.rageWindupDuration * 0.14)
+                            CubicKeyframe(MotionKeyframes.rageCycle[5].translateX, duration: MotionKeyframes.rageWindupDuration * 0.20)
+                            CubicKeyframe(MotionKeyframes.rageCycle[6].translateX, duration: MotionKeyframes.rageWindupDuration * 0.22)
+                            CubicKeyframe(MotionKeyframes.rageCycle[6].translateX, duration: MotionKeyframes.rageHoldDuration)
+                        }
+                        KeyframeTrack(\.translateY) {
+                            CubicKeyframe(MotionKeyframes.rageCycle[1].translateY, duration: MotionKeyframes.rageWindupDuration * 0.18)
+                            CubicKeyframe(MotionKeyframes.rageCycle[2].translateY, duration: MotionKeyframes.rageWindupDuration * 0.12)
+                            CubicKeyframe(MotionKeyframes.rageCycle[3].translateY, duration: MotionKeyframes.rageWindupDuration * 0.14)
+                            CubicKeyframe(MotionKeyframes.rageCycle[4].translateY, duration: MotionKeyframes.rageWindupDuration * 0.14)
+                            CubicKeyframe(MotionKeyframes.rageCycle[5].translateY, duration: MotionKeyframes.rageWindupDuration * 0.20)
+                            CubicKeyframe(MotionKeyframes.rageCycle[6].translateY, duration: MotionKeyframes.rageWindupDuration * 0.22)
+                            CubicKeyframe(MotionKeyframes.rageCycle[6].translateY, duration: MotionKeyframes.rageHoldDuration)
+                        }
+                        KeyframeTrack(\.scale) {
+                            CubicKeyframe(MotionKeyframes.rageCycle[1].scale, duration: MotionKeyframes.rageWindupDuration * 0.18)
+                            CubicKeyframe(MotionKeyframes.rageCycle[2].scale, duration: MotionKeyframes.rageWindupDuration * 0.12)
+                            CubicKeyframe(MotionKeyframes.rageCycle[3].scale, duration: MotionKeyframes.rageWindupDuration * 0.14)
+                            CubicKeyframe(MotionKeyframes.rageCycle[4].scale, duration: MotionKeyframes.rageWindupDuration * 0.14)
+                            CubicKeyframe(MotionKeyframes.rageCycle[5].scale, duration: MotionKeyframes.rageWindupDuration * 0.20)
+                            CubicKeyframe(MotionKeyframes.rageCycle[6].scale, duration: MotionKeyframes.rageWindupDuration * 0.22)
+                            CubicKeyframe(MotionKeyframes.rageCycle[6].scale, duration: MotionKeyframes.rageHoldDuration)
+                        }
+                    }
+                } else if ringAnimatorActive {
+                    // HTML @keyframes ring (Prototype v2 lines 154–162) is a 1.4s ease-in-out
+                    // sequence; SPEC.md §4 keeps a 0.55s ±10° approximation. KeyframeAnimator
+                    // owns its own lifecycle, so switching idle to anything else removes this
+                    // branch and the rotation snaps back to 0 (no leaked `.repeatForever`).
+                    KeyframeAnimator(
+                        initialValue: RingAnimatorValue(),
+                        repeating: true
+                    ) { value in
+                        glyph(bounceValue: BounceAnimatorValue(), heartScale: 1.0, rageValue: RageAnimatorValue(), ringRotation: value.rotation)
+                    } keyframes: { (_: RingAnimatorValue) in
+                        KeyframeTrack(\.rotation) {
+                            CubicKeyframe(MotionTokens.ringRotation, duration: MotionTokens.ringDuration)
+                            CubicKeyframe(-MotionTokens.ringRotation, duration: MotionTokens.ringDuration)
+                        }
+                    }
                 } else {
-                    glyph(bounceValue: BounceAnimatorValue(), heartScale: 1.0)
+                    glyph(bounceValue: BounceAnimatorValue(), heartScale: 1.0, rageValue: RageAnimatorValue())
                 }
                 if pendingCount >= 2 {
-                    Text("+\(pendingCount - 1)")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 16, height: 16)
-                        .background(
-                            Circle().fill(quietHoursEnabled ? Color(NSColor.systemGray) : Color(NSColor.systemRed))
-                        )
-                        .offset(x: 4, y: -4)        // top-trailing -4/-4 overhang
-                        .accessibilityHidden(true)  // count is announced via the parent label
+                    badgeView
                 }
                 if quietHoursEnabled {
                     Text("Zzz")
@@ -149,7 +215,7 @@ struct WidgetIconView: View {
                         .accessibilityHidden(true)
                 }
             }
-            .frame(width: 44, height: 44, alignment: .center)
+            .frame(width: GeometryTokens.widgetBaseSize.width, height: GeometryTokens.widgetBaseSize.height, alignment: .center)
         }
         .frame(width: widgetBoundsSize.width, height: widgetBoundsSize.height, alignment: .center)
         .accessibilityElement()
@@ -158,23 +224,28 @@ struct WidgetIconView: View {
     }
 
     @ViewBuilder
-    private func glyph(bounceValue: BounceAnimatorValue, heartScale: CGFloat) -> some View {
+    private func glyph(bounceValue: BounceAnimatorValue, heartScale: CGFloat, rageValue: RageAnimatorValue, ringRotation: Double = 0) -> some View {
         Image("ClaudeCodeIcon")
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: 36, height: 36)
-            .frame(width: 44, height: 44)
+            .frame(width: GeometryTokens.widgetBaseSize.width, height: GeometryTokens.widgetBaseSize.height)
             .scaleEffect(
                 x: quietHoursEnabled ? 1.0 : bounceValue.scaleX,
                 y: quietHoursEnabled ? 1.0 : bounceValue.scaleY,
                 anchor: .bottom
             )
-            .scaleEffect(quietHoursEnabled ? 1.0 : heartScale * breatheScale * alertPulseScale, anchor: .center)
-            .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation + idleRotation), anchor: .top)
+            .scaleEffect(quietHoursEnabled ? 1.0 : heartScale * alertPulseScale, anchor: .center)
+            .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation + ringRotation), anchor: .top)
             .offset(
-                x: quietHoursEnabled ? 0 : driftOffset.width,
-                y: quietHoursEnabled ? 0 : bounceValue.translateY + driftOffset.height
+                x: Self.fixedGlyphOffset.width,
+                y: (quietHoursEnabled ? 0 : bounceValue.translateY) + Self.fixedGlyphOffset.height
             )
+            // Rage throw-windup applied last so it dominates other transforms while looping.
+            // HTML transform-origin: 50% 90% (Prototype v2 line 656).
+            .scaleEffect(rageValue.scale, anchor: UnitPoint(x: 0.5, y: 0.9))
+            .rotationEffect(.degrees(rageValue.rotation), anchor: UnitPoint(x: 0.5, y: 0.9))
+            .offset(x: rageValue.translateX, y: rageValue.translateY)
             .modifier(RoamOffsetEffect(
                 angle: roamPhase,
                 radiusX: Double(MotionTokens.roamRadiusX),
@@ -184,24 +255,58 @@ struct WidgetIconView: View {
             .onAppear {
                 startIdleAnimation()
                 runNewAlertPulse()
+                primeBadgePop()
+                restartRageProjectileLoop()
             }
             .onDisappear {
-                stopDriftAnimation()
+                stopRageProjectileLoop()
             }
             .onChange(of: quietHoursEnabled) { _, _ in
                 resetAlertPulse()
                 restartIdleAnimation()
+                restartRageProjectileLoop()
             }
             .onChange(of: idleAnimation) { _, _ in
                 restartIdleAnimation()
+                restartRageProjectileLoop()
             }
             .onChange(of: reduceMotion) { _, _ in
                 resetAlertPulse()
                 restartIdleAnimation()
+                restartRageProjectileLoop()
             }
             .onChange(of: alertPulseID) { _, _ in
                 runNewAlertPulse()
             }
+            .onChange(of: pendingCount) { _, _ in
+                runBadgePop()
+            }
+    }
+
+    @ViewBuilder
+    private var badgeView: some View {
+        let fill = quietHoursEnabled
+            ? Color(red: 0x6B/255, green: 0x6B/255, blue: 0x75/255)
+            : ColorTokens.accentDark
+        let ringColor = colorScheme == .dark
+            ? Color.black.opacity(0.55)
+            : Color.white.opacity(0.85)
+        Text("+\(pendingCount - 1)")
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(Color(red: 0xFF/255, green: 0xF4/255, blue: 0xEC/255))
+            .padding(.horizontal, 5)
+            .frame(minWidth: 18, minHeight: 18)
+            .background(
+                Capsule(style: .continuous).fill(fill)
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .stroke(ringColor, lineWidth: 2)
+            )
+            .shadow(color: .black.opacity(0.25), radius: 1.5, x: 0, y: 1)
+            .scaleEffect(badgePopScale)
+            .offset(x: Self.badgeOffset.width, y: Self.badgeOffset.height)
+            .accessibilityHidden(true)
     }
 
     private var widgetAccessibilityLabel: String {
@@ -214,86 +319,90 @@ struct WidgetIconView: View {
         guard !quietHoursEnabled else { return }
         // Phase 03.1: consume MotionTokens (SC#1, SC#3 uniform reduce-motion gate).
         switch idleAnimation {
-        case .bounce:
-            // Bounce is driven by the KeyframeAnimator wrapper around the glyph
-            // (see `body`). startIdleAnimation has nothing to set up here.
+        case .bounce, .heart, .rage, .ring:
+            // Bounce / Heart / Rage / Ring are driven by KeyframeAnimator wrappers around the
+            // glyph (see `body`). They own their own lifecycle so switching idle modes unmounts
+            // the previous branch and there is no lingering animation to cancel.
             return
-        case .breathe:
-            guard let anim = MotionTokens.breatheAnimation(reduceMotion: reduceMotion) else { return }
-            withAnimation(anim) {
-                breatheScale = MotionTokens.breatheScale
-            }
-        case .heart:
-            // Heart is driven by the KeyframeAnimator wrapper around the glyph.
-            return
-        case .ring:
-            guard let anim = MotionTokens.ringAnimation(reduceMotion: reduceMotion) else { return }
-            idleRotation = -MotionTokens.ringRotation
-            withAnimation(anim) {
-                idleRotation = MotionTokens.ringRotation
-            }
         case .roam:
             guard let anim = MotionTokens.roamAnimation(reduceMotion: reduceMotion) else { return }
             withAnimation(anim) {
                 roamPhase = -360
             }
-        case .drift:
-            guard MotionTokens.driftAnimation(reduceMotion: reduceMotion) != nil else { return }
-            startDriftAnimation()
         }
     }
 
     private func restartIdleAnimation() {
-        stopDriftAnimation()
-        breatheScale = 1.0
-        idleRotation = 0
-        roamPhase = 0
+        // Roam's `.repeatForever` keeps interpolating `roamPhase` even after the user switches
+        // idle styles. Snapping the reset through a `nil` transaction cancels the in-flight
+        // animation on that property. (Ring used to leak the same way; Phase-2 fix migrated
+        // Ring to a KeyframeAnimator branch that unmounts cleanly, so no rotation reset is
+        // needed here any more.)
+        withTransaction(Transaction(animation: nil)) {
+            roamPhase = 0
+        }
         startIdleAnimation()
     }
 
-    private func startDriftAnimation() {
-        cancelDriftWorkItem()
-        driftGeneration += 1
-        runDriftStep(generation: driftGeneration)
-    }
-
-    private func stopDriftAnimation() {
-        cancelDriftWorkItem()
-        driftGeneration += 1
-        driftOffset = .zero
-    }
-
-    private func cancelDriftWorkItem() {
-        driftWorkItem?.cancel()
-        driftWorkItem = nil
-    }
-
-    private func runDriftStep(generation: Int) {
-        guard
-            idleAnimation == .drift,
-            !quietHoursEnabled,
-            generation == driftGeneration,
-            let anim = MotionTokens.driftAnimation(reduceMotion: reduceMotion)
-        else { return }
-
-        withAnimation(anim) {
-            driftOffset = makeDriftTarget()
+    // HTML @keyframes badge-pop — scale 0→1 with cubic-bezier(.34,1.6,.5,1).
+    // SwiftUI spring (response 0.22, damping 0.55) reproduces the overshoot tail.
+    private func primeBadgePop() {
+        lastBadgeKey = pendingCount
+        if pendingCount >= 2 {
+            badgePopScale = 0
+            withAnimation(.spring(response: 0.22, dampingFraction: 0.55)) {
+                badgePopScale = 1
+            }
+        } else {
+            badgePopScale = 1
         }
+    }
+
+    private func runBadgePop() {
+        guard pendingCount >= 2 else {
+            badgePopScale = 1
+            lastBadgeKey = pendingCount
+            return
+        }
+        // Re-pop only when the visible "+N" string would change, matching HTML's behaviour:
+        // the badge does not bounce on every queue mutation, only when the displayed number moves.
+        if lastBadgeKey != pendingCount {
+            lastBadgeKey = pendingCount
+            badgePopScale = 0
+            withAnimation(.spring(response: 0.22, dampingFraction: 0.55)) {
+                badgePopScale = 1
+            }
+        }
+    }
+
+    // HTML rage loop (Prototype v2 lines 1341–1347): every 2.4s while idleAnimation == .rage,
+    // throw a MacBook projectile. The glyph KeyframeAnimator already loops the throw-windup
+    // on its own; this helper handles the separate window-level projectile + impact burst.
+    // Timed to fire at peak forward whip (44% of windup ≈ 418ms after each cycle start).
+    private func restartRageProjectileLoop() {
+        stopRageProjectileLoop()
+        guard rageAnimatorActive else { return }
+        rageGeneration += 1
+        let generation = rageGeneration
+        scheduleNextRageProjectile(generation: generation, delay: MotionKeyframes.rageWindupDuration * 0.44)
+    }
+
+    private func stopRageProjectileLoop() {
+        rageGeneration += 1
+        rageWorkItem?.cancel()
+        rageWorkItem = nil
+    }
+
+    private func scheduleNextRageProjectile(generation: Int, delay: TimeInterval) {
         let workItem = DispatchWorkItem {
-            guard generation == driftGeneration else { return }
-            driftWorkItem = nil
-            runDriftStep(generation: generation)
+            guard generation == rageGeneration, rageAnimatorActive else { return }
+            MacBookProjectileLauncher.shared.launchFromWidget()
+            scheduleNextRageProjectile(generation: generation, delay: MotionKeyframes.ragePeriod)
         }
-        driftWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + MotionTokens.driftDuration, execute: workItem)
+        rageWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
     }
 
-    private func makeDriftTarget() -> CGSize {
-        CGSize(
-            width: CGFloat(Double.random(in: -MotionTokens.driftRadiusX...MotionTokens.driftRadiusX)),
-            height: CGFloat(Double.random(in: -MotionTokens.driftRadiusY...MotionTokens.driftRadiusY))
-        )
-    }
 
     private func runNewAlertPulse() {
         guard alertPulseID > 0, alertPulseID != activeAlertPulseID, !quietHoursEnabled else { return }
@@ -363,6 +472,17 @@ struct BounceAnimatorValue {
 
 struct HeartAnimatorValue {
     var scale: CGFloat = MotionKeyframes.heartCycle[0].scale
+}
+
+struct RageAnimatorValue {
+    var rotation: Double = MotionKeyframes.rageCycle[0].rotation
+    var translateX: CGFloat = MotionKeyframes.rageCycle[0].translateX
+    var translateY: CGFloat = MotionKeyframes.rageCycle[0].translateY
+    var scale: CGFloat = MotionKeyframes.rageCycle[0].scale
+}
+
+struct RingAnimatorValue {
+    var rotation: Double = 0
 }
 
 private struct RoamOffsetEffect: GeometryEffect {

@@ -4,13 +4,17 @@ import XCTest
 
 final class IdleAnimationTests: XCTestCase {
 
-    func test_idleAnimation_defaultIsBreathe() {
-        XCTAssertEqual(IdleAnimation.default, .breathe)
+    func test_idleAnimation_defaultIsBounce() {
+        XCTAssertEqual(IdleAnimation.default, .bounce)
     }
 
-    func test_idleAnimation_allCasesContainsBounceAndBreathe() {
+    func test_idleAnimation_allCasesMatchProto() {
         XCTAssertTrue(IdleAnimation.allCases.contains(.bounce))
-        XCTAssertTrue(IdleAnimation.allCases.contains(.breathe))
+        XCTAssertTrue(IdleAnimation.allCases.contains(.heart))
+        XCTAssertTrue(IdleAnimation.allCases.contains(.ring))
+        XCTAssertTrue(IdleAnimation.allCases.contains(.roam))
+        XCTAssertTrue(IdleAnimation.allCases.contains(.rage))
+        XCTAssertEqual(IdleAnimation.allCases.count, 5)
     }
 
     func test_idleAnimationSource_includesRingCase() {
@@ -31,17 +35,10 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("case roam"))
     }
 
-    func test_idleAnimationSource_includesDriftCase() {
+    func test_idleAnimationSource_includesRageCase() {
         let src = readIdleAnimationSource()
 
-        XCTAssertTrue(src.contains("case drift"))
-    }
-
-    func test_widgetIconViewSource_wiresBreatheBranch() {
-        let src = readWidgetIconViewSource()
-
-        XCTAssertTrue(src.contains("case .breathe:"))
-        XCTAssertTrue(src.contains("MotionTokens.breatheAnimation"))
+        XCTAssertTrue(src.contains("case rage"))
     }
 
     func test_widgetIconViewSource_wiresHeartKeyframeAnimator() {
@@ -54,16 +51,17 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("anchor: .center"))
     }
 
-    func test_widgetIconViewSource_wiresRingBranch() {
+    func test_widgetIconViewSource_wiresRingKeyframeAnimator() {
+        // Ring runs as its own KeyframeAnimator branch so the animation lifecycle is bound to
+        // the branch's mount state. Switching idle animations unmounts the branch and the
+        // glyph snaps back to 0° without a leaked `.repeatForever`.
         let src = readWidgetIconViewSource()
 
-        XCTAssertTrue(src.contains("@State private var idleRotation: Double = 0"))
-        XCTAssertTrue(src.contains("case .ring:"))
-        XCTAssertTrue(src.contains("MotionTokens.ringAnimation"))
-        XCTAssertTrue(src.contains("idleRotation = -MotionTokens.ringRotation"))
-        XCTAssertTrue(src.contains("idleRotation = MotionTokens.ringRotation"))
-        XCTAssertTrue(src.contains("idleRotation = 0"))
-        XCTAssertTrue(src.contains("alertPulseRotation + idleRotation"))
+        XCTAssertTrue(src.contains("ringAnimatorActive"))
+        XCTAssertTrue(src.contains("RingAnimatorValue"))
+        XCTAssertTrue(src.contains("MotionTokens.ringRotation"))
+        XCTAssertTrue(src.contains("MotionTokens.ringDuration"))
+        XCTAssertTrue(src.contains("alertPulseRotation + ringRotation"))
     }
 
     func test_widgetIconViewSource_wiresRoamBranch() {
@@ -77,29 +75,24 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("roamPhase = 0"))
     }
 
-    func test_widgetIconViewSource_wiresDriftBranch() {
+    func test_widgetIconViewSource_wiresRageKeyframeAnimator() {
         let src = readWidgetIconViewSource()
 
-        XCTAssertTrue(src.contains("@State private var driftOffset: CGSize = .zero"))
-        XCTAssertTrue(src.contains("@State private var driftGeneration: Int = 0"))
-        XCTAssertTrue(src.contains("case .drift:"))
-        XCTAssertTrue(src.contains("MotionTokens.driftAnimation"))
-        XCTAssertTrue(src.contains("runDriftStep(generation: driftGeneration)"))
-        XCTAssertTrue(src.contains("Double.random(in: -MotionTokens.driftRadiusX...MotionTokens.driftRadiusX)"))
-        XCTAssertTrue(src.contains("Double.random(in: -MotionTokens.driftRadiusY...MotionTokens.driftRadiusY)"))
+        XCTAssertTrue(src.contains("MotionKeyframes.rageCycle"))
+        XCTAssertTrue(src.contains("MotionKeyframes.rageWindupDuration"))
+        XCTAssertTrue(src.contains("MotionKeyframes.rageHoldDuration"))
+        XCTAssertTrue(src.contains("RageAnimatorValue"))
+        // HTML transform-origin 50% 90% for throw-windup.
+        XCTAssertTrue(src.contains("UnitPoint(x: 0.5, y: 0.9)"))
     }
 
-    func test_widgetIconViewSource_cancelsDriftLoopOnLifecycleEnd() {
+    func test_widgetIconViewSource_rageProjectileLoopRestartsOnIdleChange() {
         let src = readWidgetIconViewSource()
 
-        XCTAssertTrue(src.contains("@State private var driftWorkItem: DispatchWorkItem?"))
-        XCTAssertTrue(src.contains(".onDisappear"))
-        XCTAssertTrue(src.contains("stopDriftAnimation()"))
-        XCTAssertTrue(src.contains("private func stopDriftAnimation()"))
-        XCTAssertTrue(src.contains("private func cancelDriftWorkItem()"))
-        XCTAssertTrue(src.contains("driftWorkItem?.cancel()"))
-        XCTAssertTrue(src.contains("driftGeneration += 1"))
-        XCTAssertTrue(src.contains("execute: workItem"))
+        XCTAssertTrue(src.contains("@State private var rageGeneration: Int = 0"))
+        XCTAssertTrue(src.contains("private func restartRageProjectileLoop()"))
+        XCTAssertTrue(src.contains("private func stopRageProjectileLoop()"))
+        XCTAssertTrue(src.contains("MacBookProjectileLauncher.shared.launchFromWidget()"))
     }
 
     func test_widgetIconViewSource_roamUsesCounterClockwiseGeometryEffect() {
@@ -149,7 +142,7 @@ final class IdleAnimationTests: XCTestCase {
 
         XCTAssertTrue(src.contains("private var widgetBoundsSize: CGSize"))
         XCTAssertTrue(src.contains("GeometryTokens.widgetDrawableSize("))
-        XCTAssertTrue(src.contains(".frame(width: 44, height: 44, alignment: .center)"))
+        XCTAssertTrue(src.contains(".frame(width: GeometryTokens.widgetBaseSize.width, height: GeometryTokens.widgetBaseSize.height, alignment: .center)"))
         XCTAssertTrue(src.contains(".frame(width: widgetBoundsSize.width, height: widgetBoundsSize.height, alignment: .center)"))
     }
 
@@ -171,10 +164,7 @@ final class IdleAnimationTests: XCTestCase {
             return
         }
         let restartBody = String(src[restartStart.lowerBound...])
-        XCTAssertTrue(restartBody.contains("breatheScale = 1.0"))
         XCTAssertTrue(restartBody.contains("roamPhase = 0"))
-        XCTAssertTrue(restartBody.contains("driftOffset = .zero"))
-        XCTAssertTrue(restartBody.contains("driftGeneration += 1"))
         XCTAssertTrue(restartBody.contains("startIdleAnimation()"))
     }
 
@@ -208,7 +198,7 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("@State private var activeAlertPulseID: Int = 0"))
         XCTAssertTrue(src.contains(".strokeBorder(ColorTokens.accent.opacity(sonarOpacity), lineWidth: 1.5)"))
         XCTAssertTrue(src.contains(".frame(width: MotionTokens.sonarBaseDiameter, height: MotionTokens.sonarBaseDiameter)"))
-        XCTAssertTrue(sonarBlock(in: src).contains(".frame(width: 44, height: 44, alignment: .center)"))
+        XCTAssertTrue(sonarBlock(in: src).contains(".frame(width: GeometryTokens.widgetBaseSize.width, height: GeometryTokens.widgetBaseSize.height, alignment: .center)"))
         XCTAssertTrue(src.contains(".onChange(of: alertPulseID)"))
         XCTAssertTrue(src.contains("runNewAlertPulse()"))
         XCTAssertTrue(src.contains("guard activeAlertPulseID == pulseID, alertPulseGeneration == pulseGeneration else { return }"))
@@ -236,9 +226,29 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("if pendingCount >= 2 {"))
         XCTAssertTrue(src.contains("if quietHoursEnabled {"))
         XCTAssertFalse(src.contains("else if quietHoursEnabled {"))
-        XCTAssertTrue(src.contains("quietHoursEnabled ? Color(NSColor.systemGray) : Color(NSColor.systemRed)"))
+        // Badge now uses HTML-proto accent-dark fill (#B8492C) with a Quiet-mode gray (#6B6B75).
+        XCTAssertTrue(src.contains("Color(red: 0x6B/255, green: 0x6B/255, blue: 0x75/255)"))
+        XCTAssertTrue(src.contains(": ColorTokens.accentDark"))
         XCTAssertTrue(src.contains("y: pendingCount >= 2 ? 11 : -6"))
         XCTAssertTrue(src.contains(#"Text("Zzz")"#))
+    }
+
+    func test_widgetIconViewSource_keepsPendingBadgeInsidePanelBounds() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("private static let badgeOffset = CGSize(width: 0, height: 0)"))
+        XCTAssertTrue(src.contains(".offset(x: Self.badgeOffset.width, y: Self.badgeOffset.height)"))
+        XCTAssertFalse(src.contains(".offset(x: 5, y: -6)"))
+    }
+
+    func test_widgetIconViewSource_keepsGlyphPositionFixedWhenPendingBadgeIsVisible() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("private static let fixedGlyphOffset = CGSize(width: 0, height: 6)"))
+        XCTAssertTrue(src.contains("x: Self.fixedGlyphOffset.width,"))
+        XCTAssertTrue(src.contains("y: (quietHoursEnabled ? 0 : bounceValue.translateY) + Self.fixedGlyphOffset.height"))
+        XCTAssertFalse(src.contains("pendingBadgeGlyphOffset"))
+        XCTAssertFalse(src.contains("badgeClearanceGlyphOffset"))
     }
 
     func test_widgetIconViewAccessibilityLabel_announcesQuietHoursState() {

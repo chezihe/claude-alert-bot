@@ -65,7 +65,7 @@ enum GeometryTokens {
     static let popoverMaxVisibleRows: Int = 4
     // FEATURES.md §3 panel "스크롤 페이드" — applied only when the list exceeds max visible rows.
     static let popoverScrollFadeHeight: CGFloat = 12
-    static let widgetBaseSize = CGSize(width: 44, height: 44)
+    static let widgetBaseSize = CGSize(width: 50, height: 50)
 
     static func widgetDrawableSize(
         idleAnimation: IdleAnimation,
@@ -73,12 +73,6 @@ enum GeometryTokens {
         reduceMotion: Bool
     ) -> CGSize {
         guard !quietHoursEnabled, !reduceMotion else { return widgetBaseSize }
-        if idleAnimation == .drift {
-            return CGSize(
-                width: widgetBaseSize.width + MotionTokens.driftRadiusX * 2,
-                height: widgetBaseSize.height + MotionTokens.driftRadiusY * 2
-            )
-        }
         guard idleAnimation == .roam else { return widgetBaseSize }
         return CGSize(
             width: widgetBaseSize.width + MotionTokens.roamRadiusX * 2,
@@ -92,12 +86,9 @@ enum EffectTokens {
 }
 
 enum MotionTokens {
-    // Bounce and Heart now live in MotionKeyframes (keyframe-based, HTML-faithful);
+    // Bounce, Heart, and Rage live in MotionKeyframes (keyframe-based, HTML-faithful);
     // see App/MotionKeyframes.swift. Removed legacy single-scalar tokens here.
 
-    // SPEC.md §4 row "Breathe" — 2.4s, autoreverse, infinite, easeInOut, scale 1.0↔1.06.
-    static let breatheDuration: TimeInterval = 2.4
-    static let breatheScale: CGFloat = 1.06
     // SPEC.md §4 row "Ring (bell)" — 0.55s, easeInOut, rotate ±10° from top anchor.
     static let ringDuration: TimeInterval = 0.55
     static let ringRotation: Double = 10
@@ -105,10 +96,9 @@ enum MotionTokens {
     static let roamDuration: TimeInterval = 1.6
     static let roamRadiusX: CGFloat = 12
     static let roamRadiusY: CGFloat = 3
-    // SPEC.md §4 row "Drift" — 6s easeInOut random jitter within 14×16pt.
-    static let driftDuration: TimeInterval = 6.0
-    static let driftRadiusX: CGFloat = 7
-    static let driftRadiusY: CGFloat = 8
+    // SPEC.md §4 row "Rage" — 950ms throw-windup looped every 2.4s.
+    static let ragePeriod: TimeInterval = 2.4
+    static let rageWindupDuration: TimeInterval = 0.95
     // SPEC.md §4 rows "New-alert pulse" and "Sonar wave".
     static let newAlertPulseDuration: TimeInterval = 0.45
     static let newAlertPulsePeakScale: CGFloat = 1.14
@@ -132,13 +122,8 @@ enum MotionTokens {
     static let reduceMotionFadeDuration: TimeInterval = 0.15
 
     /// D4 (SC#3) — uniform reduce-motion gate. Returns nil when reduce-motion is on so call-sites
-    /// can `if let anim = MotionTokens.breatheAnimation(...) { withAnimation(anim) { ... } }`.
+    /// can `if let anim = MotionTokens.ringAnimation(...) { withAnimation(anim) { ... } }`.
     /// Caller passes the Bool from whichever native API is natural (SwiftUI Environment / NSWorkspace).
-    static func breatheAnimation(reduceMotion: Bool) -> Animation? {
-        guard !reduceMotion else { return nil }
-        return .easeInOut(duration: breatheDuration).repeatForever(autoreverses: true)
-    }
-
     static func ringAnimation(reduceMotion: Bool) -> Animation? {
         guard !reduceMotion else { return nil }
         return .easeInOut(duration: ringDuration).repeatForever(autoreverses: true)
@@ -147,10 +132,5 @@ enum MotionTokens {
     static func roamAnimation(reduceMotion: Bool) -> Animation? {
         guard !reduceMotion else { return nil }
         return .linear(duration: roamDuration).repeatForever(autoreverses: false)
-    }
-
-    static func driftAnimation(reduceMotion: Bool) -> Animation? {
-        guard !reduceMotion else { return nil }
-        return .easeInOut(duration: driftDuration)
     }
 }

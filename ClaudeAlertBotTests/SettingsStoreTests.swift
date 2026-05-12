@@ -62,7 +62,7 @@ final class SettingsStoreTests: XCTestCase {
 
         let store = SettingsStore(defaults: defaults)
 
-        XCTAssertEqual(store.idleAnimation, .breathe)
+        XCTAssertEqual(store.idleAnimation, .bounce)
     }
 
     func test_idleAnimation_persistsAcrossInit() {

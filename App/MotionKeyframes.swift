@@ -18,6 +18,14 @@ struct HeartKeyframe: Equatable {
     let scale: CGFloat
 }
 
+struct RageKeyframe: Equatable {
+    let percent: Double   // 0...100 along the 0.95s throw-windup window
+    let rotation: Double  // degrees, anchored at glyph bottom-mid (0.5, 0.9)
+    let translateX: CGFloat
+    let translateY: CGFloat
+    let scale: CGFloat
+}
+
 enum MotionKeyframes {
     // HTML bounce-cute is 0.9s ease-in-out infinite (Prototype v2 line 101).
     static let bouncePeriod: TimeInterval = 0.9
@@ -44,5 +52,23 @@ enum MotionKeyframes {
         HeartKeyframe(percent:  42, scale: 1.08),
         HeartKeyframe(percent:  56, scale: 1.00),
         HeartKeyframe(percent: 100, scale: 1.00),
+    ]
+
+    // HTML throw-windup is 950ms cubic-bezier(.5, 0, .3, 1) (Prototype v2 line 655),
+    // looped on a 2.4s rage interval (line 1346). Transform origin: 50% 90% (line 656).
+    static let rageWindupDuration: TimeInterval = 0.95
+    static let ragePeriod: TimeInterval = 2.4
+    static let rageHoldDuration: TimeInterval = ragePeriod - rageWindupDuration // 1.45s rest
+
+    // HTML @keyframes throw-windup (Prototype v2 lines 658–666).
+    // Wind back → hold → whip forward → settle.
+    static let rageCycle: [RageKeyframe] = [
+        RageKeyframe(percent:   0, rotation:   0, translateX:  0, translateY:  0, scale: 1.00),
+        RageKeyframe(percent:  18, rotation:  28, translateX:  3, translateY:  2, scale: 1.02),
+        RageKeyframe(percent:  30, rotation:  34, translateX:  4, translateY:  2, scale: 1.04),
+        RageKeyframe(percent:  44, rotation: -32, translateX: -7, translateY: -3, scale: 0.96),
+        RageKeyframe(percent:  58, rotation: -18, translateX: -3, translateY: -1, scale: 1.00),
+        RageKeyframe(percent:  78, rotation:   8, translateX:  1, translateY:  1, scale: 1.00),
+        RageKeyframe(percent: 100, rotation:   0, translateX:  0, translateY:  0, scale: 1.00),
     ]
 }

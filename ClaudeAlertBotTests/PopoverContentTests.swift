@@ -375,12 +375,15 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains("everHadAlerts: SettingsStore.shared.everHadAlerts"))
     }
 
-    func test_popoverContentView_alwaysRendersHeaderWithSettingsGear() {
+    func test_popoverContentView_rendersHeaderWithSettingsGearWhenClearable() {
         let src = readPopoverContentViewSource()
 
+        // Prototype `.clear-row`: gear + Clear All rendered together only when queue.length >= 2.
+        // Settings stays reachable via the menu bar item when the popover header is hidden.
         XCTAssertTrue(src.contains("var onOpenSettings: () -> Void = {}"))
         XCTAssertTrue(src.contains(#"Image(systemName: "gearshape")"#))
         XCTAssertTrue(src.contains(#".accessibilityLabel("Open Settings")"#))
+        XCTAssertTrue(src.contains("PopoverContentRules.shouldShowClearAll(clearableCount: clearableSessionCount)"))
     }
 
     func test_popoverContentView_usesNativePopoverMaterialBackground() {
@@ -506,10 +509,14 @@ final class PopoverContentTests: XCTestCase {
 
         XCTAssertTrue(src.contains("@State private var hasAppeared: Bool = false"))
         XCTAssertTrue(src.contains("var widgetCorner: WidgetCorner"))
-        XCTAssertTrue(src.contains("withAnimation(.spring(response: 0.35, dampingFraction: 0.6))"))
+        // Prototype `pop-in` cubic-bezier(0.34, 1.4, 0.5, 1) 260ms — slight overshoot.
+        XCTAssertTrue(src.contains("withAnimation(.spring(response: 0.26, dampingFraction: 0.62))"))
         XCTAssertTrue(src.contains("hasAppeared = true"))
         // Anchor scales toward the corner the widget lives in.
         XCTAssertTrue(src.contains("entryAnchor"))
+        // Prototype starts at translateY(-6) scale(0.96) — not pure scale-from-zero.
+        XCTAssertTrue(src.contains("entryStartScale: CGFloat = 0.96"))
+        XCTAssertTrue(src.contains("entryStartOffsetY: CGFloat = -6"))
     }
 
     func test_popoverContentViewSource_mirrorsQueueForRowDismissTransition() {

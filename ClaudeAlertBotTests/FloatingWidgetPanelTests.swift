@@ -41,9 +41,11 @@ final class FloatingWidgetPanelTests: XCTestCase {
         XCTAssertTrue(p.becomesKeyOnlyIfNeeded)
     }
 
-    func test_hasShadow_isTrue() {
+    func test_hasShadow_isFalse() {
+        // NSPanel.hasShadow draws a window-rect shadow under the bounding box, not the glyph
+        // silhouette — on a transparent 50pt panel it reads as a dark square behind the icon.
         let p = makePanel()
-        XCTAssertTrue(p.hasShadow, "UI-SPEC — `.hudWindow` material drop shadow")
+        XCTAssertFalse(p.hasShadow)
     }
 
     func test_isOpaque_isFalse_backgroundClear() {

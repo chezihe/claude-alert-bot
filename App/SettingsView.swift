@@ -60,6 +60,13 @@ struct SettingsView: View {
                 }
             }
 
+            // D3-21 — Accessibility permission banner. Cross-Space window raise requires AX.
+            if !AccessibilityRaiser.isTrusted() {
+                Section {
+                    AccessibilityPermissionBannerView()
+                }
+            }
+
             Section(Self.thresholdHeading) {
                 Stepper(value: $store.thresholdSeconds, in: 5...600, step: 5) {
                     Text("\(store.thresholdSeconds) 초")
@@ -206,11 +213,10 @@ struct SettingsView: View {
     static func idleAnimationName(_ animation: IdleAnimation) -> String {
         switch animation {
         case .bounce: return "Bounce"
-        case .breathe: return "Breathe"
         case .heart: return "Heart"
         case .ring: return "Ring"
         case .roam: return "Roam"
-        case .drift: return "Drift"
+        case .rage: return "🤬 Rage"
         }
     }
 

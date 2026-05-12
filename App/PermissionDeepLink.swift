@@ -24,4 +24,19 @@ enum PermissionDeepLink {
             if NSWorkspace.shared.open(u) { return }
         }
     }
+
+    /// D3-21 — opens System Settings → Privacy & Security → Accessibility, needed for
+    /// AX-based cross-Space window raise (full-screen iTerm windows in separate Spaces).
+    static let accessibilityURLs: [String] = [
+        "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility",
+        "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+        "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension",
+    ]
+
+    static func openAccessibilityPreferences() {
+        for s in accessibilityURLs {
+            guard let u = URL(string: s) else { continue }
+            if NSWorkspace.shared.open(u) { return }
+        }
+    }
 }

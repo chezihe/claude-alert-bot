@@ -116,19 +116,8 @@ final class DesignTokensTests: XCTestCase {
             reduceMotion: false
         )
 
-        XCTAssertEqual(size.width, 68)
-        XCTAssertEqual(size.height, 50)
-    }
-
-    func test_geometryTokens_widgetDrawableSize_expandsForActiveDrift() {
-        let size = GeometryTokens.widgetDrawableSize(
-            idleAnimation: .drift,
-            quietHoursEnabled: false,
-            reduceMotion: false
-        )
-
-        XCTAssertEqual(size.width, 58)
-        XCTAssertEqual(size.height, 60)
+        XCTAssertEqual(size.width, 74)
+        XCTAssertEqual(size.height, 56)
     }
 
     func test_geometryTokens_widgetDrawableSize_keepsBaseSizeWhenRoamIsSuppressed() {
@@ -147,37 +136,27 @@ final class DesignTokensTests: XCTestCase {
             quietHoursEnabled: false,
             reduceMotion: false
         )
-        let quietDriftSize = GeometryTokens.widgetDrawableSize(
-            idleAnimation: .drift,
-            quietHoursEnabled: true,
+        let rageSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .rage,
+            quietHoursEnabled: false,
             reduceMotion: false
         )
-        let reduceMotionDriftSize = GeometryTokens.widgetDrawableSize(
-            idleAnimation: .drift,
-            quietHoursEnabled: false,
-            reduceMotion: true
-        )
 
-        XCTAssertEqual(quietSize.width, 44)
-        XCTAssertEqual(quietSize.height, 44)
-        XCTAssertEqual(reduceMotionSize.width, 44)
-        XCTAssertEqual(reduceMotionSize.height, 44)
-        XCTAssertEqual(bounceSize.width, 44)
-        XCTAssertEqual(bounceSize.height, 44)
-        XCTAssertEqual(quietDriftSize.width, 44)
-        XCTAssertEqual(quietDriftSize.height, 44)
-        XCTAssertEqual(reduceMotionDriftSize.width, 44)
-        XCTAssertEqual(reduceMotionDriftSize.height, 44)
+        XCTAssertEqual(quietSize.width, 50)
+        XCTAssertEqual(quietSize.height, 50)
+        XCTAssertEqual(reduceMotionSize.width, 50)
+        XCTAssertEqual(reduceMotionSize.height, 50)
+        XCTAssertEqual(bounceSize.width, 50)
+        XCTAssertEqual(bounceSize.height, 50)
+        XCTAssertEqual(rageSize.width, 50)
+        XCTAssertEqual(rageSize.height, 50)
     }
 
     // MARK: - MotionTokens (SPEC.md §4 "Motion")
 
-    func test_motionTokens_breatheDuration_is2_4() {
-        XCTAssertEqual(MotionTokens.breatheDuration, 2.4, accuracy: 0.001)
-    }
-
-    func test_motionTokens_breatheScale_is1_06() {
-        XCTAssertEqual(MotionTokens.breatheScale, 1.06, accuracy: 0.001)
+    func test_motionTokens_rageValues_matchPrototype() {
+        XCTAssertEqual(MotionTokens.ragePeriod, 2.4, accuracy: 0.001)
+        XCTAssertEqual(MotionTokens.rageWindupDuration, 0.95, accuracy: 0.001)
     }
 
     func test_motionTokensSource_ringValues_matchSpec() {
@@ -198,15 +177,6 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertTrue(src.contains(".linear(duration: roamDuration).repeatForever(autoreverses: false)"))
     }
 
-    func test_motionTokensSource_driftValues_matchSpec() {
-        let src = readDesignTokensSource()
-
-        XCTAssertTrue(src.contains("static let driftDuration: TimeInterval = 6.0"))
-        XCTAssertTrue(src.contains("static let driftRadiusX: CGFloat = 7"))
-        XCTAssertTrue(src.contains("static let driftRadiusY: CGFloat = 8"))
-        XCTAssertTrue(src.contains("static func driftAnimation(reduceMotion: Bool) -> Animation?"))
-        XCTAssertTrue(src.contains(".easeInOut(duration: driftDuration)"))
-    }
 
     func test_motionTokens_newAlertPulseValues_matchSpec() {
         XCTAssertEqual(MotionTokens.newAlertPulseDuration, 0.45, accuracy: 0.001)
@@ -221,7 +191,7 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(MotionTokens.sonarStartScale, 0.5, accuracy: 0.001)
         XCTAssertEqual(MotionTokens.sonarEndScale, 3.0, accuracy: 0.001)
         XCTAssertEqual(MotionTokens.sonarBaseDiameter, 14, accuracy: 0.001)
-        XCTAssertLessThanOrEqual(MotionTokens.sonarBaseDiameter * MotionTokens.sonarEndScale, 44)
+        XCTAssertLessThanOrEqual(MotionTokens.sonarBaseDiameter * MotionTokens.sonarEndScale, 50)
         XCTAssertEqual(MotionTokens.sonarStartOpacity, 0.75, accuracy: 0.001)
         XCTAssertEqual(MotionTokens.reduceMotionFadeDuration, 0.15, accuracy: 0.001)
     }
@@ -240,13 +210,13 @@ final class DesignTokensTests: XCTestCase {
 
     // MARK: - MotionTokens reduce-motion gate (D4 / SC#3)
 
-    func test_motionTokens_breatheAnimation_returnsNil_whenReduceMotionIsTrue() {
+    func test_motionTokens_ringAnimation_returnsNil_whenReduceMotionIsTrue() {
         // D4: token namespace owns the uniform reduce-motion gate.
-        XCTAssertNil(MotionTokens.breatheAnimation(reduceMotion: true))
+        XCTAssertNil(MotionTokens.ringAnimation(reduceMotion: true))
     }
 
-    func test_motionTokens_breatheAnimation_returnsNonNil_whenReduceMotionIsFalse() {
-        XCTAssertNotNil(MotionTokens.breatheAnimation(reduceMotion: false))
+    func test_motionTokens_ringAnimation_returnsNonNil_whenReduceMotionIsFalse() {
+        XCTAssertNotNil(MotionTokens.ringAnimation(reduceMotion: false))
     }
 
     // MARK: - EffectTokens (WO-010 aging)

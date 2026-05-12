@@ -137,9 +137,10 @@ extension SettingsViewTests {
 
     func test_idleAnimationLabels_areMinimalEnglish() {
         XCTAssertEqual(SettingsView.idleAnimationName(.bounce), "Bounce")
-        XCTAssertEqual(SettingsView.idleAnimationName(.breathe), "Breathe")
         XCTAssertEqual(SettingsView.idleAnimationName(.heart), "Heart")
-        XCTAssertEqual(SettingsView.idleAnimationName(.drift), "Drift")
+        XCTAssertEqual(SettingsView.idleAnimationName(.ring), "Ring")
+        XCTAssertEqual(SettingsView.idleAnimationName(.roam), "Roam")
+        XCTAssertEqual(SettingsView.idleAnimationName(.rage), "🤬 Rage")
     }
 
     func test_idleAnimationLabelsSource_includesRing() {
@@ -160,10 +161,10 @@ extension SettingsViewTests {
         XCTAssertTrue(src.contains("case .roam: return \"Roam\""))
     }
 
-    func test_idleAnimationLabelsSource_includesDrift() {
+    func test_idleAnimationLabelsSource_includesRage() {
         let src = readSettingsViewSource()
 
-        XCTAssertTrue(src.contains("case .drift: return \"Drift\""))
+        XCTAssertTrue(src.contains("case .rage: return \"🤬 Rage\""))
     }
 
     func test_themeSection_wiresPickerToStore() {

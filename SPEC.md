@@ -78,7 +78,7 @@ Lift these directly from the HTML.
 - Popover: 270pt wide, 14pt corner radius
 - Row: 36pt min height, 12pt horizontal padding, 8pt vertical padding
 - Status dot: 7pt; hollow ring stroke 1.5pt
-- Widget glyph: 36pt glyph in a 44pt drawable; badge overhangs the top-trailing edge by 4pt
+- Widget glyph: 36pt glyph in a 50pt drawable (HTML proto host 56pt, downsized to fit the native panel without clipping shadow + badge overhang). Badge is a min-18pt-tall accent-dark capsule with a 2pt outer ring and a `+5/-6` top-trailing overhang. A 40×8pt elliptical ground shadow sits at the panel bottom, breathing in sync with bounce (0.9s) and going static under heart/ring/roam.
 - Context menu: 180pt min width, 8pt corner radius
 
 ### Typography

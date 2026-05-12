@@ -188,6 +188,10 @@ struct PopoverContentView: View {
     @State private var scrollViewportHeight: CGFloat = 0
     @State private var scrollContentFrame: CGRect = .zero
 
+    // Prototype `pop-in` keyframes: translateY(-6) scale(0.96) opacity 0 → identity.
+    private static let entryStartScale: CGFloat = 0.96
+    private static let entryStartOffsetY: CGFloat = -6
+
     /// Anchor for the spring entry scale. The popover should appear to
     /// expand outward from the widget glyph that triggered it.
     private var entryAnchor: UnitPoint {
@@ -215,27 +219,29 @@ struct PopoverContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 8) {
-                Spacer()
-                let clearableSessionCount = PopoverContentRules.clearableSessionCount(displayQueue)
-                let clearAllLabel = PopoverContentRules.clearAllButtonLabel(queue: displayQueue)
-                if PopoverContentRules.shouldShowClearAll(clearableCount: clearableSessionCount) {
+            let clearableSessionCount = PopoverContentRules.clearableSessionCount(visibleQueue)
+            let clearAllLabel = PopoverContentRules.clearAllButtonLabel(queue: visibleQueue)
+            // Prototype `.clear-row` is rendered only when queue.length >= 2 — gear and
+            // Clear All appear together. Settings remains reachable from the menu bar item.
+            if PopoverContentRules.shouldShowClearAll(clearableCount: clearableSessionCount) {
+                HStack(spacing: 8) {
+                    Button(action: onOpenSettings) {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color(NSColor.secondaryLabelColor))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Open Settings")
+                    Spacer()
                     Button(clearAllLabel, action: onClearAll)
                         .buttonStyle(.plain)
                         .font(.system(size: 11))
                         .foregroundStyle(Color(NSColor.secondaryLabelColor))
                         .accessibilityLabel(clearAllLabel)
                 }
-                Button(action: onOpenSettings) {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color(NSColor.secondaryLabelColor))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Open Settings")
+                .padding(.horizontal, 10)
+                .padding(.top, 9)
             }
-            .padding(.horizontal, 12)
-            .padding(.top, 8)
 
             if PopoverContentRules.shouldShowEmptyState(queue: visibleQueue, everHadAlerts: everHadAlerts) {
                 EmptyStateView()
@@ -314,11 +320,13 @@ struct PopoverContentView: View {
                 .mask(PopoverScrollFadeMask(showsTopFade: fades.top, showsBottomFade: fades.bottom))
             }
         }
-        .scaleEffect(hasAppeared ? 1.0 : 0.85, anchor: entryAnchor)
+        .scaleEffect(hasAppeared ? 1.0 : Self.entryStartScale, anchor: entryAnchor)
+        .offset(y: hasAppeared ? 0 : Self.entryStartOffsetY)
         .opacity(hasAppeared ? 1.0 : 0.0)
         .onAppear {
             displayQueue = queue
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) {
+            // Prototype `pop-in` cubic-bezier(0.34, 1.4, 0.5, 1) 260ms — slight overshoot.
+            withAnimation(.spring(response: 0.26, dampingFraction: 0.62)) {
                 hasAppeared = true
             }
         }

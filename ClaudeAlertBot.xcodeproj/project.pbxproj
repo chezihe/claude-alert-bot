@@ -28,6 +28,7 @@
 		4E99FC14F6F4031060A09E36 /* MutedProjectsRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94F900B4D713937E545B390C /* MutedProjectsRulesTests.swift */; };
 		50395090002C98C70B03D693 /* MotionKeyframesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A323BB2411675DC8255249 /* MotionKeyframesTests.swift */; };
 		67297E2D444E24FE063D63F5 /* SessionRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50B23882ED554CD89626EEA0 /* SessionRecord.swift */; };
+		6A4AA68004D8D377600827BB /* MacBookProjectile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3620A12CD42DCB6520993E /* MacBookProjectile.swift */; };
 		6D860F2F4A5F204144F1FC3E /* WidgetPopoverController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EC061914D2B7ECEB85B1014 /* WidgetPopoverController.swift */; };
 		7569503AF85CCD1ED620F61A /* PositioningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F846DC70533456E49CAC49C5 /* PositioningTests.swift */; };
 		77EE33694EF9AC81705A3746 /* ProjectNameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F38BDA29F2BDA2AC0F00354C /* ProjectNameTests.swift */; };
@@ -110,6 +111,7 @@
 		1CA2CABBA42E523EBB41F95E /* PopoverContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverContentTests.swift; sourceTree = "<group>"; };
 		1D0E5FF61663BD940052B098 /* HookEventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookEventTests.swift; sourceTree = "<group>"; };
 		1D54D1C911C95F984BA6C8A1 /* HookListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookListener.swift; sourceTree = "<group>"; };
+		1E3620A12CD42DCB6520993E /* MacBookProjectile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacBookProjectile.swift; sourceTree = "<group>"; };
 		22B1AABE29B040176423CE0A /* SettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStoreTests.swift; sourceTree = "<group>"; };
 		2F0532EA5559479069D65C1F /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		31A323BB2411675DC8255249 /* MotionKeyframesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionKeyframesTests.swift; sourceTree = "<group>"; };
@@ -231,6 +233,7 @@
 				C52574E53A8FD6995A80B23B /* Info.plist */,
 				448CBA41A1B75922D5F85801 /* ITerm2Jumper.swift */,
 				DBB92DF8ECD2021AD37F1AAC /* iTermSessionID.swift */,
+				1E3620A12CD42DCB6520993E /* MacBookProjectile.swift */,
 				607EF570071738D59CDD1266 /* MotionKeyframes.swift */,
 				DB9089AAD782186DEE08C823 /* MutedProjectsRules.swift */,
 				12F78A117E749843C430D7FA /* NotificationOrchestrator.swift */,
@@ -499,6 +502,7 @@
 				8ECAB8E9D4C43DADEF756A7A /* HookListener.swift in Sources */,
 				C4488CFEBDE80820E8D541D6 /* ITerm2Jumper.swift in Sources */,
 				35B1E7ACE04BF0602EE14448 /* IdleAnimation.swift in Sources */,
+				6A4AA68004D8D377600827BB /* MacBookProjectile.swift in Sources */,
 				C02DC451F4F35D0CBA472652 /* MotionKeyframes.swift in Sources */,
 				A96D0C5D318154CD39615272 /* MutedProjectsRules.swift in Sources */,
 				36C9FE5D269DBAA20CEADDB3 /* NotificationOrchestrator.swift in Sources */,

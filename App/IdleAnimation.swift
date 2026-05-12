@@ -5,11 +5,10 @@ import Foundation
 
 enum IdleAnimation: String, CaseIterable {
     case bounce
-    case breathe
     case heart
     case ring
     case roam
-    case drift
+    case rage
 
-    static let `default`: IdleAnimation = .breathe
+    static let `default`: IdleAnimation = .bounce
 }

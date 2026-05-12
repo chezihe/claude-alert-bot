@@ -63,7 +63,6 @@ struct PopoverRowView: View {
             onClick()
         }) {
             HStack(spacing: 8) {
-                statusDot
                 Text(session.projectName)
                     .font(.system(size: 13))
                     .foregroundStyle(state == .jumping
@@ -80,7 +79,7 @@ struct PopoverRowView: View {
                         .foregroundStyle(Color(NSColor.secondaryLabelColor))
                         .accessibilityLabel("Pinned")
                 }
-                Spacer()
+                Spacer(minLength: 0)
                 if showTimeSuffix {
                     Text("· \(PopoverContentRules.timeSuffix(for: session.stoppedAt))")
                         .font(.system(size: 11))
@@ -92,6 +91,7 @@ struct PopoverRowView: View {
                         .foregroundStyle(Color(NSColor.secondaryLabelColor))
                         .accessibilityLabel("Unknown Duration")
                 }
+                statusDot
             }
             .padding(.vertical, GeometryTokens.rowVerticalPadding)
             .padding(.horizontal, GeometryTokens.rowHorizontalPadding)

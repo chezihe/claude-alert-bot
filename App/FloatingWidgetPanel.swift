@@ -15,7 +15,11 @@ final class FloatingWidgetPanel: NSPanel {
         self.becomesKeyOnlyIfNeeded = true       // WIDG-02
         self.hidesOnDeactivate = false           // WIDG-04 — survives app deactivate
         self.isMovableByWindowBackground = false
-        self.hasShadow = true
+        // NSPanel.hasShadow draws a window-rect shadow under the *bounding box*, not the glyph
+        // silhouette — so on a transparent 50pt panel it reads as a dark square frame behind
+        // the icon. The widget is meant to look glued to the screen surface, not floating in
+        // a card, so the shadow stays off.
+        self.hasShadow = false
         self.isOpaque = false
         self.backgroundColor = .clear
         self.acceptsMouseMovedEvents = true      // for NSTrackingArea hover

@@ -195,17 +195,19 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(block.contains("restartIdleAnimation()"))
     }
 
-    func test_widgetIconViewSource_quietHoursSuppressesIdleKeepsPendingBadgeAndOmitsMarker() {
+    func test_widgetIconViewSource_quietHoursSuppressesIdleAndKeepsPendingBadge() {
         let src = readWidgetIconViewSource()
 
         XCTAssertTrue(src.contains("var quietHoursEnabled: Bool = false"))
         XCTAssertTrue(src.contains("guard !quietHoursEnabled else { return }"))
         XCTAssertTrue(src.contains("if pendingCount >= 2 {"))
+        XCTAssertTrue(src.contains("if quietHoursEnabled {"))
         XCTAssertFalse(src.contains("else if quietHoursEnabled {"))
         // Badge now uses HTML-proto accent-dark fill (#B8492C) with a Quiet-mode gray (#6B6B75).
         XCTAssertTrue(src.contains("Color(red: 0x6B/255, green: 0x6B/255, blue: 0x75/255)"))
         XCTAssertTrue(src.contains(": ColorTokens.accentDark"))
-        XCTAssertFalse(src.contains(#"Text("Zzz")"#))
+        XCTAssertTrue(src.contains("y: pendingCount >= 2 ? 11 : -6"))
+        XCTAssertTrue(src.contains(#"Text("Zzz")"#))
     }
 
     func test_widgetIconViewSource_keepsPendingBadgeInsidePanelBounds() {

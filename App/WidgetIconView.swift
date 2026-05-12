@@ -209,6 +209,13 @@ struct WidgetIconView: View {
                 if pendingCount >= 2 {
                     badgeView
                 }
+                if quietHoursEnabled {
+                    Text("Zzz")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(Color(NSColor.secondaryLabelColor))
+                        .offset(x: 5, y: pendingCount >= 2 ? 11 : -6)
+                        .accessibilityHidden(true)
+                }
             }
             .frame(width: GeometryTokens.widgetBaseSize.width, height: GeometryTokens.widgetBaseSize.height, alignment: .center)
         }

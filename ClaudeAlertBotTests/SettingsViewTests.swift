@@ -162,22 +162,13 @@ extension SettingsViewTests {
         XCTAssertTrue(src.contains("LoginItemController.applyFromSettings(enabled: enabled)"))
     }
 
-    func test_menuBarExtraRendersInlineSettingsControls() {
+    func test_settingsOpenPathsUsePresenterToRaiseWindow() {
         let appSource = readClaudeAlertBotAppSource()
         let popoverSource = readWidgetPopoverControllerSource()
 
-        XCTAssertTrue(appSource.contains("@ObservedObject private var store = SettingsStore.shared"))
-        XCTAssertTrue(appSource.contains("Toggle(SettingsView.soundToggleLabel, isOn: $store.soundEnabled)"))
-        XCTAssertTrue(appSource.contains("Toggle(SettingsView.quietHoursToggleLabel, isOn: $store.quietHoursEnabled)"))
-        XCTAssertTrue(appSource.contains("Picker(SettingsView.idleAnimationLabel, selection: store.idleAnimationBinding)"))
-        XCTAssertTrue(appSource.contains("Picker(SettingsView.themeLabel, selection: store.themeModeBinding)"))
-        XCTAssertTrue(appSource.contains("Picker(SettingsView.reduceMotionLabel, selection: store.reduceMotionPreferenceBinding)"))
-        XCTAssertTrue(appSource.contains("Toggle(SettingsView.launchAtLoginToggleLabel, isOn: $store.launchAtLoginEnabled)"))
-        XCTAssertTrue(appSource.contains("Task { await SessionRegistry.shared.injectTest(soundEnabled: store.soundEnabled) }"))
-        XCTAssertFalse(appSource.contains("Button(\"Settings…\") { SettingsWindowPresenter.open() }"))
+        XCTAssertTrue(appSource.contains("Button(\"Settings…\") { SettingsWindowPresenter.open() }"))
         XCTAssertFalse(appSource.contains("@Environment(\\.openSettings)"))
-        XCTAssertFalse(popoverSource.contains("onOpenSettings: {"))
-        XCTAssertFalse(popoverSource.contains("SettingsWindowPresenter.open()"))
+        XCTAssertTrue(popoverSource.contains("onOpenSettings: {\n                SettingsWindowPresenter.open()\n            }"))
         XCTAssertFalse(popoverSource.contains(#"NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)"#))
     }
 

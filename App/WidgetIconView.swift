@@ -1,6 +1,6 @@
 // App/WidgetIconView.swift — Phase 2 WIDG-03 (icon + project name location).
 // UI-SPEC: 36pt Claude Code glyph, 4pt internal padding (44pt total).
-// +N badge: 16pt × 16pt circle, systemRed fill (systemGray in Quiet Hours), white SF Pro Semibold 11pt numeral.
+// +N badge: 17pt-min capsule, accent-dark fill (gray in Quiet Hours), white SF Pro Semibold 11pt text.
 // Anchored top-trailing inside the panel bounds to avoid clipping at screen edges.
 // Bounce: 0.9s HTML-faithful KeyframeAnimator (translateY + scaleX + scaleY 3-track).
 //         Mirrors @keyframes bounce-cute squash-and-stretch; suppressed when Reduce Motion / Quiet Hours.
@@ -294,8 +294,8 @@ struct WidgetIconView: View {
         Text("+\(pendingCount - 1)")
             .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(Color(red: 0xFF/255, green: 0xF4/255, blue: 0xEC/255))
-            .padding(.horizontal, 5)
-            .frame(minWidth: 18, minHeight: 18)
+            .padding(.horizontal, 4.5)
+            .frame(minWidth: 17, minHeight: 17)
             .background(
                 Capsule(style: .continuous).fill(fill)
             )

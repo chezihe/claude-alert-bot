@@ -635,6 +635,19 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertTrue(source.contains("!Self.isRunningUnitTests"))
     }
 
+    func test_appDelegateSkipsRuntimeWiringDuringUnitTestsBeforeSocketSetup() throws {
+        let source = try readAppDelegateSource()
+        let launchRange = try XCTUnwrap(source.range(of: "func applicationDidFinishLaunching"))
+        let phaseRange = try XCTUnwrap(source.range(
+            of: "// === Phase 1 steps",
+            range: launchRange.upperBound..<source.endIndex
+        ))
+        let launchPreamble = String(source[launchRange.lowerBound..<phaseRange.lowerBound])
+
+        XCTAssertTrue(launchPreamble.contains("guard !Self.isRunningUnitTests else"))
+        XCTAssertTrue(launchPreamble.contains("skipping app runtime wiring"))
+    }
+
     private func runReporter(event: String = "stop", stdin: String) throws -> [String: Any] {
         let repoRoot = repoRootURL()
         let reporter = repoRoot.appendingPathComponent("Reporter/cab-report.sh")

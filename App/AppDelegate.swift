@@ -37,6 +37,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        guard !Self.isRunningUnitTests else {
+            log.notice("unit tests detected; skipping app runtime wiring")
+            return
+        }
+
         // === Phase 1 steps (preserved verbatim) ===
         // 1. Validate socket path length (Pitfall #6)
         guard SocketPaths.validateSocketPathLength() else {
@@ -61,9 +66,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if SettingsStore.shared.launchAtLoginEnabled {
                 LoginItemController.apply(enabled: true)
             }
-            if !Self.isRunningUnitTests {
-                HookInstaller.installBundledReporterIfNeeded()
-            }
+            HookInstaller.installBundledReporterIfNeeded()
 
             // 6. Restore session state from disk BEFORE listener accepts events.
             await SessionRegistry.shared.restore()

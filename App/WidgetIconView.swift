@@ -287,7 +287,6 @@ struct WidgetIconView: View {
         let fill = quietHoursEnabled
             ? Color(red: 0x6B/255, green: 0x6B/255, blue: 0x75/255)
             : ColorTokens.accentDark
-        let ringColor = Color.white.opacity(0.85)
         Text("+\(pendingCount - 1)")
             .font(.system(size: 9.5))
             .foregroundStyle(Color(red: 0xFF/255, green: 0xF4/255, blue: 0xEC/255))
@@ -295,10 +294,6 @@ struct WidgetIconView: View {
             .frame(minWidth: 16, minHeight: 16)
             .background(
                 Capsule(style: .continuous).fill(fill)
-            )
-            .overlay(
-                Capsule(style: .continuous)
-                    .stroke(ringColor, lineWidth: 1)
             )
             .shadow(color: .black.opacity(0.25), radius: 1.5, x: 0, y: 1)
             .scaleEffect(badgePopScale)

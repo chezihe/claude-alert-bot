@@ -177,7 +177,6 @@ struct PopoverContentView: View {
     /// hovering=true so the user can travel from the menu-bar icon onto the popover
     /// without the 250ms widget exit grace dismissing the popover mid-flight.
     var onPopoverHoverChange: (Bool) -> Void = { _ in }
-    var onOpenSettings: () -> Void = {}
     var expandedProjects: Set<String> = []
     var widgetCorner: WidgetCorner = .topRight
     var onToggleGroup: (String) -> Void = { _ in }
@@ -222,14 +221,6 @@ struct PopoverContentView: View {
             let clearableSessionCount = PopoverContentRules.clearableSessionCount(visibleQueue)
             let clearAllLabel = PopoverContentRules.clearAllButtonLabel(queue: visibleQueue)
             HStack(spacing: 8) {
-                Button(action: onOpenSettings) {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color(NSColor.secondaryLabelColor))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Open Settings")
-
                 Spacer()
 
                 if PopoverContentRules.shouldShowClearAll(clearableCount: clearableSessionCount) {

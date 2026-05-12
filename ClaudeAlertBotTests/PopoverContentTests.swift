@@ -359,7 +359,7 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertFalse(fades.bottom)
     }
 
-    // MARK: - WO-009 empty state + settings gear contract (source-level audit)
+    // MARK: - WO-009 empty state + toolbar contract (source-level audit)
 
     func test_popoverContentView_rendersEmptyStateWhenQueueIsEmpty() {
         let src = readPopoverContentViewSource()
@@ -375,13 +375,13 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains("everHadAlerts: SettingsStore.shared.everHadAlerts"))
     }
 
-    func test_popoverContentView_rendersToolbarWithSettingsGear() {
+    func test_popoverContentView_toolbarOmitsSettingsGear() {
         let src = readPopoverContentViewSource()
 
-        XCTAssertTrue(src.contains("var onOpenSettings: () -> Void = {}"))
-        XCTAssertTrue(src.contains(#"Image(systemName: "gearshape")"#))
-        XCTAssertTrue(src.contains(#".accessibilityLabel("Open Settings")"#))
         XCTAssertTrue(src.contains("PopoverContentRules.shouldShowClearAll(clearableCount: clearableSessionCount)"))
+        XCTAssertFalse(src.contains("var onOpenSettings: () -> Void = {}"))
+        XCTAssertFalse(src.contains(#"Image(systemName: "gearshape")"#))
+        XCTAssertFalse(src.contains(#".accessibilityLabel("Open Settings")"#))
     }
 
     func test_popoverContentView_toolbarConsumesFixedChromeHeight() {
@@ -475,12 +475,12 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains("rowStates: rowStates"))
     }
 
-    func test_widgetPopoverController_wiresOpenSettingsCallback() {
+    func test_widgetPopoverController_doesNotWireOpenSettingsCallback() {
         let src = readWidgetPopoverControllerSource()
 
         XCTAssertTrue(src.contains("private func makePopoverContent(queue: [CompletedSession]) -> PopoverContentView"))
-        XCTAssertTrue(src.contains("onOpenSettings: {"))
-        XCTAssertTrue(src.contains("SettingsWindowPresenter.open()"))
+        XCTAssertFalse(src.contains("onOpenSettings: {"))
+        XCTAssertFalse(src.contains("SettingsWindowPresenter.open()"))
     }
 
     func test_popoverContentView_doesNotRenderSoundOrQuietHoursQuickControls() {

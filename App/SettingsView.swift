@@ -50,6 +50,7 @@ struct SettingsView: View {
     @State private var connectionTestResult: JumpResult? = nil
     @State private var connectionTestResultAt: Date = Date()
     @State private var hideResultTask: Task<Void, Never>? = nil
+    @State private var accessibilityTrusted = AccessibilityRaiser.isTrusted()
 
     var body: some View {
         Form {
@@ -61,7 +62,7 @@ struct SettingsView: View {
             }
 
             // D3-21 — Accessibility permission banner. Cross-Space window raise requires AX.
-            if !AccessibilityRaiser.isTrusted() {
+            if !accessibilityTrusted {
                 Section {
                     AccessibilityPermissionBannerView()
                 }
@@ -191,15 +192,23 @@ struct SettingsView: View {
         .padding(.vertical, 32)
         .padding(.horizontal, 24)
         .onAppear {
+            refreshAccessibilityTrust()
             // D2-35 Path A — trigger Apple Events permission dialog when user explicitly opens Settings.
             // The cheap-query is a no-op result; what matters is that macOS displays the TCC dialog.
             if store.applescriptPermission == .unknown {
                 Task { await AppleScriptHelper.shared.triggerPermissionPrompt() }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            refreshAccessibilityTrust()
+        }
     }
 
     // MARK: - SET-05 helpers (D3-15..20)
+
+    private func refreshAccessibilityTrust() {
+        accessibilityTrusted = AccessibilityRaiser.isTrusted()
+    }
 
     static func widgetCornerLabel(_ corner: WidgetCorner) -> String {
         switch corner {

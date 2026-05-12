@@ -12,6 +12,13 @@ final class SettingsViewTests: XCTestCase {
         XCTAssertEqual(PermissionBannerView.bodyCopy, "이미 보고 있는 터미널에서도 알림이 뜰 수 있습니다.")
         XCTAssertEqual(PermissionBannerView.buttonCopy, "시스템 설정 열기")
     }
+
+    func test_accessibilityBannerCopy_locked() {
+        XCTAssertEqual(AccessibilityPermissionBannerView.headlineCopy, "손쉬운 사용 권한이 필요해요")
+        XCTAssertEqual(AccessibilityPermissionBannerView.bodyCopy, "전체화면 Space의 iTerm 창으로 점프하려면 필요합니다.")
+        XCTAssertEqual(AccessibilityPermissionBannerView.buttonCopy, "시스템 설정 열기")
+        XCTAssertFalse(AccessibilityPermissionBannerView.bodyCopy.contains("재시작"))
+    }
     // (Task 2 appends more tests below this point)
 }
 
@@ -164,6 +171,15 @@ extension SettingsViewTests {
         XCTAssertTrue(src.contains("!(window is NSPanel)"))
         XCTAssertTrue(src.contains("for window in NSApp.windows where !(window is NSPanel)"))
         XCTAssertFalse(src.contains("window.isVisible && !(window is NSPanel)"))
+    }
+
+    func test_settingsViewRefreshesAccessibilityPermissionWhenAppBecomesActive() {
+        let src = readSettingsViewSource()
+
+        XCTAssertTrue(src.contains("@State private var accessibilityTrusted = AccessibilityRaiser.isTrusted()"))
+        XCTAssertTrue(src.contains("if !accessibilityTrusted"))
+        XCTAssertTrue(src.contains(".onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification))"))
+        XCTAssertTrue(src.contains("refreshAccessibilityTrust()"))
     }
 
     /// Resolve App/SettingsView.swift relative to this test file so source-level

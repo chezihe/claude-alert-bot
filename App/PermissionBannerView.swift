@@ -41,10 +41,10 @@ struct PermissionBannerView: View {
 
 /// D3-21 — Accessibility permission banner, shown when AX is not trusted. Required
 /// for cross-Space iTerm2 window raising (full-screen iTerm windows in separate
-/// Mission Control Spaces). TCC requires app relaunch after grant.
+/// Mission Control Spaces).
 struct AccessibilityPermissionBannerView: View {
     static let headlineCopy = "손쉬운 사용 권한이 필요해요"
-    static let bodyCopy = "전체화면 Space 의 iTerm 창으로 점프하려면 필요합니다. 권한 부여 후 앱을 재시작하세요."
+    static let bodyCopy = "전체화면 Space의 iTerm 창으로 점프하려면 필요합니다."
     static let buttonCopy = "시스템 설정 열기"
 
     var body: some View {

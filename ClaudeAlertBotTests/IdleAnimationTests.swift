@@ -236,10 +236,13 @@ final class IdleAnimationTests: XCTestCase {
     func test_widgetIconViewSource_keepsPendingBadgeInsidePanelBounds() {
         let src = readWidgetIconViewSource()
 
-        XCTAssertTrue(src.contains("private static let badgeOffset = CGSize(width: 0, height: 0)"))
+        XCTAssertTrue(src.contains("private static let badgeOffset = CGSize(width: -1, height: 1)"))
         XCTAssertTrue(src.contains(".offset(x: Self.badgeOffset.width, y: Self.badgeOffset.height)"))
-        XCTAssertTrue(src.contains(".padding(.horizontal, 4.5)"))
-        XCTAssertTrue(src.contains(".frame(minWidth: 17, minHeight: 17)"))
+        XCTAssertTrue(src.contains(".padding(.horizontal, 4)"))
+        XCTAssertTrue(src.contains(".frame(minWidth: 16, minHeight: 16)"))
+        XCTAssertFalse(src.contains("private static let badgeOffset = CGSize(width: 0, height: 0)"))
+        XCTAssertFalse(src.contains(".padding(.horizontal, 4.5)"))
+        XCTAssertFalse(src.contains(".frame(minWidth: 17, minHeight: 17)"))
         XCTAssertFalse(src.contains(".padding(.horizontal, 5)"))
         XCTAssertFalse(src.contains(".frame(minWidth: 18, minHeight: 18)"))
         XCTAssertFalse(src.contains(".offset(x: 5, y: -6)"))

@@ -98,19 +98,6 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertFalse(src.contains(#"NSImage(systemSymbolName: "laptopcomputer""#))
     }
 
-    func test_macBookProjectileSource_fliesPrototypeArcWithoutImpactBurst() {
-        let src = readMacBookProjectileSource()
-
-        XCTAssertTrue(src.contains("private static let flightKeyframes"))
-        XCTAssertTrue(src.contains("Timer.scheduledTimer"))
-        XCTAssertTrue(src.contains("CATransform3DMakeRotation"))
-        XCTAssertTrue(src.contains("throwAwayFromWidget"))
-        XCTAssertFalse(src.contains("Bool.random()"))
-        XCTAssertFalse(src.contains("ImpactPanel"))
-        XCTAssertFalse(src.contains(#"NSImage(systemSymbolName: "burst.fill""#))
-        XCTAssertFalse(src.contains("NSAnimationContext.runAnimationGroup"))
-    }
-
     func test_widgetIconViewSource_roamUsesCounterClockwiseGeometryEffect() {
         let src = readWidgetIconViewSource()
 

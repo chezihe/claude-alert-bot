@@ -379,7 +379,7 @@ struct WidgetIconView: View {
 
     // HTML rage loop (Prototype v2 lines 1341–1347): every 2.4s while idleAnimation == .rage,
     // throw a MacBook projectile. The glyph KeyframeAnimator already loops the throw-windup
-    // on its own; this helper handles the separate window-level projectile + impact burst.
+    // on its own; this helper handles the separate window-level projectile.
     // Timed to fire at peak forward whip (44% of windup ≈ 418ms after each cycle start).
     private func restartRageProjectileLoop() {
         stopRageProjectileLoop()

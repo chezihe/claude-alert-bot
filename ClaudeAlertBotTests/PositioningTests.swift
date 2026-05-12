@@ -98,7 +98,7 @@ final class PositioningTests: XCTestCase {
             corner: .bottomRight
         )
 
-        XCTAssertEqual(topOrigin.y, widgetFrame.minY - 8 - popoverSize.height, accuracy: 0.0001)
-        XCTAssertEqual(bottomOrigin.y, widgetFrame.maxY + 8, accuracy: 0.0001)
+        XCTAssertEqual(topOrigin.y, widgetFrame.minY - 4 - popoverSize.height, accuracy: 0.0001)
+        XCTAssertEqual(bottomOrigin.y, widgetFrame.maxY + 4, accuracy: 0.0001)
     }
 }

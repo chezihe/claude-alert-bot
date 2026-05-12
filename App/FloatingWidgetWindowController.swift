@@ -14,6 +14,7 @@ import os
 @MainActor protocol WidgetHoverDelegate: AnyObject {
     func widgetMouseEntered()
     func widgetMouseExited()
+    func widgetMouseClicked()
 }
 
 @MainActor
@@ -22,6 +23,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     private let panel: FloatingWidgetPanel
     private var hostingView: NSHostingView<WidgetIconView>?
     private var trackingArea: NSTrackingArea?
+    private var clickGesture: NSClickGestureRecognizer?
     private var settingsCancellable: AnyCancellable?
     private var accessibilityCancellable: AnyCancellable?
     private var currentQueue: [CompletedSession] = []
@@ -54,6 +56,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
         p.contentView = hv
         self.hostingView = hv
         installTrackingArea(on: hv)
+        installClickGesture(on: hv)
         settingsCancellable = SettingsStore.shared.objectWillChange.sink { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -165,6 +168,21 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
         let ta = NSTrackingArea(rect: .zero, options: opts, owner: self, userInfo: nil)
         view.addTrackingArea(ta)
         self.trackingArea = ta
+    }
+
+    private func installClickGesture(on view: NSView) {
+        if let clickGesture {
+            view.removeGestureRecognizer(clickGesture)
+        }
+        let gesture = NSClickGestureRecognizer(target: self, action: #selector(widgetClicked(_:)))
+        gesture.buttonMask = 0x1
+        view.addGestureRecognizer(gesture)
+        clickGesture = gesture
+    }
+
+    @objc private func widgetClicked(_ recognizer: NSClickGestureRecognizer) {
+        guard recognizer.state == .ended else { return }
+        hoverDelegate?.widgetMouseClicked()
     }
 
     override func mouseEntered(with event: NSEvent) {

@@ -25,6 +25,14 @@ final class FloatingWidgetWindowControllerTests: XCTestCase {
         XCTAssertTrue(src.contains("reduceMotion: reducedMotion"))
     }
 
+    func test_sourceForwardsWidgetClickToDelegate() {
+        let src = readFloatingWidgetWindowControllerSource()
+
+        XCTAssertTrue(src.contains("func widgetMouseClicked()"))
+        XCTAssertTrue(src.contains("NSClickGestureRecognizer(target: self, action: #selector(widgetClicked"))
+        XCTAssertTrue(src.contains("hoverDelegate?.widgetMouseClicked()"))
+    }
+
     func test_visibleWidgetRepositionsWhenWidgetCornerChanges() async throws {
         guard let screen = NSScreen.main else {
             throw XCTSkip("NSScreen.main unavailable in this test environment")

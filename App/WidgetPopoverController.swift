@@ -65,6 +65,17 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(250), execute: exit)
     }
 
+    func widgetMouseClicked() {
+        entryWorkItem?.cancel(); entryWorkItem = nil
+        exitWorkItem?.cancel(); exitWorkItem = nil
+        guard let queue = widgetController?.queueSnapshot else { return }
+        if queue.count == 1, popoverPanel?.isVisible != true, let session = queue.first {
+            onRowClick(alertID: session.id)
+            return
+        }
+        showPopover()
+    }
+
     /// Phase 3 03-09 fix — popover surface hover. While hovering=true, cancel the
     /// widget-exit dismiss timer so traveling from the menu-bar icon onto the
     /// popover does not race the 250ms grace and dismiss the popover mid-flight.
@@ -85,6 +96,7 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         guard let controller = widgetController,
               let widgetPanel = controller.window else { return }
         let queue = controller.queueSnapshot
+        if queue.count == 1, popoverPanel?.isVisible != true { return }
         let content = PopoverContentView(
             queue: queue,
             onRowClick: { [weak self] alertID in self?.onRowClick(alertID: alertID) },

@@ -8,7 +8,7 @@
 // Heart: 1.4s HTML-faithful KeyframeAnimator (single scale track) anchored at center.
 //        Mirrors @keyframes heartbeat double-pulse at 14% / 42%; suppressed in Quiet Hours / Reduce Motion.
 // Ring: 0.55s ±10° top-anchor rotation, autoreverse forever; suppressed when Reduce Motion is on.
-// Roam: 1.6s counter-clockwise 24×6pt ellipse + delayed dust puffs; suppressed when Reduce Motion is on.
+// Roam: 1.6s counter-clockwise 24×6pt ellipse, linear forever; suppressed when Reduce Motion is on.
 // Drift: 6s random jitter within 14×16pt, easeInOut forever; suppressed when Reduce Motion is on.
 // New-alert pulse: scale/rotate glyph + one sonar ring; suppressed in Quiet Hours.
 import SwiftUI
@@ -22,7 +22,6 @@ struct WidgetIconView: View {
     var reduceMotionPreference: ReduceMotionPreference = .system
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
-    @Environment(\.colorScheme) private var colorScheme
     @State private var roamPhase: Double = 0
     @State private var rageGeneration: Int = 0
     @State private var rageActive: Bool = false
@@ -67,10 +66,6 @@ struct WidgetIconView: View {
         idleAnimation == .ring && !quietHoursEnabled && !reduceMotion
     }
 
-    private var roamDustActive: Bool {
-        idleAnimation == .roam && !quietHoursEnabled && !reduceMotion
-    }
-
     var body: some View {
         ZStack(alignment: .center) {
             ZStack(alignment: .topTrailing) {
@@ -85,11 +80,6 @@ struct WidgetIconView: View {
                 }
                 // Non-SPEC literals retained per Finding F-2 (see 03.1-01-SUMMARY.md):
                 // floating-widget topology differs from SPEC §3 NSStatusItem 22pt-in-28pt + badge offsets.
-                if roamDustActive {
-                    RoamDustCloudView(colorScheme: colorScheme)
-                        .allowsHitTesting(false)
-                        .accessibilityHidden(true)
-                }
                 if bounceAnimatorActive {
                     KeyframeAnimator(
                         initialValue: BounceAnimatorValue(),
@@ -485,84 +475,6 @@ struct RageAnimatorValue {
 
 struct RingAnimatorValue {
     var rotation: Double = 0
-}
-
-private struct RoamDustCloudView: View {
-    let colorScheme: ColorScheme
-
-    @State private var startedAt = Date()
-
-    var body: some View {
-        TimelineView(.animation) { context in
-            let elapsed = context.date.timeIntervalSince(startedAt)
-
-            ZStack {
-                ForEach(Array(MotionTokens.roamDustAnchorFractions.enumerated()), id: \.offset) { index, anchorX in
-                    let state = puffState(elapsed: elapsed, delay: MotionTokens.roamDustDelays[index])
-
-                    Ellipse()
-                        .fill(dustGradient)
-                        .frame(width: MotionTokens.roamDustPuffSize.width, height: MotionTokens.roamDustPuffSize.height)
-                        .scaleEffect(state.scale)
-                        .opacity(state.opacity)
-                        .position(
-                            x: GeometryTokens.widgetBaseSize.width * anchorX,
-                            y: GeometryTokens.widgetBaseSize.height - MotionTokens.roamDustBottomInset + state.offsetY
-                        )
-                }
-            }
-        }
-        .frame(width: GeometryTokens.widgetBaseSize.width, height: GeometryTokens.widgetBaseSize.height, alignment: .bottom)
-        .onAppear {
-            startedAt = Date()
-        }
-    }
-
-    private var dustGradient: RadialGradient {
-        let colors: [Color]
-        switch colorScheme {
-        case .dark:
-            colors = [
-                Color(red: 240 / 255, green: 215 / 255, blue: 180 / 255, opacity: 0.45),
-                Color(red: 240 / 255, green: 215 / 255, blue: 180 / 255, opacity: 0.12),
-                .clear
-            ]
-        default:
-            colors = [
-                Color(red: 110 / 255, green: 80 / 255, blue: 55 / 255, opacity: 0.50),
-                Color(red: 110 / 255, green: 80 / 255, blue: 55 / 255, opacity: 0.15),
-                .clear
-            ]
-        }
-
-        return RadialGradient(
-            colors: colors,
-            center: .center,
-            startRadius: 0,
-            endRadius: MotionTokens.roamDustPuffSize.width
-        )
-    }
-
-    private func puffState(elapsed: TimeInterval, delay: TimeInterval) -> (offsetY: CGFloat, scale: CGFloat, opacity: Double) {
-        let delayedElapsed = elapsed - delay
-        guard delayedElapsed >= 0 else {
-            return (0, MotionTokens.roamDustStartScale, 0)
-        }
-
-        let cycle = delayedElapsed.truncatingRemainder(dividingBy: MotionTokens.roamDuration) / MotionTokens.roamDuration
-        let eased = CGFloat(1 - (1 - cycle) * (1 - cycle))
-        let scale = MotionTokens.roamDustStartScale + (MotionTokens.roamDustEndScale - MotionTokens.roamDustStartScale) * eased
-        let offsetY = MotionTokens.roamDustRise * eased
-        let peakPoint = 0.18
-        let opacity: Double
-        if cycle <= peakPoint {
-            opacity = MotionTokens.roamDustPeakOpacity * (cycle / peakPoint)
-        } else {
-            opacity = MotionTokens.roamDustPeakOpacity * max(0, 1 - (cycle - peakPoint) / (1 - peakPoint))
-        }
-
-        return (offsetY, scale, opacity)
-    }
 }
 
 private struct RoamOffsetEffect: GeometryEffect {

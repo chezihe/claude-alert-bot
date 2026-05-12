@@ -96,15 +96,6 @@ enum MotionTokens {
     static let roamDuration: TimeInterval = 1.6
     static let roamRadiusX: CGFloat = 12
     static let roamRadiusY: CGFloat = 3
-    // Prototype v2 `.dust` puffs — 6×4pt, bottom 2pt, delayed across the same roam period.
-    static let roamDustPuffSize = CGSize(width: 6, height: 4)
-    static let roamDustBottomInset: CGFloat = 2
-    static let roamDustRise: CGFloat = -5
-    static let roamDustStartScale: CGFloat = 0.4
-    static let roamDustEndScale: CGFloat = 2.4
-    static let roamDustPeakOpacity: Double = 0.65
-    static let roamDustAnchorFractions: [CGFloat] = [0.32, 0.50, 0.68]
-    static let roamDustDelays: [TimeInterval] = [0.0, 0.4, 0.8]
     // SPEC.md §4 row "Rage" — 950ms throw-windup looped every 2.4s.
     static let ragePeriod: TimeInterval = 2.4
     static let rageWindupDuration: TimeInterval = 0.95

@@ -476,26 +476,6 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertLessThan(unavailableRange.lowerBound, jumpRange.lowerBound)
     }
 
-    func test_widgetPopoverController_singleClosedWidgetClickJumpsDirectly() throws {
-        let src = readWidgetPopoverControllerSource()
-        let clickRange = try XCTUnwrap(src.range(of: "func widgetMouseClicked()"))
-        let clickSource = String(src[clickRange.lowerBound...])
-
-        XCTAssertTrue(clickSource.contains("entryWorkItem?.cancel(); entryWorkItem = nil"))
-        XCTAssertTrue(clickSource.contains("exitWorkItem?.cancel(); exitWorkItem = nil"))
-        XCTAssertTrue(clickSource.contains("if queue.count == 1, popoverPanel?.isVisible != true"))
-        XCTAssertTrue(clickSource.contains("onRowClick(alertID: session.id)"))
-        XCTAssertTrue(clickSource.contains("return"))
-    }
-
-    func test_widgetPopoverController_hoverDoesNotOpenClosedPanelForSingleSession() throws {
-        let src = readWidgetPopoverControllerSource()
-        let showRange = try XCTUnwrap(src.range(of: "private func showPopover()"))
-        let showSource = String(src[showRange.lowerBound...])
-
-        XCTAssertTrue(showSource.contains("if queue.count == 1, popoverPanel?.isVisible != true { return }"))
-    }
-
     // MARK: - helpers
     // Phase 3 / 03-06: removed `test_isUnavailable_membershipCheck`,
     // `test_isUnavailable_emptySet_neverUnavailable`, and

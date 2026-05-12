@@ -61,6 +61,7 @@ struct AccessibilityPermissionBannerView: View {
             }
             Spacer()
             Button(Self.buttonCopy) {
+                AccessibilityRaiser.requestTrust()
                 PermissionDeepLink.openAccessibilityPreferences()
             }
         }

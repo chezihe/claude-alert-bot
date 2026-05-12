@@ -19,6 +19,18 @@ final class SettingsViewTests: XCTestCase {
         XCTAssertEqual(AccessibilityPermissionBannerView.buttonCopy, "시스템 설정 열기")
         XCTAssertFalse(AccessibilityPermissionBannerView.bodyCopy.contains("재시작"))
     }
+
+    func test_accessibilityBannerButtonRequestsCurrentAppTrustBeforeOpeningSettings() {
+        let src = readPermissionBannerViewSource()
+        guard let bannerStart = src.range(of: "struct AccessibilityPermissionBannerView") else {
+            XCTFail("Could not find AccessibilityPermissionBannerView")
+            return
+        }
+        let bannerSource = String(src[bannerStart.lowerBound...])
+
+        XCTAssertTrue(bannerSource.contains("AccessibilityRaiser.requestTrust()"))
+        XCTAssertTrue(bannerSource.contains("PermissionDeepLink.openAccessibilityPreferences()"))
+    }
     // (Task 2 appends more tests below this point)
 }
 
@@ -208,6 +220,17 @@ extension SettingsViewTests {
         let target = repoRoot.appendingPathComponent("App/SettingsView.swift")
         guard let data = try? String(contentsOf: target, encoding: .utf8) else {
             XCTFail("Could not read App/SettingsView.swift at \(target.path)")
+            return ""
+        }
+        return data
+    }
+
+    private func readPermissionBannerViewSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/PermissionBannerView.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/PermissionBannerView.swift at \(target.path)")
             return ""
         }
         return data

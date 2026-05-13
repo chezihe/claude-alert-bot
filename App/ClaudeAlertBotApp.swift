@@ -29,17 +29,32 @@ private struct MenuBarMenuContent: View {
     @State private var connectionTestResult: JumpResult? = nil
     @State private var connectionTestResultAt: Date = Date()
     @State private var hideResultTask: Task<Void, Never>? = nil
+    private var menuIdleAnimations: [IdleAnimation] {
+        IdleAnimation.allCases.filter { $0 != .rage }
+    }
 
     var body: some View {
         let activeMutes = MutedProjectsRules.activeMutes(store.mutedProjects, now: Date())
         let now = Date()
 
         Menu("Notification") {
-            Toggle(SettingsView.soundToggleLabel, isOn: $store.soundEnabled)
-            Toggle(SettingsView.quietHoursToggleLabel, isOn: $store.quietHoursEnabled)
-            Menu(SettingsView.thresholdHeading) {
-                Stepper("\(store.thresholdSeconds)초", value: $store.thresholdSeconds, in: 5...600, step: 5)
-                Text(SettingsView.thresholdCaption)
+            Toggle(Self.menuSoundToggleLabel, isOn: $store.soundEnabled)
+            Toggle(Self.menuQuietHoursToggleLabel, isOn: $store.quietHoursEnabled)
+            Menu(Self.menuThresholdHeading) {
+                ForEach(Self.thresholdPresets) { preset in
+                    Button {
+                        store.thresholdSeconds = preset.seconds
+                    } label: {
+                        HStack {
+                            Text(preset.label)
+                            if store.thresholdSeconds == preset.seconds {
+                                Spacer()
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+                Text(Self.menuThresholdCaption)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -47,7 +62,7 @@ private struct MenuBarMenuContent: View {
 
         Menu("Style") {
             Picker(SettingsView.idleAnimationLabel, selection: store.idleAnimationBinding) {
-                ForEach(IdleAnimation.allCases, id: \.self) { animation in
+                ForEach(menuIdleAnimations, id: \.self) { animation in
                     Text(SettingsView.idleAnimationName(animation)).tag(animation)
                 }
             }
@@ -63,22 +78,50 @@ private struct MenuBarMenuContent: View {
             }
         }
 
-        Menu(SettingsView.widgetPositionHeading) {
-            Picker(SettingsView.cornerLabel, selection: store.cornerBinding) {
+        Menu(Self.menuWidgetPositionHeading) {
+            Picker(Self.menuCornerLabel, selection: store.cornerBinding) {
                 ForEach(WidgetCorner.allCases) { c in
                     Text(SettingsView.widgetCornerLabel(c)).tag(c)
                 }
             }
-            Stepper("\(SettingsView.offsetXLabel): \(store.offsetX) pt", value: $store.offsetX, in: 0...64)
-            Stepper("\(SettingsView.offsetYLabel): \(store.offsetY) pt", value: $store.offsetY, in: 0...64)
+            Menu(Self.menuOffsetXLabel) {
+                ForEach(Self.offsetPresets) { preset in
+                    Button {
+                        store.offsetX = preset.value
+                    } label: {
+                        HStack {
+                            Text(preset.label)
+                            if store.offsetX == preset.value {
+                                Spacer()
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            }
+            Menu(Self.menuOffsetYLabel) {
+                ForEach(Self.offsetPresets) { preset in
+                    Button {
+                        store.offsetY = preset.value
+                    } label: {
+                        HStack {
+                            Text(preset.label)
+                            if store.offsetY == preset.value {
+                                Spacer()
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        Toggle(SettingsView.launchAtLoginToggleLabel, isOn: $store.launchAtLoginEnabled)
+        Toggle(Self.menuLaunchAtLoginLabel, isOn: $store.launchAtLoginEnabled)
             .onChange(of: store.launchAtLoginEnabled) { _, enabled in
                 LoginItemController.applyFromSettings(enabled: enabled)
             }
 
-        Menu(SettingsView.mutedProjectsHeading) {
+        Menu(Self.menuMutedProjectsHeading) {
             if activeMutes.isEmpty {
                 Text("No muted projects")
             } else {
@@ -93,11 +136,11 @@ private struct MenuBarMenuContent: View {
             }
         }
 
-        Menu(SettingsView.connectionTestHeading) {
-            Button(SettingsView.testButtonLabel) {
+        Menu(Self.menuConnectionTestHeading) {
+            Button(Self.menuTestNotificationLabel) {
                 Task { await SessionRegistry.shared.injectTest(soundEnabled: store.soundEnabled) }
             }
-            Button(SettingsView.connectionTestLabel) {
+            Button(Self.menuConnectionTestLabel) {
                 Task { await runConnectionTest() }
             }
 
@@ -159,4 +202,49 @@ private struct MenuBarMenuContent: View {
         f.dateFormat = "HH:mm"
         return f.string(from: date)
     }
+
+    private struct OffsetPreset: Identifiable {
+        let id = UUID()
+        let label: String
+        let value: Int
+    }
+
+    private struct ThresholdPreset: Identifiable {
+        let id = UUID()
+        let label: String
+        let seconds: Int
+    }
+
+    private static let menuSoundToggleLabel = "Play notification sound"
+    private static let menuQuietHoursToggleLabel = "Quiet Hours"
+    private static let menuThresholdHeading = "Notification Threshold"
+    private static let menuThresholdCaption = "Notify only after threshold elapsed"
+    private static let menuWidgetPositionHeading = "Widget Position"
+    private static let menuCornerLabel = "Corner"
+    private static let menuOffsetXLabel = "Horizontal Offset"
+    private static let menuOffsetYLabel = "Vertical Offset"
+    private static let menuLaunchAtLoginLabel = "Open at Login"
+    private static let menuMutedProjectsHeading = "Muted Projects"
+    private static let menuTestNotificationLabel = "Send test notification"
+    private static let menuConnectionTestHeading = "iTerm2 Connection"
+    private static let menuConnectionTestLabel = "Test iTerm2 connection"
+
+    private static let thresholdPresets: [ThresholdPreset] = [
+        .init(label: "Direct (0s)", seconds: 0),
+        .init(label: "5 sec", seconds: 5),
+        .init(label: "10 sec", seconds: 10),
+        .init(label: "30 sec", seconds: 30),
+        .init(label: "1 min", seconds: 60),
+        .init(label: "3 min", seconds: 180),
+        .init(label: "5 min", seconds: 300),
+        .init(label: "10 min", seconds: 600)
+    ]
+
+    private static let offsetPresets: [OffsetPreset] = [
+        .init(label: "Close to edge (8 pt)", value: 8),
+        .init(label: "Default (16 pt)", value: 16),
+        .init(label: "Roomy (32 pt)", value: 32),
+        .init(label: "Far (48 pt)", value: 48),
+        .init(label: "Maximum (64 pt)", value: 64)
+    ]
 }

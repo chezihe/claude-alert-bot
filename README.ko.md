@@ -9,6 +9,12 @@ Claude Alert Bot은 iTerm2에서 Claude Code 또는 Codex를 사용하는 사람
 알림이 떠도 원래 작업하던 터미널로 정확하게 돌아가지 못하면 실사용 가치가 없습니다.
 Claude Alert Bot은 잠깐 나타났다 사라지는 시스템 배너보다, 정확한 세션 복귀에 초점을 맞춥니다.
 
+## 예시 화면
+
+![Claude Alert Bot overview](docs/images/claude-alert-bot-overview.png)
+
+![Claude Alert Bot menu controls](docs/images/claude-alert-bot-menu.png)
+
 ## 어떤 앱인가
 
 - 조건을 만족한 세션 완료 또는 대기 이벤트가 생기면 플로팅 Claude 위젯을 띄웁니다.

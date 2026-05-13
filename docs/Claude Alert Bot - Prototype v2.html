@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Claude Alert Bot - Current UI Prototype</title>
+<style>
+  :root {
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --accent: #d97757;
+    --accent-dark: #b8492c;
+    --status-error: #e5484d;
+    --status-waiting: #f5a623;
+    --label: rgba(20, 20, 22, 0.92);
+    --secondary: rgba(20, 20, 22, 0.52);
+    --tertiary: rgba(20, 20, 22, 0.34);
+    --stroke: rgba(0, 0, 0, 0.08);
+    --menu-bg: rgba(246, 245, 242, 0.94);
+    --popover-bg: rgba(248, 247, 245, 0.94);
+    --row-hover: rgba(217, 119, 87, 0.13);
+    --shadow: 0 24px 60px -8px rgba(0, 0, 0, 0.24), 0 6px 16px -4px rgba(0, 0, 0, 0.12);
+    color-scheme: light;
+  }
+
+  body[data-theme="dark"] {
+    --label: rgba(255, 255, 255, 0.92);
+    --secondary: rgba(255, 255, 255, 0.56);
+    --tertiary: rgba(255, 255, 255, 0.34);
+    --stroke: rgba(255, 255, 255, 0.09);
+    --menu-bg: rgba(40, 40, 44, 0.92);
+    --popover-bg: rgba(38, 38, 42, 0.9);
+    --row-hover: rgba(217, 119, 87, 0.20);
+    --shadow: 0 24px 60px -8px rgba(0, 0, 0, 0.56), 0 6px 16px -4px rgba(0, 0, 0, 0.36);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    font-family: var(--font);
+    color: var(--label);
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: 0;
+  }
+
+  body {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 34%),
+      linear-gradient(135deg, #e7edf1 0%, #ddd6cf 50%, #d1d7d3 100%);
+  }
+
+  body[data-theme="dark"] {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 34%),
+      linear-gradient(135deg, #101216 0%, #272321 52%, #121519 100%);
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+  }
+
+  .desktop {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.22) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.20) 1px, transparent 1px);
+    background-size: 72px 72px;
+  }
+
+  body[data-theme="dark"] .desktop {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  }
+
+  .menubar {
+    position: absolute;
+    z-index: 100;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    background: rgba(255, 255, 255, 0.48);
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(24px) saturate(1.35);
+    font-size: 13px;
+  }
+
+  body[data-theme="dark"] .menubar {
+    background: rgba(0, 0, 0, 0.34);
+    border-bottom-color: rgba(255, 255, 255, 0.07);
+  }
+
+  .active-app-menu {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .active-app-menu strong {
+    font-weight: 650;
+  }
+
+  .menu-word {
+    opacity: 0.82;
+  }
+
+  .menu-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--secondary);
+  }
+
+  .status-item {
+    position: relative;
+    width: 25px;
+    height: 20px;
+    border: 0;
+    background: transparent;
+    border-radius: 4px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  .status-item:hover,
+  .status-item.active {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  body[data-theme="dark"] .status-item:hover,
+  body[data-theme="dark"] .status-item.active {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .status-item svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+  }
+
+  .status-item::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-dark);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.72);
+  }
+
+  .iterm {
+    position: absolute;
+    left: 58px;
+    top: 126px;
+    width: min(680px, calc(100vw - 116px));
+    height: 470px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #0d0d0f;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.34), 0 0 0 0.5px rgba(255, 255, 255, 0.12);
+    font-family: var(--mono);
+    color: #f4f0eb;
+  }
+
+  .iterm.active {
+    animation: itermFocus 1100ms cubic-bezier(0.2, 0.75, 0.35, 1);
+  }
+
+  @keyframes itermFocus {
+    0% { transform: scale(0.985); box-shadow: 0 24px 54px rgba(0, 0, 0, 0.26), 0 0 0 0.5px rgba(255, 255, 255, 0.12); }
+    28% { transform: scale(1.018); box-shadow: 0 36px 96px rgba(184, 73, 44, 0.32), 0 0 0 1px rgba(217, 119, 87, 0.48); }
+    100% { transform: scale(1); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.34), 0 0 0 0.5px rgba(255, 255, 255, 0.12); }
+  }
+
+  .tabbar {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    background: linear-gradient(#2a2929, #1d1d1f);
+    color: rgba(255, 255, 255, 0.56);
+    font: 13px var(--font);
+  }
+
+  .traffic {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
+  .traffic.red { background: #ff5f57; }
+  .traffic.yellow { background: #febc2e; }
+  .traffic.green { background: #28c840; }
+
+  .tab-title {
+    margin-left: 10px;
+    padding: 5px 10px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  .terminal-body {
+    padding: 24px;
+    font-size: 16px;
+    line-height: 1.72;
+  }
+
+  .prompt { color: #e1a282; }
+  .ok { color: #83d18c; }
+  .warn { color: #f5c16d; }
+  .dim { color: rgba(255, 255, 255, 0.48); }
+  .cursor { display: inline-block; width: 8px; height: 18px; background: rgba(255, 255, 255, 0.72); vertical-align: text-bottom; animation: blink 1s steps(2, start) infinite; }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .widget-host {
+    position: absolute;
+    top: 46px;
+    right: 16px;
+    width: 50px;
+    height: 50px;
+    z-index: 60;
+  }
+
+  .widget-host[data-corner="top-left"] { left: 16px; right: auto; }
+  .widget-host[data-corner="bottom-left"] { left: 16px; right: auto; top: auto; bottom: 16px; }
+  .widget-host[data-corner="bottom-right"] { top: auto; bottom: 16px; }
+
+  .widget {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    border: 0;
+    background: transparent;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  .sonar {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1.5px solid var(--accent);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sonar.fire {
+    animation: sonar 750ms ease-out forwards;
+  }
+
+  @keyframes sonar {
+    0% { opacity: 0.75; transform: scale(0.5); }
+    100% { opacity: 0; transform: scale(3); }
+  }
+
+  .glyph-frame {
+    width: 50px;
+    height: 50px;
+    display: grid;
+    place-items: center;
+    transform-origin: 50% 100%;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    animation: bounceCute 0.9s ease-in-out infinite;
+  }
+
+  body[data-animation="heart"] .glyph-frame { transform-origin: 50% 50%; animation: heart 1.4s ease-in-out infinite; }
+  body[data-animation="ring"] .glyph-frame { transform-origin: 50% 10%; animation: ring 1.4s ease-in-out infinite; }
+  body[data-animation="roam"] .glyph-frame { transform-origin: 50% 50%; animation: roam 1.6s linear infinite; }
+  body[data-animation="magic"] .glyph-frame { animation: magicFloat 3.6s ease-in-out infinite; }
+  body.quiet .glyph-frame,
+  body.reduce-motion .glyph-frame { animation: none; }
+
+  @keyframes bounceCute {
+    0% { transform: translateY(0) scale(1.04, 0.94); }
+    18% { transform: translateY(-2px) scale(1.01, 0.99); }
+    50% { transform: translateY(-5px) scale(0.97, 1.05); }
+    82% { transform: translateY(-2px) scale(1.01, 0.99); }
+    100% { transform: translateY(0) scale(1.04, 0.94); }
+  }
+
+  @keyframes heart {
+    0%, 28%, 56%, 100% { transform: scale(1); }
+    14% { transform: scale(1.14); }
+    42% { transform: scale(1.08); }
+  }
+
+  @keyframes ring {
+    0%, 100% { transform: rotate(0); }
+    10% { transform: rotate(-14deg); }
+    20% { transform: rotate(12deg); }
+    30% { transform: rotate(-9deg); }
+    40% { transform: rotate(7deg); }
+    50% { transform: rotate(-4deg); }
+    60% { transform: rotate(2deg); }
+  }
+
+  @keyframes roam {
+    0% { transform: translate(12px, 0); }
+    25% { transform: translate(0, -3px); }
+    50% { transform: translate(-12px, 0); }
+    75% { transform: translate(0, 3px); }
+    100% { transform: translate(12px, 0); }
+  }
+
+  @keyframes magicFloat {
+    0%, 100% { transform: translateY(0) rotate(-2.5deg); }
+    50% { transform: translateY(-3px) rotate(2.5deg); }
+  }
+
+  .glyph-frame img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    transform: translateY(6px);
+  }
+
+  .badge {
+    position: absolute;
+    top: 1px;
+    right: 2px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-dark);
+    color: #fff4ec;
+    font-size: 9.5px;
+    line-height: 1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    animation: badgePop 220ms cubic-bezier(0.34, 1.6, 0.5, 1);
+  }
+
+  body.quiet .badge { background: #6b6b75; }
+
+  @keyframes badgePop {
+    from { opacity: 0; transform: scale(0); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .popover {
+    position: absolute;
+    width: 270px;
+    z-index: 55;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--popover-bg);
+    color: var(--label);
+    backdrop-filter: blur(44px) saturate(1.9);
+    box-shadow: var(--shadow), inset 0 0 0 0.5px var(--stroke), inset 0 0.5px 0 rgba(255, 255, 255, 0.5);
+    transform-origin: top right;
+    animation: popIn 260ms cubic-bezier(0.34, 1.4, 0.5, 1);
+  }
+
+  @keyframes popIn {
+    0% { transform: translateY(-6px) scale(0.96); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  .toolbar {
+    height: 32px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 9px 10px 0;
+  }
+
+  .toolbar button {
+    border: 0;
+    background: transparent;
+    color: var(--secondary);
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .toolbar button:hover { background: rgba(0, 0, 0, 0.06); }
+  body[data-theme="dark"] .toolbar button:hover { background: rgba(255, 255, 255, 0.07); }
+
+  .rows {
+    max-height: calc(36px * 4);
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .rows::-webkit-scrollbar { display: none; }
+
+  .row {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: transparent;
+    color: var(--label);
+    cursor: pointer;
+    user-select: none;
+    transition: background 120ms ease, opacity 160ms ease, transform 180ms ease, height 180ms ease;
+  }
+
+  .row:hover { background: var(--row-hover); }
+
+  .row.unavailable { opacity: 0.5; }
+  .row.unavailable .project { text-decoration: line-through; }
+  .row.aged { filter: saturate(0.4); }
+  .row.muted { opacity: 0.6; }
+  .row.removing { opacity: 0; transform: translateX(8px); min-height: 0; height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; }
+
+  .project {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 520;
+  }
+
+  .group-project {
+    font-weight: 650;
+  }
+
+  .pin {
+    width: 11px;
+    height: 11px;
+    flex: 0 0 11px;
+    opacity: 0.65;
+    transform: rotate(45deg);
+  }
+
+  .secondary {
+    flex-shrink: 0;
+    color: var(--secondary);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .group-count {
+    min-width: 18px;
+    min-height: 16px;
+    padding: 0 6px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: rgba(120, 120, 128, 0.72);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 650;
+  }
+
+  .chevron {
+    width: 7px;
+    color: var(--secondary);
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .status-dot {
+    position: relative;
+    width: 7px;
+    height: 7px;
+    flex: 0 0 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 0.5px rgba(217, 119, 87, 0.3);
+  }
+
+  .status-dot.error {
+    background: var(--status-error);
+    box-shadow: 0 0 0 0.5px rgba(229, 72, 77, 0.3);
+  }
+
+  .status-dot.waiting {
+    background: var(--status-waiting);
+    box-shadow: 0 0 0 0.5px rgba(245, 166, 35, 0.4);
+    animation: waitingDot 1.6s ease-in-out infinite;
+  }
+
+  body.reduce-motion .status-dot.waiting { animation: none; }
+
+  @keyframes waitingDot {
+    50% { opacity: 0.5; }
+  }
+
+  .status-dot.hollow {
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px currentColor;
+    color: var(--secondary);
+  }
+
+  .row.just-arrived .status-dot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1.5px solid var(--accent);
+    animation: ripple 1s ease-out 3 forwards;
+  }
+
+  @keyframes ripple {
+    0% { transform: scale(0.9); opacity: 0.6; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+
+  body.reduce-motion .row.just-arrived .status-dot::after { display: none; }
+
+  .empty {
+    min-height: 48px;
+    display: grid;
+    place-items: center;
+    color: var(--secondary);
+    font-size: 12px;
+  }
+
+  .menuextra {
+    position: absolute;
+    top: 27px;
+    right: 58px;
+    width: 302px;
+    z-index: 90;
+    display: none;
+    padding: 6px;
+    border-radius: 10px;
+    background: var(--menu-bg);
+    backdrop-filter: blur(44px) saturate(1.6);
+    box-shadow: var(--shadow), inset 0 0 0 0.5px var(--stroke);
+    font-size: 13px;
+  }
+
+  .menuextra.open { display: block; }
+
+  .submenu-panel {
+    position: absolute;
+    top: 27px;
+    right: 366px;
+    width: 286px;
+    z-index: 91;
+    display: none;
+    padding: 6px;
+    border-radius: 10px;
+    background: var(--menu-bg);
+    backdrop-filter: blur(44px) saturate(1.6);
+    box-shadow: var(--shadow), inset 0 0 0 0.5px var(--stroke);
+    font-size: 13px;
+  }
+
+  .submenu-panel.open { display: block; }
+
+  .menu-section {
+    padding: 4px 0;
+    border-bottom: 1px solid var(--stroke);
+  }
+
+  .menu-section:last-child { border-bottom: none; }
+
+  .menu-heading,
+  .menu-row {
+    width: 100%;
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 8px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    text-align: left;
+    cursor: default;
+  }
+
+  .menu-row:hover,
+  .menu-heading:hover { background: rgba(0, 0, 0, 0.07); }
+  body[data-theme="dark"] .menu-row:hover,
+  body[data-theme="dark"] .menu-heading:hover { background: rgba(255, 255, 255, 0.08); }
+
+  .menu-row.active,
+  .menu-heading.active {
+    background: rgba(0, 0, 0, 0.10);
+  }
+
+  body[data-theme="dark"] .menu-row.active,
+  body[data-theme="dark"] .menu-heading.active {
+    background: rgba(255, 255, 255, 0.13);
+  }
+
+  .menu-heading {
+    justify-content: space-between;
+    font-weight: 520;
+  }
+
+  .menu-row .check {
+    width: 14px;
+    color: var(--label);
+  }
+
+  .menu-row .label { flex: 1; }
+  .menu-row .hint { color: var(--secondary); }
+  .menu-row.danger { color: var(--status-error); }
+  .menu-caption { padding: 2px 8px 4px 30px; color: var(--secondary); font-size: 11px; }
+
+  .context-menu {
+    position: absolute;
+    z-index: 120;
+    display: none;
+    min-width: 176px;
+    padding: 5px;
+    border-radius: 8px;
+    background: var(--menu-bg);
+    backdrop-filter: blur(34px) saturate(1.4);
+    box-shadow: var(--shadow), inset 0 0 0 0.5px var(--stroke);
+    font-size: 13px;
+  }
+
+  .context-menu.open { display: block; }
+
+  .context-menu button {
+    width: 100%;
+    min-height: 24px;
+    padding: 2px 8px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .context-menu button:hover { background: rgba(0, 0, 0, 0.07); }
+  body[data-theme="dark"] .context-menu button:hover { background: rgba(255, 255, 255, 0.08); }
+
+  .permission-banner {
+    position: absolute;
+    left: 58px;
+    bottom: 44px;
+    width: 430px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 14px;
+    border-radius: 12px;
+    background: rgba(255, 248, 237, 0.9);
+    color: #3a2a1e;
+    box-shadow: 0 14px 38px rgba(0, 0, 0, 0.16), inset 0 0 0 0.5px rgba(184, 73, 44, 0.18);
+    font-size: 12px;
+  }
+
+  body[data-theme="dark"] .permission-banner {
+    background: rgba(57, 47, 40, 0.86);
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .permission-banner strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 13px;
+  }
+
+  .permission-banner span {
+    color: var(--secondary);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  @media (max-width: 900px) {
+    .iterm {
+      left: 20px;
+      right: 20px;
+      width: auto;
+      top: 96px;
+      height: 360px;
+    }
+
+    .terminal-body { font-size: 13px; }
+    .popover { right: 16px; }
+    .permission-banner { display: none; }
+  }
+</style>
+</head>
+<body data-theme="light" data-animation="bounce">
+  <div class="desktop" aria-hidden="true"></div>
+
+  <header class="menubar">
+    <div class="active-app-menu" aria-label="Active application menu">
+      <strong>iTerm2</strong>
+      <span class="menu-word">Shell</span>
+      <span class="menu-word">Edit</span>
+      <span class="menu-word">View</span>
+      <span class="menu-word">Session</span>
+      <span class="menu-word">Window</span>
+      <span class="menu-word">Help</span>
+    </div>
+    <div class="menu-right">
+      <span>Wi-Fi</span>
+      <span>100%</span>
+      <button id="statusItem" class="status-item" type="button" aria-label="Claude Alert Bot menu">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+          <path d="M10 21h4"></path>
+        </svg>
+      </button>
+      <span id="clock">11:42</span>
+    </div>
+  </header>
+
+  <nav id="menuExtra" class="menuextra" aria-label="Menu bar controls">
+    <div class="menu-section">
+      <button class="menu-row active" type="button" data-submenu="notification"><span class="check"></span><span class="label">Notification</span><span>›</span></button>
+      <button class="menu-row" type="button" data-submenu="style"><span class="check"></span><span class="label">Style</span><span>›</span></button>
+      <button class="menu-row" type="button" data-submenu="position"><span class="check"></span><span class="label">Widget Position</span><span>›</span></button>
+    </div>
+    <div class="menu-section">
+      <button class="menu-row" type="button" data-action="launch-login"><span class="check" id="loginCheck">✓</span><span class="label">Open at Login</span></button>
+      <button class="menu-row" type="button" data-submenu="muted"><span class="check"></span><span class="label">Muted Projects</span><span>›</span></button>
+      <button class="menu-row" type="button" data-submenu="connection"><span class="check"></span><span class="label">iTerm2 Connection</span><span>›</span></button>
+    </div>
+    <div class="menu-section">
+      <button class="menu-row danger" type="button"><span class="check"></span><span class="label">Quit</span></button>
+    </div>
+  </nav>
+  <nav id="menuSubmenu" class="submenu-panel open" aria-label="Menu bar submenu"></nav>
+
+  <section id="iterm" class="iterm" aria-label="iTerm2 session">
+    <div class="tabbar">
+      <span class="traffic red"></span>
+      <span class="traffic yellow"></span>
+      <span class="traffic green"></span>
+      <span class="tab-title">~/Projects/claude-alert-bot</span>
+    </div>
+    <div class="terminal-body" id="terminalBody">
+      <div><span class="prompt">choi@MacBook-Pro</span> % claude</div>
+      <div><span class="ok">✓</span> Loaded project context</div>
+      <div>&gt; Build and run the app</div>
+      <br />
+      <div><span class="ok">✓</span> Build completed</div>
+      <div><span class="ok">✓</span> Tests passed (28)</div>
+      <div><span class="warn">!</span> Permission prompt waiting in website-redesign</div>
+      <br />
+      <div><span class="prompt">choi@MacBook-Pro</span> % <span class="cursor"></span></div>
+    </div>
+  </section>
+
+  <div id="widgetHost" class="widget-host" data-corner="top-right">
+    <button id="widget" class="widget" type="button" aria-label="Claude alert. 5 pending sessions">
+      <span id="sonar" class="sonar"></span>
+      <span class="glyph-frame">
+        <img src="../App/Assets.xcassets/ClaudeCodeIcon.imageset/claudecode-color.svg" alt="" />
+      </span>
+      <span id="badge" class="badge">+5</span>
+    </button>
+  </div>
+
+  <div id="popoverMount"></div>
+
+  <div id="contextMenu" class="context-menu" aria-label="Row context menu">
+    <button type="button" data-context-action="pin">Pin</button>
+    <button type="button" data-context-action="mute">Mute this project for 1h</button>
+  </div>
+
+  <aside class="permission-banner" aria-label="Permission notes">
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="var(--accent-dark)" d="M12 2 1 21h22L12 2Zm1 15h-2v-2h2v2Zm0-4h-2V8h2v5Z"></path>
+    </svg>
+    <div>
+      <strong>Automation + Accessibility are required for exact jump-back.</strong>
+      <span>The real app exposes the checks from iTerm2 Connection in the menu bar.</span>
+    </div>
+  </aside>
+
+<script>
+const iconPath = "../App/Assets.xcassets/ClaudeCodeIcon.imageset/claudecode-color.svg";
+const state = {
+  popoverOpen: true,
+  menuOpen: false,
+  soundEnabled: true,
+  quietHours: false,
+  reduceMotion: false,
+  launchAtLogin: true,
+  theme: "light",
+  corner: "top-right",
+  animationIndex: 0,
+  cornerIndex: 1,
+  selectedSubmenu: "notification",
+  connectionResult: "Connected at 11:42",
+  contextSessionId: null,
+  sessions: [
+    { id: "a1", projectName: "claude-alert-bot", kind: "success", stoppedAt: "11:42", durationSec: 67, pinned: true, available: true, muted: false, justArrived: true },
+    { id: "g1", projectName: "website-redesign", kind: "waiting", stoppedAt: "11:39", durationSec: 142, pinned: false, available: true, muted: true },
+    { id: "g2", projectName: "website-redesign", kind: "success", stoppedAt: "11:36", durationSec: 89, pinned: false, available: true, muted: true },
+    { id: "g3", projectName: "website-redesign", kind: "success", stoppedAt: "11:31", durationSec: 64, pinned: false, available: true, muted: true },
+    { id: "b1", projectName: "codex-hooks", kind: "waiting", stoppedAt: "11:27", durationSec: null, pinned: false, available: true, muted: false },
+    { id: "c1", projectName: "api-migration", kind: "success", stoppedAt: "10:18", durationSec: 310, pinned: false, available: false, muted: false, aged: true }
+  ],
+  expandedProjects: new Set()
+};
+
+const animations = ["bounce", "heart", "ring", "roam", "magic"];
+const animationLabels = ["Bounce", "Heart", "Ring", "Roam", "Magic"];
+const corners = ["top-left", "top-right", "bottom-left", "bottom-right"];
+const cornerLabels = ["Top Left", "Top Right", "Bottom Left", "Bottom Right"];
+
+const statusItem = document.getElementById("statusItem");
+const menuExtra = document.getElementById("menuExtra");
+const menuSubmenu = document.getElementById("menuSubmenu");
+const widget = document.getElementById("widget");
+const widgetHost = document.getElementById("widgetHost");
+const popoverMount = document.getElementById("popoverMount");
+const badge = document.getElementById("badge");
+const sonar = document.getElementById("sonar");
+const contextMenu = document.getElementById("contextMenu");
+const terminal = document.getElementById("iterm");
+const terminalBody = document.getElementById("terminalBody");
+
+function visibleItems() {
+  const ordered = [...state.sessions].sort((a, b) => {
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+    return state.sessions.indexOf(a) - state.sessions.indexOf(b);
+  });
+  const counts = ordered.reduce((acc, s) => {
+    acc[s.projectName] = (acc[s.projectName] || 0) + 1;
+    return acc;
+  }, {});
+  const emitted = new Set();
+  const items = [];
+  for (const session of ordered) {
+    const count = counts[session.projectName] || 0;
+    if (count >= 3) {
+      if (emitted.has(session.projectName)) {
+        if (state.expandedProjects.has(session.projectName)) items.push({ type: "session", session, showTime: true, child: true });
+        continue;
+      }
+      emitted.add(session.projectName);
+      items.push({ type: "group", projectName: session.projectName, count, expanded: state.expandedProjects.has(session.projectName), muted: session.muted });
+      if (state.expandedProjects.has(session.projectName)) items.push({ type: "session", session, showTime: true, child: true });
+    } else {
+      items.push({ type: "session", session, showTime: count >= 2, child: false });
+    }
+  }
+  return items;
+}
+
+function renderWidget() {
+  const count = state.sessions.length;
+  if (count >= 2) {
+    badge.style.display = "flex";
+    badge.textContent = `+${count}`;
+  } else {
+    badge.style.display = "none";
+  }
+  widget.setAttribute("aria-label", `Claude alert. ${count} pending ${count === 1 ? "session" : "sessions"}${state.quietHours ? ". Quiet Hours" : ""}`);
+}
+
+function renderPopover() {
+  popoverMount.innerHTML = "";
+  if (!state.popoverOpen) return;
+
+  const popover = document.createElement("section");
+  popover.className = "popover";
+  popover.setAttribute("aria-label", "Pending sessions");
+  positionPopover(popover);
+
+  const clearable = state.sessions.filter(s => !s.pinned).length;
+  if (clearable >= 2) {
+    const toolbar = document.createElement("div");
+    toolbar.className = "toolbar";
+    const clearButton = document.createElement("button");
+    clearButton.type = "button";
+    clearButton.textContent = state.sessions.some(s => s.pinned) ? "Clear Unpinned" : "Clear All";
+    clearButton.addEventListener("click", clearUnpinned);
+    toolbar.appendChild(clearButton);
+    popover.appendChild(toolbar);
+  }
+
+  if (state.sessions.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "No pending alerts";
+    popover.appendChild(empty);
+  } else {
+    const rows = document.createElement("div");
+    rows.className = "rows";
+    for (const item of visibleItems()) {
+      rows.appendChild(item.type === "group" ? groupRow(item) : sessionRow(item));
+    }
+    popover.appendChild(rows);
+  }
+
+  popoverMount.appendChild(popover);
+}
+
+function positionPopover(popover) {
+  const gap = 14;
+  const margin = 16;
+  const topBase = 46 + 50 + gap;
+  const bottomBase = margin + 50 + gap;
+  if (state.corner.startsWith("top")) {
+    popover.style.top = `${topBase}px`;
+    popover.style.transformOrigin = state.corner === "top-right" ? "top right" : "top left";
+  } else {
+    popover.style.bottom = `${bottomBase}px`;
+    popover.style.transformOrigin = state.corner === "bottom-right" ? "bottom right" : "bottom left";
+  }
+  if (state.corner.endsWith("right")) popover.style.right = `${margin}px`;
+  else popover.style.left = `${margin}px`;
+}
+
+function groupRow(item) {
+  const row = document.createElement("div");
+  row.className = `row ${item.muted ? "muted" : ""}`;
+  row.addEventListener("click", () => {
+    if (state.expandedProjects.has(item.projectName)) state.expandedProjects.delete(item.projectName);
+    else state.expandedProjects.add(item.projectName);
+    renderPopover();
+  });
+
+  const chevron = document.createElement("span");
+  chevron.className = "chevron";
+  chevron.textContent = item.expanded ? "⌄" : "›";
+  row.appendChild(chevron);
+
+  const project = document.createElement("span");
+  project.className = "project group-project";
+  project.textContent = item.projectName;
+  row.appendChild(project);
+
+  const count = document.createElement("span");
+  count.className = "group-count";
+  count.textContent = item.count;
+  row.appendChild(count);
+  return row;
+}
+
+function sessionRow({ session, showTime, child }) {
+  const row = document.createElement("div");
+  row.className = [
+    "row",
+    session.available ? "" : "unavailable",
+    session.justArrived ? "just-arrived" : "",
+    session.aged ? "aged" : "",
+    session.muted ? "muted" : ""
+  ].filter(Boolean).join(" ");
+  row.dataset.id = session.id;
+  row.style.paddingLeft = child ? "26px" : "";
+
+  const project = document.createElement("span");
+  project.className = "project";
+  project.textContent = session.projectName;
+  row.appendChild(project);
+
+  if (session.pinned) {
+    const pin = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    pin.setAttribute("viewBox", "0 0 16 16");
+    pin.setAttribute("class", "pin");
+    pin.innerHTML = '<path fill="currentColor" d="M5.1 1.3h5.8c.35 0 .63.28.63.63v1.02c0 .26-.16.49-.4.58l-.77.3v4.08l2.22 2.22c.4.4.12 1.08-.45 1.08H8.72v3.1a.72.72 0 0 1-1.44 0v-3.1H3.87c-.57 0-.85-.68-.45-1.08l2.22-2.22V3.83l-.77-.3a.62.62 0 0 1-.4-.58V1.93c0-.35.28-.63.63-.63Z"></path>';
+    row.appendChild(pin);
+  }
+
+  if (showTime) {
+    const time = document.createElement("span");
+    time.className = "secondary";
+    time.textContent = `· ${session.stoppedAt}`;
+    row.appendChild(time);
+  }
+
+  if (session.durationSec == null) {
+    const orphan = document.createElement("span");
+    orphan.className = "secondary";
+    orphan.textContent = "?";
+    row.appendChild(orphan);
+  }
+
+  const dot = document.createElement("span");
+  dot.className = `status-dot ${session.available ? session.kind : "hollow"}`;
+  row.appendChild(dot);
+
+  row.addEventListener("click", () => activateRow(session, row));
+  row.addEventListener("contextmenu", event => openContextMenu(event, session.id));
+  return row;
+}
+
+function activateRow(session, row) {
+  if (!session.available) {
+    row.classList.add("removing");
+    setTimeout(() => {
+      state.sessions = state.sessions.filter(s => s.id !== session.id);
+      renderAll();
+    }, 180);
+    return;
+  }
+
+  row.classList.add("removing");
+  setTimeout(() => {
+    state.sessions = state.sessions.filter(s => s.id !== session.id);
+    renderAll();
+    focusITerm(session);
+  }, 180);
+}
+
+function focusITerm(session) {
+  terminal.classList.remove("active");
+  void terminal.offsetWidth;
+  terminal.classList.add("active");
+  terminalBody.innerHTML = `
+    <div><span class="prompt">choi@MacBook-Pro</span> % cd ~/Projects/${escapeHtml(session.projectName)}</div>
+    <div><span class="ok">✓</span> Restored exact iTerm2 session ${escapeHtml(session.id)}</div>
+    <div><span class="dim">AppleScript selected the original tab/window.</span></div>
+    <br />
+    <div><span class="prompt">choi@MacBook-Pro</span> % <span class="cursor"></span></div>
+  `;
+}
+
+function clearUnpinned() {
+  state.sessions = state.sessions.filter(s => s.pinned);
+  renderAll();
+}
+
+function openContextMenu(event, sessionId) {
+  event.preventDefault();
+  state.contextSessionId = sessionId;
+  const session = state.sessions.find(s => s.id === sessionId);
+  if (!session) return;
+  contextMenu.querySelector('[data-context-action="pin"]').textContent = session.pinned ? "Unpin" : "Pin";
+  contextMenu.querySelector('[data-context-action="mute"]').textContent = session.muted ? "Unmute This Project" : "Mute this project for 1h";
+  contextMenu.style.left = `${event.pageX}px`;
+  contextMenu.style.top = `${event.pageY}px`;
+  contextMenu.classList.add("open");
+}
+
+function closeContextMenu() {
+  contextMenu.classList.remove("open");
+}
+
+function applyMenuState() {
+  document.getElementById("loginCheck").textContent = state.launchAtLogin ? "✓" : "";
+  document.querySelectorAll("[data-submenu]").forEach(row => {
+    row.classList.toggle("active", row.dataset.submenu === state.selectedSubmenu);
+  });
+  document.body.dataset.theme = state.theme;
+  document.body.dataset.animation = animations[state.animationIndex];
+  document.body.classList.toggle("quiet", state.quietHours);
+  document.body.classList.toggle("reduce-motion", state.reduceMotion);
+  widgetHost.dataset.corner = state.corner;
+  renderMenuSubmenu();
+}
+
+function renderMenuSubmenu() {
+  menuSubmenu.classList.toggle("open", state.menuOpen);
+  if (!state.menuOpen) return;
+
+  if (state.selectedSubmenu === "notification") {
+    menuSubmenu.innerHTML = `
+      <div class="menu-section">
+        <button class="menu-row" type="button" data-action="toggle-sound"><span class="check">${state.soundEnabled ? "✓" : ""}</span><span class="label">Play notification sound</span></button>
+        <button class="menu-row" type="button" data-action="toggle-quiet"><span class="check">${state.quietHours ? "✓" : ""}</span><span class="label">Quiet Hours</span></button>
+      </div>
+      <div class="menu-section">
+        <button class="menu-row" type="button"><span class="check">✓</span><span class="label">30 sec</span></button>
+        <div class="menu-caption">Notify only after threshold elapsed</div>
+      </div>
+    `;
+    return;
+  }
+
+  if (state.selectedSubmenu === "style") {
+    menuSubmenu.innerHTML = `
+      <div class="menu-section">
+        <button class="menu-row" type="button" data-action="animation"><span class="check">✓</span><span class="label">Animation</span><span class="hint">${animationLabels[state.animationIndex]}</span></button>
+        <button class="menu-row" type="button" data-action="theme"><span class="check">✓</span><span class="label">Appearance</span><span class="hint">${state.theme[0].toUpperCase() + state.theme.slice(1)}</span></button>
+        <button class="menu-row" type="button" data-action="reduce-motion"><span class="check">${state.reduceMotion ? "✓" : ""}</span><span class="label">Mode</span><span class="hint">System</span></button>
+      </div>
+    `;
+    return;
+  }
+
+  if (state.selectedSubmenu === "position") {
+    menuSubmenu.innerHTML = `
+      <div class="menu-section">
+        <button class="menu-row" type="button" data-action="corner"><span class="check">✓</span><span class="label">Corner</span><span class="hint">${cornerLabels[state.cornerIndex]}</span></button>
+        <div class="menu-row"><span class="check"></span><span class="label">Horizontal Offset</span><span class="hint">16 pt</span></div>
+        <div class="menu-row"><span class="check"></span><span class="label">Vertical Offset</span><span class="hint">16 pt</span></div>
+      </div>
+    `;
+    return;
+  }
+
+  if (state.selectedSubmenu === "muted") {
+    menuSubmenu.innerHTML = `
+      <div class="menu-section">
+        <div class="menu-row"><span class="check"></span><span class="label">website-redesign</span><span class="hint">47m left</span></div>
+        <button class="menu-row" type="button"><span class="check"></span><span class="label">Unmute</span></button>
+      </div>
+    `;
+    return;
+  }
+
+  menuSubmenu.innerHTML = `
+    <div class="menu-section">
+      <button class="menu-row" type="button" data-action="test-alert"><span class="check"></span><span class="label">Send test notification</span></button>
+      <button class="menu-row" type="button" data-action="connection-test"><span class="check"></span><span class="label">Test iTerm2 connection</span></button>
+      <div class="menu-caption">${state.connectionResult}</div>
+    </div>
+  `;
+}
+
+function sendTestNotification(kind = "success") {
+  const nextId = `t${Math.floor(Math.random() * 9000)}`;
+  state.sessions.unshift({
+    id: nextId,
+    projectName: kind === "waiting" ? "permission-check" : "test-notification",
+    kind,
+    stoppedAt: nowHHMM(),
+    durationSec: kind === "waiting" ? null : 31,
+    pinned: false,
+    available: true,
+    muted: false,
+    justArrived: true
+  });
+  if (!state.quietHours && !state.reduceMotion) {
+    sonar.classList.remove("fire");
+    void sonar.offsetWidth;
+    sonar.classList.add("fire");
+  }
+  setTimeout(() => {
+    const session = state.sessions.find(s => s.id === nextId);
+    if (session) session.justArrived = false;
+    renderPopover();
+  }, 3000);
+  renderAll();
+}
+
+function nowHHMM() {
+  return new Date().toTimeString().slice(0, 5);
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function renderAll() {
+  applyMenuState();
+  renderWidget();
+  renderPopover();
+}
+
+statusItem.addEventListener("click", event => {
+  event.stopPropagation();
+  state.menuOpen = !state.menuOpen;
+  menuExtra.classList.toggle("open", state.menuOpen);
+  statusItem.classList.toggle("active", state.menuOpen);
+  renderMenuSubmenu();
+});
+
+widget.addEventListener("click", event => {
+  event.stopPropagation();
+  state.popoverOpen = !state.popoverOpen;
+  renderPopover();
+});
+
+menuExtra.addEventListener("click", event => {
+  const submenu = event.target.closest("[data-submenu]")?.dataset.submenu;
+  if (submenu) {
+    state.selectedSubmenu = submenu;
+    renderAll();
+    return;
+  }
+  const action = event.target.closest("[data-action]")?.dataset.action;
+  handleMenuAction(action);
+});
+
+menuExtra.addEventListener("mouseover", event => {
+  const submenu = event.target.closest("[data-submenu]")?.dataset.submenu;
+  if (!submenu) return;
+  state.selectedSubmenu = submenu;
+  renderAll();
+});
+
+menuSubmenu.addEventListener("click", event => {
+  const action = event.target.closest("[data-action]")?.dataset.action;
+  handleMenuAction(action);
+});
+
+function handleMenuAction(action) {
+  if (!action) return;
+  if (action === "toggle-sound") state.soundEnabled = !state.soundEnabled;
+  if (action === "toggle-quiet") state.quietHours = !state.quietHours;
+  if (action === "animation") state.animationIndex = (state.animationIndex + 1) % animations.length;
+  if (action === "theme") state.theme = state.theme === "light" ? "dark" : "light";
+  if (action === "reduce-motion") state.reduceMotion = !state.reduceMotion;
+  if (action === "corner") {
+    state.cornerIndex = (state.cornerIndex + 1) % corners.length;
+    state.corner = corners[state.cornerIndex];
+  }
+  if (action === "launch-login") state.launchAtLogin = !state.launchAtLogin;
+  if (action === "test-alert") sendTestNotification();
+  if (action === "connection-test") state.connectionResult = `Connected at ${nowHHMM()}`;
+  renderAll();
+}
+
+contextMenu.addEventListener("click", event => {
+  const action = event.target.closest("[data-context-action]")?.dataset.contextAction;
+  const session = state.sessions.find(s => s.id === state.contextSessionId);
+  if (!action || !session) return;
+  if (action === "pin") session.pinned = !session.pinned;
+  if (action === "mute") {
+    const shouldMute = !session.muted;
+    for (const row of state.sessions) {
+      if (row.projectName === session.projectName) row.muted = shouldMute;
+    }
+  }
+  closeContextMenu();
+  renderAll();
+});
+
+document.addEventListener("click", event => {
+  if (!event.target.closest("#menuExtra") && !event.target.closest("#menuSubmenu") && !event.target.closest("#statusItem")) {
+    state.menuOpen = false;
+    menuExtra.classList.remove("open");
+    menuSubmenu.classList.remove("open");
+    statusItem.classList.remove("active");
+  }
+  if (!event.target.closest("#contextMenu")) closeContextMenu();
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") {
+    state.popoverOpen = false;
+    state.menuOpen = false;
+    menuExtra.classList.remove("open");
+    menuSubmenu.classList.remove("open");
+    statusItem.classList.remove("active");
+    closeContextMenu();
+    renderPopover();
+  }
+});
+
+renderAll();
+</script>
+</body>
+</html>

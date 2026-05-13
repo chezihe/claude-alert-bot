@@ -8,6 +8,12 @@ When a long-running session finishes, or when the agent pauses waiting for you, 
 The main idea is simple: if the alert cannot take you back to the right terminal, it is not useful.
 Claude Alert Bot is built around session-accurate jump-back rather than short-lived system banners.
 
+## Screenshots
+
+![Claude Alert Bot overview](docs/images/claude-alert-bot-overview.png)
+
+![Claude Alert Bot menu controls](docs/images/claude-alert-bot-menu.png)
+
 ## What It Does
 
 - Shows a floating Claude widget when a qualifying session completes or waits for input.

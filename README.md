@@ -1,5 +1,7 @@
 # Claude Alert Bot
 
+[한국어](README.ko.md)
+
 Claude Alert Bot is a native macOS utility for Claude Code and Codex users who work in iTerm2.
 When a long-running session finishes, or when the agent pauses waiting for you, the app shows a floating widget on your desktop and lets you jump back to the exact iTerm2 tab or window that produced the event.
 

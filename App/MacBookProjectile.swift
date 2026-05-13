@@ -1,7 +1,7 @@
 // App/MacBookProjectile.swift — Rage idle MacBook throw.
-// Source of truth: HTML prototype `Claude Alert Bot - Prototype v2.html`
-//   @keyframes mb-fly   (lines 679–685) — 1.05s flight, translate (-300, +240), rotate -900°
-//   @keyframes mb-impact (lines 695–699) — 600ms scale-rotate fade at landing point
+// Source of truth: internal motion prototype
+//   @keyframes mb-fly   — 1.05s flight, translate (-300, +240), rotate -900°
+//   @keyframes mb-impact — 600ms scale-rotate fade at landing point
 //
 // Implementation: a transient borderless NSPanel hosting an SF Symbol or emoji glyph
 // is briefly raised, animated via CoreAnimation, then torn down. No desktop "shake"
@@ -74,7 +74,7 @@ private final class ProjectilePanel: NSPanel {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
-    /// HTML @keyframes mb-fly (Prototype v2 lines 679–685). 1.05s cubic-bezier flight
+    /// Internal prototype @keyframes mb-fly. 1.05s cubic-bezier flight
     /// that ends at (origin + translate). Rotation totals -900° (2.5 full spins).
     func fly(translateX: CGFloat, translateY: CGFloat, completion: @escaping (NSPoint) -> Void) {
         let start = self.frame.origin
@@ -103,7 +103,7 @@ private final class ProjectilePanel: NSPanel {
     }
 }
 
-/// 70×70pt impact burst. Uses an SF "burst.fill" symbol with HTML's mb-impact keyframes.
+/// 70×70pt impact burst. Uses an SF "burst.fill" symbol with the prototype's mb-impact keyframes.
 private final class ImpactPanel: NSPanel {
     init(centerPoint: NSPoint) {
         let size = NSSize(width: 70, height: 70)
@@ -136,7 +136,7 @@ private final class ImpactPanel: NSPanel {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
-    /// HTML @keyframes mb-impact (Prototype v2 lines 695–699). 600ms ease into
+    /// Internal prototype @keyframes mb-impact. 600ms ease into
     /// scale 1.2 + rotate 15°, then continues to scale 1.8 + rotate 25° fade.
     func burst(completion: @escaping () -> Void) {
         let duration: TimeInterval = 0.6

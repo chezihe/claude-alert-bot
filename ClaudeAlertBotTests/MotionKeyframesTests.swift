@@ -1,6 +1,6 @@
 // MotionKeyframesTests.swift — Phase 1 motion rework.
 // Drift-guard for App/MotionKeyframes.swift. Bounce / Heart / Ring cycles mirror
-// `Claude Alert Bot - Prototype v2.html` @keyframes blocks.
+// internal motion prototype @keyframes blocks.
 import XCTest
 @testable import ClaudeAlertBot
 
@@ -34,7 +34,7 @@ final class MotionKeyframesTests: XCTestCase {
     }
 
     func test_bounceCycle_matchesPrototypeKeyframesExactly() {
-        // HTML @keyframes bounce-cute (Claude Alert Bot - Prototype v2.html:117–123)
+        // internal prototype @keyframes bounce-cute
         let expected: [(Double, CGFloat, CGFloat, CGFloat)] = [
             (0,    0,  1.04, 0.94),
             (18,  -2,  1.01, 0.99),
@@ -76,7 +76,7 @@ final class MotionKeyframesTests: XCTestCase {
     }
 
     func test_heartCycle_matchesPrototypeKeyframesExactly() {
-        // HTML @keyframes heartbeat (Claude Alert Bot - Prototype v2.html:147–153).
+        // internal prototype @keyframes heartbeat.
         let expected: [(Double, CGFloat)] = [
             (0,   1.00),
             (14,  1.14),
@@ -117,7 +117,7 @@ final class MotionKeyframesTests: XCTestCase {
     }
 
     func test_ringCycle_matchesPrototypeKeyframesExactly() {
-        // HTML @keyframes ring (Claude Alert Bot - Prototype v2.html:154–162).
+        // internal prototype @keyframes ring.
         let expected: [(Double, Double)] = [
             (0,     0),
             (10,  -14),

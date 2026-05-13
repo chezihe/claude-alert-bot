@@ -1,7 +1,7 @@
 # Motion Rework — Design
 
 **Date:** 2026-05-11
-**Source of truth:** `Claude Alert Bot - Prototype v2.html`
+**Source of truth:** internal motion prototype
 **Affected SPEC:** `SPEC.md` §4 Motion
 
 ## Problem

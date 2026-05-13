@@ -9,7 +9,7 @@
 **Tech Stack:** Swift 5, SwiftUI (macOS 14 SDK — `.transition`, `withAnimation(.spring)`, `@State` mirror pattern), XCTest, xcodegen + xcodebuild.
 
 **Reference spec:** `docs/superpowers/specs/2026-05-11-motion-rework-design.md` (commit `bd5ec9a`)
-**Source of truth (visual):** `Claude Alert Bot - Prototype v2.html` — `@keyframes row-out` (lines 287–290 area) and `@keyframes pop-in` (lines 217–220 area).
+**Source of truth (visual):** internal motion prototype — `@keyframes row-out` and `@keyframes pop-in`.
 **Previous plan in this sweep:** `docs/superpowers/plans/2026-05-11-motion-rework-phase1.md`
 
 ---
@@ -464,7 +464,7 @@ Expected: `BUILD SUCCEEDED` and `build/export/ClaudeAlertBot.app` exists.
 
 ```bash
 open build/export/ClaudeAlertBot.app
-open "Claude Alert Bot - Prototype v2.html"
+compare transition timing against the current implementation if you need to verify it
 ```
 
 - [ ] **Step 4.3: Trigger an alert and verify dismiss slide**

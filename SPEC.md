@@ -1,6 +1,6 @@
 # Claude Alert Bot — macOS Implementation Spec
 
-> **Reference prototype:** `Claude Alert Bot - Prototype v2.html`
+> **Reference prototype:** internal motion prototype
 > The HTML file is the source of truth for visuals, motion, and interaction. This document maps it to native macOS APIs.
 >
 > **Current implementation note:** repository-level constraints in `AGENTS.md` / `CLAUDE.md` override prototype-era alternatives below. The app currently uses Claude Code / Codex CLI hooks + Unix domain socket IPC, `NSAppleScript` for iTerm2, `AVAudioPlayer` for sound, and a floating `NSPanel` widget.

@@ -9,7 +9,7 @@
 **Tech Stack:** Swift 5, SwiftUI (macOS 14 SDK — `KeyframeAnimator`, `CubicKeyframe`, `KeyframeTrack`), XCTest, xcodegen + xcodebuild.
 
 **Reference spec:** `docs/superpowers/specs/2026-05-11-motion-rework-design.md` (commit `bd5ec9a`)
-**Source of truth (visual):** `Claude Alert Bot - Prototype v2.html` keyframes `@keyframes bounce-cute` (lines 117–123) and `@keyframes heartbeat` (lines 147–153).
+**Source of truth (visual):** internal motion prototype keyframes `@keyframes bounce-cute` and `@keyframes heartbeat`.
 
 ---
 
@@ -74,7 +74,7 @@ Create `ClaudeAlertBotTests/MotionKeyframesTests.swift`:
 ```swift
 // MotionKeyframesTests.swift — Phase 1 motion rework.
 // Drift-guard for App/MotionKeyframes.swift. Bounce cycle mirrors
-// `Claude Alert Bot - Prototype v2.html` @keyframes bounce-cute (lines 117–123).
+// internal motion prototype @keyframes bounce-cute.
 import XCTest
 @testable import ClaudeAlertBot
 
@@ -108,7 +108,7 @@ final class MotionKeyframesTests: XCTestCase {
     }
 
     func test_bounceCycle_matchesPrototypeKeyframesExactly() {
-        // HTML @keyframes bounce-cute (Claude Alert Bot - Prototype v2.html:117–123)
+        // internal prototype @keyframes bounce-cute
         let expected: [(Double, CGFloat, CGFloat, CGFloat)] = [
             (0,    0,  1.04, 0.94),
             (18,  -2,  1.01, 0.99),
@@ -144,7 +144,7 @@ Create `App/MotionKeyframes.swift`:
 ```swift
 // App/MotionKeyframes.swift — Phase 1 motion rework.
 // Pure keyframe data (no view code). Source of truth: HTML prototype
-// `Claude Alert Bot - Prototype v2.html` @keyframes bounce-cute (117–123)
+// internal motion prototype @keyframes bounce-cute
 // and @keyframes heartbeat (147–153). Loop-continuous; consumed by
 // WidgetIconView's KeyframeAnimator multi-track wiring.
 import CoreGraphics
@@ -158,10 +158,10 @@ struct BounceKeyframe: Equatable {
 }
 
 enum MotionKeyframes {
-    // HTML bounce-cute is 0.9s ease-in-out infinite (Prototype v2 line 101).
+    // internal prototype bounce-cute is 0.9s ease-in-out infinite.
     static let bouncePeriod: TimeInterval = 0.9
 
-    // HTML @keyframes bounce-cute (Prototype v2 lines 117–123).
+    // internal prototype @keyframes bounce-cute.
     // Bottom squash (1.04, 0.94) → apex stretch (0.97, 1.05) → bottom squash.
     static let bounceCycle: [BounceKeyframe] = [
         BounceKeyframe(percent:   0, translateY:  0, scaleX: 1.04, scaleY: 0.94),
@@ -232,7 +232,7 @@ Append to `ClaudeAlertBotTests/MotionKeyframesTests.swift` (inside the same clas
     }
 
     func test_heartCycle_matchesPrototypeKeyframesExactly() {
-        // HTML @keyframes heartbeat (Claude Alert Bot - Prototype v2.html:147–153).
+        // internal prototype @keyframes heartbeat.
         let expected: [(Double, CGFloat)] = [
             (0,   1.00),
             (14,  1.14),
@@ -271,10 +271,10 @@ struct HeartKeyframe: Equatable {
 Append to the `MotionKeyframes` enum:
 
 ```swift
-    // HTML heartbeat is 1.4s ease-in-out infinite (Prototype v2 line 106).
+    // internal prototype heartbeat is 1.4s ease-in-out infinite.
     static let heartPeriod: TimeInterval = 1.4
 
-    // HTML @keyframes heartbeat (Prototype v2 lines 147–153).
+    // internal prototype @keyframes heartbeat.
     // Double-pulse: peak 1 at 14% (1.14), peak 2 at 42% (1.08), then idle.
     static let heartCycle: [HeartKeyframe] = [
         HeartKeyframe(percent:   0, scale: 1.00),
@@ -788,7 +788,7 @@ Expected: `build/export/ClaudeAlertBot.app` exists.
 
 ```bash
 open build/export/ClaudeAlertBot.app
-open "Claude Alert Bot - Prototype v2.html"
+compare timing details against the current implementation if you need to verify them
 ```
 
 - [ ] **Step 6.3: Trigger a real alert**

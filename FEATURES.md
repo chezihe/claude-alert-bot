@@ -1,6 +1,6 @@
 # Claude Alert Bot v2 — 기능 정리
 
-> 레퍼런스 프로토타입: `Claude Alert Bot - Prototype v2.html`
+> 레퍼런스 프로토타입: 내부 모션 프로토타입
 > 시각/모션/인터랙션은 HTML이 진실의 원천. 본 문서는 기능 단위 체크리스트.
 
 ---

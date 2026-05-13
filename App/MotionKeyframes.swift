@@ -1,6 +1,6 @@
 // App/MotionKeyframes.swift — Phase 1 motion rework.
 // Pure keyframe data (no view code). Source of truth: HTML prototype
-// `Claude Alert Bot - Prototype v2.html` @keyframes bounce-cute (117–123),
+// internal motion prototype @keyframes bounce-cute (117–123),
 // heartbeat (147–153), and ring (154–162). Loop-continuous; consumed by
 // WidgetIconView's KeyframeAnimator multi-track wiring.
 import CoreGraphics
@@ -32,10 +32,10 @@ struct RageKeyframe: Equatable {
 }
 
 enum MotionKeyframes {
-    // HTML bounce-cute is 0.9s ease-in-out infinite (Prototype v2 line 101).
+    // internal prototype bounce-cute is 0.9s ease-in-out infinite.
     static let bouncePeriod: TimeInterval = 0.9
 
-    // HTML @keyframes bounce-cute (Prototype v2 lines 117–123).
+    // internal prototype @keyframes bounce-cute.
     // Bottom squash (1.04, 0.94) → apex stretch (0.97, 1.05) → bottom squash.
     static let bounceCycle: [BounceKeyframe] = [
         BounceKeyframe(percent:   0, translateY:  0, scaleX: 1.04, scaleY: 0.94),
@@ -45,10 +45,10 @@ enum MotionKeyframes {
         BounceKeyframe(percent: 100, translateY:  0, scaleX: 1.04, scaleY: 0.94),
     ]
 
-    // HTML heartbeat is 1.4s ease-in-out infinite (Prototype v2 line 106).
+    // internal prototype heartbeat is 1.4s ease-in-out infinite.
     static let heartPeriod: TimeInterval = 1.4
 
-    // HTML @keyframes heartbeat (Prototype v2 lines 147–153).
+    // internal prototype @keyframes heartbeat.
     // Double-pulse: peak 1 at 14% (1.14), peak 2 at 42% (1.08), then idle.
     static let heartCycle: [HeartKeyframe] = [
         HeartKeyframe(percent:   0, scale: 1.00),
@@ -59,10 +59,10 @@ enum MotionKeyframes {
         HeartKeyframe(percent: 100, scale: 1.00),
     ]
 
-    // HTML ring is 1.4s ease-in-out infinite (Prototype v2 line 107).
+    // internal prototype ring is 1.4s ease-in-out infinite.
     static let ringPeriod: TimeInterval = 1.4
 
-    // HTML @keyframes ring (Prototype v2 lines 154–162).
+    // internal prototype @keyframes ring.
     // Damped bell swing; starts and ends at 0 so the loop does not snap.
     static let ringCycle: [RingKeyframe] = [
         RingKeyframe(percent:   0, rotation:   0),
@@ -75,8 +75,8 @@ enum MotionKeyframes {
         RingKeyframe(percent: 100, rotation:   0),
     ]
 
-    // HTML throw-windup is 950ms cubic-bezier(.5, 0, .3, 1) (Prototype v2 line 655),
-    // looped on a 2.4s rage interval (line 1346). Transform origin: 50% 90% (line 656).
+    // internal prototype throw-windup is 950ms cubic-bezier(.5, 0, .3, 1),
+    // looped on a 2.4s rage interval. Transform origin: 50% 90%.
     static let rageWindupDuration: TimeInterval = 0.95
     static let ragePeriod: TimeInterval = 2.4
     static let rageHoldDuration: TimeInterval = ragePeriod - rageWindupDuration // 1.45s rest
@@ -94,7 +94,7 @@ enum MotionKeyframes {
     // comes in from the right, mirroring a typical animated transformation.
     static let magicBurstRotation: Double = -360
 
-    // HTML @keyframes throw-windup (Prototype v2 lines 658–666).
+    // internal prototype @keyframes throw-windup.
     // Wind back → hold → whip forward → settle.
     static let rageCycle: [RageKeyframe] = [
         RageKeyframe(percent:   0, rotation:   0, translateX:  0, translateY:  0, scale: 1.00),

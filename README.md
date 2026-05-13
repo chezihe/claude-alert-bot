@@ -162,3 +162,7 @@ xattr -cr /Applications/ClaudeAlertBot.app
 - macOS 14+
 - Unsigned / ad-hoc signed distribution
 - No external Swift dependencies
+
+## License
+
+MIT. See [LICENSE](LICENSE).

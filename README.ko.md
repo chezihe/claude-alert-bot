@@ -163,3 +163,7 @@ xattr -cr /Applications/ClaudeAlertBot.app
 - macOS 14+
 - unsigned / ad-hoc signed 배포
 - 외부 Swift 의존성 없음
+
+## 라이선스
+
+MIT. [LICENSE](LICENSE)를 참고하세요.

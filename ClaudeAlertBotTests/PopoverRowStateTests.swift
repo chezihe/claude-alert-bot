@@ -91,7 +91,7 @@ final class PopoverRowStateTests: XCTestCase {
 
         XCTAssertTrue(
             src.contains(".strikethrough(!session.available"),
-            "Unavailable rows must strike through the project name per FEATURES.md"
+            "Unavailable rows must strike through the project name per the project contract"
         )
     }
 
@@ -100,7 +100,7 @@ final class PopoverRowStateTests: XCTestCase {
 
         XCTAssertTrue(
             src.contains("session.available ? 1 : 0.5"),
-            "Unavailable rows must render at 50% opacity per SPEC.md"
+            "Unavailable rows must render at 50% opacity per the project contract"
         )
     }
 

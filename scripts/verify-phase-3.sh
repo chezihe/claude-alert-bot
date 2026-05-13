@@ -11,7 +11,7 @@
 #
 # Sources:
 #   - scripts/verify-phase-2.sh (lines 1-100 — header + colors + helpers; copied
-#     byte-identical per CLAUDE.md "preserve original code")
+#     byte-identical per repository guidance "preserve original code")
 #   - 03-CONTEXT.md D3-01..D3-25 (decisions defining row coverage)
 #   - 03-PATTERNS.md (verifier patterns)
 

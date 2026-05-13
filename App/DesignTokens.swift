@@ -1,5 +1,5 @@
 // App/DesignTokens.swift — Phase 03.1 design system foundation.
-// Single source of truth for visual + motion tokens traceable to SPEC.md §3 + §4.
+// Single source of truth for visual + motion tokens traceable to the project contract.
 // Per D2-29: zero external Swift deps. All call-sites in WidgetIconView / PopoverContentView /
 // PopoverRowView resolve through this module (SC#1).
 // Reduce-motion gate is owned by MotionTokens factory (D4 / SC#3) — call-sites pass a Bool;
@@ -10,15 +10,15 @@ import SwiftUI
 import AppKit
 
 enum ColorTokens {
-    // SPEC.md §3 row "Accent (warm orange)"
+    // Project contract: accent (warm orange)
     static let accent: Color = makeColor(hex: 0xD97757)
-    // SPEC.md §3 row "Accent dark"
+    // Project contract: accent dark
     static let accentDark: Color = makeColor(hex: 0xB8492C)
-    // SPEC.md §3 row "Status: success"
+    // Project contract: status success
     static let statusSuccess: Color = makeColor(hex: 0xD97757)
-    // SPEC.md §3 row "Status: error"
+    // Project contract: status error
     static let statusError: Color = makeColor(hex: 0xE5484D)
-    // SPEC.md §3 row "Status: waiting"
+    // Project contract: status waiting
     static let statusWaiting: Color = makeColor(hex: 0xF5A623)
 
     static func statusDot(for kind: AlertKind) -> Color {
@@ -32,7 +32,7 @@ enum ColorTokens {
         }
     }
 
-    // SPEC.md §3 row "Row hover"
+    // Project contract: row hover
     static func rowHover(colorScheme: ColorScheme) -> Color {
         statusSuccess.opacity(colorScheme == .dark ? 0.20 : 0.13)
     }
@@ -47,28 +47,28 @@ enum ColorTokens {
 }
 
 enum GeometryTokens {
-    // SPEC.md §3 row "Popover: 270pt wide" — WO-009 reconciles code/spec.
+    // Project contract: popover width 270pt — WO-009 reconciles code and contract.
     static let popoverWidth: CGFloat = 270
     // Fixed toolbar row for settings and optional clear action.
     static let popoverToolbarHeight: CGFloat = 32
-    // SPEC.md §3 row "Popover: 14pt corner radius"
+    // Project contract: popover corner radius 14pt
     static let popoverCornerRadius: CGFloat = 14
-    // SPEC.md §3 row "Row: 36pt min height"
+    // Project contract: row min height 36pt
     static let rowMinHeight: CGFloat = 36
-    // SPEC.md §3 row "12pt horizontal padding"
+    // Project contract: row horizontal padding 12pt
     static let rowHorizontalPadding: CGFloat = 12
-    // SPEC.md §3 row "8pt vertical padding"
+    // Project contract: row vertical padding 8pt
     static let rowVerticalPadding: CGFloat = 8
-    // SPEC.md §3 row "Status dot: 7pt"
+    // Project contract: status dot diameter 7pt
     static let statusDotDiameter: CGFloat = 7
-    // SPEC.md §3 row "hollow ring stroke 1.5pt"
+    // Project contract: hollow ring stroke 1.5pt
     static let statusDotRingStroke: CGFloat = 1.5
     // Magic animation expands vertically to keep falling stars visible outside the base 50×50 icon.
     static let magicDrawableExtraWidth: CGFloat = 24
     static let magicDrawableExtraHeight: CGFloat = 32
-    // FEATURES.md §3 row "최대 4행 표시" — WO-009 enforces; rows beyond scroll vertically.
+    // Project contract: max 4 visible rows — WO-009 enforces; rows beyond scroll vertically.
     static let popoverMaxVisibleRows: Int = 4
-    // FEATURES.md §3 panel "스크롤 페이드" — applied only when the list exceeds max visible rows.
+    // Project contract: scroll fade — applied only when the list exceeds max visible rows.
     static let popoverScrollFadeHeight: CGFloat = 12
     static let widgetBaseSize = CGSize(width: 50, height: 50)
 
@@ -100,20 +100,20 @@ enum MotionTokens {
     // Bounce, Heart, Ring, and Rage live in MotionKeyframes (keyframe-based, HTML-faithful);
     // see App/MotionKeyframes.swift. Removed legacy single-scalar tokens here.
 
-    // SPEC.md §4 row "Roam (running track)" — 1.6s linear loop on a 24×6pt ellipse.
+    // Project contract: roam (running track) — 1.6s linear loop on a 24×6pt ellipse.
     static let roamDuration: TimeInterval = 1.6
     static let roamRadiusX: CGFloat = 12
     static let roamRadiusY: CGFloat = 3
-    // SPEC-compliant Magic idle is a user-defined motion concept from phase 03-2.
+    // Contract-compliant Magic idle is a user-defined motion concept from phase 03-2.
     // Medium intensity: 5–8 falling stars in a 3.0s repeat loop.
     static let magicAnimationDuration: TimeInterval = 3.0
     static let magicStarStartOffset: CGFloat = -20
     static let magicStarTravelDistance: CGFloat = 56
     static let magicStarSize: CGFloat = 6
-    // SPEC.md §4 row "Rage" — 950ms throw-windup looped every 2.4s.
+    // Project contract: rage — 950ms throw-windup looped every 2.4s.
     static let ragePeriod: TimeInterval = 2.4
     static let rageWindupDuration: TimeInterval = 0.95
-    // SPEC.md §4 rows "New-alert pulse" and "Sonar wave".
+    // Project contract: new-alert pulse and sonar wave.
     static let newAlertPulseDuration: TimeInterval = 0.45
     static let newAlertPulsePeakScale: CGFloat = 1.14
     static let newAlertPulseSquashScale: CGFloat = 0.96
@@ -125,7 +125,7 @@ enum MotionTokens {
     // Keep the 3x sonar wave inside WidgetIconView's fixed 44pt drawable area.
     static let sonarBaseDiameter: CGFloat = 14
     static let sonarStartOpacity: Double = 0.75
-    // SPEC.md §4 row "Status dot ripple (just-arrived)".
+    // Project contract: status dot ripple (just-arrived).
     static let statusDotRippleDuration: TimeInterval = 1.0
     static let statusDotRippleEndScale: CGFloat = 2.4
     static let statusDotRippleStartOpacity: Double = 0.6

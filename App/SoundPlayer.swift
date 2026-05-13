@@ -1,6 +1,6 @@
 // App/SoundPlayer.swift — Phase 2 Wave 3 (02-06) AUD-01.
 // RESEARCH Pattern 10 (lines 801-832). NSSound rejected per macOS 26 CoreAudio crash report
-// (CLAUDE.md TL;DR row "Sound" — AVAudioPlayer is the durable choice).
+// (project guidance: AVAudioPlayer is the durable choice).
 // D2-19: AVAudioPlayer direct. UNNotificationSound channel deliberately not used (auto-dismiss risk).
 // Default sound = /System/Library/Sounds/Funk.aiff — system-resident, no asset shipping per
 // CONTEXT D2 "Claude's Discretion" (사운드 파일).

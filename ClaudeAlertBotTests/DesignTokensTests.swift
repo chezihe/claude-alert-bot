@@ -1,6 +1,6 @@
 // DesignTokensTests.swift — Phase 03.1 Plan 01.
 // Drift-guard XCTests for App/DesignTokens.swift. Every documented token value
-// (SPEC.md §3 + §4) is asserted here; mutating any token literal
+// in the project contract is asserted here; mutating any token literal
 // MUST break exactly one test below. SC#2 contract.
 //
 // Pure XCTest — no SnapshotTesting / pointfreeco / external Swift deps (D2-29).
@@ -11,7 +11,7 @@ import AppKit
 
 final class DesignTokensTests: XCTestCase {
 
-    // MARK: - ColorTokens (SPEC.md §3 "Color")
+    // MARK: - ColorTokens (project contract "Color")
 
     func test_colorTokens_accent_matchesSpecHex_D97757() {
         let c = NSColor(ColorTokens.accent).usingColorSpace(.sRGB)
@@ -71,7 +71,7 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(c?.alphaComponent ?? 0, 0.20, accuracy: 0.005)
     }
 
-    // MARK: - GeometryTokens (SPEC.md §3 "Geometry")
+    // MARK: - GeometryTokens (project contract "Geometry")
 
     func test_geometryTokens_popoverWidth_is270_perSpec() {
         XCTAssertEqual(GeometryTokens.popoverWidth, 270)
@@ -177,7 +177,7 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(magicReduceMotionSize.height, 50)
     }
 
-    // MARK: - MotionTokens (SPEC.md §4 "Motion")
+    // MARK: - MotionTokens (project contract "Motion")
 
     func test_motionTokens_rageValues_matchPrototype() {
         XCTAssertEqual(MotionTokens.ragePeriod, 2.4, accuracy: 0.001)

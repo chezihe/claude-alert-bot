@@ -345,6 +345,66 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(completed.first?.kind, .success)
     }
 
+    func test_ingest_stop_replacesUnpinnedRowsByItermSessionID() async {
+        let r = makeRegistry()
+        await bind(r)
+        let itermUUID = "550e8400-e29b-41d4-a716-446655440000"
+        let pinned = CompletedSession(sessionID: "sid-prev-pinned", projectName: "old",
+                                      stoppedAt: Date(), durationSec: 40,
+                                      itermSessionID: itermUUID, tty: nil, cwd: nil,
+                                      pinned: true)
+        let unpinned = CompletedSession(sessionID: "sid-prev-unpinned", projectName: "old",
+                                        stoppedAt: Date(), durationSec: 41,
+                                        itermSessionID: itermUUID, tty: nil, cwd: nil)
+        await r.seedCompletedForTesting(pinned)
+        await r.seedCompletedForTesting(unpinned)
+
+        let nextStop = HookEventFactory.stop(
+            sessionID: "sid-next",
+            iTermSessionID: "w0t0p1:\(itermUUID)",
+            ts: iso(Date()),
+            termProgram: "iTerm.app"
+        )
+        await r.ingest(nextStop, thresholdSeconds: 0, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let completed = await r.snapshotForTesting().completed
+        XCTAssertEqual(completed.count, 2)
+        XCTAssertFalse(completed.contains { $0.sessionID == "sid-prev-unpinned" })
+        XCTAssertEqual(completed.map(\.sessionID), ["sid-prev-pinned", "sid-next"])
+    }
+
+    func test_ingest_notification_replacesUnpinnedRowsByItermSessionID() async {
+        let r = makeRegistry()
+        await bind(r)
+        let itermUUID = "550e8400-e29b-41d4-a716-446655440111"
+        let pinned = CompletedSession(sessionID: "notif-prev-pinned", projectName: "old",
+                                       stoppedAt: Date(), durationSec: 30,
+                                       itermSessionID: itermUUID, tty: nil, cwd: nil,
+                                       kind: .success, pinned: true)
+        let unpinned = CompletedSession(sessionID: "notif-prev-unpinned", projectName: "old",
+                                         stoppedAt: Date(), durationSec: 31,
+                                         itermSessionID: itermUUID, tty: nil, cwd: nil,
+                                         kind: .waiting)
+        await r.seedCompletedForTesting(pinned)
+        await r.seedCompletedForTesting(unpinned)
+
+        let nextNotification = HookEventFactory.notification(
+            sessionID: "sid-notification-next",
+            iTermSessionID: "w0t0p1:\(itermUUID)",
+            ts: iso(Date()),
+            termProgram: "iTerm.app"
+        )
+        await r.ingest(nextNotification, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let completed = await r.snapshotForTesting().completed
+        XCTAssertEqual(completed.count, 2)
+        XCTAssertFalse(completed.contains { $0.sessionID == "notif-prev-unpinned" })
+        XCTAssertEqual(completed.last?.sessionID, "sid-notification-next")
+        XCTAssertEqual(completed.last?.kind, .waiting)
+    }
+
     /// Test F — AUD-01 dedupe: same (sid, ts/2s bucket) twice → second present.playSound=false.
     func test_AUD_01_dedupe_sameKey_secondCallNoSound() async {
         let r = makeRegistry()

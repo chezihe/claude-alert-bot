@@ -142,6 +142,7 @@ actor SessionRegistry {
             startedAt: event.started_at,
             lastOutput: event.last_output
         )
+        clearUnpinnedByItermSession(session.itermSessionID)
         completed.append(session)
         await persist()
         let snapshot = self.completed
@@ -175,6 +176,7 @@ actor SessionRegistry {
             startedAt: event.started_at,
             lastOutput: event.last_output
         )
+        clearUnpinnedByItermSession(session.itermSessionID)
         completed.append(session)
         await persist()
         let snapshot = self.completed
@@ -328,6 +330,13 @@ actor SessionRegistry {
 
     private func clearUnpinnedWaitingAlert(sessionID: String) {
         completed.removeAll(where: { $0.sessionID == sessionID && $0.kind == .waiting && !$0.pinned })
+    }
+
+    private func clearUnpinnedByItermSession(_ itermSessionID: String?) {
+        guard let itermSessionID else { return }
+        completed.removeAll(where: {
+            !$0.pinned && $0.itermSessionID == itermSessionID
+        })
     }
 
     private static func isSyntheticTestFixture(_ session: CompletedSession) -> Bool {

@@ -243,6 +243,7 @@ struct SettingsView: View {
         case .ring: return "Ring"
         case .roam: return "Roam"
         case .rage: return "🤬 Rage"
+        case .magic: return "Magic"
         }
     }
 

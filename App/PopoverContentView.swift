@@ -131,7 +131,10 @@ enum PopoverContentRules {
         let bodyHeight: CGFloat = shouldShowEmptyState(queue: queue, everHadAlerts: everHadAlerts)
             ? 48
             : (queue.isEmpty ? 0 : GeometryTokens.rowMinHeight * CGFloat(rowsClamped))
-        let chromeHeight: CGFloat = GeometryTokens.popoverToolbarHeight
+        let shouldShowToolbar = shouldShowClearAll(
+            clearableCount: clearableSessionCount(queue)
+        )
+        let chromeHeight: CGFloat = shouldShowToolbar ? GeometryTokens.popoverToolbarHeight : 0
         return bodyHeight + chromeHeight
     }
 
@@ -220,20 +223,21 @@ struct PopoverContentView: View {
         VStack(alignment: .leading, spacing: 0) {
             let clearableSessionCount = PopoverContentRules.clearableSessionCount(visibleQueue)
             let clearAllLabel = PopoverContentRules.clearAllButtonLabel(queue: visibleQueue)
-            HStack(spacing: 8) {
-                Spacer()
+            let showClearAllToolbar = PopoverContentRules.shouldShowClearAll(clearableCount: clearableSessionCount)
 
-                if PopoverContentRules.shouldShowClearAll(clearableCount: clearableSessionCount) {
+            if showClearAllToolbar {
+                HStack(spacing: 8) {
+                    Spacer()
                     Button(clearAllLabel, action: onClearAll)
                         .buttonStyle(.plain)
                         .font(.system(size: 11))
                         .foregroundStyle(Color(NSColor.secondaryLabelColor))
                         .accessibilityLabel(clearAllLabel)
                 }
+                .padding(.horizontal, 10)
+                .padding(.top, 9)
+                .frame(height: GeometryTokens.popoverToolbarHeight, alignment: .top)
             }
-            .padding(.horizontal, 10)
-            .padding(.top, 9)
-            .frame(height: GeometryTokens.popoverToolbarHeight, alignment: .top)
 
             if PopoverContentRules.shouldShowEmptyState(queue: visibleQueue, everHadAlerts: everHadAlerts) {
                 EmptyStateView()

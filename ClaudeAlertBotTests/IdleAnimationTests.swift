@@ -14,7 +14,17 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(IdleAnimation.allCases.contains(.ring))
         XCTAssertTrue(IdleAnimation.allCases.contains(.roam))
         XCTAssertTrue(IdleAnimation.allCases.contains(.rage))
-        XCTAssertEqual(IdleAnimation.allCases.count, 5)
+        XCTAssertTrue(IdleAnimation.allCases.contains(.magic))
+        XCTAssertEqual(IdleAnimation.allCases.count, 6)
+    }
+
+    func test_widgetIconViewSource_wiresMagicAnimationOverlay() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("case .magic:"))
+        XCTAssertTrue(src.contains("magicAnimationOverlay"))
+        XCTAssertTrue(src.contains("magicAnimatorActive"))
+        XCTAssertTrue(src.contains("magicProgress"))
     }
 
     func test_widgetIconViewSource_wiresHeartKeyframeAnimator() {
@@ -120,7 +130,9 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("private var widgetBoundsSize: CGSize"))
         XCTAssertTrue(src.contains("GeometryTokens.widgetDrawableSize("))
         XCTAssertTrue(src.contains(".frame(width: GeometryTokens.widgetBaseSize.width, height: GeometryTokens.widgetBaseSize.height, alignment: .center)"))
-        XCTAssertTrue(src.contains(".frame(width: widgetBoundsSize.width, height: widgetBoundsSize.height, alignment: .center)"))
+        // Magic biases the outer bounds to .leading so the wand/burst can fan out to
+        // the right of the icon; every other idle keeps the classic center alignment.
+        XCTAssertTrue(src.contains(".frame(width: widgetBoundsSize.width, height: widgetBoundsSize.height, alignment: magicAnimatorActive ? .leading : .center)"))
     }
 
     func test_floatingWidgetWindowController_passesAlertPulseIDToIconView() {

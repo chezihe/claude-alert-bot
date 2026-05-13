@@ -120,6 +120,17 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(size.height, 56)
     }
 
+    func test_geometryTokens_widgetDrawableSize_expandsForActiveMagic() {
+        let size = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .magic,
+            quietHoursEnabled: false,
+            reduceMotion: false
+        )
+
+        XCTAssertEqual(size.width, 74)
+        XCTAssertEqual(size.height, 82)
+    }
+
     func test_geometryTokens_widgetDrawableSize_keepsBaseSizeWhenRoamIsSuppressed() {
         let quietSize = GeometryTokens.widgetDrawableSize(
             idleAnimation: .roam,
@@ -141,6 +152,16 @@ final class DesignTokensTests: XCTestCase {
             quietHoursEnabled: false,
             reduceMotion: false
         )
+        let magicSuppressedSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .magic,
+            quietHoursEnabled: true,
+            reduceMotion: false
+        )
+        let magicReduceMotionSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .magic,
+            quietHoursEnabled: false,
+            reduceMotion: true
+        )
 
         XCTAssertEqual(quietSize.width, 50)
         XCTAssertEqual(quietSize.height, 50)
@@ -150,6 +171,10 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(bounceSize.height, 50)
         XCTAssertEqual(rageSize.width, 50)
         XCTAssertEqual(rageSize.height, 50)
+        XCTAssertEqual(magicSuppressedSize.width, 50)
+        XCTAssertEqual(magicSuppressedSize.height, 50)
+        XCTAssertEqual(magicReduceMotionSize.width, 50)
+        XCTAssertEqual(magicReduceMotionSize.height, 50)
     }
 
     // MARK: - MotionTokens (SPEC.md §4 "Motion")

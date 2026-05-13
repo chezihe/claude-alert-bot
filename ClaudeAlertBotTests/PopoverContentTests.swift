@@ -205,13 +205,9 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertEqual(visible.map(\.sessionID), ["a1"])
     }
 
-    func test_popoverHeight_clampsRowsAndIncludesToolbarChrome() {
+    func test_popoverHeight_excludesToolbarHeight_whenSingleClearableSession() {
         let queue = [
-            mkSession(id: "a1", project: "Alpha"),
-            mkSession(id: "a2", project: "Beta"),
-            mkSession(id: "a3", project: "Gamma"),
-            mkSession(id: "a4", project: "Delta"),
-            mkSession(id: "a5", project: "Epsilon")
+            mkSession(id: "a1", project: "Alpha")
         ]
 
         let height = PopoverContentRules.popoverHeight(
@@ -220,7 +216,22 @@ final class PopoverContentTests: XCTestCase {
             everHadAlerts: true
         )
 
-        XCTAssertEqual(height, GeometryTokens.rowMinHeight * 4 + GeometryTokens.popoverToolbarHeight)
+        XCTAssertEqual(height, GeometryTokens.rowMinHeight)
+    }
+
+    func test_popoverHeight_includesToolbarHeight_whenTwoClearableSessions() {
+        let queue = [
+            mkSession(id: "a1", project: "Alpha"),
+            mkSession(id: "a2", project: "Beta")
+        ]
+
+        let height = PopoverContentRules.popoverHeight(
+            queue: queue,
+            expandedProjects: [],
+            everHadAlerts: true
+        )
+
+        XCTAssertEqual(height, GeometryTokens.rowMinHeight * 2 + GeometryTokens.popoverToolbarHeight)
     }
 
     func test_timeSuffix_format_hhmm() {
@@ -384,9 +395,12 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains("PopoverContentRules.shouldShowClearAll(clearableCount: clearableSessionCount)"))
     }
 
-    func test_popoverContentView_toolbarConsumesFixedChromeHeight() {
+    func test_popoverContentView_toolbarIsConditionalOnClearAllVisibility() {
         let src = readPopoverContentViewSource()
 
+        XCTAssertTrue(src.contains("let showClearAllToolbar = PopoverContentRules.shouldShowClearAll(clearableCount: clearableSessionCount)"))
+        XCTAssertTrue(src.contains("if showClearAllToolbar {"))
+        XCTAssertTrue(src.contains("Button(clearAllLabel, action: onClearAll)"))
         XCTAssertTrue(src.contains(".frame(height: GeometryTokens.popoverToolbarHeight, alignment: .top)"))
     }
 

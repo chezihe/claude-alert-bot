@@ -125,6 +125,7 @@ extension SettingsViewTests {
         XCTAssertEqual(SettingsView.idleAnimationName(.ring), "Ring")
         XCTAssertEqual(SettingsView.idleAnimationName(.roam), "Roam")
         XCTAssertEqual(SettingsView.idleAnimationName(.rage), "🤬 Rage")
+        XCTAssertEqual(SettingsView.idleAnimationName(.magic), "Magic")
     }
 
     func test_themeSection_wiresPickerToStore() {
@@ -172,15 +173,36 @@ extension SettingsViewTests {
         XCTAssertFalse(popoverSource.contains(#"NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)"#))
 
         XCTAssertTrue(appSource.contains("Menu(\"Notification\")"))
-        XCTAssertTrue(appSource.contains("Toggle(SettingsView.soundToggleLabel, isOn: $store.soundEnabled)"))
-        XCTAssertTrue(appSource.contains("Toggle(SettingsView.quietHoursToggleLabel, isOn: $store.quietHoursEnabled)"))
+        XCTAssertTrue(appSource.contains("Toggle(Self.menuSoundToggleLabel, isOn: $store.soundEnabled)"))
+        XCTAssertTrue(appSource.contains("Toggle(Self.menuQuietHoursToggleLabel, isOn: $store.quietHoursEnabled)"))
         XCTAssertTrue(appSource.contains("Menu(\"Style\")"))
         XCTAssertTrue(appSource.contains("Picker(SettingsView.idleAnimationLabel, selection: store.idleAnimationBinding)"))
         XCTAssertTrue(appSource.contains("Picker(SettingsView.themeLabel, selection: store.themeModeBinding)"))
         XCTAssertTrue(appSource.contains("Picker(SettingsView.reduceMotionLabel, selection: store.reduceMotionPreferenceBinding)"))
-        XCTAssertTrue(appSource.contains("Toggle(SettingsView.launchAtLoginToggleLabel, isOn: $store.launchAtLoginEnabled)"))
-        XCTAssertTrue(appSource.contains("Menu(SettingsView.widgetPositionHeading)"))
-        XCTAssertTrue(appSource.contains("Menu(SettingsView.connectionTestHeading)"))
+        XCTAssertTrue(appSource.contains("Toggle(Self.menuLaunchAtLoginLabel, isOn: $store.launchAtLoginEnabled)"))
+        XCTAssertTrue(appSource.contains("Menu(Self.menuWidgetPositionHeading)"))
+        XCTAssertTrue(appSource.contains("Menu(Self.menuConnectionTestHeading)"))
+    }
+
+    func test_menuBarSettings_replacesSteppersWithPresetMenus() {
+        let appSource = readClaudeAlertBotAppSource()
+
+        XCTAssertFalse(appSource.contains("Stepper(\\(store.thresholdSeconds)초\", value: $store.thresholdSeconds"))
+        XCTAssertFalse(appSource.contains("Stepper(\\(SettingsView.offsetXLabel): \\(store.offsetX) pt\", value: $store.offsetX"))
+        XCTAssertFalse(appSource.contains("Stepper(\\(SettingsView.offsetYLabel): \\(store.offsetY) pt\", value: $store.offsetY"))
+        XCTAssertTrue(appSource.contains("Direct (0s)"))
+        XCTAssertTrue(appSource.contains("struct ThresholdPreset"))
+        XCTAssertTrue(appSource.contains("struct OffsetPreset"))
+        XCTAssertTrue(appSource.contains(".init(label: \"Direct (0s)\", seconds: 0)"))
+        XCTAssertTrue(appSource.contains(".init(label: \"Close to edge (8 pt)\", value: 8)"))
+        XCTAssertTrue(appSource.contains("private static let menuOffsetXLabel = \"Horizontal Offset\""))
+        XCTAssertTrue(appSource.contains("private static let menuOffsetYLabel = \"Vertical Offset\""))
+        XCTAssertTrue(appSource.contains("private static let menuSoundToggleLabel = \"Play notification sound\""))
+        XCTAssertTrue(appSource.contains("private static let menuQuietHoursToggleLabel = \"Quiet Hours\""))
+        XCTAssertTrue(appSource.contains("private static let menuThresholdHeading = \"Notification Threshold\""))
+        XCTAssertTrue(appSource.contains("private static let menuWidgetPositionHeading = \"Widget Position\""))
+        XCTAssertTrue(appSource.contains("private static let menuConnectionTestHeading = \"iTerm2 Connection\""))
+        XCTAssertTrue(appSource.contains("Image(systemName: \"checkmark\")"))
     }
 
     func test_settingsWindowPresenterBringsSettingsWindowToFront() {

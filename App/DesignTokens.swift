@@ -63,6 +63,9 @@ enum GeometryTokens {
     static let statusDotDiameter: CGFloat = 7
     // SPEC.md §3 row "hollow ring stroke 1.5pt"
     static let statusDotRingStroke: CGFloat = 1.5
+    // Magic animation expands vertically to keep falling stars visible outside the base 50×50 icon.
+    static let magicDrawableExtraWidth: CGFloat = 24
+    static let magicDrawableExtraHeight: CGFloat = 32
     // FEATURES.md §3 row "최대 4행 표시" — WO-009 enforces; rows beyond scroll vertically.
     static let popoverMaxVisibleRows: Int = 4
     // FEATURES.md §3 panel "스크롤 페이드" — applied only when the list exceeds max visible rows.
@@ -75,7 +78,13 @@ enum GeometryTokens {
         reduceMotion: Bool
     ) -> CGSize {
         guard !quietHoursEnabled, !reduceMotion else { return widgetBaseSize }
-        guard idleAnimation == .roam else { return widgetBaseSize }
+        guard idleAnimation == .roam || idleAnimation == .magic else { return widgetBaseSize }
+        if idleAnimation == .magic {
+            return CGSize(
+                width: widgetBaseSize.width + magicDrawableExtraWidth,
+                height: widgetBaseSize.height + magicDrawableExtraHeight
+            )
+        }
         return CGSize(
             width: widgetBaseSize.width + MotionTokens.roamRadiusX * 2,
             height: widgetBaseSize.height + MotionTokens.roamRadiusY * 2
@@ -95,6 +104,12 @@ enum MotionTokens {
     static let roamDuration: TimeInterval = 1.6
     static let roamRadiusX: CGFloat = 12
     static let roamRadiusY: CGFloat = 3
+    // SPEC-compliant Magic idle is a user-defined motion concept from phase 03-2.
+    // Medium intensity: 5–8 falling stars in a 3.0s repeat loop.
+    static let magicAnimationDuration: TimeInterval = 3.0
+    static let magicStarStartOffset: CGFloat = -20
+    static let magicStarTravelDistance: CGFloat = 56
+    static let magicStarSize: CGFloat = 6
     // SPEC.md §4 row "Rage" — 950ms throw-windup looped every 2.4s.
     static let ragePeriod: TimeInterval = 2.4
     static let rageWindupDuration: TimeInterval = 0.95

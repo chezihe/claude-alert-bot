@@ -33,10 +33,22 @@ struct WidgetIconView: View {
     @State private var activeAlertPulseID: Int = 0
     @State private var alertPulseGeneration: Int = 0
     @State private var badgePopScale: CGFloat = 1.0
+    @State private var magicProgress: Double = 0
+    @State private var magicBurstID: Int = 0
+    @State private var magicBurstActive: Bool = false
+    @State private var magicBurstStartedAt: Date = .distantPast
+    @State private var magicBurstWorkItem: DispatchWorkItem? = nil
     @State private var lastBadgeKey: Int = -1
 
     private static let badgeOffset = CGSize(width: -1, height: 1)
     private static let fixedGlyphOffset = CGSize(width: 0, height: 6)
+    // Pivot sits on the icon's right arm (the "hand") so the wand reads as held by it.
+    private static let magicWandOffset = CGSize(width: 16, height: -4)
+    private static let magicWandBaseRotation: Double = 32
+    private static let magicWandSwingAmplitude: Double = 12
+    private static let magicStarCount: Int = 6
+    // Seeded horizontal offsets keep stars spread across the icon without runtime RNG.
+    private static let magicStarHorizontalOffsets: [CGFloat] = [-14, 8, -4, 12, -10, 2]
 
     private var reduceMotion: Bool {
         reduceMotionPreference.effectiveReduceMotion(systemReduceMotion: systemReduceMotion)
@@ -64,6 +76,10 @@ struct WidgetIconView: View {
 
     private var ringAnimatorActive: Bool {
         idleAnimation == .ring && !quietHoursEnabled && !reduceMotion
+    }
+
+    private var magicAnimatorActive: Bool {
+        idleAnimation == .magic && !quietHoursEnabled && !reduceMotion
     }
 
     var body: some View {
@@ -184,6 +200,40 @@ struct WidgetIconView: View {
                             CubicKeyframe(MotionKeyframes.rageCycle[6].scale, duration: MotionKeyframes.rageHoldDuration)
                         }
                     }
+                } else if magicAnimatorActive {
+                    // Magic = Float Sway (sin hover + sin tilt) with a Sparkle Burst accent
+                    // every magicBurstInterval seconds: 360° CCW spin + 12 radial stars.
+                    // TimelineView drives per-frame sin values; burst rotation/stars derive
+                    // from magicBurstStartedAt + magicBurstActive (scheduled by DispatchQueue).
+                    TimelineView(.animation) { context in
+                        let now = context.date.timeIntervalSinceReferenceDate
+                        let hoverY = CGFloat(sin(now / MotionKeyframes.magicHoverPeriod * 2 * .pi))
+                                     * MotionKeyframes.magicHoverAmplitude
+                        let tiltDeg = sin(now / MotionKeyframes.magicTiltPeriod * 2 * .pi)
+                                      * MotionKeyframes.magicTiltAmplitude
+                        let burstPhase = currentMagicBurstPhase(at: context.date)
+                        // Ease-in-out so the spin doesn't snap at start/end.
+                        let easedSpin = burstSpinEase(burstPhase)
+                        let burstRotation = easedSpin * MotionKeyframes.magicBurstRotation
+                        glyph(
+                            bounceValue: BounceAnimatorValue(translateY: hoverY, scaleX: 1, scaleY: 1),
+                            heartScale: 1.0,
+                            rageValue: RageAnimatorValue()
+                        )
+                        // Tilt stays on the in-plane axis (subtle lean), burst spins on Y
+                        // (vertical axis) so the icon turns like a figure-skater / magical-girl
+                        // transformation — side → back → side → front — not like a clock hand.
+                        .rotationEffect(.degrees(tiltDeg), anchor: .center)
+                        .rotation3DEffect(
+                            .degrees(burstRotation),
+                            axis: (x: 0, y: 1, z: 0),
+                            anchor: .center,
+                            perspective: 0.6
+                        )
+                        .overlay(alignment: .center) {
+                            magicAnimationOverlay
+                        }
+                    }
                 } else if ringAnimatorActive {
                     // KeyframeAnimator owns its own lifecycle, so switching idle to anything else
                     // removes this branch and the rotation snaps back to 0 (no leaked `.repeatForever`).
@@ -212,14 +262,20 @@ struct WidgetIconView: View {
             }
             .frame(width: GeometryTokens.widgetBaseSize.width, height: GeometryTokens.widgetBaseSize.height, alignment: .center)
         }
-        .frame(width: widgetBoundsSize.width, height: widgetBoundsSize.height, alignment: .center)
+        // Magic biases the extra width to the right of the icon (the wand "lives" there).
+        .frame(width: widgetBoundsSize.width, height: widgetBoundsSize.height, alignment: magicAnimatorActive ? .leading : .center)
         .accessibilityElement()
         .accessibilityLabel(widgetAccessibilityLabel)
         .accessibilityAddTraits(.isButton)
     }
 
     @ViewBuilder
-    private func glyph(bounceValue: BounceAnimatorValue, heartScale: CGFloat, rageValue: RageAnimatorValue, ringRotation: Double = 0) -> some View {
+    private func glyph(
+        bounceValue: BounceAnimatorValue,
+        heartScale: CGFloat,
+        rageValue: RageAnimatorValue,
+        ringRotation: Double = 0
+    ) -> some View {
         Image("ClaudeCodeIcon")
             .resizable()
             .aspectRatio(contentMode: .fit)
@@ -252,23 +308,28 @@ struct WidgetIconView: View {
                 runNewAlertPulse()
                 primeBadgePop()
                 restartRageProjectileLoop()
+                restartMagicBurstLoop()
             }
             .onDisappear {
                 stopRageProjectileLoop()
+                stopMagicBurstLoop()
             }
             .onChange(of: quietHoursEnabled) { _, _ in
                 resetAlertPulse()
                 restartIdleAnimation()
                 restartRageProjectileLoop()
+                restartMagicBurstLoop()
             }
             .onChange(of: idleAnimation) { _, _ in
                 restartIdleAnimation()
                 restartRageProjectileLoop()
+                restartMagicBurstLoop()
             }
             .onChange(of: reduceMotion) { _, _ in
                 resetAlertPulse()
                 restartIdleAnimation()
                 restartRageProjectileLoop()
+                restartMagicBurstLoop()
             }
             .onChange(of: alertPulseID) { _, _ in
                 runNewAlertPulse()
@@ -276,6 +337,83 @@ struct WidgetIconView: View {
             .onChange(of: pendingCount) { _, _ in
                 runBadgePop()
             }
+    }
+
+    private var magicAnimationOverlay: some View {
+        let swing = sin((magicProgress * 2 * .pi) - (.pi / 2))
+        let swingRotation = (swing * Self.magicWandSwingAmplitude) + Self.magicWandBaseRotation
+        return ZStack {
+            magicFallingStars
+            magicWand(rotationDegrees: swingRotation)
+        }
+        .frame(
+            width: GeometryTokens.widgetBaseSize.width + GeometryTokens.magicDrawableExtraWidth,
+            height: GeometryTokens.widgetBaseSize.height + GeometryTokens.magicDrawableExtraHeight,
+            alignment: .center
+        )
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    private func currentMagicBurstPhase(at date: Date) -> Double {
+        guard magicBurstActive else { return 0 }
+        let elapsed = date.timeIntervalSince(magicBurstStartedAt)
+        guard elapsed >= 0 else { return 0 }
+        return min(1, elapsed / MotionKeyframes.magicBurstDuration)
+    }
+
+    // Smooth ease-in-out (cosine) so the spin starts and ends without a jolt.
+    private func burstSpinEase(_ phase: Double) -> Double {
+        guard phase > 0, phase < 1 else { return phase }
+        return (1 - cos(phase * .pi)) / 2
+    }
+
+    private func magicWand(rotationDegrees: Double) -> some View {
+        VStack(spacing: 3) {
+            Circle()
+                .frame(width: 4, height: 4)
+                .foregroundStyle(Color(red: 1, green: 0.98, blue: 0.9))
+            Capsule()
+                .frame(width: 2, height: 14)
+                .foregroundStyle(Color(red: 0xEE / 255, green: 0xF7 / 255, blue: 0xFF / 255))
+        }
+        .offset(x: Self.magicWandOffset.width, y: Self.magicWandOffset.height)
+        .rotationEffect(.degrees(rotationDegrees), anchor: .bottom)
+        .allowsHitTesting(false)
+    }
+
+    // Six bright sparkles drift downward through the icon on a 3s loop, staggered so two
+    // or three are visible at any moment (medium-intensity preset). TimelineView drives
+    // continuous redraws — the parent overlay already gates render on magicAnimatorActive,
+    // so Reduce Motion / Quiet Hours unmount this entirely.
+    private var magicFallingStars: some View {
+        TimelineView(.animation) { context in
+            let now = context.date.timeIntervalSinceReferenceDate
+            ZStack {
+                ForEach(0..<Self.magicStarCount, id: \.self) { index in
+                    magicStar(index: index, now: now)
+                }
+            }
+        }
+    }
+
+    private func magicStar(index: Int, now: TimeInterval) -> some View {
+        let period = MotionTokens.magicAnimationDuration
+        let stagger = Double(index) / Double(Self.magicStarCount)
+        let raw = (now / period) + stagger
+        let phase = raw - floor(raw)
+        let yOffset = MotionTokens.magicStarStartOffset + CGFloat(phase) * MotionTokens.magicStarTravelDistance
+        let xOffset = Self.magicStarHorizontalOffsets[index % Self.magicStarHorizontalOffsets.count]
+        // sin(πφ) → fades in for the first half of the fall and fades out by the end.
+        let opacity = sin(phase * .pi)
+        return Image(systemName: "sparkle")
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: MotionTokens.magicStarSize, height: MotionTokens.magicStarSize)
+            .foregroundStyle(Color(red: 1, green: 0.96, blue: 0.78))
+            .shadow(color: Color(red: 1, green: 0.92, blue: 0.55).opacity(0.55), radius: 1.5)
+            .opacity(opacity)
+            .offset(x: xOffset, y: yOffset)
     }
 
     @ViewBuilder
@@ -317,6 +455,14 @@ struct WidgetIconView: View {
             withAnimation(anim) {
                 roamPhase = -360
             }
+        case .magic:
+            guard !reduceMotion else {
+                magicProgress = 0
+                return
+            }
+            withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) {
+                magicProgress = 1
+            }
         }
     }
 
@@ -328,6 +474,7 @@ struct WidgetIconView: View {
         // needed here any more.)
         withTransaction(Transaction(animation: nil)) {
             roamPhase = 0
+            magicProgress = 0
         }
         startIdleAnimation()
     }
@@ -389,6 +536,44 @@ struct WidgetIconView: View {
         }
         rageWorkItem = workItem
         DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
+    }
+
+    // Magic burst loop: every magicBurstInterval seconds, mark a burst window magicBurstDuration
+    // long. The body's TimelineView reads magicBurstActive / magicBurstStartedAt to drive the
+    // CCW 360° spin and the 12 radial sparkles. Mirrors restartRageProjectileLoop's generation
+    // pattern so toggling idle modes can't leak a stale work item.
+    private func restartMagicBurstLoop() {
+        stopMagicBurstLoop()
+        guard magicAnimatorActive else { return }
+        magicBurstID &+= 1
+        let generation = magicBurstID
+        scheduleNextMagicBurst(generation: generation, delay: MotionKeyframes.magicBurstInterval)
+    }
+
+    private func stopMagicBurstLoop() {
+        magicBurstID &+= 1
+        magicBurstWorkItem?.cancel()
+        magicBurstWorkItem = nil
+        magicBurstActive = false
+    }
+
+    private func scheduleNextMagicBurst(generation: Int, delay: TimeInterval) {
+        let workItem = DispatchWorkItem {
+            guard generation == magicBurstID, magicAnimatorActive else { return }
+            triggerMagicBurst(generation: generation)
+            scheduleNextMagicBurst(generation: generation, delay: MotionKeyframes.magicBurstInterval)
+        }
+        magicBurstWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
+    }
+
+    private func triggerMagicBurst(generation: Int) {
+        magicBurstStartedAt = Date()
+        magicBurstActive = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + MotionKeyframes.magicBurstDuration) {
+            guard generation == magicBurstID else { return }
+            magicBurstActive = false
+        }
     }
 
 

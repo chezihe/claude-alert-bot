@@ -81,6 +81,19 @@ enum MotionKeyframes {
     static let ragePeriod: TimeInterval = 2.4
     static let rageHoldDuration: TimeInterval = ragePeriod - rageWindupDuration // 1.45s rest
 
+    // Magic idle — float sway base + sparkle burst (z-axis CCW spin + radial stars).
+    // Sin-driven hover/tilt have intentionally different periods so the loops don't lockstep.
+    static let magicHoverPeriod: TimeInterval = 3.6
+    static let magicHoverAmplitude: CGFloat = 3
+    static let magicTiltPeriod: TimeInterval = 4.0
+    static let magicTiltAmplitude: Double = 2.5
+    // Burst window every magicBurstInterval seconds, magicBurstDuration long.
+    static let magicBurstInterval: TimeInterval = 6.0
+    static let magicBurstDuration: TimeInterval = 1.2
+    // Y-axis 360° spin (magical-girl transformation cue). Negative = side-of-icon-toward-camera
+    // comes in from the right, mirroring a typical animated transformation.
+    static let magicBurstRotation: Double = -360
+
     // HTML @keyframes throw-windup (Prototype v2 lines 658–666).
     // Wind back → hold → whip forward → settle.
     static let rageCycle: [RageKeyframe] = [

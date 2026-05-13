@@ -168,7 +168,7 @@ extension SettingsViewTests {
 
         XCTAssertTrue(appSource.contains("Button(\"Settings…\") { SettingsWindowPresenter.open() }"))
         XCTAssertFalse(appSource.contains("@Environment(\\.openSettings)"))
-        XCTAssertTrue(popoverSource.contains("onOpenSettings: {\n                SettingsWindowPresenter.open()\n            }"))
+        XCTAssertFalse(popoverSource.contains("onOpenSettings: {\n                SettingsWindowPresenter.open()\n            }"))
         XCTAssertFalse(popoverSource.contains(#"NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)"#))
     }
 

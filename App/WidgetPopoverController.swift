@@ -155,9 +155,6 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
                 self.reloadPopoverContent()
             },
             onPopoverHoverChange: { [weak self] hovering in self?.onPopoverHover(hovering) },
-            onOpenSettings: {
-                SettingsWindowPresenter.open()
-            },
             expandedProjects: expandedProjects,
             widgetCorner: SettingsStore.shared.widgetCorner,
             onToggleGroup: { [weak self] projectName in

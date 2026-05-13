@@ -118,8 +118,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // === Phase 1 step 5 (preserved — outside Task; signal handlers don't depend on Phase 2 wiring) ===
         installSignalHandler(SIGTERM)
         installSignalHandler(SIGINT)
-        // NOTE: D2-29 — no NSMenu / settingsWindow / NSApp.activate. The SwiftUI
-        // `Settings { … }` scene in ClaudeAlertBotApp.swift handles ⌘, automatically.
+        // NOTE: D2-29 — no NSMenu / settingsWindow / NSApp.activate. Settings are
+        // now exposed from `MenuBarExtra` directly.
     }
 
     private static var isRunningUnitTests: Bool {

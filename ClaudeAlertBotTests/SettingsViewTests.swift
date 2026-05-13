@@ -162,14 +162,25 @@ extension SettingsViewTests {
         XCTAssertTrue(src.contains("LoginItemController.applyFromSettings(enabled: enabled)"))
     }
 
-    func test_settingsOpenPathsUsePresenterToRaiseWindow() {
+    func test_menuBarSettingsExposeInlineControls() {
         let appSource = readClaudeAlertBotAppSource()
         let popoverSource = readWidgetPopoverControllerSource()
 
-        XCTAssertTrue(appSource.contains("Button(\"Settings…\") { SettingsWindowPresenter.open() }"))
+        XCTAssertFalse(appSource.contains("Button(\"Settings…\") { SettingsWindowPresenter.open() }"))
         XCTAssertFalse(appSource.contains("@Environment(\\.openSettings)"))
         XCTAssertFalse(popoverSource.contains("onOpenSettings: {\n                SettingsWindowPresenter.open()\n            }"))
         XCTAssertFalse(popoverSource.contains(#"NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)"#))
+
+        XCTAssertTrue(appSource.contains("Menu(\"Notification\")"))
+        XCTAssertTrue(appSource.contains("Toggle(SettingsView.soundToggleLabel, isOn: $store.soundEnabled)"))
+        XCTAssertTrue(appSource.contains("Toggle(SettingsView.quietHoursToggleLabel, isOn: $store.quietHoursEnabled)"))
+        XCTAssertTrue(appSource.contains("Menu(\"Style\")"))
+        XCTAssertTrue(appSource.contains("Picker(SettingsView.idleAnimationLabel, selection: store.idleAnimationBinding)"))
+        XCTAssertTrue(appSource.contains("Picker(SettingsView.themeLabel, selection: store.themeModeBinding)"))
+        XCTAssertTrue(appSource.contains("Picker(SettingsView.reduceMotionLabel, selection: store.reduceMotionPreferenceBinding)"))
+        XCTAssertTrue(appSource.contains("Toggle(SettingsView.launchAtLoginToggleLabel, isOn: $store.launchAtLoginEnabled)"))
+        XCTAssertTrue(appSource.contains("Menu(SettingsView.widgetPositionHeading)"))
+        XCTAssertTrue(appSource.contains("Menu(SettingsView.connectionTestHeading)"))
     }
 
     func test_settingsWindowPresenterBringsSettingsWindowToFront() {

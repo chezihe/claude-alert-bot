@@ -34,13 +34,13 @@ final class MotionKeyframesTests: XCTestCase {
     }
 
     func test_bounceCycle_matchesPrototypeKeyframesExactly() {
-        // internal prototype @keyframes bounce-cute
-        let expected: [(Double, CGFloat, CGFloat, CGFloat)] = [
-            (0,    0,  1.04, 0.94),
-            (18,  -2,  1.01, 0.99),
-            (50,  -5,  0.97, 1.05),
-            (82,  -2,  1.01, 0.99),
-            (100,  0,  1.04, 0.94),
+        // internal prototype @keyframes bounce-cute (post 64pt widget rescale + rotation overlay)
+        let expected: [(Double, CGFloat, CGFloat, CGFloat, Double)] = [
+            (0,    0,  1.04, 0.94,  0),
+            (18,  -3,  1.01, 0.99, -2),
+            (50,  -7,  0.97, 1.05,  0),
+            (82,  -3,  1.01, 0.99,  2),
+            (100,  0,  1.04, 0.94,  0),
         ]
         XCTAssertEqual(MotionKeyframes.bounceCycle.count, expected.count)
         for (kf, exp) in zip(MotionKeyframes.bounceCycle, expected) {
@@ -48,6 +48,7 @@ final class MotionKeyframesTests: XCTestCase {
             XCTAssertEqual(kf.translateY, exp.1, accuracy: 0.0001)
             XCTAssertEqual(kf.scaleX,     exp.2, accuracy: 0.0001)
             XCTAssertEqual(kf.scaleY,     exp.3, accuracy: 0.0001)
+            XCTAssertEqual(kf.rotation,   exp.4, accuracy: 0.0001)
         }
     }
 
@@ -117,7 +118,7 @@ final class MotionKeyframesTests: XCTestCase {
     }
 
     func test_ringCycle_matchesPrototypeKeyframesExactly() {
-        // internal prototype @keyframes ring.
+        // internal prototype @keyframes ring + micro-aftershock at 70%/85% (post 64pt rescale).
         let expected: [(Double, Double)] = [
             (0,     0),
             (10,  -14),
@@ -126,6 +127,8 @@ final class MotionKeyframesTests: XCTestCase {
             (40,    7),
             (50,   -4),
             (60,    2),
+            (70,  -1.2),
+            (85,   0.6),
             (100,   0),
         ]
         XCTAssertEqual(MotionKeyframes.ringCycle.count, expected.count)

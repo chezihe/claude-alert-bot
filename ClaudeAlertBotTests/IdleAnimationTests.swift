@@ -22,9 +22,9 @@ final class IdleAnimationTests: XCTestCase {
         let src = readWidgetIconViewSource()
 
         XCTAssertTrue(src.contains("case .magic:"))
-        XCTAssertTrue(src.contains("magicAnimationOverlay"))
+        XCTAssertTrue(src.contains("magicCastOverlay"))
         XCTAssertTrue(src.contains("magicAnimatorActive"))
-        XCTAssertTrue(src.contains("magicProgress"))
+        XCTAssertTrue(src.contains("magicCastPhase"))
     }
 
     func test_widgetIconViewSource_wiresHeartKeyframeAnimator() {
@@ -224,11 +224,11 @@ final class IdleAnimationTests: XCTestCase {
     func test_widgetIconViewSource_keepsPendingBadgeInsidePanelBounds() {
         let src = readWidgetIconViewSource()
 
-        XCTAssertTrue(src.contains("private static let badgeOffset = CGSize(width: -1, height: 1)"))
+        XCTAssertTrue(src.contains("private static let badgeOffset = CGSize(width: -2, height: 2)"))
         XCTAssertTrue(src.contains(".offset(x: Self.badgeOffset.width, y: Self.badgeOffset.height)"))
-        XCTAssertTrue(src.contains(".font(.system(size: 9.5))"))
-        XCTAssertTrue(src.contains(".padding(.horizontal, 4)"))
-        XCTAssertTrue(src.contains(".frame(minWidth: 16, minHeight: 16)"))
+        XCTAssertTrue(src.contains(".font(.system(size: 10.5))"))
+        XCTAssertTrue(src.contains(".padding(.horizontal, 5)"))
+        XCTAssertTrue(src.contains(".frame(minWidth: 18, minHeight: 18)"))
         XCTAssertFalse(src.contains("private static let badgeOffset = CGSize(width: 0, height: 0)"))
         XCTAssertFalse(src.contains(".font(.system(size: 11, weight: .semibold))"))
         XCTAssertFalse(src.contains("let ringColor"))
@@ -239,8 +239,7 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertFalse(src.contains(".frame(minWidth: 17, minHeight: 17)"))
         XCTAssertFalse(src.contains(".stroke(ringColor, lineWidth: 1)"))
         XCTAssertFalse(src.contains(".stroke(ringColor, lineWidth: 2)"))
-        XCTAssertFalse(src.contains(".padding(.horizontal, 5)"))
-        XCTAssertFalse(src.contains(".frame(minWidth: 18, minHeight: 18)"))
+        XCTAssertFalse(src.contains(".stroke(ringColor, lineWidth: 1.5)"))
         XCTAssertFalse(src.contains(".offset(x: 5, y: -6)"))
     }
 
@@ -254,7 +253,7 @@ final class IdleAnimationTests: XCTestCase {
     func test_widgetIconViewSource_keepsGlyphPositionFixedWhenPendingBadgeIsVisible() {
         let src = readWidgetIconViewSource()
 
-        XCTAssertTrue(src.contains("private static let fixedGlyphOffset = CGSize(width: 0, height: 6)"))
+        XCTAssertTrue(src.contains("private static let fixedGlyphOffset = CGSize(width: 0, height: 8)"))
         XCTAssertTrue(src.contains("x: Self.fixedGlyphOffset.width,"))
         XCTAssertTrue(src.contains("y: (quietHoursEnabled ? 0 : bounceValue.translateY) + Self.fixedGlyphOffset.height"))
         XCTAssertFalse(src.contains("pendingBadgeGlyphOffset"))

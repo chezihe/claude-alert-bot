@@ -116,8 +116,9 @@ final class DesignTokensTests: XCTestCase {
             reduceMotion: false
         )
 
-        XCTAssertEqual(size.width, 74)
-        XCTAssertEqual(size.height, 56)
+        // 64 + 2 * roamRadiusX(16), 64 + 2 * roamRadiusY(4)
+        XCTAssertEqual(size.width, 96)
+        XCTAssertEqual(size.height, 72)
     }
 
     func test_geometryTokens_widgetDrawableSize_expandsForActiveMagic() {
@@ -127,11 +128,13 @@ final class DesignTokensTests: XCTestCase {
             reduceMotion: false
         )
 
-        XCTAssertEqual(size.width, 74)
-        XCTAssertEqual(size.height, 82)
+        // 64 + magicDrawableExtraWidth(30), 64 + magicDrawableExtraHeight(40)
+        XCTAssertEqual(size.width, 94)
+        XCTAssertEqual(size.height, 104)
     }
 
     func test_geometryTokens_widgetDrawableSize_keepsBaseSizeWhenRoamIsSuppressed() {
+        let base = GeometryTokens.widgetBaseSize
         let quietSize = GeometryTokens.widgetDrawableSize(
             idleAnimation: .roam,
             quietHoursEnabled: true,
@@ -163,18 +166,12 @@ final class DesignTokensTests: XCTestCase {
             reduceMotion: true
         )
 
-        XCTAssertEqual(quietSize.width, 50)
-        XCTAssertEqual(quietSize.height, 50)
-        XCTAssertEqual(reduceMotionSize.width, 50)
-        XCTAssertEqual(reduceMotionSize.height, 50)
-        XCTAssertEqual(bounceSize.width, 50)
-        XCTAssertEqual(bounceSize.height, 50)
-        XCTAssertEqual(rageSize.width, 50)
-        XCTAssertEqual(rageSize.height, 50)
-        XCTAssertEqual(magicSuppressedSize.width, 50)
-        XCTAssertEqual(magicSuppressedSize.height, 50)
-        XCTAssertEqual(magicReduceMotionSize.width, 50)
-        XCTAssertEqual(magicReduceMotionSize.height, 50)
+        XCTAssertEqual(quietSize, base)
+        XCTAssertEqual(reduceMotionSize, base)
+        XCTAssertEqual(bounceSize, base)
+        XCTAssertEqual(rageSize, base)
+        XCTAssertEqual(magicSuppressedSize, base)
+        XCTAssertEqual(magicReduceMotionSize, base)
     }
 
     // MARK: - MotionTokens (project contract "Motion")
@@ -196,8 +193,8 @@ final class DesignTokensTests: XCTestCase {
         let src = readDesignTokensSource()
 
         XCTAssertTrue(src.contains("static let roamDuration: TimeInterval = 1.6"))
-        XCTAssertTrue(src.contains("static let roamRadiusX: CGFloat = 12"))
-        XCTAssertTrue(src.contains("static let roamRadiusY: CGFloat = 3"))
+        XCTAssertTrue(src.contains("static let roamRadiusX: CGFloat = 16"))
+        XCTAssertTrue(src.contains("static let roamRadiusY: CGFloat = 4"))
         XCTAssertTrue(src.contains("static func roamAnimation(reduceMotion: Bool) -> Animation?"))
         XCTAssertTrue(src.contains(".linear(duration: roamDuration).repeatForever(autoreverses: false)"))
     }
@@ -215,8 +212,8 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(MotionTokens.sonarDuration, 0.75, accuracy: 0.001)
         XCTAssertEqual(MotionTokens.sonarStartScale, 0.5, accuracy: 0.001)
         XCTAssertEqual(MotionTokens.sonarEndScale, 3.0, accuracy: 0.001)
-        XCTAssertEqual(MotionTokens.sonarBaseDiameter, 14, accuracy: 0.001)
-        XCTAssertLessThanOrEqual(MotionTokens.sonarBaseDiameter * MotionTokens.sonarEndScale, 50)
+        XCTAssertEqual(MotionTokens.sonarBaseDiameter, 18, accuracy: 0.001)
+        XCTAssertLessThanOrEqual(MotionTokens.sonarBaseDiameter * MotionTokens.sonarEndScale, GeometryTokens.widgetBaseSize.width)
         XCTAssertEqual(MotionTokens.sonarStartOpacity, 0.75, accuracy: 0.001)
         XCTAssertEqual(MotionTokens.reduceMotionFadeDuration, 0.15, accuracy: 0.001)
     }

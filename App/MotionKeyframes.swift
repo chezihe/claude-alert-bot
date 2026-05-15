@@ -11,6 +11,8 @@ struct BounceKeyframe: Equatable {
     let translateY: CGFloat
     let scaleX: CGFloat
     let scaleY: CGFloat
+    // Micro-rotation overlay (degrees) for cartoon "톡톡" feel — anchored at glyph bottom.
+    let rotation: Double
 }
 
 struct HeartKeyframe: Equatable {
@@ -35,14 +37,15 @@ enum MotionKeyframes {
     // internal prototype bounce-cute is 0.9s ease-in-out infinite.
     static let bouncePeriod: TimeInterval = 0.9
 
-    // internal prototype @keyframes bounce-cute.
+    // internal prototype @keyframes bounce-cute (post 64pt-widget rescale + micro-rotation overlay).
     // Bottom squash (1.04, 0.94) → apex stretch (0.97, 1.05) → bottom squash.
+    // Rotation lean (-2° → 0° → +2°) mirrors a cartoon weight-shift across the bounce.
     static let bounceCycle: [BounceKeyframe] = [
-        BounceKeyframe(percent:   0, translateY:  0, scaleX: 1.04, scaleY: 0.94),
-        BounceKeyframe(percent:  18, translateY: -2, scaleX: 1.01, scaleY: 0.99),
-        BounceKeyframe(percent:  50, translateY: -5, scaleX: 0.97, scaleY: 1.05),
-        BounceKeyframe(percent:  82, translateY: -2, scaleX: 1.01, scaleY: 0.99),
-        BounceKeyframe(percent: 100, translateY:  0, scaleX: 1.04, scaleY: 0.94),
+        BounceKeyframe(percent:   0, translateY:  0, scaleX: 1.04, scaleY: 0.94, rotation:  0),
+        BounceKeyframe(percent:  18, translateY: -3, scaleX: 1.01, scaleY: 0.99, rotation: -2),
+        BounceKeyframe(percent:  50, translateY: -7, scaleX: 0.97, scaleY: 1.05, rotation:  0),
+        BounceKeyframe(percent:  82, translateY: -3, scaleX: 1.01, scaleY: 0.99, rotation:  2),
+        BounceKeyframe(percent: 100, translateY:  0, scaleX: 1.04, scaleY: 0.94, rotation:  0),
     ]
 
     // internal prototype heartbeat is 1.4s ease-in-out infinite.
@@ -62,7 +65,7 @@ enum MotionKeyframes {
     // internal prototype ring is 1.4s ease-in-out infinite.
     static let ringPeriod: TimeInterval = 1.4
 
-    // internal prototype @keyframes ring.
+    // internal prototype @keyframes ring (with added micro-aftershock at 70%/85% for "톡톡" finish).
     // Damped bell swing; starts and ends at 0 so the loop does not snap.
     static let ringCycle: [RingKeyframe] = [
         RingKeyframe(percent:   0, rotation:   0),
@@ -72,6 +75,8 @@ enum MotionKeyframes {
         RingKeyframe(percent:  40, rotation:   7),
         RingKeyframe(percent:  50, rotation:  -4),
         RingKeyframe(percent:  60, rotation:   2),
+        RingKeyframe(percent:  70, rotation: -1.2),
+        RingKeyframe(percent:  85, rotation:  0.6),
         RingKeyframe(percent: 100, rotation:   0),
     ]
 
@@ -81,18 +86,12 @@ enum MotionKeyframes {
     static let ragePeriod: TimeInterval = 2.4
     static let rageHoldDuration: TimeInterval = ragePeriod - rageWindupDuration // 1.45s rest
 
-    // Magic idle — float sway base + sparkle burst (z-axis CCW spin + radial stars).
+    // Magic idle v2 — gentle float sway only; the wand owns the "cast" motion.
     // Sin-driven hover/tilt have intentionally different periods so the loops don't lockstep.
     static let magicHoverPeriod: TimeInterval = 3.6
-    static let magicHoverAmplitude: CGFloat = 3
+    static let magicHoverAmplitude: CGFloat = 4
     static let magicTiltPeriod: TimeInterval = 4.0
-    static let magicTiltAmplitude: Double = 2.5
-    // Burst window every magicBurstInterval seconds, magicBurstDuration long.
-    static let magicBurstInterval: TimeInterval = 6.0
-    static let magicBurstDuration: TimeInterval = 1.2
-    // Y-axis 360° spin (magical-girl transformation cue). Negative = side-of-icon-toward-camera
-    // comes in from the right, mirroring a typical animated transformation.
-    static let magicBurstRotation: Double = -360
+    static let magicTiltAmplitude: Double = 3
 
     // internal prototype @keyframes throw-windup.
     // Wind back → hold → whip forward → settle.

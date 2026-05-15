@@ -63,14 +63,14 @@ enum GeometryTokens {
     static let statusDotDiameter: CGFloat = 7
     // Project contract: hollow ring stroke 1.5pt
     static let statusDotRingStroke: CGFloat = 1.5
-    // Magic animation expands vertically to keep falling stars visible outside the base 50×50 icon.
-    static let magicDrawableExtraWidth: CGFloat = 24
-    static let magicDrawableExtraHeight: CGFloat = 32
+    // Magic animation expands vertically to keep falling stars visible outside the base 64×64 icon.
+    static let magicDrawableExtraWidth: CGFloat = 30
+    static let magicDrawableExtraHeight: CGFloat = 40
     // Project contract: max 4 visible rows — WO-009 enforces; rows beyond scroll vertically.
     static let popoverMaxVisibleRows: Int = 4
     // Project contract: scroll fade — applied only when the list exceeds max visible rows.
     static let popoverScrollFadeHeight: CGFloat = 12
-    static let widgetBaseSize = CGSize(width: 50, height: 50)
+    static let widgetBaseSize = CGSize(width: 64, height: 64)
 
     static func widgetDrawableSize(
         idleAnimation: IdleAnimation,
@@ -100,16 +100,27 @@ enum MotionTokens {
     // Bounce, Heart, Ring, and Rage live in MotionKeyframes (keyframe-based, HTML-faithful);
     // see App/MotionKeyframes.swift. Removed legacy single-scalar tokens here.
 
-    // Project contract: roam (running track) — 1.6s linear loop on a 24×6pt ellipse.
+    // Project contract: roam (running track) — 1.6s linear loop on a 32×8pt ellipse (post 64pt-widget rescale).
     static let roamDuration: TimeInterval = 1.6
-    static let roamRadiusX: CGFloat = 12
-    static let roamRadiusY: CGFloat = 3
-    // Contract-compliant Magic idle is a user-defined motion concept from phase 03-2.
-    // Medium intensity: 5–8 falling stars in a 3.0s repeat loop.
-    static let magicAnimationDuration: TimeInterval = 3.0
-    static let magicStarStartOffset: CGFloat = -20
-    static let magicStarTravelDistance: CGFloat = 56
-    static let magicStarSize: CGFloat = 6
+    static let roamRadiusX: CGFloat = 16
+    static let roamRadiusY: CGFloat = 4
+    // Magic idle v2 — "magical girl" Tap-Cast: wand 4-phase cycle + wand-tip trail + radial burst.
+    // Each cycle: idle (long, gentle wand sway) → windup (pull back) → strike (cast!) → recoil.
+    static let magicCastInterval: TimeInterval = 4.0
+    static let magicCastIdleDuration: TimeInterval = 3.0
+    static let magicCastWindupDuration: TimeInterval = 0.3
+    static let magicCastStrikeDuration: TimeInterval = 0.2
+    static let magicCastRecoilDuration: TimeInterval = 0.5
+    // Wand-tip trail — small sparkles drift off the wand tip during idle motion.
+    static let magicTrailSpawnInterval: TimeInterval = 0.18
+    static let magicTrailLifetime: TimeInterval = 0.6
+    static let magicTrailMaxCount: Int = 6
+    static let magicTrailSize: CGFloat = 4
+    // Burst spray — radial sparkles fired from the wand tip at the strike moment.
+    static let magicBurstSparkCount: Int = 8
+    static let magicBurstSparkRadius: CGFloat = 20
+    static let magicBurstSparkDuration: TimeInterval = 0.6
+    static let magicBurstSparkSize: CGFloat = 5
     // Project contract: rage — 950ms throw-windup looped every 2.4s.
     static let ragePeriod: TimeInterval = 2.4
     static let rageWindupDuration: TimeInterval = 0.95
@@ -122,8 +133,8 @@ enum MotionTokens {
     static let sonarDuration: TimeInterval = 0.75
     static let sonarStartScale: CGFloat = 0.5
     static let sonarEndScale: CGFloat = 3.0
-    // Keep the 3x sonar wave inside WidgetIconView's fixed 44pt drawable area.
-    static let sonarBaseDiameter: CGFloat = 14
+    // Keep the 3x sonar wave inside WidgetIconView's fixed 64pt drawable area (18 * 3 = 54pt).
+    static let sonarBaseDiameter: CGFloat = 18
     static let sonarStartOpacity: Double = 0.75
     // Project contract: status dot ripple (just-arrived).
     static let statusDotRippleDuration: TimeInterval = 1.0

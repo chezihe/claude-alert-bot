@@ -20,6 +20,7 @@ struct WidgetIconView: View {
     var alertPulseID: Int = 0
     var quietHoursEnabled: Bool = false
     var reduceMotionPreference: ReduceMotionPreference = .system
+    var widgetIconStyle: WidgetIconStyle = .default
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @State private var roamPhase: Double = 0
@@ -298,7 +299,7 @@ struct WidgetIconView: View {
         rageValue: RageAnimatorValue,
         ringRotation: Double = 0
     ) -> some View {
-        Image("ClaudeCodeIcon")
+        Image(widgetIconStyle.assetName)
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: 46, height: 46)

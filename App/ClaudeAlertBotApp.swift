@@ -61,6 +61,11 @@ private struct MenuBarMenuContent: View {
         }
 
         Menu("Style") {
+            Picker(SettingsView.widgetIconLabel, selection: store.widgetIconStyleBinding) {
+                ForEach(WidgetIconStyle.allCases, id: \.self) { style in
+                    Text(SettingsView.widgetIconStyleName(style)).tag(style)
+                }
+            }
             Picker(SettingsView.idleAnimationLabel, selection: store.idleAnimationBinding) {
                 ForEach(menuIdleAnimations, id: \.self) { animation in
                     Text(SettingsView.idleAnimationName(animation)).tag(animation)

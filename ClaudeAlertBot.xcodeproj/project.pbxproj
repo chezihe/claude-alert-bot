@@ -37,6 +37,7 @@
 		79903489DB30D25112CC0F2F /* TerminalJumper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 522E0E229AC969DF7503A6DC /* TerminalJumper.swift */; };
 		7CDB1B27F00604DEBE01739E /* SessionGCTimerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE75F8C6E2B4371B287E4B6E /* SessionGCTimerTests.swift */; };
 		7FB4A5BE37BDC1B0C0CA18AD /* WidgetIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10B9E598D15FE4F984232A /* WidgetIconView.swift */; };
+		46F37B5FB4D54D1783D62FC9 /* WidgetIconStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D586C619594EA689E1323E /* WidgetIconStyle.swift */; };
 		81C9844218324610D06FE9CF /* PopoverRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BCACF080D2BE209AC3408BB /* PopoverRowView.swift */; };
 		852BC49996E1BFF94F8AF34D /* SettingsViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 524A1F92225F3605DDFE4B41 /* SettingsViewTests.swift */; };
 		8E1ECB3C7626B361AF1EFBA5 /* WakeObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 650DBF68BEBAABAE7F7A198D /* WakeObserver.swift */; };
@@ -147,6 +148,7 @@
 		A2492431EE9304DB1FF24B55 /* PermissionDeepLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionDeepLinkTests.swift; sourceTree = "<group>"; };
 		A7447ADE56CD4CC06C811494 /* DesignTokensTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokensTests.swift; sourceTree = "<group>"; };
 		AA10B9E598D15FE4F984232A /* WidgetIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetIconView.swift; sourceTree = "<group>"; };
+		61D586C619594EA689E1323E /* WidgetIconStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetIconStyle.swift; sourceTree = "<group>"; };
 		B10C653B05E6F6D202CE920D /* ProjectName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectName.swift; sourceTree = "<group>"; };
 		B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAlertBotTests.swift; sourceTree = "<group>"; };
 		BE75F8C6E2B4371B287E4B6E /* SessionGCTimerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionGCTimerTests.swift; sourceTree = "<group>"; };
@@ -255,6 +257,7 @@
 				13A9A6378829C0CD87A47282 /* SoundPlayer.swift */,
 				522E0E229AC969DF7503A6DC /* TerminalJumper.swift */,
 				650DBF68BEBAABAE7F7A198D /* WakeObserver.swift */,
+				61D586C619594EA689E1323E /* WidgetIconStyle.swift */,
 				AA10B9E598D15FE4F984232A /* WidgetIconView.swift */,
 				0EC061914D2B7ECEB85B1014 /* WidgetPopoverController.swift */,
 				EDF449A89D43D22903D8CDE8 /* WorkspaceFrontmostObserver.swift */,
@@ -525,6 +528,7 @@
 				A18B22B68BE4366E466158B9 /* SoundPlayer.swift in Sources */,
 				79903489DB30D25112CC0F2F /* TerminalJumper.swift in Sources */,
 				8E1ECB3C7626B361AF1EFBA5 /* WakeObserver.swift in Sources */,
+				46F37B5FB4D54D1783D62FC9 /* WidgetIconStyle.swift in Sources */,
 				7FB4A5BE37BDC1B0C0CA18AD /* WidgetIconView.swift in Sources */,
 				6D860F2F4A5F204144F1FC3E /* WidgetPopoverController.swift in Sources */,
 				97C580169F97615A0622C3B4 /* WorkspaceFrontmostObserver.swift in Sources */,

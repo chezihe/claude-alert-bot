@@ -17,6 +17,8 @@ struct SettingsView: View {
     static let quietHoursToggleLabel = "Quiet Hours"
     static let idleAnimationHeading = "Idle Animation"
     static let idleAnimationLabel = "Animation"
+    static let widgetIconHeading = "Widget Icon"
+    static let widgetIconLabel = "Icon"
     static let themeHeading = "Theme"
     static let themeLabel = "Appearance"
     static let reduceMotionHeading = "Reduce Motion"
@@ -92,6 +94,15 @@ struct SettingsView: View {
                 Picker(Self.idleAnimationLabel, selection: store.idleAnimationBinding) {
                     ForEach(IdleAnimation.allCases, id: \.self) { animation in
                         Text(Self.idleAnimationName(animation)).tag(animation)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+
+            Section(Self.widgetIconHeading) {
+                Picker(Self.widgetIconLabel, selection: store.widgetIconStyleBinding) {
+                    ForEach(WidgetIconStyle.allCases, id: \.self) { style in
+                        Text(Self.widgetIconStyleName(style)).tag(style)
                     }
                 }
                 .pickerStyle(.menu)
@@ -244,6 +255,12 @@ struct SettingsView: View {
         case .roam: return "Roam"
         case .rage: return "🤬 Rage"
         case .magic: return "Magic"
+        }
+    }
+
+    static func widgetIconStyleName(_ style: WidgetIconStyle) -> String {
+        switch style {
+        case .claude: return "Claude"
         }
     }
 

@@ -52,6 +52,7 @@ final class SettingsStore: ObservableObject {
     @AppStorage("quiet_hours_enabled") var quietHoursEnabled: Bool = false
     @AppStorage("ever_had_alerts")   var everHadAlerts: Bool = false
     @AppStorage("idle_animation")    private var idleAnimationRaw: String = IdleAnimation.default.rawValue
+    @AppStorage("widget_icon_style") private var widgetIconStyleRaw: String = WidgetIconStyle.default.rawValue
     @AppStorage("theme_mode")        private var themeModeRaw: String = ThemeMode.default.rawValue
     @AppStorage("reduce_motion_preference") private var reduceMotionPreferenceRaw: String = ReduceMotionPreference.default.rawValue
     @AppStorage("launch_at_login_enabled") var launchAtLoginEnabled: Bool = false
@@ -68,6 +69,11 @@ final class SettingsStore: ObservableObject {
     var idleAnimation: IdleAnimation {
         get { IdleAnimation(rawValue: idleAnimationRaw) ?? .default }
         set { idleAnimationRaw = newValue.rawValue; objectWillChange.send() }
+    }
+
+    var widgetIconStyle: WidgetIconStyle {
+        get { WidgetIconStyle(rawValue: widgetIconStyleRaw) ?? .default }
+        set { widgetIconStyleRaw = newValue.rawValue; objectWillChange.send() }
     }
 
     var themeMode: ThemeMode {
@@ -87,6 +93,10 @@ final class SettingsStore: ObservableObject {
 
     var idleAnimationBinding: Binding<IdleAnimation> {
         Binding(get: { self.idleAnimation }, set: { self.idleAnimation = $0 })
+    }
+
+    var widgetIconStyleBinding: Binding<WidgetIconStyle> {
+        Binding(get: { self.widgetIconStyle }, set: { self.widgetIconStyle = $0 })
     }
 
     var themeModeBinding: Binding<ThemeMode> {
@@ -129,6 +139,7 @@ final class SettingsStore: ObservableObject {
         self._quietHoursEnabled = AppStorage(wrappedValue: false, "quiet_hours_enabled", store: defaults)
         self._everHadAlerts = AppStorage(wrappedValue: false, "ever_had_alerts", store: defaults)
         self._idleAnimationRaw = AppStorage(wrappedValue: IdleAnimation.default.rawValue, "idle_animation", store: defaults)
+        self._widgetIconStyleRaw = AppStorage(wrappedValue: WidgetIconStyle.default.rawValue, "widget_icon_style", store: defaults)
         self._themeModeRaw = AppStorage(wrappedValue: ThemeMode.default.rawValue, "theme_mode", store: defaults)
         self._reduceMotionPreferenceRaw = AppStorage(wrappedValue: ReduceMotionPreference.default.rawValue, "reduce_motion_preference", store: defaults)
         self._launchAtLoginEnabled = AppStorage(wrappedValue: false, "launch_at_login_enabled", store: defaults)

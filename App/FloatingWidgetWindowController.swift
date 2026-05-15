@@ -50,7 +50,8 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
             idleAnimation: SettingsStore.shared.idleAnimation,
             alertPulseID: currentAlertPulseID,
             quietHoursEnabled: SettingsStore.shared.quietHoursEnabled,
-            reduceMotionPreference: SettingsStore.shared.reduceMotionPreference
+            reduceMotionPreference: SettingsStore.shared.reduceMotionPreference,
+            widgetIconStyle: SettingsStore.shared.widgetIconStyle
         ))
         hv.frame = initialFrame
         p.contentView = hv
@@ -150,7 +151,8 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
             idleAnimation: SettingsStore.shared.idleAnimation,
             alertPulseID: currentAlertPulseID,
             quietHoursEnabled: SettingsStore.shared.quietHoursEnabled,
-            reduceMotionPreference: SettingsStore.shared.reduceMotionPreference
+            reduceMotionPreference: SettingsStore.shared.reduceMotionPreference,
+            widgetIconStyle: SettingsStore.shared.widgetIconStyle
         )
     }
 

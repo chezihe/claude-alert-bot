@@ -147,6 +147,32 @@ xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
 - 정확한 창을 앞으로 못 올린다면 Accessibility 권한을 허용합니다.
 - iTerm2가 이미 실행 중인지 확인합니다.
 
+### 클릭한 세션이 아닌 다른 세션으로 이동할 때
+
+듀얼 모니터, 또는 여러 iTerm2 창이 동시에 떠있는 환경에서 행을 클릭했는데 엉뚱한 세션으로 포커스가 가는 경우입니다. 대부분 Accessibility 권한이 비어 있을 때 나타납니다. 권한이 없으면 앱은 단순한 앱 단위 활성화만 시도하고, macOS가 임의의 창(보통 마우스가 있는 화면의 창)을 위로 올리기 때문입니다.
+
+특히 직접 빌드해서 쓰는 경우 자주 발생합니다. 앱이 ad-hoc 서명(개발자 인증서 없이 로컬에서만 통하는 서명 방식)으로 빌드되면, 빌드할 때마다 바이너리 지문(cdhash)이 바뀌어 macOS가 이전 빌드에 부여한 권한을 새 빌드에 자동 적용하지 않습니다.
+
+해결 순서:
+
+1. 벨 메뉴에서 `Grant Accessibility…`를 클릭합니다.
+2. macOS가 띄우는 다이얼로그에서 허용한 뒤, 자동으로 열리는 `시스템 설정 > 개인정보 보호 및 보안 > 손쉬운 사용`에서 ClaudeAlertBot 토글이 켜져 있는지 확인합니다.
+3. 앱을 종료 후 다시 실행합니다. 권한 상태는 프로세스 시작 시점에 잡힙니다.
+
+권한이 실제로 적용됐는지 확인하고 싶으면 다음 로그를 봅니다.
+
+```bash
+/usr/bin/log show --predicate 'subsystem == "com.claudealert.bot.hook" && category == "ax"' --info --last 30s
+```
+
+`[ax-trust trusted=true ...]`가 보이면 정상입니다. 여전히 `trusted=false` 또는 `[ax-skip reason=not-trusted]`가 찍히면 권한 등록이 이전 빌드와 충돌한 상태입니다. 완전히 비우고 다시 부여하세요.
+
+```bash
+tccutil reset Accessibility com.claudealert.bot
+```
+
+이후 1단계부터 다시 진행합니다.
+
 ### Hook 재설치
 
 개발 중 reporter 스크립트와 hook 설정을 수동으로 다시 적용하고 싶다면:

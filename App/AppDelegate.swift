@@ -42,6 +42,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        AccessibilityRaiser.logTrustDiagnostics()
+
         // === Phase 1 steps (preserved verbatim) ===
         // 1. Validate socket path length (Pitfall #6)
         guard SocketPaths.validateSocketPathLength() else {

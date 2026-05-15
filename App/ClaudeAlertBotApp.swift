@@ -175,6 +175,11 @@ private struct MenuBarMenuContent: View {
             }
         }
 
+        Button("Grant Accessibility…") {
+            AccessibilityRaiser.requestTrust()
+            PermissionDeepLink.openAccessibilityPreferences()
+        }
+
         Divider()
         Button("Quit") { NSApp.terminate(nil) }
     }

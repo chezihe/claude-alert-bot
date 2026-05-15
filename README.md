@@ -146,6 +146,32 @@ xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
 - Grant Accessibility permission if the app cannot raise the exact iTerm2 window.
 - Make sure iTerm2 is already running.
 
+### Clicking A Row Activates The Wrong Session
+
+This happens on multi-display setups, or when several iTerm2 windows are open at once, and the clicked row brings up a different session than expected. Almost always it means Accessibility permission is not in effect. Without it, the app falls back to a plain app-level activation and macOS picks whichever iTerm2 window it prefers — typically the one on the screen under the mouse cursor.
+
+It shows up most often with self-built copies. Ad-hoc signing (the local-only signature used when there is no Developer ID certificate) changes the binary fingerprint (cdhash) on every rebuild, so macOS does not carry the previously-granted permission over to the new build.
+
+Recovery steps:
+
+1. Open the bell menu and click `Grant Accessibility…`.
+2. Approve the macOS dialog, then verify the ClaudeAlertBot toggle is ON in `System Settings > Privacy & Security > Accessibility` (it opens automatically).
+3. Quit and relaunch the app. Trust state is captured at process startup.
+
+To confirm the permission is actually applied, check the log:
+
+```bash
+/usr/bin/log show --predicate 'subsystem == "com.claudealert.bot.hook" && category == "ax"' --info --last 30s
+```
+
+`[ax-trust trusted=true ...]` means it is in effect. If you still see `trusted=false` or `[ax-skip reason=not-trusted]`, a stale registration from a previous build is in the way. Reset and re-grant:
+
+```bash
+tccutil reset Accessibility com.claudealert.bot
+```
+
+Then start again from step 1.
+
 ### Hook Repair
 
 If you want to reapply the reporter script and hook configuration manually during development:

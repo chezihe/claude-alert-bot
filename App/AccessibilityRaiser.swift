@@ -26,6 +26,16 @@ enum AccessibilityRaiser {
         AXIsProcessTrusted()
     }
 
+    /// Diagnostic — emits the current AX trust state plus the running binary path
+    /// so logs can confirm whether a "permission granted" UI toggle actually maps
+    /// to this binary's cdhash. Ad-hoc builds change cdhash on every rebuild and
+    /// silently invalidate TCC entries from prior builds.
+    static func logTrustDiagnostics() {
+        let trusted = AXIsProcessTrusted()
+        let exe = Bundle.main.executablePath ?? "<unknown>"
+        log.notice("[ax-trust trusted=\(trusted, privacy: .public) exe=\(exe, privacy: .public)]")
+    }
+
     /// Triggers the system "Add to Accessibility" dialog if we are not yet trusted.
     /// macOS shows the dialog at most once per app install; subsequent calls while
     /// untrusted silently return false. After the user grants, the app must be
@@ -71,14 +81,17 @@ enum AccessibilityRaiser {
             return false
         }
 
+        // Order matters on multi-display setups: activate() FIRST so macOS picks
+        // *some* iTerm2 window as foreground (often the one on the active screen),
+        // THEN raise + kAXMain + kAXFocused on the exact target so our raise is
+        // the final state. Reversed order lets activate() overwrite the raise.
         // kAXRaiseAction is the only AX call that crosses Mission Control Spaces.
-        // We set kAXMain after — the raise alone leaves keyboard focus undefined.
-        let raiseErr = AXUIElementPerformAction(win, kAXRaiseAction as CFString)
-        AXUIElementSetAttributeValue(win, kAXMainAttribute as CFString, kCFBooleanTrue)
         if let app = NSRunningApplication(processIdentifier: itermPID) {
-            // macOS 14+ replacement for the deprecated activate(options:).
             app.activate()
         }
+        let raiseErr = AXUIElementPerformAction(win, kAXRaiseAction as CFString)
+        AXUIElementSetAttributeValue(win, kAXMainAttribute as CFString, kCFBooleanTrue)
+        AXUIElementSetAttributeValue(win, kAXFocusedAttribute as CFString, kCFBooleanTrue)
         log.notice("[ax-raised windowID=\(windowID ?? 0, privacy: .public) code=\(raiseErr.rawValue, privacy: .public)]")
         return true
     }
@@ -110,6 +123,7 @@ enum AccessibilityRaiser {
             for w in axWindows {
                 var cgID: CGWindowID = 0
                 if _AXUIElementGetWindow(w, &cgID) == .success, cgID == wantedID {
+                    log.notice("[ax-match path=windowID id=\(wantedID, privacy: .public)]")
                     return w
                 }
             }
@@ -122,6 +136,7 @@ enum AccessibilityRaiser {
                 var titleRef: CFTypeRef?
                 if AXUIElementCopyAttributeValue(w, kAXTitleAttribute as CFString, &titleRef) == .success,
                    let t = titleRef as? String, t == wantedTitle {
+                    log.notice("[ax-match path=title-fallback title=\(wantedTitle, privacy: .public)]")
                     return w
                 }
             }

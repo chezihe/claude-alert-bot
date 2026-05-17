@@ -59,6 +59,17 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertEqual(envelope["last_output"] as? String, "Claude needs your permission to use Bash")
     }
 
+    func test_reporterIgnoresCodexMemorySessions() throws {
+        let envelope = try runReporterEnvelope(stdin: """
+        {
+          "session_id": "sid-memory",
+          "cwd": "\(tempHome.path)/.codex/memories"
+        }
+        """)
+
+        XCTAssertNil(envelope)
+    }
+
     func test_reporterCapsLastOutputTo4KB() throws {
         let output = String(repeating: "x", count: 5_000)
         let payloadData = try JSONSerialization.data(withJSONObject: [
@@ -649,6 +660,10 @@ final class ReporterScriptTests: XCTestCase {
     }
 
     private func runReporter(event: String = "stop", stdin: String) throws -> [String: Any] {
+        try XCTUnwrap(runReporterEnvelope(event: event, stdin: stdin))
+    }
+
+    private func runReporterEnvelope(event: String = "stop", stdin: String) throws -> [String: Any]? {
         let repoRoot = repoRootURL()
         let reporter = repoRoot.appendingPathComponent("Reporter/cab-report.sh")
 
@@ -681,7 +696,7 @@ final class ReporterScriptTests: XCTestCase {
         let line = try XCTUnwrap(log.split(separator: "\n").last)
         let data = Data(line.utf8)
         let outer = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
-        return try XCTUnwrap(outer["envelope"] as? [String: Any])
+        return outer["envelope"] as? [String: Any]
     }
 
     @discardableResult

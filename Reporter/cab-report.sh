@@ -76,6 +76,14 @@ def epoch(v):
         except Exception:
             return None
     return None
+def is_codex_memory_event(envelope):
+    cwd = envelope.get("cwd")
+    home = env("HOME")
+    if not isinstance(cwd, str) or not home:
+        return False
+    memories = os.path.abspath(os.path.join(home, ".codex", "memories"))
+    cwd = os.path.abspath(os.path.expanduser(cwd))
+    return envelope.get("transcript_path") is None and (cwd == memories or cwd.startswith(memories + os.sep))
 def transcript_started_at(path):
     if not isinstance(path, str) or not path:
         return None
@@ -135,6 +143,8 @@ if not isinstance(last_output, str):
 last_output = cap_utf8(last_output)
 if last_output is not None:
     envelope["last_output"] = last_output
+if is_codex_memory_event(envelope):
+    sys.exit(0)
 print(json.dumps(envelope, ensure_ascii=False))
 ' 2>/dev/null) || JSON=""
 

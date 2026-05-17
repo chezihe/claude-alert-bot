@@ -186,6 +186,32 @@ final class AppleScriptHelperTests: XCTestCase {
         )
     }
 
+    func test_accessibilityRaiser_usesFocusedOrMainWindowWhenWindowIDAndTitleMiss() throws {
+        let testFile = URL(fileURLWithPath: #filePath)
+        let projectRoot = testFile
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let raiserURL = projectRoot
+            .appendingPathComponent("App")
+            .appendingPathComponent("AccessibilityRaiser.swift")
+        let src = (try? String(contentsOf: raiserURL, encoding: .utf8)) ?? ""
+        XCTAssertFalse(src.isEmpty, "Could not read App/AccessibilityRaiser.swift at \(raiserURL.path)")
+
+        XCTAssertTrue(
+            src.contains("let fallbackAXWindows = fallbackWindows(appElement)"),
+            "When iTerm2's AppleScript window id/title drift from AX, raise should keep focused/main AX windows for a post-miss fallback"
+        )
+        XCTAssertTrue(
+            src.contains("let matchedWindow = matchWindow(axWindows, windowID: windowID, title: title)")
+                && src.contains("let target = matchedWindow ?? fallbackAXWindows.first"),
+            "After AppleScript selected the target session, AX raise should fall back to the focused/main iTerm window if id/title matching misses"
+        )
+        XCTAssertTrue(
+            src.contains("[ax-match path=focused-main-fallback"),
+            "The focused/main fallback path should be visible in logs for diagnosis"
+        )
+    }
+
     func test_accessibilityRaiser_doesNotPromptFromJumpPath() throws {
         let testFile = URL(fileURLWithPath: #filePath)
         let projectRoot = testFile

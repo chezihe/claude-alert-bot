@@ -61,10 +61,12 @@ enum AccessibilityRaiser {
             log.warning("[ax-error reason=copy-windows code=\(copyErr.rawValue, privacy: .public)]")
             return false
         }
+        let fallbackAXWindows = fallbackWindows(appElement)
         var axWindows = (windowsRef as? [AXUIElement]) ?? []
-        axWindows.append(contentsOf: fallbackWindows(appElement))
+        axWindows.append(contentsOf: fallbackAXWindows)
 
-        let target = matchWindow(axWindows, windowID: windowID, title: title)
+        let matchedWindow = matchWindow(axWindows, windowID: windowID, title: title)
+        let target = matchedWindow ?? fallbackAXWindows.first
         guard let win = target else {
             // Emit available AX titles + CGWindowIDs when match fails so the user-side
             // log shows exactly why the title didn't line up (decoration drift between
@@ -79,6 +81,9 @@ enum AccessibilityRaiser {
             }.joined(separator: " || ")
             log.notice("[ax-miss windowID=\(windowID ?? 0, privacy: .public) title=\(title ?? "", privacy: .public) available=\(available, privacy: .public)]")
             return false
+        }
+        if matchedWindow == nil && fallbackAXWindows.contains(where: { CFEqual($0, win) }) {
+            log.notice("[ax-match path=focused-main-fallback windowID=\(windowID ?? 0, privacy: .public)]")
         }
 
         // Order matters on multi-display setups: activate() FIRST so macOS picks

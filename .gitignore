@@ -13,3 +13,6 @@ xcuserdata/
 
 # Phase 1 build artifacts
 *.xcarchive
+
+# Local Codex/Superpowers workspace
+.superpowers/

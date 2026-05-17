@@ -47,8 +47,8 @@ enum ColorTokens {
 }
 
 enum GeometryTokens {
-    // Project contract: popover width 270pt — WO-009 reconciles code and contract.
-    static let popoverWidth: CGFloat = 270
+    // Project contract: popover width 255pt — WO-009 reconciles code and contract.
+    static let popoverWidth: CGFloat = 255
     // Fixed toolbar row for settings and optional clear action.
     static let popoverToolbarHeight: CGFloat = 32
     // Project contract: popover corner radius 14pt

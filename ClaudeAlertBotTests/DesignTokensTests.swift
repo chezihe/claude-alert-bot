@@ -73,8 +73,8 @@ final class DesignTokensTests: XCTestCase {
 
     // MARK: - GeometryTokens (project contract "Geometry")
 
-    func test_geometryTokens_popoverWidth_is270_perSpec() {
-        XCTAssertEqual(GeometryTokens.popoverWidth, 270)
+    func test_geometryTokens_popoverWidth_is255_perSpec() {
+        XCTAssertEqual(GeometryTokens.popoverWidth, 255)
     }
 
     func test_geometryTokens_popoverCornerRadius_is14() {

@@ -78,6 +78,46 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(second.idleAnimation, .bounce)
     }
 
+    func test_zeldaAlertEffect_defaultIsHeal() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = SettingsStore(defaults: defaults)
+
+        XCTAssertEqual(store.zeldaAlertEffect, .heal)
+    }
+
+    func test_zeldaAlertEffect_persistsAcrossInit() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let first = SettingsStore(defaults: defaults)
+        first.zeldaAlertEffect = .hit
+
+        let second = SettingsStore(defaults: defaults)
+        XCTAssertEqual(second.zeldaAlertEffect, .hit)
+    }
+
+    func test_widgetIconStyleChange_resetsAnimationSelectionsToIconDefaults() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = SettingsStore(defaults: defaults)
+        store.idleAnimation = .magic
+        store.zeldaAlertEffect = .hit
+
+        store.widgetIconStyle = .zelda
+
+        XCTAssertEqual(store.idleAnimation, .bounce)
+        XCTAssertEqual(store.zeldaAlertEffect, .heal)
+    }
+
     func test_themeMode_defaultIsSystem() {
         let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!

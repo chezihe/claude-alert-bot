@@ -66,9 +66,17 @@ private struct MenuBarMenuContent: View {
                     Text(SettingsView.widgetIconStyleName(style)).tag(style)
                 }
             }
-            Picker(SettingsView.idleAnimationLabel, selection: store.idleAnimationBinding) {
-                ForEach(menuIdleAnimations, id: \.self) { animation in
-                    Text(SettingsView.idleAnimationName(animation)).tag(animation)
+            if store.widgetIconStyle == .zelda {
+                Picker(SettingsView.idleAnimationLabel, selection: store.zeldaAlertEffectBinding) {
+                    ForEach(WidgetAlertEffect.allCases, id: \.self) { effect in
+                        Text(SettingsView.zeldaAlertEffectName(effect)).tag(effect)
+                    }
+                }
+            } else {
+                Picker(SettingsView.idleAnimationLabel, selection: store.idleAnimationBinding) {
+                    ForEach(menuIdleAnimations, id: \.self) { animation in
+                        Text(SettingsView.idleAnimationName(animation)).tag(animation)
+                    }
                 }
             }
             Picker(SettingsView.themeLabel, selection: store.themeModeBinding) {

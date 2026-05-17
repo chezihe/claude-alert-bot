@@ -342,6 +342,7 @@
 				E91A92EBBEF2F146AF2DE9BA /* Resources */,
 				64AA2AC3ADACB0F5DCB01F42 /* Embed cab-test helper into Contents/MacOS */,
 				D838B4AB29EFC4F6F0B17286 /* Embed Reporter shell script */,
+				B7A23B8F20E948A2A94B5A61 /* Embed Zelda widget assets */,
 			);
 			buildRules = (
 			);
@@ -443,6 +444,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "SRC=\"${SRCROOT}/Reporter/cab-report.sh\"\nDEST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/cab-report.sh\"\nif [ -f \"$SRC\" ]; then\n    mkdir -p \"$(dirname \"$DEST\")\"\n    cp \"$SRC\" \"$DEST\"\n    chmod +x \"$DEST\"\nfi\n";
+		};
+		B7A23B8F20E948A2A94B5A61 /* Embed Zelda widget assets */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed Zelda widget assets";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "SRC=\"${SRCROOT}/zelda\"\nDEST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/zelda\"\nif [ -d \"$SRC\" ]; then\n    rm -rf \"$DEST\"\n    mkdir -p \"$DEST\"\n    cp -R \"$SRC\"/. \"$DEST\"/\n    find \"$DEST\" -name .DS_Store -delete\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

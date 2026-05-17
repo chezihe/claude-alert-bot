@@ -23,9 +23,16 @@ import os
 /// touching CoreAudio. SoundPlayer is the production conformer.
 @MainActor protocol SoundPlaying: AnyObject {
     func playOnce()
+    func playOnce(cue: SoundCue)
 }
 
 extension SoundPlayer: SoundPlaying {}
+
+extension SoundPlaying {
+    func playOnce(cue: SoundCue) {
+        playOnce()
+    }
+}
 
 /// Widget abstraction — declared here so plan 02-07 can implement against it in parallel
 /// (and Wave 4 02-08 popover + Wave 6 02-11 wiring consume the same shape).
@@ -78,7 +85,7 @@ final class NotificationOrchestrator: NotifierProtocol {
         store.everHadAlerts = true
         widget?.showWidget(pendingCount: queue.count, latest: session)
         if playSoundOnce && store.soundEnabled && !store.quietHoursEnabled {
-            sound.playOnce()
+            sound.playOnce(cue: store.widgetIconStyle.alertSoundCue(effect: store.zeldaAlertEffect))
             log.notice("present session=\(session.sessionID, privacy: .public) sound=on")
         } else {
             log.notice("present session=\(session.sessionID, privacy: .public) sound=off playSoundOnce=\(playSoundOnce, privacy: .public) enabled=\(store.soundEnabled, privacy: .public) quiet=\(store.quietHoursEnabled, privacy: .public)")

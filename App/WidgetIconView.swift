@@ -21,6 +21,8 @@ struct WidgetIconView: View {
     var quietHoursEnabled: Bool = false
     var reduceMotionPreference: ReduceMotionPreference = .system
     var widgetIconStyle: WidgetIconStyle = .default
+    var widgetSide: WidgetSide = .right
+    var alertEffect: WidgetAlertEffect = .heal
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @State private var roamPhase: Double = 0
@@ -44,9 +46,17 @@ struct WidgetIconView: View {
     @State private var trailSparkles: [TrailSpark] = []
     @State private var burstSparkles: [BurstSpark] = []
     @State private var lastBurstCycleID: Int = -1
+    @State private var zeldaIdleStartedAt: Date = Date()
+    @State private var zeldaAlertStartedAt: Date = .distantPast
 
     private static let badgeOffset = CGSize(width: -2, height: 2)
+    private static let zeldaHeartOffset = CGSize(width: -1, height: -18)
+    private static let claudeGlyphSize = CGSize(width: 46, height: 46)
+    private static let zeldaGlyphSize = CGSize(width: 92, height: 92)
+    private static let zeldaIdleFrameDuration: TimeInterval = 0.45
+    private static let zeldaAlertFrameDuration: TimeInterval = 0.18
     private static let fixedGlyphOffset = CGSize(width: 0, height: 8)
+    private static let zeldaGlyphOffset = CGSize(width: 0, height: 18)
     // Pivot sits on the icon's right arm (the "hand") so the wand reads as held by it.
     private static let magicWandOffset = CGSize(width: 20, height: -5)
     private static let magicWandBaseRotation: Double = 32
@@ -63,28 +73,37 @@ struct WidgetIconView: View {
         GeometryTokens.widgetDrawableSize(
             idleAnimation: idleAnimation,
             quietHoursEnabled: quietHoursEnabled,
-            reduceMotion: reduceMotion
+            reduceMotion: reduceMotion,
+            widgetIconStyle: widgetIconStyle
         )
     }
 
+    private var glyphSize: CGSize {
+        widgetIconStyle == .zelda ? Self.zeldaGlyphSize : Self.claudeGlyphSize
+    }
+
+    private var glyphOffset: CGSize {
+        widgetIconStyle == .zelda ? Self.zeldaGlyphOffset : Self.fixedGlyphOffset
+    }
+
     private var bounceAnimatorActive: Bool {
-        idleAnimation == .bounce && !quietHoursEnabled && !reduceMotion
+        widgetIconStyle == .claude && idleAnimation == .bounce && !quietHoursEnabled && !reduceMotion
     }
 
     private var heartAnimatorActive: Bool {
-        idleAnimation == .heart && !quietHoursEnabled && !reduceMotion
+        widgetIconStyle == .claude && idleAnimation == .heart && !quietHoursEnabled && !reduceMotion
     }
 
     private var rageAnimatorActive: Bool {
-        idleAnimation == .rage && !quietHoursEnabled && !reduceMotion
+        widgetIconStyle == .claude && idleAnimation == .rage && !quietHoursEnabled && !reduceMotion
     }
 
     private var ringAnimatorActive: Bool {
-        idleAnimation == .ring && !quietHoursEnabled && !reduceMotion
+        widgetIconStyle == .claude && idleAnimation == .ring && !quietHoursEnabled && !reduceMotion
     }
 
     private var magicAnimatorActive: Bool {
-        idleAnimation == .magic && !quietHoursEnabled && !reduceMotion
+        widgetIconStyle == .claude && idleAnimation == .magic && !quietHoursEnabled && !reduceMotion
     }
 
     var body: some View {
@@ -269,7 +288,11 @@ struct WidgetIconView: View {
                 } else {
                     glyph(bounceValue: BounceAnimatorValue(), heartScale: 1.0, rageValue: RageAnimatorValue())
                 }
-                if pendingCount >= 2 {
+                if widgetIconStyle == .zelda {
+                    if pendingCount >= 1 {
+                        zeldaHeartBadgeView
+                    }
+                } else if pendingCount >= 2 {
                     badgeView
                 }
             }
@@ -299,10 +322,8 @@ struct WidgetIconView: View {
         rageValue: RageAnimatorValue,
         ringRotation: Double = 0
     ) -> some View {
-        Image(widgetIconStyle.assetName)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: 46, height: 46)
+        glyphImage
+            .frame(width: glyphSize.width, height: glyphSize.height)
             .frame(width: GeometryTokens.widgetBaseSize.width, height: GeometryTokens.widgetBaseSize.height)
             // Heart-mode glow pulses in sync with the heartScale double-pulse (1.0→1.14).
             .shadow(
@@ -324,8 +345,8 @@ struct WidgetIconView: View {
             .scaleEffect(quietHoursEnabled ? 1.0 : heartScale * alertPulseScale, anchor: .center)
             .rotationEffect(.degrees(quietHoursEnabled ? 0 : alertPulseRotation + ringRotation), anchor: UnitPoint(x: 0.5, y: 0.1))
             .offset(
-                x: Self.fixedGlyphOffset.width,
-                y: (quietHoursEnabled ? 0 : bounceValue.translateY) + Self.fixedGlyphOffset.height
+                x: glyphOffset.width,
+                y: (quietHoursEnabled ? 0 : bounceValue.translateY) + glyphOffset.height
             )
             // Rage throw-windup applied last so it dominates other transforms while looping.
             // Internal prototype transform-origin: 50% 90%.
@@ -336,7 +357,7 @@ struct WidgetIconView: View {
             .offset(y: rageImpactKick * 1.5)
             // Roam breathing — subtle 1.0↔1.04 scale across the 1.6s lap.
             .scaleEffect(
-                idleAnimation == .roam && !quietHoursEnabled && !reduceMotion
+                idleAnimation == .roam && widgetIconStyle == .claude && !quietHoursEnabled && !reduceMotion
                     ? 1.0 + 0.04 * CGFloat(sin(roamPhase * .pi / 180))
                     : 1.0,
                 anchor: .center
@@ -345,7 +366,7 @@ struct WidgetIconView: View {
                 angle: roamPhase,
                 radiusX: Double(MotionTokens.roamRadiusX),
                 radiusY: Double(MotionTokens.roamRadiusY),
-                isActive: idleAnimation == .roam && !quietHoursEnabled && !reduceMotion
+                isActive: idleAnimation == .roam && widgetIconStyle == .claude && !quietHoursEnabled && !reduceMotion
             ))
             .onAppear {
                 startIdleAnimation()
@@ -369,6 +390,13 @@ struct WidgetIconView: View {
                 restartRageProjectileLoop()
                 restartCastCycleLoop()
             }
+            .onChange(of: widgetIconStyle) { _, _ in
+                resetAlertPulse()
+                restartIdleAnimation()
+                restartRageProjectileLoop()
+                restartCastCycleLoop()
+                zeldaIdleStartedAt = Date()
+            }
             .onChange(of: reduceMotion) { _, _ in
                 resetAlertPulse()
                 restartIdleAnimation()
@@ -381,6 +409,51 @@ struct WidgetIconView: View {
             .onChange(of: pendingCount) { _, _ in
                 runBadgePop()
             }
+    }
+
+    @ViewBuilder
+    private var glyphImage: some View {
+        if widgetIconStyle == .zelda {
+            TimelineView(.animation) { context in
+                zeldaImage(frameName: zeldaFrameName(at: context.date), widgetSide: widgetSide)
+            }
+        } else {
+            Image("ClaudeCodeIcon")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+        }
+    }
+
+    private func zeldaFrameName(at date: Date) -> String {
+        let alertFrames = ZeldaFrame.alertFrames(side: widgetSide, effect: alertEffect)
+        let alertAge = date.timeIntervalSince(zeldaAlertStartedAt)
+        if alertAge >= 0 {
+            var elapsed: TimeInterval = 0
+            for frameName in alertFrames {
+                let duration = Self.zeldaAlertFrameDuration * ZeldaFrame.alertFrameDurationMultiplier(frameName: frameName)
+                if alertAge < elapsed + duration {
+                    return frameName
+                }
+                elapsed += duration
+            }
+        }
+        let idleAge = max(0, date.timeIntervalSince(zeldaIdleStartedAt))
+        let index = Int(idleAge / Self.zeldaIdleFrameDuration) % ZeldaFrame.idleFrames.count
+        return ZeldaFrame.idleFrames[index]
+    }
+
+    private func zeldaImage(frameName: String, widgetSide: WidgetSide) -> some View {
+        Image(nsImage: bundleImage(named: frameName, subdirectory: ZeldaFrame.pickerSubdirectory(side: widgetSide)))
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+    }
+
+    private func bundleImage(named name: String, subdirectory: String) -> NSImage {
+        if let url = Bundle.main.url(forResource: name, withExtension: "png", subdirectory: subdirectory),
+           let image = NSImage(contentsOf: url) {
+            return image
+        }
+        return NSImage(size: NSSize(width: 1, height: 1))
     }
 
     // MARK: - Magic v2 (Tap-Cast)
@@ -569,6 +642,35 @@ struct WidgetIconView: View {
             .accessibilityHidden(true)
     }
 
+    private var zeldaHeartFrameName: String {
+        switch min(max(pendingCount, 1), 3) {
+        case 1: return "heart_frame_01"
+        case 2: return "heart_frame_02"
+        default: return "heart_frame_03"
+        }
+    }
+
+    @ViewBuilder
+    private var zeldaHeartBadgeView: some View {
+        HStack(alignment: .top, spacing: 0) {
+            Image(nsImage: bundleImage(named: zeldaHeartFrameName, subdirectory: "zelda/heart"))
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 45, height: 24)
+            if pendingCount > 3 {
+                zeldaHeartOverflowText
+            }
+        }
+        .offset(x: Self.zeldaHeartOffset.width, y: Self.zeldaHeartOffset.height)
+        .accessibilityHidden(true)
+    }
+
+    private var zeldaHeartOverflowText: some View {
+        Text("+\(pendingCount - 3)")
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(.black)
+    }
+
     private var widgetAccessibilityLabel: String {
         let sessionCount = pendingCount == 1 ? "1 pending session" : "\(pendingCount) pending sessions"
         let quietSuffix = quietHoursEnabled ? ". Quiet Hours" : ""
@@ -585,6 +687,7 @@ struct WidgetIconView: View {
             // the previous branch and there is no lingering animation to cancel.
             return
         case .roam:
+            guard widgetIconStyle == .claude else { return }
             guard let anim = MotionTokens.roamAnimation(reduceMotion: reduceMotion) else { return }
             withAnimation(anim) {
                 roamPhase = -360
@@ -738,6 +841,9 @@ struct WidgetIconView: View {
         guard alertPulseID > 0, alertPulseID != activeAlertPulseID, !quietHoursEnabled else { return }
         let pulseID = alertPulseID
         activeAlertPulseID = pulseID
+        if widgetIconStyle == .zelda {
+            zeldaAlertStartedAt = Date()
+        }
         alertPulseGeneration += 1
         let pulseGeneration = alertPulseGeneration
         alertPulseScale = 1.0
@@ -790,6 +896,7 @@ struct WidgetIconView: View {
             alertPulseRotation = 0
             sonarScale = MotionTokens.sonarStartScale
             sonarOpacity = 0
+            zeldaAlertStartedAt = .distantPast
         }
     }
 }

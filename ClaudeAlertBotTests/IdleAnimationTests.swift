@@ -157,6 +157,17 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(restartBody.contains("startIdleAnimation()"))
     }
 
+    func test_widgetIconViewSource_claudeIdleAnimatorsDoNotRunForZeldaIcon() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("widgetIconStyle == .claude && idleAnimation == .bounce"))
+        XCTAssertTrue(src.contains("widgetIconStyle == .claude && idleAnimation == .heart"))
+        XCTAssertTrue(src.contains("widgetIconStyle == .claude && idleAnimation == .rage"))
+        XCTAssertTrue(src.contains("widgetIconStyle == .claude && idleAnimation == .ring"))
+        XCTAssertTrue(src.contains("widgetIconStyle == .claude && idleAnimation == .magic"))
+        XCTAssertTrue(src.contains("idleAnimation == .roam && widgetIconStyle == .claude"))
+    }
+
     func test_widgetIconViewSource_restartsWhenReduceMotionChanges() {
         let src = readWidgetIconViewSource()
 
@@ -213,7 +224,7 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(src.contains("var quietHoursEnabled: Bool = false"))
         XCTAssertTrue(src.contains("guard !quietHoursEnabled else { return }"))
         XCTAssertTrue(src.contains("if pendingCount >= 2 {"))
-        XCTAssertTrue(src.contains("if quietHoursEnabled {"))
+        XCTAssertTrue(src.contains("quietHoursEnabled ? 1.0"))
         XCTAssertFalse(src.contains("else if quietHoursEnabled {"))
         // Badge now uses HTML-proto accent-dark fill (#B8492C) with a Quiet-mode gray (#6B6B75).
         XCTAssertTrue(src.contains("Color(red: 0x6B/255, green: 0x6B/255, blue: 0x75/255)"))
@@ -250,12 +261,81 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertFalse(src.contains("pendingCount - 1"))
     }
 
+    func test_widgetIconViewSource_replacesBadgeWithZeldaHeartsOnlyForZelda() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("if widgetIconStyle == .zelda {"))
+        XCTAssertTrue(src.contains("zeldaHeartBadgeView"))
+        XCTAssertTrue(src.contains("zeldaHeartOverflowText"))
+        XCTAssertTrue(src.contains("zeldaHeartFrameName"))
+        XCTAssertTrue(src.contains(#"Text("+\(pendingCount - 3)")"#))
+        XCTAssertTrue(src.contains("} else if pendingCount >= 2 {"))
+        XCTAssertTrue(src.contains("if pendingCount >= 2 {"))
+        XCTAssertTrue(src.contains("badgeView"))
+    }
+
+    func test_widgetIconViewSource_wiresZeldaIdleAndAlertFrames() {
+        let src = readWidgetIconViewSource()
+        let frameSource = readWidgetIconStyleSource()
+
+        XCTAssertTrue(src.contains("ZeldaFrame.idleFrames"))
+        XCTAssertTrue(src.contains("ZeldaFrame.alertFrames(side: widgetSide, effect: alertEffect)"))
+        XCTAssertTrue(frameSource.contains(#""zelda_frame_00""#))
+        XCTAssertTrue(frameSource.contains(#""zelda_frame_01""#))
+        XCTAssertTrue(frameSource.contains(#""zelda_frame_02""#))
+        XCTAssertTrue(frameSource.contains(#""zelda_frame_03""#))
+        XCTAssertTrue(frameSource.contains(#""zelda_frame_04_heal""#))
+        XCTAssertTrue(frameSource.contains(#""zelda_frame_04_hit""#))
+        XCTAssertTrue(src.contains("ZeldaFrame.pickerSubdirectory(side: widgetSide)"))
+        XCTAssertTrue(src.contains("ZeldaFrame.alertFrameDurationMultiplier(frameName: frameName)"))
+        XCTAssertFalse(frameSource.contains(#""zelda_frame_05""#))
+        XCTAssertFalse(frameSource.contains(#""zelda_frame_06""#))
+        XCTAssertFalse(frameSource.contains(#""zelda_frame_07_heal""#))
+        XCTAssertFalse(frameSource.contains(#""zelda_frame_07_hit""#))
+    }
+
+    func test_floatingWidgetWindowControllerPassesWidgetSideAndAlertEffectToIconView() {
+        let src = readFloatingWidgetWindowControllerSource()
+
+        XCTAssertTrue(src.contains("widgetSide: store.widgetCorner.widgetSide"))
+        XCTAssertTrue(src.contains("alertEffect: currentAlertEffect"))
+        XCTAssertTrue(src.contains("currentAlertEffect = SettingsStore.shared.zeldaAlertEffect"))
+        XCTAssertFalse(src.contains("currentAlertEffect = .heal"))
+    }
+
+    func test_widgetIconViewSource_usesDoubleSizeZeldaIconAndHearts() {
+        let src = readWidgetIconViewSource()
+
+        XCTAssertTrue(src.contains("private static let zeldaGlyphSize = CGSize(width: 92, height: 92)"))
+        XCTAssertTrue(src.contains("private static let claudeGlyphSize = CGSize(width: 46, height: 46)"))
+        XCTAssertTrue(src.contains("private static let zeldaGlyphOffset = CGSize(width: 0, height: 18)"))
+        XCTAssertTrue(src.contains("private static let zeldaHeartOffset = CGSize(width: -1, height: -18)"))
+        XCTAssertTrue(src.contains("widgetIconStyle == .zelda ? Self.zeldaGlyphOffset : Self.fixedGlyphOffset"))
+        XCTAssertTrue(src.contains(".frame(width: glyphSize.width, height: glyphSize.height)"))
+        XCTAssertTrue(src.contains(".frame(width: 45, height: 24)"))
+        guard
+            let overflowRange = src.range(of: "private var zeldaHeartOverflowText: some View"),
+            let accessibilityRange = src.range(of: "private var widgetAccessibilityLabel: String")
+        else {
+            XCTFail("WidgetIconView must define zeldaHeartOverflowText before widgetAccessibilityLabel")
+            return
+        }
+        let overflowSource = String(src[overflowRange.lowerBound..<accessibilityRange.lowerBound])
+        XCTAssertTrue(overflowSource.contains(#"Text("+\(pendingCount - 3)")"#))
+        XCTAssertTrue(overflowSource.contains(".font(.system(size: 12, weight: .bold))"))
+        XCTAssertTrue(overflowSource.contains(".foregroundStyle(.black)"))
+        XCTAssertFalse(overflowSource.contains(".padding(.horizontal, 5)"))
+        XCTAssertFalse(overflowSource.contains(".frame(minWidth: 22, minHeight: 19)"))
+        XCTAssertFalse(overflowSource.contains(".background(Capsule(style: .continuous).fill(ColorTokens.accentDark))"))
+        XCTAssertFalse(overflowSource.contains(".offset(x: 11, y: 0)"))
+    }
+
     func test_widgetIconViewSource_keepsGlyphPositionFixedWhenPendingBadgeIsVisible() {
         let src = readWidgetIconViewSource()
 
         XCTAssertTrue(src.contains("private static let fixedGlyphOffset = CGSize(width: 0, height: 8)"))
-        XCTAssertTrue(src.contains("x: Self.fixedGlyphOffset.width,"))
-        XCTAssertTrue(src.contains("y: (quietHoursEnabled ? 0 : bounceValue.translateY) + Self.fixedGlyphOffset.height"))
+        XCTAssertTrue(src.contains("x: glyphOffset.width,"))
+        XCTAssertTrue(src.contains("y: (quietHoursEnabled ? 0 : bounceValue.translateY) + glyphOffset.height"))
         XCTAssertFalse(src.contains("pendingBadgeGlyphOffset"))
         XCTAssertFalse(src.contains("badgeClearanceGlyphOffset"))
     }
@@ -301,6 +381,17 @@ final class IdleAnimationTests: XCTestCase {
         let target = repoRoot.appendingPathComponent("App/FloatingWidgetWindowController.swift")
         guard let data = try? String(contentsOf: target, encoding: .utf8) else {
             XCTFail("Could not read App/FloatingWidgetWindowController.swift at \(target.path)")
+            return ""
+        }
+        return data
+    }
+
+    private func readWidgetIconStyleSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/WidgetIconStyle.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/WidgetIconStyle.swift at \(target.path)")
             return ""
         }
         return data

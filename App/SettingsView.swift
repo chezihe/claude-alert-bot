@@ -261,6 +261,14 @@ struct SettingsView: View {
     static func widgetIconStyleName(_ style: WidgetIconStyle) -> String {
         switch style {
         case .claude: return "Claude"
+        case .zelda: return "Zelda"
+        }
+    }
+
+    static func zeldaAlertEffectName(_ effect: WidgetAlertEffect) -> String {
+        switch effect {
+        case .heal: return "Heal"
+        case .hit: return "Hit"
         }
     }
 

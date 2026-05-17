@@ -66,6 +66,7 @@ enum GeometryTokens {
     // Magic animation expands vertically to keep falling stars visible outside the base 64×64 icon.
     static let magicDrawableExtraWidth: CGFloat = 30
     static let magicDrawableExtraHeight: CGFloat = 40
+    static let zeldaWidgetDrawableSize = CGSize(width: 128, height: 128)
     // Project contract: max 4 visible rows — WO-009 enforces; rows beyond scroll vertically.
     static let popoverMaxVisibleRows: Int = 4
     // Project contract: scroll fade — applied only when the list exceeds max visible rows.
@@ -75,8 +76,10 @@ enum GeometryTokens {
     static func widgetDrawableSize(
         idleAnimation: IdleAnimation,
         quietHoursEnabled: Bool,
-        reduceMotion: Bool
+        reduceMotion: Bool,
+        widgetIconStyle: WidgetIconStyle = .default
     ) -> CGSize {
+        if widgetIconStyle == .zelda { return zeldaWidgetDrawableSize }
         guard !quietHoursEnabled, !reduceMotion else { return widgetBaseSize }
         guard idleAnimation == .roam || idleAnimation == .magic else { return widgetBaseSize }
         if idleAnimation == .magic {

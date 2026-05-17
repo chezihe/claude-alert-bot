@@ -57,6 +57,17 @@ targets:
               chmod +x "$DEST"
           fi
         shell: /bin/sh
+      - name: "Embed Zelda widget assets"
+        script: |
+          SRC="${SRCROOT}/zelda"
+          DEST="${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/zelda"
+          if [ -d "$SRC" ]; then
+              rm -rf "$DEST"
+              mkdir -p "$DEST"
+              cp -R "$SRC"/. "$DEST"/
+              find "$DEST" -name .DS_Store -delete
+          fi
+        shell: /bin/sh
   cab-test:
     type: tool
     platform: macOS

@@ -128,6 +128,53 @@ extension SettingsViewTests {
         XCTAssertEqual(SettingsView.idleAnimationName(.magic), "Magic")
     }
 
+    func test_widgetIconStyle_allCasesIncludesZeldaAndDefaultStaysClaude() {
+        XCTAssertEqual(WidgetIconStyle.default, .claude)
+        XCTAssertTrue(WidgetIconStyle.allCases.contains(.claude))
+        XCTAssertTrue(WidgetIconStyle.allCases.contains(.zelda))
+    }
+
+    func test_widgetIconStyleLabels_areMinimalEnglish() {
+        XCTAssertEqual(SettingsView.widgetIconStyleName(.claude), "Claude")
+        XCTAssertEqual(SettingsView.widgetIconStyleName(.zelda), "Zelda")
+    }
+
+    func test_zeldaFramePaths_matchWidgetSideAndEffect() {
+        XCTAssertEqual(ZeldaFrame.idleFrames, ["zelda_frame_00", "zelda_frame_01"])
+        XCTAssertEqual(ZeldaFrame.alertFrames(side: .left, effect: .heal),
+                       ["zelda_frame_02", "zelda_frame_03", "zelda_frame_04_heal"])
+        XCTAssertEqual(ZeldaFrame.alertFrames(side: .left, effect: .hit),
+                       ["zelda_frame_02", "zelda_frame_03", "zelda_frame_04_hit"])
+        XCTAssertEqual(ZeldaFrame.alertFrames(side: .right, effect: .heal),
+                       ["zelda_frame_02", "zelda_frame_03", "zelda_frame_04_heal"])
+        XCTAssertEqual(ZeldaFrame.alertFrames(side: .right, effect: .hit),
+                       ["zelda_frame_02", "zelda_frame_03", "zelda_frame_04_hit"])
+        XCTAssertEqual(ZeldaFrame.pickerSubdirectory(side: .left), "zelda/picker/left")
+        XCTAssertEqual(ZeldaFrame.pickerSubdirectory(side: .right), "zelda/picker/right")
+        XCTAssertEqual(ZeldaFrame.alertFrameDurationMultiplier(frameName: "zelda_frame_04_heal"), 1.5)
+        XCTAssertEqual(ZeldaFrame.alertFrameDurationMultiplier(frameName: "zelda_frame_04_hit"), 1.5)
+        XCTAssertEqual(ZeldaFrame.alertFrameDurationMultiplier(frameName: "zelda_frame_02"), 1.0)
+    }
+
+    func test_zeldaAlertEffectLabels_areMinimalEnglish() {
+        XCTAssertEqual(WidgetAlertEffect.default, .heal)
+        XCTAssertEqual(WidgetAlertEffect.allCases, [.heal, .hit])
+        XCTAssertEqual(SettingsView.zeldaAlertEffectName(.heal), "Heal")
+        XCTAssertEqual(SettingsView.zeldaAlertEffectName(.hit), "Hit")
+    }
+
+    func test_menuBarAnimationPickerBranchesByIconStyle() {
+        let appSource = readClaudeAlertBotAppSource()
+
+        XCTAssertTrue(appSource.contains("if store.widgetIconStyle == .zelda {"))
+        XCTAssertTrue(appSource.contains("Picker(SettingsView.idleAnimationLabel, selection: store.zeldaAlertEffectBinding)"))
+        XCTAssertTrue(appSource.contains("ForEach(WidgetAlertEffect.allCases, id: \\.self)"))
+        XCTAssertTrue(appSource.contains("Text(SettingsView.zeldaAlertEffectName(effect)).tag(effect)"))
+        XCTAssertTrue(appSource.contains("} else {"))
+        XCTAssertTrue(appSource.contains("Picker(SettingsView.idleAnimationLabel, selection: store.idleAnimationBinding)"))
+        XCTAssertTrue(appSource.contains("ForEach(menuIdleAnimations, id: \\.self)"))
+    }
+
     func test_themeSection_wiresPickerToStore() {
         let src = readSettingsViewSource()
 
@@ -176,6 +223,7 @@ extension SettingsViewTests {
         XCTAssertTrue(appSource.contains("Toggle(Self.menuSoundToggleLabel, isOn: $store.soundEnabled)"))
         XCTAssertTrue(appSource.contains("Toggle(Self.menuQuietHoursToggleLabel, isOn: $store.quietHoursEnabled)"))
         XCTAssertTrue(appSource.contains("Menu(\"Style\")"))
+        XCTAssertTrue(appSource.contains("Picker(SettingsView.idleAnimationLabel, selection: store.zeldaAlertEffectBinding)"))
         XCTAssertTrue(appSource.contains("Picker(SettingsView.idleAnimationLabel, selection: store.idleAnimationBinding)"))
         XCTAssertTrue(appSource.contains("Picker(SettingsView.themeLabel, selection: store.themeModeBinding)"))
         XCTAssertTrue(appSource.contains("Picker(SettingsView.reduceMotionLabel, selection: store.reduceMotionPreferenceBinding)"))

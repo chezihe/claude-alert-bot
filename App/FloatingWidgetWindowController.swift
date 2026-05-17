@@ -29,6 +29,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     private var currentQueue: [CompletedSession] = []
     private var currentPendingCount: Int = 0
     private var currentAlertPulseID: Int = 0
+    private var currentAlertEffect: WidgetAlertEffect = .heal
     weak var hoverDelegate: WidgetHoverDelegate?
 
     init() {
@@ -38,7 +39,8 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
             quietHoursEnabled: store.quietHoursEnabled,
             reduceMotion: store.reduceMotionPreference.effectiveReduceMotion(
                 systemReduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-            )
+            ),
+            widgetIconStyle: store.widgetIconStyle
         )
         let initialFrame = NSRect(origin: .zero, size: initialSize)
         let p = FloatingWidgetPanel(contentRect: initialFrame)
@@ -51,7 +53,9 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
             alertPulseID: currentAlertPulseID,
             quietHoursEnabled: SettingsStore.shared.quietHoursEnabled,
             reduceMotionPreference: SettingsStore.shared.reduceMotionPreference,
-            widgetIconStyle: SettingsStore.shared.widgetIconStyle
+            widgetIconStyle: SettingsStore.shared.widgetIconStyle,
+            widgetSide: store.widgetCorner.widgetSide,
+            alertEffect: currentAlertEffect
         ))
         hv.frame = initialFrame
         p.contentView = hv
@@ -103,6 +107,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
         currentPendingCount = pendingCount
         if latest != nil && !SettingsStore.shared.quietHoursEnabled {
             currentAlertPulseID += 1
+            currentAlertEffect = SettingsStore.shared.zeldaAlertEffect
         }
         updateRootView(pendingCount: pendingCount)
         reposition()
@@ -143,7 +148,8 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
         let size = GeometryTokens.widgetDrawableSize(
             idleAnimation: store.idleAnimation,
             quietHoursEnabled: store.quietHoursEnabled,
-            reduceMotion: reducedMotion
+            reduceMotion: reducedMotion,
+            widgetIconStyle: store.widgetIconStyle
         )
         resizeContent(to: size)
         hostingView?.rootView = WidgetIconView(
@@ -152,7 +158,9 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
             alertPulseID: currentAlertPulseID,
             quietHoursEnabled: SettingsStore.shared.quietHoursEnabled,
             reduceMotionPreference: SettingsStore.shared.reduceMotionPreference,
-            widgetIconStyle: SettingsStore.shared.widgetIconStyle
+            widgetIconStyle: SettingsStore.shared.widgetIconStyle,
+            widgetSide: store.widgetCorner.widgetSide,
+            alertEffect: currentAlertEffect
         )
     }
 

@@ -41,7 +41,12 @@ final class SpyWidget: WidgetControllerProtocol {
 @MainActor
 final class SpySoundPlayer: SoundPlaying {
     private(set) var playOnceCount = 0
+    private(set) var playedCues: [SoundCue] = []
     func playOnce() { playOnceCount += 1 }
+    func playOnce(cue: SoundCue) {
+        playedCues.append(cue)
+        playOnce()
+    }
 }
 
 final class NotificationOrchestratorTests: XCTestCase {
@@ -66,6 +71,8 @@ final class NotificationOrchestratorTests: XCTestCase {
         SettingsStore.shared.soundEnabled = true
         SettingsStore.shared.quietHoursEnabled = false
         SettingsStore.shared.everHadAlerts = false
+        SettingsStore.shared.widgetIconStyle = .default
+        SettingsStore.shared.zeldaAlertEffect = .heal
     }
 
     @MainActor
@@ -73,6 +80,8 @@ final class NotificationOrchestratorTests: XCTestCase {
         SettingsStore.shared.soundEnabled = true
         SettingsStore.shared.quietHoursEnabled = false
         SettingsStore.shared.everHadAlerts = false
+        SettingsStore.shared.widgetIconStyle = .default
+        SettingsStore.shared.zeldaAlertEffect = .heal
     }
 
     @MainActor
@@ -151,6 +160,7 @@ final class NotificationOrchestratorTests: XCTestCase {
     func test_present_skipsSound_whenQuietHoursEnabled() async {
         SettingsStore.shared.soundEnabled = true
         SettingsStore.shared.quietHoursEnabled = true
+        SettingsStore.shared.widgetIconStyle = .zelda
         let widget = SpyWidget()
         let sound = SpySoundPlayer()
         let orch = NotificationOrchestrator(widget: widget, sound: sound)
@@ -160,6 +170,37 @@ final class NotificationOrchestratorTests: XCTestCase {
 
         XCTAssertEqual(widget.showCalls.count, 1, "Quiet Hours must still queue/show the widget")
         XCTAssertEqual(sound.playOnceCount, 0, "Quiet Hours must suppress sound")
+        XCTAssertEqual(sound.playedCues, [], "Quiet Hours must suppress named Zelda cues too")
+    }
+
+    @MainActor
+    func test_present_usesZeldaHealCue_whenZeldaStyleIsActive() async {
+        SettingsStore.shared.soundEnabled = true
+        SettingsStore.shared.widgetIconStyle = .zelda
+        SettingsStore.shared.zeldaAlertEffect = .heal
+        let widget = SpyWidget()
+        let sound = SpySoundPlayer()
+        let orch = NotificationOrchestrator(widget: widget, sound: sound)
+
+        let s = makeSession()
+        await orch.present(session: s, pendingQueue: [s], playSoundOnce: true)
+
+        XCTAssertEqual(sound.playedCues, [.zeldaHeal])
+    }
+
+    @MainActor
+    func test_present_usesZeldaHitCue_whenZeldaStyleAndHitEffectAreActive() async {
+        SettingsStore.shared.soundEnabled = true
+        SettingsStore.shared.widgetIconStyle = .zelda
+        SettingsStore.shared.zeldaAlertEffect = .hit
+        let widget = SpyWidget()
+        let sound = SpySoundPlayer()
+        let orch = NotificationOrchestrator(widget: widget, sound: sound)
+
+        let s = makeSession()
+        await orch.present(session: s, pendingQueue: [s], playSoundOnce: true)
+
+        XCTAssertEqual(sound.playedCues, [.zeldaHit])
     }
 
     @MainActor

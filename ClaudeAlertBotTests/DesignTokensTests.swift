@@ -125,12 +125,25 @@ final class DesignTokensTests: XCTestCase {
         let size = GeometryTokens.widgetDrawableSize(
             idleAnimation: .magic,
             quietHoursEnabled: false,
-            reduceMotion: false
+            reduceMotion: false,
+            widgetIconStyle: .claude
         )
 
         // 64 + magicDrawableExtraWidth(30), 64 + magicDrawableExtraHeight(40)
         XCTAssertEqual(size.width, 94)
         XCTAssertEqual(size.height, 104)
+    }
+
+    func test_geometryTokens_widgetDrawableSize_expandsForZeldaIcon() {
+        let size = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .bounce,
+            quietHoursEnabled: true,
+            reduceMotion: true,
+            widgetIconStyle: .zelda
+        )
+
+        XCTAssertEqual(size.width, 128)
+        XCTAssertEqual(size.height, 128)
     }
 
     func test_geometryTokens_widgetDrawableSize_keepsBaseSizeWhenRoamIsSuppressed() {

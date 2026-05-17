@@ -169,4 +169,55 @@ final class PositioningTests: XCTestCase {
         XCTAssertEqual(topOrigin.y, widgetFrame.minY - 4 - popoverSize.height, accuracy: 0.0001)
         XCTAssertEqual(bottomOrigin.y, widgetFrame.maxY + 4, accuracy: 0.0001)
     }
+
+    func test_widgetPopoverPositioning_usesZeldaVisualAnchorForVerticalGap() {
+        let widgetFrame = NSRect(x: 1000, y: 500, width: 128, height: 128)
+        let popoverSize = NSSize(width: 270, height: 200)
+
+        let topOrigin = WidgetPopoverPositioning.origin(
+            widgetFrame: widgetFrame,
+            panelSize: popoverSize,
+            visibleFrame: visibleFrame,
+            corner: .topRight,
+            widgetIconStyle: .zelda
+        )
+        let bottomOrigin = WidgetPopoverPositioning.origin(
+            widgetFrame: widgetFrame,
+            panelSize: popoverSize,
+            visibleFrame: visibleFrame,
+            corner: .bottomRight,
+            widgetIconStyle: .zelda
+        )
+
+        XCTAssertEqual(topOrigin.y, widgetFrame.minY + 2 - (4.0 / 3.0) - popoverSize.height, accuracy: 0.0001)
+        XCTAssertEqual(bottomOrigin.y, widgetFrame.maxY - 2 + (4.0 / 3.0), accuracy: 0.0001)
+        XCTAssertEqual(
+            bottomOrigin.y - widgetFrame.maxY,
+            widgetFrame.minY - (topOrigin.y + popoverSize.height),
+            accuracy: 0.0001
+        )
+    }
+
+    func test_widgetPopoverPositioning_usesZeldaVisualAnchorForHorizontalEdges() {
+        let widgetFrame = NSRect(x: 1000, y: 500, width: 128, height: 128)
+        let popoverSize = NSSize(width: 270, height: 200)
+
+        let leftOrigin = WidgetPopoverPositioning.origin(
+            widgetFrame: widgetFrame,
+            panelSize: popoverSize,
+            visibleFrame: visibleFrame,
+            corner: .topLeft,
+            widgetIconStyle: .zelda
+        )
+        let rightOrigin = WidgetPopoverPositioning.origin(
+            widgetFrame: widgetFrame,
+            panelSize: popoverSize,
+            visibleFrame: visibleFrame,
+            corner: .topRight,
+            widgetIconStyle: .zelda
+        )
+
+        XCTAssertEqual(leftOrigin.x, widgetFrame.minX + 9, accuracy: 0.0001)
+        XCTAssertEqual(rightOrigin.x, widgetFrame.minX + 9 + 110 - popoverSize.width, accuracy: 0.0001)
+    }
 }

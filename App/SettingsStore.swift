@@ -52,6 +52,7 @@ final class SettingsStore: ObservableObject {
     @AppStorage("quiet_hours_enabled") var quietHoursEnabled: Bool = false
     @AppStorage("ever_had_alerts")   var everHadAlerts: Bool = false
     @AppStorage("idle_animation")    private var idleAnimationRaw: String = IdleAnimation.default.rawValue
+    @AppStorage("zelda_alert_effect") private var zeldaAlertEffectRaw: String = WidgetAlertEffect.default.rawValue
     @AppStorage("widget_icon_style") private var widgetIconStyleRaw: String = WidgetIconStyle.default.rawValue
     @AppStorage("theme_mode")        private var themeModeRaw: String = ThemeMode.default.rawValue
     @AppStorage("reduce_motion_preference") private var reduceMotionPreferenceRaw: String = ReduceMotionPreference.default.rawValue
@@ -71,9 +72,20 @@ final class SettingsStore: ObservableObject {
         set { idleAnimationRaw = newValue.rawValue; objectWillChange.send() }
     }
 
+    var zeldaAlertEffect: WidgetAlertEffect {
+        get { WidgetAlertEffect(rawValue: zeldaAlertEffectRaw) ?? .default }
+        set { zeldaAlertEffectRaw = newValue.rawValue; objectWillChange.send() }
+    }
+
     var widgetIconStyle: WidgetIconStyle {
         get { WidgetIconStyle(rawValue: widgetIconStyleRaw) ?? .default }
-        set { widgetIconStyleRaw = newValue.rawValue; objectWillChange.send() }
+        set {
+            guard widgetIconStyleRaw != newValue.rawValue else { return }
+            widgetIconStyleRaw = newValue.rawValue
+            idleAnimationRaw = IdleAnimation.default.rawValue
+            zeldaAlertEffectRaw = WidgetAlertEffect.default.rawValue
+            objectWillChange.send()
+        }
     }
 
     var themeMode: ThemeMode {
@@ -93,6 +105,10 @@ final class SettingsStore: ObservableObject {
 
     var idleAnimationBinding: Binding<IdleAnimation> {
         Binding(get: { self.idleAnimation }, set: { self.idleAnimation = $0 })
+    }
+
+    var zeldaAlertEffectBinding: Binding<WidgetAlertEffect> {
+        Binding(get: { self.zeldaAlertEffect }, set: { self.zeldaAlertEffect = $0 })
     }
 
     var widgetIconStyleBinding: Binding<WidgetIconStyle> {
@@ -139,6 +155,7 @@ final class SettingsStore: ObservableObject {
         self._quietHoursEnabled = AppStorage(wrappedValue: false, "quiet_hours_enabled", store: defaults)
         self._everHadAlerts = AppStorage(wrappedValue: false, "ever_had_alerts", store: defaults)
         self._idleAnimationRaw = AppStorage(wrappedValue: IdleAnimation.default.rawValue, "idle_animation", store: defaults)
+        self._zeldaAlertEffectRaw = AppStorage(wrappedValue: WidgetAlertEffect.default.rawValue, "zelda_alert_effect", store: defaults)
         self._widgetIconStyleRaw = AppStorage(wrappedValue: WidgetIconStyle.default.rawValue, "widget_icon_style", store: defaults)
         self._themeModeRaw = AppStorage(wrappedValue: ThemeMode.default.rawValue, "theme_mode", store: defaults)
         self._reduceMotionPreferenceRaw = AppStorage(wrappedValue: ReduceMotionPreference.default.rawValue, "reduce_motion_preference", store: defaults)

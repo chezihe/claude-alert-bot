@@ -242,7 +242,8 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             widgetFrame: widgetPanel.frame,
             panelSize: size,
             visibleFrame: screen.visibleFrame,
-            corner: SettingsStore.shared.widgetCorner
+            corner: SettingsStore.shared.widgetCorner,
+            widgetIconStyle: SettingsStore.shared.widgetIconStyle
         )
         panel.setFrame(NSRect(origin: origin, size: size), display: true)
         hostView.frame = NSRect(origin: .zero, size: size)
@@ -376,31 +377,44 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
 
 enum WidgetPopoverPositioning {
     private static let widgetGap: CGFloat = 4
+    private static let zeldaWidgetGap: CGFloat = 4.0 / 3.0
 
     static func origin(widgetFrame: NSRect,
                        panelSize: NSSize,
                        visibleFrame: NSRect,
-                       corner: WidgetCorner) -> NSPoint {
+                       corner: WidgetCorner,
+                       widgetIconStyle: WidgetIconStyle = .claude) -> NSPoint {
+        let anchorFrame = popoverAnchorFrame(widgetFrame: widgetFrame, widgetIconStyle: widgetIconStyle)
+        let gap = popoverGap(widgetIconStyle: widgetIconStyle)
         let x: CGFloat
         switch corner {
         case .topRight, .bottomRight:
-            x = widgetFrame.maxX - panelSize.width
+            x = anchorFrame.maxX - panelSize.width
         case .topLeft, .bottomLeft:
-            x = widgetFrame.minX
+            x = anchorFrame.minX
         }
 
         let y: CGFloat
         switch corner {
         case .topRight, .topLeft:
-            y = widgetFrame.minY - widgetGap - panelSize.height
+            y = anchorFrame.minY - gap - panelSize.height
         case .bottomRight, .bottomLeft:
-            y = widgetFrame.maxY + widgetGap
+            y = widgetFrame.maxY + gap - (anchorFrame.minY - widgetFrame.minY)
         }
 
         return NSPoint(
             x: clamp(x, lower: visibleFrame.minX, upper: visibleFrame.maxX - panelSize.width),
             y: clamp(y, lower: visibleFrame.minY, upper: visibleFrame.maxY - panelSize.height)
         )
+    }
+
+    private static func popoverAnchorFrame(widgetFrame: NSRect, widgetIconStyle: WidgetIconStyle) -> NSRect {
+        guard widgetIconStyle == .zelda else { return widgetFrame }
+        return NSRect(x: widgetFrame.minX + 9, y: widgetFrame.minY + 2, width: 110, height: 116)
+    }
+
+    private static func popoverGap(widgetIconStyle: WidgetIconStyle) -> CGFloat {
+        widgetIconStyle == .zelda ? zeldaWidgetGap : widgetGap
     }
 
     private static func clamp(_ value: CGFloat, lower: CGFloat, upper: CGFloat) -> CGFloat {

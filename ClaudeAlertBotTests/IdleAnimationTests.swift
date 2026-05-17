@@ -288,7 +288,7 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertTrue(frameSource.contains(#""zelda_frame_03""#))
         XCTAssertTrue(frameSource.contains(#""zelda_frame_04_heal""#))
         XCTAssertTrue(frameSource.contains(#""zelda_frame_04_hit""#))
-        XCTAssertTrue(src.contains("ZeldaFrame.pickerSubdirectory(side: widgetSide)"))
+        XCTAssertTrue(src.contains("ZeldaFrame.characterSubdirectory(side: widgetSide)"))
         XCTAssertTrue(src.contains("ZeldaFrame.alertFrameDurationMultiplier(frameName: frameName)"))
         XCTAssertFalse(frameSource.contains(#""zelda_frame_05""#))
         XCTAssertFalse(frameSource.contains(#""zelda_frame_06""#))

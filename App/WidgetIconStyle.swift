@@ -63,12 +63,12 @@ enum ZeldaFrame {
         }
     }
 
-    static func pickerSubdirectory(side: WidgetSide) -> String {
+    static func characterSubdirectory(side: WidgetSide) -> String {
         switch side {
         case .left:
-            return "zelda/picker/left"
+            return "adventure-widget/character/left"
         case .right:
-            return "zelda/picker/right"
+            return "adventure-widget/character/right"
         }
     }
 

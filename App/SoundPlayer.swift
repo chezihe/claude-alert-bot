@@ -21,9 +21,9 @@ enum SoundCue: Hashable {
         case .defaultAlert:
             return nil
         case .zeldaHeal:
-            return Bundle.main.url(forResource: "heal", withExtension: "mp3", subdirectory: "zelda/sound")
+            return Bundle.main.url(forResource: "heal", withExtension: "mp3", subdirectory: "adventure-widget/audio")
         case .zeldaHit:
-            return Bundle.main.url(forResource: "hit", withExtension: "mp3", subdirectory: "zelda/sound")
+            return Bundle.main.url(forResource: "hit", withExtension: "mp3", subdirectory: "adventure-widget/audio")
         }
     }
 }

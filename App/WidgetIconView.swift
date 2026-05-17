@@ -443,7 +443,7 @@ struct WidgetIconView: View {
     }
 
     private func zeldaImage(frameName: String, widgetSide: WidgetSide) -> some View {
-        Image(nsImage: bundleImage(named: frameName, subdirectory: ZeldaFrame.pickerSubdirectory(side: widgetSide)))
+        Image(nsImage: bundleImage(named: frameName, subdirectory: ZeldaFrame.characterSubdirectory(side: widgetSide)))
             .resizable()
             .aspectRatio(contentMode: .fit)
     }
@@ -653,7 +653,7 @@ struct WidgetIconView: View {
     @ViewBuilder
     private var zeldaHeartBadgeView: some View {
         HStack(alignment: .top, spacing: 0) {
-            Image(nsImage: bundleImage(named: zeldaHeartFrameName, subdirectory: "zelda/heart"))
+            Image(nsImage: bundleImage(named: zeldaHeartFrameName, subdirectory: "adventure-widget/status-badge"))
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 45, height: 24)

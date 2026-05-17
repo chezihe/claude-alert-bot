@@ -149,8 +149,8 @@ extension SettingsViewTests {
                        ["zelda_frame_02", "zelda_frame_03", "zelda_frame_04_heal"])
         XCTAssertEqual(ZeldaFrame.alertFrames(side: .right, effect: .hit),
                        ["zelda_frame_02", "zelda_frame_03", "zelda_frame_04_hit"])
-        XCTAssertEqual(ZeldaFrame.pickerSubdirectory(side: .left), "zelda/picker/left")
-        XCTAssertEqual(ZeldaFrame.pickerSubdirectory(side: .right), "zelda/picker/right")
+        XCTAssertEqual(ZeldaFrame.characterSubdirectory(side: .left), "adventure-widget/character/left")
+        XCTAssertEqual(ZeldaFrame.characterSubdirectory(side: .right), "adventure-widget/character/right")
         XCTAssertEqual(ZeldaFrame.alertFrameDurationMultiplier(frameName: "zelda_frame_04_heal"), 1.5)
         XCTAssertEqual(ZeldaFrame.alertFrameDurationMultiplier(frameName: "zelda_frame_04_hit"), 1.5)
         XCTAssertEqual(ZeldaFrame.alertFrameDurationMultiplier(frameName: "zelda_frame_02"), 1.0)

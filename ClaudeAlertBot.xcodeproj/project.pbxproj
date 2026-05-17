@@ -10,7 +10,6 @@
 		003B98084B11309FF52AFBE3 /* SessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12CE8E75E63CBC95D6D3C0F3 /* SessionStoreTests.swift */; };
 		0536835EBF9ED126642336F4 /* HookEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D0E5FF61663BD940052B098 /* HookEventTests.swift */; };
 		05594CE07D57F8773968D7F1 /* AppleScriptHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A672A85EF635E98BBCBD52 /* AppleScriptHelper.swift */; };
-		5F40AB0979E64F69ABEC6504 /* AccessibilityRaiser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9701D85257904055A38A56E2 /* AccessibilityRaiser.swift */; };
 		061BE16CB87556492A84EC67 /* PopoverContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD87652FF46DACEA294E54A6 /* PopoverContentView.swift */; };
 		0FD47850BE7EA040C6B323E9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3AD080323016E4B964B92C69 /* Assets.xcassets */; };
 		12B4AD96D68F218C0C6BCC1E /* ClaudeAlertBotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */; };
@@ -28,16 +27,17 @@
 		3E34F876C0E5EE6646F97A2A /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4659AB687A21FAB2AB35ECE /* DesignTokens.swift */; };
 		4E99FC14F6F4031060A09E36 /* MutedProjectsRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94F900B4D713937E545B390C /* MutedProjectsRulesTests.swift */; };
 		50395090002C98C70B03D693 /* MotionKeyframesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A323BB2411675DC8255249 /* MotionKeyframesTests.swift */; };
+		5F7A053BDB3B2D83F6BE5188 /* AccessibilityRaiser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 803213E148F2B54B47DD8FD3 /* AccessibilityRaiser.swift */; };
 		67297E2D444E24FE063D63F5 /* SessionRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50B23882ED554CD89626EEA0 /* SessionRecord.swift */; };
 		6A4AA68004D8D377600827BB /* MacBookProjectile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3620A12CD42DCB6520993E /* MacBookProjectile.swift */; };
 		6D860F2F4A5F204144F1FC3E /* WidgetPopoverController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EC061914D2B7ECEB85B1014 /* WidgetPopoverController.swift */; };
+		745C26C8CC4FB897096F150B /* WidgetIconStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A38BFC17EEAB4C4B2B9BEE /* WidgetIconStyle.swift */; };
 		7569503AF85CCD1ED620F61A /* PositioningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F846DC70533456E49CAC49C5 /* PositioningTests.swift */; };
 		77EE33694EF9AC81705A3746 /* ProjectNameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F38BDA29F2BDA2AC0F00354C /* ProjectNameTests.swift */; };
 		78E4C5E92665EEC7E965DACD /* SessionRecordTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8446BA9DA3DB2F6E24A02697 /* SessionRecordTests.swift */; };
 		79903489DB30D25112CC0F2F /* TerminalJumper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 522E0E229AC969DF7503A6DC /* TerminalJumper.swift */; };
 		7CDB1B27F00604DEBE01739E /* SessionGCTimerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE75F8C6E2B4371B287E4B6E /* SessionGCTimerTests.swift */; };
 		7FB4A5BE37BDC1B0C0CA18AD /* WidgetIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10B9E598D15FE4F984232A /* WidgetIconView.swift */; };
-		46F37B5FB4D54D1783D62FC9 /* WidgetIconStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D586C619594EA689E1323E /* WidgetIconStyle.swift */; };
 		81C9844218324610D06FE9CF /* PopoverRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BCACF080D2BE209AC3408BB /* PopoverRowView.swift */; };
 		852BC49996E1BFF94F8AF34D /* SettingsViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 524A1F92225F3605DDFE4B41 /* SettingsViewTests.swift */; };
 		8E1ECB3C7626B361AF1EFBA5 /* WakeObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 650DBF68BEBAABAE7F7A198D /* WakeObserver.swift */; };
@@ -97,7 +97,6 @@
 
 /* Begin PBXFileReference section */
 		05A672A85EF635E98BBCBD52 /* AppleScriptHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleScriptHelper.swift; sourceTree = "<group>"; };
-		9701D85257904055A38A56E2 /* AccessibilityRaiser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityRaiser.swift; sourceTree = "<group>"; };
 		061CE1E19FDE7AD807A94BD1 /* PermissionBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionBannerView.swift; sourceTree = "<group>"; };
 		06B6F2CA27C6DFDE9C8B8F6C /* ReporterScriptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReporterScriptTests.swift; sourceTree = "<group>"; };
 		09884DA38C8ABC43B43A4C15 /* iTermSessionIDTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermSessionIDTests.swift; sourceTree = "<group>"; };
@@ -139,7 +138,9 @@
 		7151E148769D039124B77B2F /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		76DCB8BF2B9B7D78E4D3BD9B /* MockTerminalJumper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockTerminalJumper.swift; sourceTree = "<group>"; };
 		800FA652B76F41855EDB0DEA /* SessionGCTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionGCTimer.swift; sourceTree = "<group>"; };
+		803213E148F2B54B47DD8FD3 /* AccessibilityRaiser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityRaiser.swift; sourceTree = "<group>"; };
 		8446BA9DA3DB2F6E24A02697 /* SessionRecordTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRecordTests.swift; sourceTree = "<group>"; };
+		88A38BFC17EEAB4C4B2B9BEE /* WidgetIconStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetIconStyle.swift; sourceTree = "<group>"; };
 		8A714300C48D443F40C0A625 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		8E982CB48D46A37C9DDD56AA /* SessionRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRegistryTests.swift; sourceTree = "<group>"; };
 		94F900B4D713937E545B390C /* MutedProjectsRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MutedProjectsRulesTests.swift; sourceTree = "<group>"; };
@@ -148,7 +149,6 @@
 		A2492431EE9304DB1FF24B55 /* PermissionDeepLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionDeepLinkTests.swift; sourceTree = "<group>"; };
 		A7447ADE56CD4CC06C811494 /* DesignTokensTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokensTests.swift; sourceTree = "<group>"; };
 		AA10B9E598D15FE4F984232A /* WidgetIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetIconView.swift; sourceTree = "<group>"; };
-		61D586C619594EA689E1323E /* WidgetIconStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetIconStyle.swift; sourceTree = "<group>"; };
 		B10C653B05E6F6D202CE920D /* ProjectName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectName.swift; sourceTree = "<group>"; };
 		B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAlertBotTests.swift; sourceTree = "<group>"; };
 		BE75F8C6E2B4371B287E4B6E /* SessionGCTimerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionGCTimerTests.swift; sourceTree = "<group>"; };
@@ -221,8 +221,8 @@
 		3B63D51CE34619A76B883906 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				803213E148F2B54B47DD8FD3 /* AccessibilityRaiser.swift */,
 				8A714300C48D443F40C0A625 /* AppDelegate.swift */,
-				9701D85257904055A38A56E2 /* AccessibilityRaiser.swift */,
 				05A672A85EF635E98BBCBD52 /* AppleScriptHelper.swift */,
 				3AD080323016E4B964B92C69 /* Assets.xcassets */,
 				D699217A41C1D86EBB145BC3 /* ClaudeAlertBot.entitlements */,
@@ -257,7 +257,7 @@
 				13A9A6378829C0CD87A47282 /* SoundPlayer.swift */,
 				522E0E229AC969DF7503A6DC /* TerminalJumper.swift */,
 				650DBF68BEBAABAE7F7A198D /* WakeObserver.swift */,
-				61D586C619594EA689E1323E /* WidgetIconStyle.swift */,
+				88A38BFC17EEAB4C4B2B9BEE /* WidgetIconStyle.swift */,
 				AA10B9E598D15FE4F984232A /* WidgetIconView.swift */,
 				0EC061914D2B7ECEB85B1014 /* WidgetPopoverController.swift */,
 				EDF449A89D43D22903D8CDE8 /* WorkspaceFrontmostObserver.swift */,
@@ -342,7 +342,7 @@
 				E91A92EBBEF2F146AF2DE9BA /* Resources */,
 				64AA2AC3ADACB0F5DCB01F42 /* Embed cab-test helper into Contents/MacOS */,
 				D838B4AB29EFC4F6F0B17286 /* Embed Reporter shell script */,
-				B7A23B8F20E948A2A94B5A61 /* Embed Zelda widget assets */,
+				214E95C7A496D9555B390419 /* Embed adventure widget assets */,
 			);
 			buildRules = (
 			);
@@ -409,6 +409,24 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		214E95C7A496D9555B390419 /* Embed adventure widget assets */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed adventure widget assets";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "SRC=\"${SRCROOT}/App/Resources/adventure-widget\"\nDEST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/adventure-widget\"\nif [ -d \"$SRC\" ]; then\n    rm -rf \"$DEST\"\n    mkdir -p \"$DEST\"\n    cp -R \"$SRC\"/. \"$DEST\"/\n    find \"$DEST\" -name .DS_Store -delete\nfi\n";
+		};
 		64AA2AC3ADACB0F5DCB01F42 /* Embed cab-test helper into Contents/MacOS */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -444,24 +462,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "SRC=\"${SRCROOT}/Reporter/cab-report.sh\"\nDEST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/cab-report.sh\"\nif [ -f \"$SRC\" ]; then\n    mkdir -p \"$(dirname \"$DEST\")\"\n    cp \"$SRC\" \"$DEST\"\n    chmod +x \"$DEST\"\nfi\n";
-		};
-		B7A23B8F20E948A2A94B5A61 /* Embed Zelda widget assets */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Embed Zelda widget assets";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "SRC=\"${SRCROOT}/zelda\"\nDEST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/zelda\"\nif [ -d \"$SRC\" ]; then\n    rm -rf \"$DEST\"\n    mkdir -p \"$DEST\"\n    cp -R \"$SRC\"/. \"$DEST\"/\n    find \"$DEST\" -name .DS_Store -delete\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -515,8 +515,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5F7A053BDB3B2D83F6BE5188 /* AccessibilityRaiser.swift in Sources */,
 				25A5F43CD41AC83F13E587D9 /* AppDelegate.swift in Sources */,
-				5F40AB0979E64F69ABEC6504 /* AccessibilityRaiser.swift in Sources */,
 				05594CE07D57F8773968D7F1 /* AppleScriptHelper.swift in Sources */,
 				D4F0BAE2D982705E01F8E9CF /* ClaudeAlertBotApp.swift in Sources */,
 				3E34F876C0E5EE6646F97A2A /* DesignTokens.swift in Sources */,
@@ -547,7 +547,7 @@
 				A18B22B68BE4366E466158B9 /* SoundPlayer.swift in Sources */,
 				79903489DB30D25112CC0F2F /* TerminalJumper.swift in Sources */,
 				8E1ECB3C7626B361AF1EFBA5 /* WakeObserver.swift in Sources */,
-				46F37B5FB4D54D1783D62FC9 /* WidgetIconStyle.swift in Sources */,
+				745C26C8CC4FB897096F150B /* WidgetIconStyle.swift in Sources */,
 				7FB4A5BE37BDC1B0C0CA18AD /* WidgetIconView.swift in Sources */,
 				6D860F2F4A5F204144F1FC3E /* WidgetPopoverController.swift in Sources */,
 				97C580169F97615A0622C3B4 /* WorkspaceFrontmostObserver.swift in Sources */,

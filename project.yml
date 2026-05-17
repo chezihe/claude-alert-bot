@@ -11,6 +11,8 @@ targets:
     sources:
       - path: App
         name: App
+        excludes:
+          - Resources/**
     info:
       path: App/Info.plist
       properties:
@@ -57,10 +59,10 @@ targets:
               chmod +x "$DEST"
           fi
         shell: /bin/sh
-      - name: "Embed Zelda widget assets"
+      - name: "Embed adventure widget assets"
         script: |
-          SRC="${SRCROOT}/zelda"
-          DEST="${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/zelda"
+          SRC="${SRCROOT}/App/Resources/adventure-widget"
+          DEST="${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/adventure-widget"
           if [ -d "$SRC" ]; then
               rm -rf "$DEST"
               mkdir -p "$DEST"

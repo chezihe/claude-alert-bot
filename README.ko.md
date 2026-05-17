@@ -143,8 +143,11 @@ xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
 ### 행을 클릭해도 점프하지 않을 때
 
 - 벨 메뉴에서 `iTerm2 Connection > Test iTerm2 connection`을 실행합니다.
-- macOS가 묻는다면 Automation 권한을 허용합니다.
-- 정확한 창을 앞으로 못 올린다면 Accessibility 권한을 허용합니다.
+- 이 테스트가 실패하면 Automation/iTerm2 연결 문제입니다. macOS가 묻는다면 Automation 권한을 허용하고, 필요할 때만 AppleEvents 권한을 초기화한 뒤 연결 테스트를 다시 실행합니다.
+  ```bash
+  tccutil reset AppleEvents com.claudealert.bot
+  ```
+- 연결 테스트는 통과하지만 클릭한 행이 정확한 창을 앞으로 못 올린다면 아래 Accessibility 복구 순서를 따릅니다.
 - iTerm2가 이미 실행 중인지 확인합니다.
 
 ### 클릭한 세션이 아닌 다른 세션으로 이동할 때
@@ -155,23 +158,46 @@ xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
 
 해결 순서:
 
-1. 벨 메뉴에서 `Grant Accessibility…`를 클릭합니다.
-2. macOS가 띄우는 다이얼로그에서 허용한 뒤, 자동으로 열리는 `시스템 설정 > 개인정보 보호 및 보안 > 손쉬운 사용`에서 ClaudeAlertBot 토글이 켜져 있는지 확인합니다.
-3. 앱을 종료 후 다시 실행합니다. 권한 상태는 프로세스 시작 시점에 잡힙니다.
+1. 실행 중인 앱을 종료합니다.
+   ```bash
+   pkill -x ClaudeAlertBot
+   ```
+2. 이전 Accessibility 등록을 지웁니다.
+   ```bash
+   tccutil reset Accessibility com.claudealert.bot
+   ```
+3. 방금 빌드한 앱을 다시 엽니다.
+   ```bash
+   open build/export/ClaudeAlertBot.app
+   ```
+4. 벨 메뉴에서 `Grant Accessibility…`를 클릭합니다.
+5. `시스템 설정 > 개인정보 보호 및 보안 > 손쉬운 사용`에서 `ClaudeAlertBot` 토글을 켭니다.
+6. 앱을 종료 후 다시 실행합니다. 권한 상태는 프로세스 시작 시점에 잡힙니다.
+7. 로그를 확인합니다.
+
+`tccutil reset` 직후에는 시스템 설정에 항목이 바로 안 보일 수 있습니다. 이때 앱 메뉴의 `Grant Accessibility…`를 눌러 새 항목을 만든 뒤 토글을 켜야 합니다.
+
+`scripts/build.sh`로 새 ad-hoc 빌드를 만들면 macOS가 새 바이너리로 인식해서 권한이 다시 stale 될 수 있습니다. 같은 증상이 반복되면 위 순서를 다시 진행하세요.
 
 권한이 실제로 적용됐는지 확인하고 싶으면 다음 로그를 봅니다.
 
 ```bash
-/usr/bin/log show --predicate 'subsystem == "com.claudealert.bot.hook" && category == "ax"' --info --last 30s
+/usr/bin/log show --predicate 'subsystem == "com.claudealert.bot.hook"' --info --last 5m
 ```
 
-`[ax-trust trusted=true ...]`가 보이면 정상입니다. 여전히 `trusted=false` 또는 `[ax-skip reason=not-trusted]`가 찍히면 권한 등록이 이전 빌드와 충돌한 상태입니다. 완전히 비우고 다시 부여하세요.
+정상 동작에서는 다음과 같은 로그가 보입니다.
 
-```bash
-tccutil reset Accessibility com.claudealert.bot
-```
+- `[ax-raised ... code=0]`
+- `[jumped session=...]`
+- 필요 시 `[ax-match path=focused-main-fallback ...]`
 
-이후 1단계부터 다시 진행합니다.
+문제가 남아 있으면 다음 로그가 보일 수 있습니다.
+
+- `[ax-trust trusted=false ...]`
+- `[ax-skip reason=not-trusted]`
+- `[activate-fallback]`
+
+이 경우 권한 등록이 이전 빌드와 충돌한 상태일 가능성이 높으므로 해결 순서 1단계부터 다시 진행합니다.
 
 ### Hook 재설치
 

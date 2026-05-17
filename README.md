@@ -142,8 +142,11 @@ xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
 ### Clicking A Row Does Not Jump
 
 - Run `iTerm2 Connection > Test iTerm2 connection` from the bell menu.
-- Grant Automation permission if macOS asks.
-- Grant Accessibility permission if the app cannot raise the exact iTerm2 window.
+- If that test fails, treat it as an Automation/iTerm2 connection issue. Grant Automation permission if macOS asks, and reset AppleEvents only when the connection test needs to be initialized again.
+  ```bash
+  tccutil reset AppleEvents com.claudealert.bot
+  ```
+- If the connection test passes but row clicks still cannot raise the exact window, follow the Accessibility recovery steps below.
 - Make sure iTerm2 is already running.
 
 ### Clicking A Row Activates The Wrong Session
@@ -154,23 +157,46 @@ It shows up most often with self-built copies. Ad-hoc signing (the local-only si
 
 Recovery steps:
 
-1. Open the bell menu and click `Grant Accessibility…`.
-2. Approve the macOS dialog, then verify the ClaudeAlertBot toggle is ON in `System Settings > Privacy & Security > Accessibility` (it opens automatically).
-3. Quit and relaunch the app. Trust state is captured at process startup.
+1. Quit the running app.
+   ```bash
+   pkill -x ClaudeAlertBot
+   ```
+2. Clear the previous Accessibility registration.
+   ```bash
+   tccutil reset Accessibility com.claudealert.bot
+   ```
+3. Open the freshly built app.
+   ```bash
+   open build/export/ClaudeAlertBot.app
+   ```
+4. Open the bell menu and click `Grant Accessibility…`.
+5. In `System Settings > Privacy & Security > Accessibility`, turn on the `ClaudeAlertBot` toggle.
+6. Quit and relaunch the app. Trust state is captured at process startup.
+7. Check the log.
+
+After `tccutil reset`, the app may not appear in System Settings immediately. Click `Grant Accessibility…` from the app menu to create the new entry, then turn on the toggle.
+
+If you create a new ad-hoc build with `scripts/build.sh`, macOS may treat it as a new binary and the permission can become stale again. Repeat the same recovery steps if the symptom returns.
 
 To confirm the permission is actually applied, check the log:
 
 ```bash
-/usr/bin/log show --predicate 'subsystem == "com.claudealert.bot.hook" && category == "ax"' --info --last 30s
+/usr/bin/log show --predicate 'subsystem == "com.claudealert.bot.hook"' --info --last 5m
 ```
 
-`[ax-trust trusted=true ...]` means it is in effect. If you still see `trusted=false` or `[ax-skip reason=not-trusted]`, a stale registration from a previous build is in the way. Reset and re-grant:
+Healthy logs include:
 
-```bash
-tccutil reset Accessibility com.claudealert.bot
-```
+- `[ax-raised ... code=0]`
+- `[jumped session=...]`
+- When needed, `[ax-match path=focused-main-fallback ...]`
 
-Then start again from step 1.
+Problem logs include:
+
+- `[ax-trust trusted=false ...]`
+- `[ax-skip reason=not-trusted]`
+- `[activate-fallback]`
+
+If those remain, a stale registration from a previous build is probably still in the way. Start again from recovery step 1.
 
 ### Hook Repair
 

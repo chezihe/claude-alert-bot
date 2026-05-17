@@ -104,6 +104,170 @@ final class PositioningTests: XCTestCase {
         XCTAssertEqual(bottomOrigin.y, 16, accuracy: 0.0001)
     }
 
+    func test_widgetPositioning_alignsClaudeAnchorsAcrossDrawableSizes() {
+        let baseSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .bounce,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .claude
+        )
+        let roamSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .roam,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .claude
+        )
+        let magicSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .magic,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .claude
+        )
+        let baseOrigin = WidgetPositioning.origin(
+            visibleFrame: visibleFrame,
+            safeAreaInsets: zeroSafe,
+            corner: .topRight,
+            offsetX: 16,
+            offsetY: 16,
+            panelSize: baseSize,
+            positioningAnchor: GeometryTokens.widgetPositioningAnchor(
+                idleAnimation: .bounce,
+                quietHoursEnabled: false,
+                reduceMotion: false,
+                widgetIconStyle: .claude
+            )
+        )
+        let roamOrigin = WidgetPositioning.origin(
+            visibleFrame: visibleFrame,
+            safeAreaInsets: zeroSafe,
+            corner: .topRight,
+            offsetX: 16,
+            offsetY: 16,
+            panelSize: roamSize,
+            positioningAnchor: GeometryTokens.widgetPositioningAnchor(
+                idleAnimation: .roam,
+                quietHoursEnabled: false,
+                reduceMotion: false,
+                widgetIconStyle: .claude
+            )
+        )
+        let magicOrigin = WidgetPositioning.origin(
+            visibleFrame: visibleFrame,
+            safeAreaInsets: zeroSafe,
+            corner: .topRight,
+            offsetX: 16,
+            offsetY: 16,
+            panelSize: magicSize,
+            positioningAnchor: GeometryTokens.widgetPositioningAnchor(
+                idleAnimation: .magic,
+                quietHoursEnabled: false,
+                reduceMotion: false,
+                widgetIconStyle: .claude
+            )
+        )
+        let baseAnchorPoint = NSPoint(x: baseOrigin.x + 32, y: baseOrigin.y + 44)
+        let roamAnchorPoint = NSPoint(x: roamOrigin.x + 48, y: roamOrigin.y + 44)
+        let magicAnchorPoint = NSPoint(x: magicOrigin.x + 32, y: magicOrigin.y + 52)
+
+        XCTAssertEqual(baseAnchorPoint.x, roamAnchorPoint.x, accuracy: 0.0001)
+        XCTAssertEqual(baseAnchorPoint.y, roamAnchorPoint.y, accuracy: 0.0001)
+        XCTAssertEqual(baseAnchorPoint.x, magicAnchorPoint.x, accuracy: 0.0001)
+        XCTAssertEqual(baseAnchorPoint.y, magicAnchorPoint.y, accuracy: 0.0001)
+    }
+
+    func test_widgetPositioning_alignsZeldaAnchorWithClaudeAnchor() {
+        let claudeSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .bounce,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .claude
+        )
+        let zeldaSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .bounce,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .zelda
+        )
+        let claudeAnchor = GeometryTokens.widgetPositioningAnchor(
+            idleAnimation: .bounce,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .claude
+        )
+        let zeldaAnchor = GeometryTokens.widgetPositioningAnchor(
+            idleAnimation: .bounce,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .zelda,
+            widgetSide: .left
+        )
+        let claudeOrigin = WidgetPositioning.origin(
+            visibleFrame: visibleFrame,
+            safeAreaInsets: zeroSafe,
+            corner: .bottomLeft,
+            offsetX: 16,
+            offsetY: 16,
+            panelSize: claudeSize,
+            positioningAnchor: claudeAnchor
+        )
+        let zeldaOrigin = WidgetPositioning.origin(
+            visibleFrame: visibleFrame,
+            safeAreaInsets: zeroSafe,
+            corner: .bottomLeft,
+            offsetX: 16,
+            offsetY: 16,
+            panelSize: zeldaSize,
+            positioningAnchor: zeldaAnchor
+        )
+
+        XCTAssertEqual(claudeOrigin.x + claudeAnchor.x, zeldaOrigin.x + zeldaAnchor.x, accuracy: 0.0001)
+        XCTAssertEqual(claudeOrigin.y + claudeAnchor.y, zeldaOrigin.y + zeldaAnchor.y, accuracy: 0.0001)
+    }
+
+    func test_widgetPositioning_keepsSideSpecificZeldaPngEdgesOffScreenCorners() {
+        let zeldaSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .bounce,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .zelda
+        )
+        let leftAnchor = GeometryTokens.widgetPositioningAnchor(
+            idleAnimation: .bounce,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .zelda,
+            widgetSide: .left
+        )
+        let rightAnchor = GeometryTokens.widgetPositioningAnchor(
+            idleAnimation: .bounce,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .zelda,
+            widgetSide: .right
+        )
+        let leftOrigin = WidgetPositioning.origin(
+            visibleFrame: visibleFrame,
+            safeAreaInsets: zeroSafe,
+            corner: .bottomLeft,
+            offsetX: 16,
+            offsetY: 16,
+            panelSize: zeldaSize,
+            positioningAnchor: leftAnchor
+        )
+        let rightOrigin = WidgetPositioning.origin(
+            visibleFrame: visibleFrame,
+            safeAreaInsets: zeroSafe,
+            corner: .bottomRight,
+            offsetX: 16,
+            offsetY: 16,
+            panelSize: zeldaSize,
+            positioningAnchor: rightAnchor
+        )
+
+        XCTAssertEqual(leftOrigin.x + 18, 25, accuracy: 0.0001)
+        XCTAssertEqual(rightOrigin.x + 110, visibleFrame.maxX - 25, accuracy: 0.0001)
+    }
+
     func test_widgetScreenSelection_prefersFocusedWindowScreenOverFallback() {
         let primary = NSRect(x: 0, y: 0, width: 1440, height: 900)
         let secondary = NSRect(x: 1440, y: 0, width: 1440, height: 900)

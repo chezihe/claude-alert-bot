@@ -232,11 +232,13 @@ final class IdleAnimationTests: XCTestCase {
         XCTAssertFalse(src.contains(#"Text("Zzz")"#))
     }
 
-    func test_widgetIconViewSource_keepsPendingBadgeInsidePanelBounds() {
+    func test_widgetIconViewSource_positionsPendingBadgeWithZeldaLikeClearance() {
         let src = readWidgetIconViewSource()
+        let tokenSource = readDesignTokensSource()
 
-        XCTAssertTrue(src.contains("private static let badgeOffset = CGSize(width: -2, height: 2)"))
+        XCTAssertTrue(src.contains("private static let badgeOffset = CGSize(width: -2, height: -10)"))
         XCTAssertTrue(src.contains(".offset(x: Self.badgeOffset.width, y: Self.badgeOffset.height)"))
+        XCTAssertTrue(tokenSource.contains("static let widgetBadgeTopClearance: CGFloat = 12"))
         XCTAssertTrue(src.contains(".font(.system(size: 10.5))"))
         XCTAssertTrue(src.contains(".padding(.horizontal, 5)"))
         XCTAssertTrue(src.contains(".frame(minWidth: 18, minHeight: 18)"))
@@ -381,6 +383,17 @@ final class IdleAnimationTests: XCTestCase {
         let target = repoRoot.appendingPathComponent("App/FloatingWidgetWindowController.swift")
         guard let data = try? String(contentsOf: target, encoding: .utf8) else {
             XCTFail("Could not read App/FloatingWidgetWindowController.swift at \(target.path)")
+            return ""
+        }
+        return data
+    }
+
+    private func readDesignTokensSource(_ thisFile: StaticString = #filePath) -> String {
+        let here = URL(fileURLWithPath: "\(thisFile)")
+        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
+        let target = repoRoot.appendingPathComponent("App/DesignTokens.swift")
+        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
+            XCTFail("Could not read App/DesignTokens.swift at \(target.path)")
             return ""
         }
         return data

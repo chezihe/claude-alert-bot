@@ -116,9 +116,8 @@ final class DesignTokensTests: XCTestCase {
             reduceMotion: false
         )
 
-        // 64 + 2 * roamRadiusX(16), 64 + 2 * roamRadiusY(4)
         XCTAssertEqual(size.width, 96)
-        XCTAssertEqual(size.height, 72)
+        XCTAssertEqual(size.height, 88)
     }
 
     func test_geometryTokens_widgetDrawableSize_expandsForActiveMagic() {
@@ -146,8 +145,76 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(size.height, 128)
     }
 
+    func test_geometryTokens_widgetDrawableSize_includesClaudeBadgeTopClearance() {
+        let baseSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .bounce,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .claude
+        )
+        let roamSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .roam,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .claude
+        )
+        let magicSize = GeometryTokens.widgetDrawableSize(
+            idleAnimation: .magic,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .claude
+        )
+
+        XCTAssertEqual(baseSize.width, 64)
+        XCTAssertEqual(baseSize.height, 88)
+        XCTAssertGreaterThanOrEqual(baseSize.height, GeometryTokens.widgetBaseSize.height + GeometryTokens.widgetBadgeTopClearance * 2)
+        XCTAssertGreaterThanOrEqual(roamSize.height, GeometryTokens.widgetBaseSize.height + GeometryTokens.widgetBadgeTopClearance * 2)
+        XCTAssertGreaterThanOrEqual(magicSize.height, GeometryTokens.widgetBaseSize.height + GeometryTokens.widgetBadgeTopClearance * 2)
+    }
+
+    func test_geometryTokens_widgetPositioningAnchor_tracksVisibleIconCenter() {
+        let baseAnchor = GeometryTokens.widgetPositioningAnchor(
+            idleAnimation: .bounce,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .claude
+        )
+        let roamAnchor = GeometryTokens.widgetPositioningAnchor(
+            idleAnimation: .roam,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .claude
+        )
+        let magicAnchor = GeometryTokens.widgetPositioningAnchor(
+            idleAnimation: .magic,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .claude
+        )
+        let zeldaAnchor = GeometryTokens.widgetPositioningAnchor(
+            idleAnimation: .bounce,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .zelda,
+            widgetSide: .right
+        )
+        let zeldaLeftAnchor = GeometryTokens.widgetPositioningAnchor(
+            idleAnimation: .bounce,
+            quietHoursEnabled: false,
+            reduceMotion: false,
+            widgetIconStyle: .zelda,
+            widgetSide: .left
+        )
+
+        XCTAssertEqual(baseAnchor, CGPoint(x: 32, y: 44))
+        XCTAssertEqual(roamAnchor, CGPoint(x: 48, y: 44))
+        XCTAssertEqual(magicAnchor, CGPoint(x: 32, y: 52))
+        XCTAssertEqual(zeldaLeftAnchor, CGPoint(x: 41, y: 60))
+        XCTAssertEqual(zeldaAnchor, CGPoint(x: 87, y: 60))
+    }
+
     func test_geometryTokens_widgetDrawableSize_keepsBaseSizeWhenRoamIsSuppressed() {
-        let base = GeometryTokens.widgetBaseSize
+        let base = CGSize(width: 64, height: 88)
         let quietSize = GeometryTokens.widgetDrawableSize(
             idleAnimation: .roam,
             quietHoursEnabled: true,

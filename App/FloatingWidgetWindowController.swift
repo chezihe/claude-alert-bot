@@ -194,7 +194,14 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
             corner: store.widgetCorner,
             offsetX: store.offsetX,
             offsetY: store.offsetY,
-            panelSize: panel.frame.size
+            panelSize: panel.frame.size,
+            positioningAnchor: GeometryTokens.widgetPositioningAnchor(
+                idleAnimation: store.idleAnimation,
+                quietHoursEnabled: store.quietHoursEnabled,
+                reduceMotion: reducedMotion,
+                widgetIconStyle: store.widgetIconStyle,
+                widgetSide: store.widgetCorner.widgetSide
+            )
         )
         panel.setFrameOrigin(origin)
     }

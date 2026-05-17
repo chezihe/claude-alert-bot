@@ -50,12 +50,36 @@ enum WidgetPositioning {
         corner: WidgetCorner,
         offsetX: Int,
         offsetY: Int,
-        panelSize: NSSize
+        panelSize: NSSize,
+        positioningAnchor: CGPoint? = nil
     ) -> NSPoint {
         let f = visibleFrame
         let safe = safeAreaInsets
         let ox = max(CGFloat(offsetX), 0)
         let oy = max(CGFloat(offsetY), 0)
+        if let positioningAnchor {
+            let targetX: CGFloat
+            switch corner {
+            case .topRight, .bottomRight:
+                targetX = f.maxX - max(ox, safe.right) - GeometryTokens.widgetBaseSize.width / 2
+            case .topLeft, .bottomLeft:
+                targetX = f.minX + max(ox, safe.left) + GeometryTokens.widgetBaseSize.width / 2
+            }
+
+            let targetY: CGFloat
+            switch corner {
+            case .topRight, .topLeft:
+                targetY = f.maxY - max(oy, safe.top) - GeometryTokens.widgetBaseSize.height / 2 - topBadgeClearance
+            case .bottomRight, .bottomLeft:
+                targetY = f.minY + max(oy, safe.bottom) + GeometryTokens.widgetBaseSize.height / 2
+            }
+
+            return NSPoint(
+                x: targetX - positioningAnchor.x,
+                y: targetY - positioningAnchor.y
+            )
+        }
+
         switch corner {
         case .topRight:
             return NSPoint(x: f.maxX - panelSize.width  - max(ox, safe.right),

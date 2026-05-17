@@ -67,6 +67,7 @@ enum GeometryTokens {
     static let magicDrawableExtraWidth: CGFloat = 30
     static let magicDrawableExtraHeight: CGFloat = 40
     static let zeldaWidgetDrawableSize = CGSize(width: 128, height: 128)
+    static let widgetBadgeTopClearance: CGFloat = 12
     // Project contract: max 4 visible rows — WO-009 enforces; rows beyond scroll vertically.
     static let popoverMaxVisibleRows: Int = 4
     // Project contract: scroll fade — applied only when the list exceeds max visible rows.
@@ -80,18 +81,50 @@ enum GeometryTokens {
         widgetIconStyle: WidgetIconStyle = .default
     ) -> CGSize {
         if widgetIconStyle == .zelda { return zeldaWidgetDrawableSize }
-        guard !quietHoursEnabled, !reduceMotion else { return widgetBaseSize }
-        guard idleAnimation == .roam || idleAnimation == .magic else { return widgetBaseSize }
+        let baseDrawableSize = CGSize(
+            width: widgetBaseSize.width,
+            height: widgetBaseSize.height + widgetBadgeTopClearance * 2
+        )
+        guard !quietHoursEnabled, !reduceMotion else { return baseDrawableSize }
+        guard idleAnimation == .roam || idleAnimation == .magic else { return baseDrawableSize }
         if idleAnimation == .magic {
             return CGSize(
                 width: widgetBaseSize.width + magicDrawableExtraWidth,
-                height: widgetBaseSize.height + magicDrawableExtraHeight
+                height: max(widgetBaseSize.height + magicDrawableExtraHeight, baseDrawableSize.height)
             )
         }
         return CGSize(
             width: widgetBaseSize.width + MotionTokens.roamRadiusX * 2,
-            height: widgetBaseSize.height + MotionTokens.roamRadiusY * 2
+            height: max(widgetBaseSize.height + MotionTokens.roamRadiusY * 2, baseDrawableSize.height)
         )
+    }
+
+    static func widgetPositioningAnchor(
+        idleAnimation: IdleAnimation,
+        quietHoursEnabled: Bool,
+        reduceMotion: Bool,
+        widgetIconStyle: WidgetIconStyle = .default,
+        widgetSide: WidgetSide = .right
+    ) -> CGPoint {
+        if widgetIconStyle == .zelda {
+            switch widgetSide {
+            case .left:
+                return CGPoint(x: 41, y: 60)
+            case .right:
+                return CGPoint(x: 87, y: 60)
+            }
+        }
+
+        let size = widgetDrawableSize(
+            idleAnimation: idleAnimation,
+            quietHoursEnabled: quietHoursEnabled,
+            reduceMotion: reduceMotion,
+            widgetIconStyle: widgetIconStyle
+        )
+        if idleAnimation == .magic && !quietHoursEnabled && !reduceMotion {
+            return CGPoint(x: widgetBaseSize.width / 2, y: size.height / 2)
+        }
+        return CGPoint(x: size.width / 2, y: size.height / 2)
     }
 }
 

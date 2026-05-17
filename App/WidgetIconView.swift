@@ -49,7 +49,7 @@ struct WidgetIconView: View {
     @State private var zeldaIdleStartedAt: Date = Date()
     @State private var zeldaAlertStartedAt: Date = .distantPast
 
-    private static let badgeOffset = CGSize(width: -2, height: 2)
+    private static let badgeOffset = CGSize(width: -2, height: -10)
     private static let zeldaHeartOffset = CGSize(width: -1, height: -18)
     private static let claudeGlyphSize = CGSize(width: 46, height: 46)
     private static let zeldaGlyphSize = CGSize(width: 92, height: 92)

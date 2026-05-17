@@ -25,6 +25,15 @@ final class FloatingWidgetWindowControllerTests: XCTestCase {
         XCTAssertTrue(src.contains("reduceMotion: reducedMotion"))
     }
 
+    func test_sourcePassesWidgetPositioningAnchorWhenRepositioning() {
+        let src = readFloatingWidgetWindowControllerSource()
+
+        XCTAssertTrue(src.contains("GeometryTokens.widgetPositioningAnchor("))
+        XCTAssertTrue(src.contains("positioningAnchor: GeometryTokens.widgetPositioningAnchor("))
+        XCTAssertTrue(src.contains("widgetIconStyle: store.widgetIconStyle"))
+        XCTAssertTrue(src.contains("widgetSide: store.widgetCorner.widgetSide"))
+    }
+
     func test_sourceTracksFocusScreenChangesWhileWidgetIsVisible() {
         let src = readFloatingWidgetWindowControllerSource()
 
@@ -73,7 +82,16 @@ final class FloatingWidgetWindowControllerTests: XCTestCase {
             corner: .bottomLeft,
             offsetX: 16,
             offsetY: 16,
-            panelSize: controller.window!.frame.size
+            panelSize: controller.window!.frame.size,
+            positioningAnchor: GeometryTokens.widgetPositioningAnchor(
+                idleAnimation: store.idleAnimation,
+                quietHoursEnabled: store.quietHoursEnabled,
+                reduceMotion: store.reduceMotionPreference.effectiveReduceMotion(
+                    systemReduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+                ),
+                widgetIconStyle: store.widgetIconStyle,
+                widgetSide: store.widgetCorner.widgetSide
+            )
         )
 
         XCTAssertNotEqual(before.x, after.x, accuracy: 0.0001)

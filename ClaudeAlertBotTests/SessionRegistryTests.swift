@@ -476,8 +476,8 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(notifier.presentCalls[1].playSound, false)
     }
 
-    /// Test G — D2-14: suppressIfFrontmost closure returning true silently drops the alert.
-    func test_suppressIfFrontmost_dropsAlertSilently_D2_14() async {
+    /// Test G — frontmost match must not suppress completion alerts.
+    func test_frontmostMatchDoesNotSuppressStopAlert() async {
         let r = makeRegistry()
         await bind(r)
         let sid = "sid-G"
@@ -488,11 +488,11 @@ final class SessionRegistryTests: XCTestCase {
                        suppressIfFrontmost: suppressYes)
 
         let snap = await r.snapshotForTesting()
-        XCTAssertEqual(snap.completed.count, 0)
-        XCTAssertEqual(notifier.presentCalls.count, 0)
+        XCTAssertEqual(snap.completed.count, 1)
+        XCTAssertEqual(notifier.presentCalls.count, 1)
     }
 
-    func test_suppressIfFrontmost_persistsClearedInFlight() async {
+    func test_frontmostMatchClearsInFlightAndStillPresentsAlert() async {
         let r = makeRegistry()
         await bind(r)
         let sid = "sid-G2"
@@ -511,10 +511,11 @@ final class SessionRegistryTests: XCTestCase {
 
         let snap = await r.snapshotForTesting()
         XCTAssertNil(snap.inFlight[sid])
-        XCTAssertEqual(snap.completed.count, 0)
+        XCTAssertEqual(snap.completed.count, 1)
+        XCTAssertEqual(notifier.presentCalls.count, 1)
         let persisted = await SessionStore(url: tempURL).load()
         XCTAssertNil(persisted?.inFlight[sid],
-                     "D2-14 suppress should persist the cleared in-flight start so it does not restore after relaunch.")
+                     "Stop ingest should persist the cleared in-flight start so it does not restore after relaunch.")
     }
 
     /// Test H — SESS-04: runGC removes inFlight entries older than 6 hours.

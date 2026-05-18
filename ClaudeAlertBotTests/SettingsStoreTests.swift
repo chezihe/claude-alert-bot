@@ -54,6 +54,34 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertTrue(second.quietHoursEnabled)
     }
 
+    func test_detailShowLastOutput_defaultIsOff() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = SettingsStore(defaults: defaults)
+
+        XCTAssertFalse(store.detailShowLastOutput)
+    }
+
+    func test_detailShowLastOutput_persistsAcrossInit() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let first = SettingsStore(defaults: defaults)
+        first.detailShowLastOutput = true
+
+        let second = SettingsStore(defaults: defaults)
+        XCTAssertTrue(second.detailShowLastOutput)
+
+        second.detailShowLastOutput = false
+        let third = SettingsStore(defaults: defaults)
+        XCTAssertFalse(third.detailShowLastOutput)
+    }
+
     func test_idleAnimation_defaultIsBreathe() {
         let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!

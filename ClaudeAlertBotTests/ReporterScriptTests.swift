@@ -44,6 +44,109 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertNil(envelope["last_output"])
     }
 
+    func test_reporterFallsBackToTranscriptAssistantMessageForLastOutput() throws {
+        let transcript = tempHome.appendingPathComponent("transcript.jsonl")
+        try """
+        {"timestamp":"2026-05-18T01:00:00Z","type":"user","payload":{"content":"run tests"}}
+        {"timestamp":"2026-05-18T01:01:00Z","type":"response_item","payload":{"type":"message","content":[{"type":"output_text","text":"xcodebuild test passed\\nAll checks green"}]}}
+        """.write(to: transcript, atomically: true, encoding: .utf8)
+
+        let envelope = try runReporter(stdin: """
+        {
+          "session_id": "sid-reporter",
+          "cwd": "/tmp/project",
+          "transcript_path": "\(transcript.path)"
+        }
+        """)
+
+        XCTAssertEqual(envelope["last_output"] as? String, "xcodebuild test passed\nAll checks green")
+    }
+
+    func test_reporterPrefersTranscriptAssistantMessageOverExplicitLastOutputForStop() throws {
+        let transcript = tempHome.appendingPathComponent("transcript.jsonl")
+        try """
+        {"type":"response_item","payload":{"type":"message","content":[{"type":"output_text","text":"transcript fallback"}]}}
+        """.write(to: transcript, atomically: true, encoding: .utf8)
+
+        let envelope = try runReporter(stdin: """
+        {
+          "session_id": "sid-reporter",
+          "cwd": "/tmp/project",
+          "transcript_path": "\(transcript.path)",
+          "last_output": "explicit output"
+        }
+        """)
+
+        XCTAssertEqual(envelope["last_output"] as? String, "transcript fallback")
+    }
+
+    func test_reporterWaitsForClaudeTranscriptAssistantMessageForLastOutput() throws {
+        let transcript = tempHome.appendingPathComponent("transcript.jsonl")
+        try """
+        {"timestamp":"2026-05-18T01:00:00Z","type":"user","message":{"role":"user","content":"5초뒤에 인사해"}}
+
+        """.write(to: transcript, atomically: true, encoding: .utf8)
+
+        let appendDone = expectation(description: "assistant transcript line appended")
+        DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(500)) {
+            let assistantLine = """
+            {"timestamp":"2026-05-18T01:00:05Z","type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"안녕하세요"}]}}
+
+            """
+            do {
+                let handle = try FileHandle(forWritingTo: transcript)
+                try handle.seekToEnd()
+                try handle.write(contentsOf: Data(assistantLine.utf8))
+                try handle.close()
+            } catch {
+                XCTFail("failed to append transcript line: \(error)")
+            }
+            appendDone.fulfill()
+        }
+
+        let envelope = try runReporter(stdin: """
+        {
+          "session_id": "sid-reporter",
+          "cwd": "/tmp/project",
+          "transcript_path": "\(transcript.path)"
+        }
+        """)
+        wait(for: [appendDone], timeout: 2)
+
+        XCTAssertEqual(envelope["last_output"] as? String, "안녕하세요")
+    }
+
+    func test_reporterDoesNotUsePromptSubmitTranscriptForLastOutput() throws {
+        let transcript = tempHome.appendingPathComponent("transcript.jsonl")
+        try """
+        {"type":"response_item","payload":{"type":"message","content":[{"type":"output_text","text":"previous assistant message"}]}}
+        """.write(to: transcript, atomically: true, encoding: .utf8)
+
+        let envelope = try runReporter(event: "user_prompt_submit", stdin: """
+        {
+          "session_id": "sid-reporter",
+          "cwd": "/tmp/project",
+          "transcript_path": "\(transcript.path)"
+        }
+        """)
+
+        XCTAssertNil(envelope["last_output"])
+    }
+
+    func test_reporterDoesNotMapStopMessageFieldsToLastOutput() throws {
+        let envelope = try runReporter(stdin: """
+        {
+          "session_id": "sid-reporter",
+          "cwd": "/tmp/project",
+          "message": "not an assistant message",
+          "output": "not an assistant message either",
+          "summary": "not an assistant message summary"
+        }
+        """)
+
+        XCTAssertNil(envelope["last_output"])
+    }
+
     func test_reporterMapsNotificationToWaitingKind() throws {
         let envelope = try runReporter(event: "notification", stdin: """
         {

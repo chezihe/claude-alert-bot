@@ -55,6 +55,7 @@ enum GeometryTokens {
     static let popoverCornerRadius: CGFloat = 14
     // Project contract: row min height 36pt
     static let rowMinHeight: CGFloat = 36
+    static let rowLastOutputPreviewExtraHeight: CGFloat = 10
     // Project contract: row horizontal padding 12pt
     static let rowHorizontalPadding: CGFloat = 12
     // Project contract: row vertical padding 8pt

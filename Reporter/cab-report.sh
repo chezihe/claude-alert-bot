@@ -42,7 +42,7 @@ JSON=$(STDIN_JSON="$STDIN_JSON" \
        TS="$TS" \
        PPID_VAL="$PPID_VAL" \
        /usr/bin/python3 -S -c '
-import json, os, sys
+import json, os, sys, time
 from datetime import datetime
 
 raw = os.environ.get("STDIN_JSON", "")
@@ -102,6 +102,60 @@ def transcript_started_at(path):
         return latest
     except Exception:
         return None
+def content_text(content):
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict) and isinstance(item.get("text"), str):
+                parts.append(item.get("text"))
+        return "\n".join(parts) if parts else None
+    return None
+def payload_text(payload):
+    if not isinstance(payload, dict):
+        return None
+    for key in ("message", "output", "result", "summary", "text"):
+        if isinstance(payload.get(key), str):
+            return payload.get(key)
+    return content_text(payload.get("content"))
+def transcript_last_output(path):
+    if not isinstance(path, str) or not path:
+        return None
+    try:
+        latest = None
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    obj = json.loads(line)
+                except Exception:
+                    continue
+                payload = obj.get("payload") if isinstance(obj.get("payload"), dict) else {}
+                message = obj.get("message") if isinstance(obj.get("message"), dict) else {}
+                candidate = None
+                if message.get("role") == "assistant":
+                    candidate = content_text(message.get("content"))
+                elif obj.get("type") == "assistant":
+                    candidate = payload_text(payload) or content_text(obj.get("content"))
+                elif payload.get("type") == "message":
+                    candidate = payload_text(payload)
+                elif obj.get("type") == "event_msg" and payload.get("type") == "agent_message":
+                    candidate = payload.get("message")
+                if isinstance(candidate, str) and candidate.strip():
+                    latest = candidate
+        return latest
+    except Exception:
+        return None
+def wait_transcript_last_output(path):
+    for attempt in range(8):
+        output = transcript_last_output(path)
+        if isinstance(output, str) and output.strip():
+            return output
+        if attempt < 7:
+            time.sleep(0.1)
+    return None
 
 envelope = {
     "schema_version": 1,
@@ -134,12 +188,20 @@ if not isinstance(kind, str) and env("EVENT") == "notification":
     kind = "waiting"
 if isinstance(kind, str):
     envelope["kind"] = kind
-last_output = parsed.get("last_output")
-if not isinstance(last_output, str):
-    for key in ("message", "output", "result", "summary"):
-        if isinstance(parsed.get(key), str):
-            last_output = parsed.get(key)
-            break
+event = env("EVENT")
+last_output = None
+if event == "stop":
+    transcript_path = parsed.get("transcript_path")
+    if isinstance(transcript_path, str) and transcript_path:
+        last_output = wait_transcript_last_output(transcript_path)
+    if not isinstance(last_output, str):
+        last_output = parsed.get("last_output")
+elif event == "notification":
+    last_output = parsed.get("message")
+    if not isinstance(last_output, str):
+        last_output = parsed.get("last_output")
+else:
+    last_output = parsed.get("last_output")
 last_output = cap_utf8(last_output)
 if last_output is not None:
     envelope["last_output"] = last_output

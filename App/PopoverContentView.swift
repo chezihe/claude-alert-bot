@@ -80,6 +80,14 @@ enum PopoverContentRules {
         session.durationSec == nil
     }
 
+    static func lastOutputPreview(_ value: String?) -> String? {
+        guard let value else { return nil }
+        return value
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first { !$0.isEmpty }
+    }
+
     static func orderedByPinnedThenStoppedAt(_ queue: [CompletedSession]) -> [CompletedSession] {
         queue.enumerated().sorted { lhs, rhs in
             let left = lhs.element
@@ -123,14 +131,34 @@ enum PopoverContentRules {
         groupedListItems(queue, expandedProjects: expandedProjects).count
     }
 
+    static func rowHeight(item: PopoverListItem, showLastOutput: Bool) -> CGFloat {
+        switch item {
+        case .group:
+            return GeometryTokens.rowMinHeight
+        case .session(let session, _):
+            let previewHeight = showLastOutput && lastOutputPreview(session.lastOutput) != nil
+                ? GeometryTokens.rowLastOutputPreviewExtraHeight
+                : 0
+            return GeometryTokens.rowMinHeight + previewHeight
+        }
+    }
+
+    static func visibleRowsHeight(items: [PopoverListItem],
+                                  showLastOutput: Bool,
+                                  maxVisibleRows: Int = GeometryTokens.popoverMaxVisibleRows) -> CGFloat {
+        items.prefix(maxVisibleRows).reduce(CGFloat(0)) { total, item in
+            total + rowHeight(item: item, showLastOutput: showLastOutput)
+        }
+    }
+
     static func popoverHeight(queue: [CompletedSession],
                               expandedProjects: Set<String>,
-                              everHadAlerts: Bool) -> CGFloat {
-        let rows = max(1, displayRowCount(queue, expandedProjects: expandedProjects))
-        let rowsClamped = min(rows, GeometryTokens.popoverMaxVisibleRows)
+                              everHadAlerts: Bool,
+                              showLastOutput: Bool = false) -> CGFloat {
+        let items = groupedListItems(queue, expandedProjects: expandedProjects)
         let bodyHeight: CGFloat = shouldShowEmptyState(queue: queue, everHadAlerts: everHadAlerts)
             ? 48
-            : (queue.isEmpty ? 0 : GeometryTokens.rowMinHeight * CGFloat(rowsClamped))
+            : (queue.isEmpty ? 0 : visibleRowsHeight(items: items, showLastOutput: showLastOutput))
         let shouldShowToolbar = shouldShowClearAll(
             clearableCount: clearableSessionCount(queue)
         )
@@ -184,6 +212,7 @@ struct PopoverContentView: View {
     var widgetCorner: WidgetCorner = .topRight
     var onToggleGroup: (String) -> Void = { _ in }
     var everHadAlerts: Bool = false
+    var showLastOutput: Bool = false
 
     @State private var displayQueue: [CompletedSession] = []
     @State private var hasAppeared: Bool = false
@@ -269,6 +298,7 @@ struct PopoverContentView: View {
                                     PopoverRowView(
                                         session: session,
                                         showTimeSuffix: showTimeSuffix,
+                                        showLastOutput: showLastOutput,
                                         state: rowStates[session.id, default: .normal],
                                         isMuted: isProjectMuted(session.projectName),
                                         onClick: { onRowClick(session.id) },
@@ -294,10 +324,10 @@ struct PopoverContentView: View {
                     )
                 }
                 .scrollIndicators(.never)
-                .frame(maxHeight: CGFloat(min(
-                    PopoverContentRules.displayRowCount(visibleQueue, expandedProjects: expandedProjects),
-                    GeometryTokens.popoverMaxVisibleRows
-                )) * GeometryTokens.rowMinHeight)
+                .frame(maxHeight: PopoverContentRules.visibleRowsHeight(
+                    items: listItems,
+                    showLastOutput: showLastOutput
+                ))
                 .coordinateSpace(name: Self.scrollCoordinateSpaceName)
                 .background(
                     GeometryReader { proxy in
@@ -336,7 +366,8 @@ struct PopoverContentView: View {
             height: PopoverContentRules.popoverHeight(
                 queue: visibleQueue,
                 expandedProjects: expandedProjects,
-                everHadAlerts: everHadAlerts
+                everHadAlerts: everHadAlerts,
+                showLastOutput: showLastOutput
             )
         )
         .background(PopoverMaterialBackground())

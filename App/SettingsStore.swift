@@ -50,6 +50,7 @@ final class SettingsStore: ObservableObject {
     @AppStorage("threshold_seconds") var thresholdSeconds: Int = 30   // THR-01 default per ROADMAP
     @AppStorage("sound_enabled")     var soundEnabled: Bool = true    // AUD-02
     @AppStorage("quiet_hours_enabled") var quietHoursEnabled: Bool = false
+    @AppStorage("detail_show_last_output") var detailShowLastOutput: Bool = false
     @AppStorage("ever_had_alerts")   var everHadAlerts: Bool = false
     @AppStorage("idle_animation")    private var idleAnimationRaw: String = IdleAnimation.default.rawValue
     @AppStorage("zelda_alert_effect") private var zeldaAlertEffectRaw: String = WidgetAlertEffect.default.rawValue
@@ -153,6 +154,7 @@ final class SettingsStore: ObservableObject {
         self._thresholdSeconds = AppStorage(wrappedValue: 30, "threshold_seconds", store: defaults)
         self._soundEnabled = AppStorage(wrappedValue: true, "sound_enabled", store: defaults)
         self._quietHoursEnabled = AppStorage(wrappedValue: false, "quiet_hours_enabled", store: defaults)
+        self._detailShowLastOutput = AppStorage(wrappedValue: false, "detail_show_last_output", store: defaults)
         self._everHadAlerts = AppStorage(wrappedValue: false, "ever_had_alerts", store: defaults)
         self._idleAnimationRaw = AppStorage(wrappedValue: IdleAnimation.default.rawValue, "idle_animation", store: defaults)
         self._zeldaAlertEffectRaw = AppStorage(wrappedValue: WidgetAlertEffect.default.rawValue, "zelda_alert_effect", store: defaults)

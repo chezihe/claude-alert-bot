@@ -222,6 +222,7 @@ extension SettingsViewTests {
         XCTAssertTrue(appSource.contains("Menu(\"Notification\")"))
         XCTAssertTrue(appSource.contains("Toggle(Self.menuSoundToggleLabel, isOn: $store.soundEnabled)"))
         XCTAssertTrue(appSource.contains("Toggle(Self.menuQuietHoursToggleLabel, isOn: $store.quietHoursEnabled)"))
+        XCTAssertTrue(appSource.contains("Menu(Self.menuAlertDetailsHeading)"))
         XCTAssertTrue(appSource.contains("Menu(\"Style\")"))
         XCTAssertTrue(appSource.contains("Picker(SettingsView.idleAnimationLabel, selection: store.zeldaAlertEffectBinding)"))
         XCTAssertTrue(appSource.contains("Picker(SettingsView.idleAnimationLabel, selection: store.idleAnimationBinding)"))
@@ -248,9 +249,21 @@ extension SettingsViewTests {
         XCTAssertTrue(appSource.contains("private static let menuSoundToggleLabel = \"Play notification sound\""))
         XCTAssertTrue(appSource.contains("private static let menuQuietHoursToggleLabel = \"Quiet Hours\""))
         XCTAssertTrue(appSource.contains("private static let menuThresholdHeading = \"Notification Threshold\""))
+        XCTAssertTrue(appSource.contains("private static let menuAlertDetailsHeading = \"Alert Details\""))
+        XCTAssertTrue(appSource.contains("private static let menuAlertDetailsNoneLabel = \"None\""))
+        XCTAssertTrue(appSource.contains("private static let menuAlertDetailsLastOutputLabel = \"Last Output\""))
         XCTAssertTrue(appSource.contains("private static let menuWidgetPositionHeading = \"Widget Position\""))
         XCTAssertTrue(appSource.contains("private static let menuConnectionTestHeading = \"iTerm2 Connection\""))
         XCTAssertTrue(appSource.contains("Image(systemName: \"checkmark\")"))
+    }
+
+    func test_menuBarAlertDetailsMenu_wiresLastOutputSetting() {
+        let appSource = readClaudeAlertBotAppSource()
+
+        XCTAssertTrue(appSource.contains("store.detailShowLastOutput = false"))
+        XCTAssertTrue(appSource.contains("store.detailShowLastOutput = true"))
+        XCTAssertTrue(appSource.contains("if !store.detailShowLastOutput"))
+        XCTAssertTrue(appSource.contains("if store.detailShowLastOutput"))
     }
 
     func test_settingsWindowPresenterBringsSettingsWindowToFront() {

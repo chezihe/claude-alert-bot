@@ -234,6 +234,75 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertEqual(height, GeometryTokens.rowMinHeight * 2 + GeometryTokens.popoverToolbarHeight)
     }
 
+    func test_lastOutputPreview_usesFirstNonEmptyLine() {
+        let value = "\n   \n  AssertionError: expected active session\nsecond line"
+
+        XCTAssertEqual(
+            PopoverContentRules.lastOutputPreview(value),
+            "AssertionError: expected active session"
+        )
+    }
+
+    func test_lastOutputPreview_ignoresNilEmptyAndWhitespaceValues() {
+        XCTAssertNil(PopoverContentRules.lastOutputPreview(nil))
+        XCTAssertNil(PopoverContentRules.lastOutputPreview(""))
+        XCTAssertNil(PopoverContentRules.lastOutputPreview(" \n\t "))
+    }
+
+    func test_popoverHeight_addsPreviewHeightOnlyWhenLastOutputOptionIsEnabled() {
+        let queue = [
+            mkSession(id: "a1", project: "Alpha", lastOutput: "xcodebuild test passed")
+        ]
+
+        let offHeight = PopoverContentRules.popoverHeight(
+            queue: queue,
+            expandedProjects: [],
+            everHadAlerts: true,
+            showLastOutput: false
+        )
+        let onHeight = PopoverContentRules.popoverHeight(
+            queue: queue,
+            expandedProjects: [],
+            everHadAlerts: true,
+            showLastOutput: true
+        )
+
+        XCTAssertEqual(offHeight, GeometryTokens.rowMinHeight)
+        XCTAssertEqual(onHeight, GeometryTokens.rowMinHeight + GeometryTokens.rowLastOutputPreviewExtraHeight)
+    }
+
+    func test_popoverHeight_doesNotAddPreviewHeightForBlankLastOutput() {
+        let queue = [
+            mkSession(id: "a1", project: "Alpha", lastOutput: " \n ")
+        ]
+
+        let height = PopoverContentRules.popoverHeight(
+            queue: queue,
+            expandedProjects: [],
+            everHadAlerts: true,
+            showLastOutput: true
+        )
+
+        XCTAssertEqual(height, GeometryTokens.rowMinHeight)
+    }
+
+    func test_popoverHeight_doesNotAddPreviewHeightForCollapsedGroupHeader() {
+        let queue = [
+            mkSession(id: "a1", project: "Alpha", lastOutput: "one"),
+            mkSession(id: "a2", project: "Alpha", lastOutput: "two"),
+            mkSession(id: "a3", project: "Alpha", lastOutput: "three")
+        ]
+
+        let height = PopoverContentRules.popoverHeight(
+            queue: queue,
+            expandedProjects: [],
+            everHadAlerts: true,
+            showLastOutput: true
+        )
+
+        XCTAssertEqual(height, GeometryTokens.rowMinHeight + GeometryTokens.popoverToolbarHeight)
+    }
+
     func test_timeSuffix_format_hhmm() {
         var comps = DateComponents()
         comps.year = 2026; comps.month = 5; comps.day = 7
@@ -473,6 +542,16 @@ final class PopoverContentTests: XCTestCase {
         XCTAssertTrue(src.contains("everHadAlerts: everHadAlerts"))
     }
 
+    func test_popoverContentView_wiresLastOutputOptionToRowsAndHeight() {
+        let src = readPopoverContentViewSource()
+        let controllerSrc = readWidgetPopoverControllerSource()
+
+        XCTAssertTrue(src.contains("var showLastOutput: Bool = false"))
+        XCTAssertTrue(src.contains("showLastOutput: showLastOutput"))
+        XCTAssertTrue(src.contains("PopoverContentRules.visibleRowsHeight("))
+        XCTAssertTrue(controllerSrc.contains("showLastOutput: SettingsStore.shared.detailShowLastOutput"))
+    }
+
     func test_widgetPopoverController_wiresProjectGroupExpansion() {
         let src = readWidgetPopoverControllerSource()
 
@@ -542,7 +621,8 @@ final class PopoverContentTests: XCTestCase {
                            duration: Int? = 31,
                            stoppedAt: Date = Date(),
                            pinned: Bool = false,
-                           alertID: String? = nil) -> CompletedSession {
+                           alertID: String? = nil,
+                           lastOutput: String? = nil) -> CompletedSession {
         CompletedSession(
             sessionID: id,
             projectName: project,
@@ -551,6 +631,7 @@ final class PopoverContentTests: XCTestCase {
             itermSessionID: nil,
             tty: nil,
             cwd: nil,
+            lastOutput: lastOutput,
             pinned: pinned,
             alertID: alertID ?? id
         )

@@ -14,7 +14,7 @@
 // Phase 03.1: row geometry literals (36/12/8) resolve through GeometryTokens (SC#1).
 // Non-SPEC literals retained per Finding F-2: hover color/anim (controlAccentColor + 0.12s),
 // Phase 3 D3-11 missing-animation timings (0.15s × 2 + 0.4s collapse + 0.2s reduce-motion fallback),
-// typography (13pt body, 11pt secondary). See 03.1-01-SUMMARY.md.
+// typography (13pt body, 11pt metadata, 10pt preview). See 03.1-01-SUMMARY.md.
 import SwiftUI
 import AppKit
 
@@ -28,6 +28,7 @@ enum RowState: Equatable {
 struct PopoverRowView: View {
     let session: CompletedSession
     let showTimeSuffix: Bool
+    var showLastOutput: Bool = false
     /// Phase 3 D3-11 — state owned by parent (WidgetPopoverController via PopoverContentView).
     /// Default `.normal` keeps any call site that hasn't wired state yet working until 03-07.
     var state: RowState = .normal
@@ -62,40 +63,50 @@ struct PopoverRowView: View {
             guard state == .normal else { return }
             onClick()
         }) {
-            HStack(spacing: 8) {
-                Text(session.projectName)
-                    .font(.system(size: 13))
-                    .foregroundStyle(state == .jumping
-                                     ? Color(NSColor.tertiaryLabelColor)
-                                     : Color(NSColor.labelColor))
-                    .strikethrough(!session.available, color: Color(NSColor.secondaryLabelColor))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .rotationEffect(.degrees(rotation))     // 도리도리 effect — only animates in .missing
-                if session.pinned {
-                    Image(systemName: "pin.fill")
-                        .font(.system(size: 11))
-                        .rotationEffect(.degrees(45))
-                        .foregroundStyle(Color(NSColor.secondaryLabelColor))
-                        .accessibilityLabel("Pinned")
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 8) {
+                    Text(session.projectName)
+                        .font(.system(size: 13))
+                        .foregroundStyle(state == .jumping
+                                         ? Color(NSColor.tertiaryLabelColor)
+                                         : Color(NSColor.labelColor))
+                        .strikethrough(!session.available, color: Color(NSColor.secondaryLabelColor))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .rotationEffect(.degrees(rotation))     // 도리도리 effect — only animates in .missing
+                    if session.pinned {
+                        Image(systemName: "pin.fill")
+                            .font(.system(size: 11))
+                            .rotationEffect(.degrees(45))
+                            .foregroundStyle(Color(NSColor.secondaryLabelColor))
+                            .accessibilityLabel("Pinned")
+                    }
+                    Spacer(minLength: 0)
+                    if showTimeSuffix {
+                        Text("· \(PopoverContentRules.timeSuffix(for: session.stoppedAt))")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color(NSColor.secondaryLabelColor))
+                    }
+                    if PopoverContentRules.showsOrphanIndicator(session: session) {
+                        Text("?")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color(NSColor.secondaryLabelColor))
+                            .accessibilityLabel("Unknown Duration")
+                    }
+                    statusDot
                 }
-                Spacer(minLength: 0)
-                if showTimeSuffix {
-                    Text("· \(PopoverContentRules.timeSuffix(for: session.stoppedAt))")
-                        .font(.system(size: 11))
+                if let preview = lastOutputPreviewText {
+                    Text(preview)
+                        .font(.system(size: 10))
                         .foregroundStyle(Color(NSColor.secondaryLabelColor))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                if PopoverContentRules.showsOrphanIndicator(session: session) {
-                    Text("?")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Color(NSColor.secondaryLabelColor))
-                        .accessibilityLabel("Unknown Duration")
-                }
-                statusDot
             }
             .padding(.vertical, GeometryTokens.rowVerticalPadding)
             .padding(.horizontal, GeometryTokens.rowHorizontalPadding)
-            .frame(minHeight: collapsed ? 0 : GeometryTokens.rowMinHeight)
+            .frame(height: effectiveRowHeight)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 isHovered ? ColorTokens.rowHover(colorScheme: colorScheme) : Color.clear
@@ -144,6 +155,20 @@ struct PopoverRowView: View {
         let statusText = session.available ? "session complete" : "session unavailable"
         let actionText = session.available ? "activate to jump" : "activate to clear"
         return "\(session.projectName), \(pinnedPrefix)\(statusText), \(actionText)"
+    }
+
+    private func lastOutputPreview(_ value: String?) -> String? {
+        PopoverContentRules.lastOutputPreview(value)
+    }
+
+    private var lastOutputPreviewText: String? {
+        guard showLastOutput else { return nil }
+        return lastOutputPreview(session.lastOutput)
+    }
+
+    private var effectiveRowHeight: CGFloat {
+        guard !collapsed else { return 0 }
+        return GeometryTokens.rowMinHeight + (lastOutputPreviewText == nil ? 0 : GeometryTokens.rowLastOutputPreviewExtraHeight)
     }
 
     @ViewBuilder

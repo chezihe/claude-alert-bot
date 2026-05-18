@@ -160,7 +160,8 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             onToggleGroup: { [weak self] projectName in
                 self?.onToggleGroup(projectName: projectName)
             },
-            everHadAlerts: SettingsStore.shared.everHadAlerts
+            everHadAlerts: SettingsStore.shared.everHadAlerts,
+            showLastOutput: SettingsStore.shared.detailShowLastOutput
         )
     }
 
@@ -229,7 +230,8 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         let height = PopoverContentRules.popoverHeight(
             queue: queue,
             expandedProjects: expandedProjects,
-            everHadAlerts: SettingsStore.shared.everHadAlerts
+            everHadAlerts: SettingsStore.shared.everHadAlerts,
+            showLastOutput: SettingsStore.shared.detailShowLastOutput
         )
         let size = NSSize(width: GeometryTokens.popoverWidth, height: height)
         guard let widgetPanel = widgetController?.window,

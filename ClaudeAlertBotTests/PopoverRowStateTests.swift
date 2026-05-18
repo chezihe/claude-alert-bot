@@ -136,6 +136,19 @@ final class PopoverRowStateTests: XCTestCase {
         )
     }
 
+    func test_lastOutputPreview_isOptionalOneLineSecondaryText() {
+        let src = readPopoverRowViewSource()
+
+        XCTAssertTrue(src.contains("var showLastOutput: Bool = false"))
+        XCTAssertTrue(src.contains("if let preview = lastOutputPreviewText"))
+        XCTAssertTrue(src.contains("Text(preview)"))
+        XCTAssertTrue(src.contains("Text(preview)\n                        .font(.system(size: 10))"))
+        XCTAssertTrue(src.contains(".foregroundStyle(Color(NSColor.secondaryLabelColor))"))
+        XCTAssertTrue(src.contains(".lineLimit(1)"))
+        XCTAssertTrue(src.contains(".truncationMode(.tail)"))
+        XCTAssertTrue(src.contains(".frame(height: effectiveRowHeight)"))
+    }
+
     func test_statusDotRipple_usesJustArrivedRuleAndMotionTokens() {
         let src = readPopoverRowViewSource()
 

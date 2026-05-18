@@ -58,6 +58,30 @@ private struct MenuBarMenuContent: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Menu(Self.menuAlertDetailsHeading) {
+                Button {
+                    store.detailShowLastOutput = false
+                } label: {
+                    HStack {
+                        Text(Self.menuAlertDetailsNoneLabel)
+                        if !store.detailShowLastOutput {
+                            Spacer()
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+                Button {
+                    store.detailShowLastOutput = true
+                } label: {
+                    HStack {
+                        Text(Self.menuAlertDetailsLastOutputLabel)
+                        if store.detailShowLastOutput {
+                            Spacer()
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
         }
 
         Menu("Style") {
@@ -237,6 +261,9 @@ private struct MenuBarMenuContent: View {
     private static let menuQuietHoursToggleLabel = "Quiet Hours"
     private static let menuThresholdHeading = "Notification Threshold"
     private static let menuThresholdCaption = "Notify only after threshold elapsed"
+    private static let menuAlertDetailsHeading = "Alert Details"
+    private static let menuAlertDetailsNoneLabel = "None"
+    private static let menuAlertDetailsLastOutputLabel = "Last Output"
     private static let menuWidgetPositionHeading = "Widget Position"
     private static let menuCornerLabel = "Corner"
     private static let menuOffsetXLabel = "Horizontal Offset"

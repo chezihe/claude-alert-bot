@@ -23,7 +23,8 @@ Claude Alert Bot is built around session-accurate jump-back rather than short-li
 - Supports waiting-input alerts from Claude notification hooks for permission prompts and elicitation dialogs.
 - Lets you pin important rows, mute a project for 1 hour, or clear unpinned rows.
 - Groups repeated alerts from the same project and shows a compact count badge.
-- Offers menu bar controls for sound, Quiet Hours, widget position, animation, appearance, reduce motion, launch at login, muted projects, test notification, and iTerm2 connection testing.
+- Can show a one-line Last Output preview of the latest captured assistant message or output under each Claude Code or Codex row when enabled from `Notification > Alert Details > Last Output`.
+- Offers menu bar controls for sound, Quiet Hours, notification threshold, alert details, widget position, animation, appearance, reduce motion, launch at login, muted projects, test notification, and iTerm2 connection testing.
 - Installs and maintains the bundled hook reporter automatically on launch.
 
 ## Requirements
@@ -80,6 +81,9 @@ macOS may ask for:
 5. Activate a row to jump back to the exact terminal session.
 6. Right-click a row to pin it or mute that project for 1 hour.
 
+If you want more context in the popover, open the bell menu and choose `Notification > Alert Details > Last Output`.
+Rows will show the first non-empty line of the latest captured assistant message or output when one is available.
+
 ## Feature Overview
 
 ### Persistent Queue
@@ -100,7 +104,8 @@ Waiting-input alerts appear immediately.
 The status dot shows the alert type: green for success, red for error, and yellow for waiting input.
 Rows normally show the completed run time.
 If the app cannot determine the run time, the time indicator is shown as `?`.
-When the finished iTerm2 session is already the current frontmost session, the app skips the completion alert.
+When `Last Output` is enabled, Claude Code and Codex rows can show one secondary preview line.
+Blank output is ignored, multiline output uses the first non-empty line, and long text is truncated to fit the row.
 
 ### Quiet Hours
 

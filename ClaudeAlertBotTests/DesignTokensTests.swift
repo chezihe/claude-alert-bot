@@ -28,11 +28,11 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(c?.blueComponent  ?? 0, Double(0x2C) / 255.0, accuracy: 0.005)
     }
 
-    func test_colorTokens_statusSuccess_matchesSpecHex_D97757() {
+    func test_colorTokens_statusSuccess_matchesSpecHex_34C759() {
         let c = NSColor(ColorTokens.statusSuccess).usingColorSpace(.sRGB)
-        XCTAssertEqual(c?.redComponent   ?? 0, Double(0xD9) / 255.0, accuracy: 0.005)
-        XCTAssertEqual(c?.greenComponent ?? 0, Double(0x77) / 255.0, accuracy: 0.005)
-        XCTAssertEqual(c?.blueComponent  ?? 0, Double(0x57) / 255.0, accuracy: 0.005)
+        XCTAssertEqual(c?.redComponent   ?? 0, Double(0x34) / 255.0, accuracy: 0.005)
+        XCTAssertEqual(c?.greenComponent ?? 0, Double(0xC7) / 255.0, accuracy: 0.005)
+        XCTAssertEqual(c?.blueComponent  ?? 0, Double(0x59) / 255.0, accuracy: 0.005)
     }
 
     func test_colorTokens_statusError_matchesSpecHex_E5484D() {

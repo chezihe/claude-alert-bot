@@ -111,7 +111,12 @@ actor SessionRegistry {
             guard let start = inFlight.removeValue(forKey: sid)?.startedAt else { return nil }
             return Int(stoppedAt.timeIntervalSince(start))
         }()
+        let effectiveKind: AlertKind = {
+            if event.exit_code.map({ $0 != 0 }) == true { return .error }
+            return event.kind ?? .success
+        }()
         let passes: Bool = {
+            if effectiveKind == .error { return true }
             switch durationSec {
             case .some(let d): return d >= thresholdSeconds
             case .none:        return true   // THR-02 — never silently drop
@@ -137,7 +142,7 @@ actor SessionRegistry {
             itermSessionID: iTermSessionID.uuid(fromRaw: event.iterm_session_id),   // D3-02 — UUID-only on write
             tty: event.tty,
             cwd: event.cwd,
-            kind: event.kind ?? .success,
+            kind: effectiveKind,
             exitCode: event.exit_code,
             startedAt: event.started_at,
             lastOutput: event.last_output

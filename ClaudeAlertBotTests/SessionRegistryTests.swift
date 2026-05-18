@@ -174,6 +174,53 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(notifier.presentCalls.first?.session, sid)
     }
 
+    func test_ingest_stop_errorBelowThreshold_emitsAlert() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-error-below-threshold"
+        let t0 = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
+        await r.seedInFlightForTesting(sessionID: sid, started: t0, cwd: "/x")
+        let stop = HookEventFactory.stop(
+            sessionID: sid,
+            ts: iso(t0.addingTimeInterval(5)),
+            termProgram: "iTerm.app",
+            kind: .error
+        )
+
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let session = await r.snapshotForTesting().completed.first
+        XCTAssertEqual(session?.sessionID, sid)
+        XCTAssertEqual(session?.durationSec, 5)
+        XCTAssertEqual(session?.kind, .error)
+        XCTAssertEqual(notifier.presentCalls.map(\.session), [sid])
+    }
+
+    func test_ingest_stop_nonZeroExitCodeWithoutKind_emitsErrorBelowThreshold() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-exit-code-error"
+        let t0 = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
+        await r.seedInFlightForTesting(sessionID: sid, started: t0, cwd: "/x")
+        let stop = HookEventFactory.stop(
+            sessionID: sid,
+            ts: iso(t0.addingTimeInterval(5)),
+            termProgram: "iTerm.app",
+            exitCode: 1
+        )
+
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let session = await r.snapshotForTesting().completed.first
+        XCTAssertEqual(session?.sessionID, sid)
+        XCTAssertEqual(session?.durationSec, 5)
+        XCTAssertEqual(session?.kind, .error)
+        XCTAssertEqual(session?.exitCode, 1)
+        XCTAssertEqual(notifier.presentCalls.map(\.session), [sid])
+    }
+
     func test_ingest_stop_fromExplicitNonITerm_skipsAppendAndPresent() async {
         let r = makeRegistry()
         await bind(r)
@@ -248,6 +295,7 @@ final class SessionRegistryTests: XCTestCase {
         let stoppedAt = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
         let secondStop = HookEventFactory.stop(
             sessionID: secondID,
+            iTermSessionID: "w0t0p1:22222222-2222-4222-8222-222222222222",
             ts: iso(stoppedAt.addingTimeInterval(1))
         )
         reentrantNotifier.onFirstPresent = {
@@ -255,7 +303,11 @@ final class SessionRegistryTests: XCTestCase {
                            suppressIfFrontmost: self.suppressNo)
         }
 
-        let firstStop = HookEventFactory.stop(sessionID: firstID, ts: iso(stoppedAt))
+        let firstStop = HookEventFactory.stop(
+            sessionID: firstID,
+            iTermSessionID: "w0t0p1:11111111-1111-4111-8111-111111111111",
+            ts: iso(stoppedAt)
+        )
         await r.ingest(firstStop, thresholdSeconds: 0, soundEnabled: true,
                        suppressIfFrontmost: suppressNo)
 

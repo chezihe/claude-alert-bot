@@ -15,7 +15,7 @@ enum ColorTokens {
     // Project contract: accent dark
     static let accentDark: Color = makeColor(hex: 0xB8492C)
     // Project contract: status success
-    static let statusSuccess: Color = makeColor(hex: 0xD97757)
+    static let statusSuccess: Color = makeColor(hex: 0x34C759)
     // Project contract: status error
     static let statusError: Color = makeColor(hex: 0xE5484D)
     // Project contract: status waiting
@@ -34,7 +34,7 @@ enum ColorTokens {
 
     // Project contract: row hover
     static func rowHover(colorScheme: ColorScheme) -> Color {
-        statusSuccess.opacity(colorScheme == .dark ? 0.20 : 0.13)
+        accent.opacity(colorScheme == .dark ? 0.20 : 0.13)
     }
 
     /// Hex (RRGGBB) → SwiftUI Color via componentwise sRGB. Private helper, zero deps.

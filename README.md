@@ -91,6 +91,16 @@ That makes it useful for long-running agent work where a standard banner would d
 
 You can choose how long a run must take before it produces an alert.
 Short, noisy runs can be suppressed without losing session accuracy for meaningful completions.
+Failed runs still produce alerts even when they are shorter than the threshold.
+If a stop event has a non-zero exit code, Claude Alert Bot treats it as a failed run.
+Waiting-input alerts appear immediately.
+
+### Row Indicators
+
+The status dot shows the alert type: green for success, red for error, and yellow for waiting input.
+Rows normally show the completed run time.
+If the app cannot determine the run time, the time indicator is shown as `?`.
+When the finished iTerm2 session is already the current frontmost session, the app skips the completion alert.
 
 ### Quiet Hours
 

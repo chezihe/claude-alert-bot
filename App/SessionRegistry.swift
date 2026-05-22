@@ -57,7 +57,7 @@ actor SessionRegistry {
     func ingest(_ event: HookEvent,
                 thresholdSeconds: Int,
                 soundEnabled: Bool,
-                suppressIfFrontmost _: @Sendable (String?) async -> Bool) async {
+                suppressIfFrontmost: @Sendable (String?) async -> Bool) async {
         // Lazy GC kick (Pattern 6 third trigger)
         await runGC()
         guard Self.isSupportedTerminal(event.term_program) else {
@@ -69,7 +69,8 @@ actor SessionRegistry {
         case "notification": await handleNotification(event, soundEnabled: soundEnabled)
         case "stop": await handleStop(event,
                                      thresholdSeconds: thresholdSeconds,
-                                     soundEnabled: soundEnabled)
+                                     soundEnabled: soundEnabled,
+                                     suppressIfFrontmost: suppressIfFrontmost)
         default: log.warning("unknown event=\(event.event, privacy: .public)")
         }
     }
@@ -91,9 +92,17 @@ actor SessionRegistry {
 
     private func handleStop(_ event: HookEvent,
                             thresholdSeconds: Int,
-                            soundEnabled: Bool) async {
+                            soundEnabled: Bool,
+                            suppressIfFrontmost: @Sendable (String?) async -> Bool) async {
         guard let sid = event.session_id, let stoppedAt = parseTS(event.ts) else { return }
         clearUnpinnedWaitingAlert(sessionID: sid)
+        // D2-14 cheap-query (only relevant when permission granted — caller decides via closure)
+        if await suppressIfFrontmost(event.iterm_session_id) {
+            log.notice("D2-14 pre-suppress session=\(sid, privacy: .public)")
+            inFlight.removeValue(forKey: sid)
+            await persist()
+            return
+        }
         // AUD-01 dedupe (sound-only scope per D2-20)
         let key = DedupeKey.from(sessionID: sid, at: stoppedAt)
         let isDup = !dedupeSet.insert(key).inserted

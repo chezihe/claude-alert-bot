@@ -318,10 +318,13 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
                     Task { await SessionRegistry.shared.clearOne(alertID: alertID) }
                     self.dismissPopover()
                 case .missing:
-                    self.rowStates.removeValue(forKey: alertID)
                     Task { [weak self] in
+                        guard let self else { return }
                         await SessionRegistry.shared.markUnavailable(alertID: alertID)
-                        await MainActor.run { self?.reloadPopoverContent() }
+                        await MainActor.run {
+                            self.rowStates.removeValue(forKey: alertID)
+                            self.reloadPopoverContent()
+                        }
                     }
                 case .iTermNotRunning, .timeout, .otherError:
                     self.rowStates[alertID] = .missing

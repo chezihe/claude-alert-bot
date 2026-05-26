@@ -103,6 +103,14 @@ actor SessionRegistry {
             await persist()
             return
         }
+        // Reorder guard: cab-report.sh's stop hook lags (it waits up to ~0.8s reading the
+        // transcript for last_output). If the user replied within that window, a newer
+        // user_prompt_submit landed first and this stop's ts predates that in-flight start —
+        // the stop is stale. Discard it without creating an alert; the new turn stays in flight.
+        if let start = inFlight[sid]?.startedAt, stoppedAt < start {
+            log.notice("stale stop discarded session=\(sid, privacy: .public) (reordered behind newer prompt)")
+            return
+        }
         // AUD-01 dedupe (sound-only scope per D2-20)
         let key = DedupeKey.from(sessionID: sid, at: stoppedAt)
         let isDup = !dedupeSet.insert(key).inserted

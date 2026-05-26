@@ -197,6 +197,32 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(notifier.presentCalls.map(\.session), [sid])
     }
 
+    /// Reorder guard — a delayed stop whose ts predates the current in-flight start (the
+    /// user replied within cab-report.sh's transcript-wait window, so a newer
+    /// user_prompt_submit landed first) is stale and must NOT create an alert — even for
+    /// error kind, which otherwise bypasses the threshold. The newer turn stays in flight.
+    func test_ingest_staleStop_reorderedBehindNewerPrompt_discarded() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-stale-reorder"
+        let t0 = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
+        await r.seedInFlightForTesting(sessionID: sid, started: t0, cwd: "/x")
+        let staleStop = HookEventFactory.stop(
+            sessionID: sid,
+            ts: iso(t0.addingTimeInterval(-1)),
+            termProgram: "iTerm.app",
+            kind: .error
+        )
+
+        await r.ingest(staleStop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.count, 0, "stale reordered stop must not create an alert")
+        XCTAssertTrue(notifier.presentCalls.isEmpty)
+        XCTAssertNotNil(snap.inFlight[sid], "newer turn must stay in flight")
+    }
+
     func test_ingest_stop_nonZeroExitCodeWithoutKind_emitsErrorBelowThreshold() async {
         let r = makeRegistry()
         await bind(r)

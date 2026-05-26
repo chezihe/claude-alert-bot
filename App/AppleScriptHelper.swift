@@ -125,6 +125,15 @@ actor AppleScriptHelper {
         if lastKnownPermission == .unknown {
             return false
         }
+        // The scriptSource below only reads iTerm2's *internal* current session, which
+        // stays set even when iTerm2 is in the background. Without this gate D2-14 would
+        // suppress alerts while the user is in another app entirely (the stopped session
+        // merely happens to be iTerm2's last-used one). Honor the "frontmost" contract:
+        // if iTerm2 is not the frontmost application, the user is not looking at it.
+        let iTermIsFrontmost = await MainActor.run {
+            NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.googlecode.iterm2"
+        }
+        guard iTermIsFrontmost else { return false }
         let result = await runQuery()
         switch result {
         case .success(let s):

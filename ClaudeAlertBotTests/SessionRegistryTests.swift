@@ -544,6 +544,57 @@ final class SessionRegistryTests: XCTestCase {
                      "Stop ingest should persist the cleared in-flight start so it does not restore after relaunch.")
     }
 
+    /// Frontmost-suppressed stop must still clear (and refresh away) a pending waiting alert.
+    /// Repro: Claude asks for confirmation → waiting alert shown; the user reads the options in
+    /// iTerm2 (now frontmost) and answers; the follow-up stop is D2-14-suppressed. The waiting
+    /// alert was removed in memory but the widget was never refreshed, so it stayed on screen.
+    func test_ingest_stop_frontmostSuppress_clearsWaitingAlertAndRefreshesWidget() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-waiting-suppress"
+        let waiting = CompletedSession(sessionID: sid, projectName: "p",
+                                       stoppedAt: Date(), durationSec: nil,
+                                       itermSessionID: nil, tty: nil, cwd: nil,
+                                       kind: .waiting)
+        await r.seedCompletedForTesting(waiting)
+        let stop = HookEventFactory.stop(sessionID: sid, iTermSessionID: "w0t0p1:X",
+                                         ts: iso(Date()), termProgram: "iTerm.app")
+
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressYes)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.count, 0, "frontmost-suppressed stop must clear the waiting alert")
+        XCTAssertEqual(notifier.presentCalls.count, 0, "suppressed stop emits no new alert")
+        XCTAssertEqual(notifier.refreshCalls.last, 0,
+                       "widget must be refreshed so the cleared waiting alert disappears")
+    }
+
+    /// Below-threshold stop after a confirmation must also clear the waiting alert from the UI.
+    func test_ingest_stop_belowThreshold_clearsWaitingAlertAndRefreshesWidget() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-waiting-below-threshold"
+        let t0 = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
+        let waiting = CompletedSession(sessionID: sid, projectName: "p",
+                                       stoppedAt: t0, durationSec: nil,
+                                       itermSessionID: nil, tty: nil, cwd: nil,
+                                       kind: .waiting)
+        await r.seedCompletedForTesting(waiting)
+        await r.seedInFlightForTesting(sessionID: sid, started: t0, cwd: "/x")
+        let stop = HookEventFactory.stop(sessionID: sid, ts: iso(t0.addingTimeInterval(5)),
+                                         termProgram: "iTerm.app")
+
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.count, 0, "below-threshold stop must clear the waiting alert")
+        XCTAssertEqual(notifier.presentCalls.count, 0)
+        XCTAssertEqual(notifier.refreshCalls.last, 0,
+                       "widget must be refreshed so the cleared waiting alert disappears")
+    }
+
     /// Test H — SESS-04: runGC removes inFlight entries older than 6 hours.
     func test_runGC_removesStaleInFlight_SESS_04() async {
         let r = makeRegistry()

@@ -95,12 +95,16 @@ actor SessionRegistry {
                             soundEnabled: Bool,
                             suppressIfFrontmost: @Sendable (String?) async -> Bool) async {
         guard let sid = event.session_id, let stoppedAt = parseTS(event.ts) else { return }
-        clearUnpinnedWaitingAlert(sessionID: sid)
+        // Removing the waiting alert in memory is not enough — early-return paths below must
+        // refresh the widget too, or the cleared alert lingers on screen (e.g. the user answered
+        // a confirmation prompt while iTerm2 was frontmost → D2-14 suppress).
+        let clearedWaiting = clearUnpinnedWaitingAlert(sessionID: sid)
         // D2-14 cheap-query (only relevant when permission granted — caller decides via closure)
         if await suppressIfFrontmost(event.iterm_session_id) {
             log.notice("D2-14 pre-suppress session=\(sid, privacy: .public)")
             inFlight.removeValue(forKey: sid)
             await persist()
+            if clearedWaiting { await notifyQueueChanged() }
             return
         }
         // Reorder guard: cab-report.sh's stop hook lags (it waits up to ~0.8s reading the
@@ -109,6 +113,10 @@ actor SessionRegistry {
         // the stop is stale. Discard it without creating an alert; the new turn stays in flight.
         if let start = inFlight[sid]?.startedAt, stoppedAt < start {
             log.notice("stale stop discarded session=\(sid, privacy: .public) (reordered behind newer prompt)")
+            if clearedWaiting {
+                await persist()
+                await notifyQueueChanged()
+            }
             return
         }
         // AUD-01 dedupe (sound-only scope per D2-20)
@@ -133,6 +141,7 @@ actor SessionRegistry {
         guard passes else {
             log.notice("THR-01 below-threshold session=\(sid, privacy: .public) dur=\(durationSec ?? -1)")
             await persist()
+            if clearedWaiting { await notifyQueueChanged() }
             return
         }
         let projectName = ProjectName.derive(cwd: event.cwd, claudeProjectDir: event.claude_project_dir)
@@ -140,6 +149,7 @@ actor SessionRegistry {
         if await MainActor.run(body: { SettingsStore.shared.isMuted(project: projectName, now: muteCheckNow) }) {
             log.notice("ingest_stop muted project=\(projectName, privacy: .public) session=\(sid, privacy: .public)")
             await persist()
+            if clearedWaiting { await notifyQueueChanged() }
             return
         }
         let session = CompletedSession(
@@ -341,8 +351,19 @@ actor SessionRegistry {
         await persistence.save(snap)
     }
 
-    private func clearUnpinnedWaitingAlert(sessionID: String) {
+    /// Returns true iff a waiting alert was actually removed, so callers on early-return
+    /// paths know whether the widget still needs a refresh.
+    @discardableResult
+    private func clearUnpinnedWaitingAlert(sessionID: String) -> Bool {
+        let before = completed.count
         completed.removeAll(where: { $0.sessionID == sessionID && $0.kind == .waiting && !$0.pinned })
+        return completed.count != before
+    }
+
+    private func notifyQueueChanged() async {
+        let snapshot = self.completed
+        let n = self.notifier
+        await n?.refreshQueueState(completed: snapshot, count: snapshot.count)
     }
 
     private func clearUnpinnedByItermSession(_ itermSessionID: String?) {

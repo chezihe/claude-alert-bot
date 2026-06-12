@@ -14,13 +14,11 @@
 		0FD47850BE7EA040C6B323E9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3AD080323016E4B964B92C69 /* Assets.xcassets */; };
 		12B4AD96D68F218C0C6BCC1E /* ClaudeAlertBotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */; };
 		130828703258F88DC24A971F /* ProjectName.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10C653B05E6F6D202CE920D /* ProjectName.swift */; };
-		208C4F34607652159DBF7783 /* PermissionBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 061CE1E19FDE7AD807A94BD1 /* PermissionBannerView.swift */; };
 		20E904D935A6A682964658C4 /* SessionRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBA9501E7D277F63F6ECCC3 /* SessionRegistry.swift */; };
 		2185CDDB44AD540DCB31275C /* FloatingWidgetPanelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DE80FA8FCF86DDC5881D02A /* FloatingWidgetPanelTests.swift */; };
 		2581DA783324A83148D692E7 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D0B0A11E7A8D1588546D213 /* SessionStore.swift */; };
 		25A5F43CD41AC83F13E587D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A714300C48D443F40C0A625 /* AppDelegate.swift */; };
 		2AF0C68FF0D110A70ADA27D9 /* DesignTokensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7447ADE56CD4CC06C811494 /* DesignTokensTests.swift */; };
-		315A001AA88E79B3B6B7E1FB /* SettingsWindowPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF748C66B1B34BC3FF2829D6 /* SettingsWindowPresenter.swift */; };
 		35B1E7ACE04BF0602EE14448 /* IdleAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 520D1F48BD764206CCC37CE5 /* IdleAnimation.swift */; };
 		36C9FE5D269DBAA20CEADDB3 /* NotificationOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F78A117E749843C430D7FA /* NotificationOrchestrator.swift */; };
 		399D2EA67DA5BAF6E5600AD5 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1285336F5A35E2874B0371E /* EmptyStateView.swift */; };
@@ -53,6 +51,7 @@
 		A8F29327F7881CB4C3E7D507 /* MockNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAEF869A88355CE7D6169965 /* MockNotifier.swift */; };
 		A96D0C5D318154CD39615272 /* MutedProjectsRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB9089AAD782186DEE08C823 /* MutedProjectsRules.swift */; };
 		AE06704A525B5DDE625A26FD /* iTermSessionIDTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09884DA38C8ABC43B43A4C15 /* iTermSessionIDTests.swift */; };
+		B8436C1DD5325A86473D9FFB /* HookInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDA17AB423C7057C45F609A8 /* HookInstaller.swift */; };
 		BAC90EB131673B372DBA2C88 /* SessionRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E982CB48D46A37C9DDD56AA /* SessionRegistryTests.swift */; };
 		BEFFBBB2C70821502EA1465F /* ReporterScriptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06B6F2CA27C6DFDE9C8B8F6C /* ReporterScriptTests.swift */; };
 		C02DC451F4F35D0CBA472652 /* MotionKeyframes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607EF570071738D59CDD1266 /* MotionKeyframes.swift */; };
@@ -97,7 +96,6 @@
 
 /* Begin PBXFileReference section */
 		05A672A85EF635E98BBCBD52 /* AppleScriptHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleScriptHelper.swift; sourceTree = "<group>"; };
-		061CE1E19FDE7AD807A94BD1 /* PermissionBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionBannerView.swift; sourceTree = "<group>"; };
 		06B6F2CA27C6DFDE9C8B8F6C /* ReporterScriptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReporterScriptTests.swift; sourceTree = "<group>"; };
 		09884DA38C8ABC43B43A4C15 /* iTermSessionIDTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermSessionIDTests.swift; sourceTree = "<group>"; };
 		0A2AAE01066E19E3CC60E865 /* EmptyStateViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateViewTests.swift; sourceTree = "<group>"; };
@@ -151,8 +149,8 @@
 		AA10B9E598D15FE4F984232A /* WidgetIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetIconView.swift; sourceTree = "<group>"; };
 		B10C653B05E6F6D202CE920D /* ProjectName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectName.swift; sourceTree = "<group>"; };
 		B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAlertBotTests.swift; sourceTree = "<group>"; };
+		BDA17AB423C7057C45F609A8 /* HookInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookInstaller.swift; sourceTree = "<group>"; };
 		BE75F8C6E2B4371B287E4B6E /* SessionGCTimerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionGCTimerTests.swift; sourceTree = "<group>"; };
-		BF748C66B1B34BC3FF2829D6 /* SettingsWindowPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowPresenter.swift; sourceTree = "<group>"; };
 		C1285336F5A35E2874B0371E /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
 		C52574E53A8FD6995A80B23B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C884F642E992E25E5C950B7B /* AppleScriptHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleScriptHelperTests.swift; sourceTree = "<group>"; };
@@ -232,6 +230,7 @@
 				10A1150F9BBA13057C1B014A /* FloatingWidgetPanel.swift */,
 				F3804D51921660FB395D4326 /* FloatingWidgetWindowController.swift */,
 				422669922C84673FA026FD1E /* HookEvent.swift */,
+				BDA17AB423C7057C45F609A8 /* HookInstaller.swift */,
 				1D54D1C911C95F984BA6C8A1 /* HookListener.swift */,
 				520D1F48BD764206CCC37CE5 /* IdleAnimation.swift */,
 				C52574E53A8FD6995A80B23B /* Info.plist */,
@@ -241,7 +240,6 @@
 				607EF570071738D59CDD1266 /* MotionKeyframes.swift */,
 				DB9089AAD782186DEE08C823 /* MutedProjectsRules.swift */,
 				12F78A117E749843C430D7FA /* NotificationOrchestrator.swift */,
-				061CE1E19FDE7AD807A94BD1 /* PermissionBannerView.swift */,
 				4727020E044B4D9690900BC4 /* PermissionDeepLink.swift */,
 				DD87652FF46DACEA294E54A6 /* PopoverContentView.swift */,
 				4BCACF080D2BE209AC3408BB /* PopoverRowView.swift */,
@@ -252,7 +250,6 @@
 				5D0B0A11E7A8D1588546D213 /* SessionStore.swift */,
 				2F0532EA5559479069D65C1F /* SettingsStore.swift */,
 				5486D21A0C5465A9F1319450 /* SettingsView.swift */,
-				BF748C66B1B34BC3FF2829D6 /* SettingsWindowPresenter.swift */,
 				6B78D85FFDFAD8C99CF5951D /* SocketPaths.swift */,
 				13A9A6378829C0CD87A47282 /* SoundPlayer.swift */,
 				522E0E229AC969DF7503A6DC /* TerminalJumper.swift */,
@@ -524,6 +521,7 @@
 				E6AD2F8FB235BC0F741D5F1A /* FloatingWidgetPanel.swift in Sources */,
 				F9DEF37670C35DB441688F45 /* FloatingWidgetWindowController.swift in Sources */,
 				DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */,
+				B8436C1DD5325A86473D9FFB /* HookInstaller.swift in Sources */,
 				8ECAB8E9D4C43DADEF756A7A /* HookListener.swift in Sources */,
 				C4488CFEBDE80820E8D541D6 /* ITerm2Jumper.swift in Sources */,
 				35B1E7ACE04BF0602EE14448 /* IdleAnimation.swift in Sources */,
@@ -531,7 +529,6 @@
 				C02DC451F4F35D0CBA472652 /* MotionKeyframes.swift in Sources */,
 				A96D0C5D318154CD39615272 /* MutedProjectsRules.swift in Sources */,
 				36C9FE5D269DBAA20CEADDB3 /* NotificationOrchestrator.swift in Sources */,
-				208C4F34607652159DBF7783 /* PermissionBannerView.swift in Sources */,
 				C2E97DBA3A369EDCD3C83066 /* PermissionDeepLink.swift in Sources */,
 				061BE16CB87556492A84EC67 /* PopoverContentView.swift in Sources */,
 				81C9844218324610D06FE9CF /* PopoverRowView.swift in Sources */,
@@ -542,7 +539,6 @@
 				2581DA783324A83148D692E7 /* SessionStore.swift in Sources */,
 				C7419C65428643DFBE1C1607 /* SettingsStore.swift in Sources */,
 				9740C680FAC90405F61DA79B /* SettingsView.swift in Sources */,
-				315A001AA88E79B3B6B7E1FB /* SettingsWindowPresenter.swift in Sources */,
 				E6D06143C70520743ED73969 /* SocketPaths.swift in Sources */,
 				A18B22B68BE4366E466158B9 /* SoundPlayer.swift in Sources */,
 				79903489DB30D25112CC0F2F /* TerminalJumper.swift in Sources */,

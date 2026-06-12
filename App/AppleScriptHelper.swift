@@ -207,44 +207,47 @@ actor AppleScriptHelper {
             return .otherError(0)
         }
         let source = String(format: Self.jumpByUUIDTemplate, uuid)
-        let log = self.log
-        let result: JumpResult = await withCheckedContinuation { (cont: CheckedContinuation<JumpResult, Never>) in
+        let scriptResult: ScriptResult = await withCheckedContinuation { (cont: CheckedContinuation<ScriptResult, Never>) in
             queue.async {
                 guard let script = NSAppleScript(source: source) else {
                     cont.resume(returning: .otherError(0)); return
                 }
                 var compileErr: NSDictionary?
                 guard script.compileAndReturnError(&compileErr) else {
-                    let r = Self.classify(error: compileErr, result: "")
-                    cont.resume(returning: Self.scriptResultToJump(r, emptyMeans: .missing))
+                    cont.resume(returning: Self.classify(error: compileErr, result: ""))
                     return
                 }
                 var runErr: NSDictionary?
                 let value = script.executeAndReturnError(&runErr)
-                let s = value.stringValue ?? ""
-                let r = Self.classify(error: runErr, result: s)
-                // D3-21 — cross-Space raise via Accessibility API. AppleScript has
-                // already selected the UUID match; AX is a best-effort exact-window
-                // activation boost, not evidence that the session disappeared.
-                if case .success(let payload) = r, !payload.isEmpty {
-                    guard let (winID, title) = Self.parseJumpPayload(payload),
-                          let pid = AccessibilityRaiser.itermPID() else {
-                        cont.resume(returning: .missing)
-                        return
-                    }
-                    let raised = AccessibilityRaiser.raise(itermPID: pid, windowID: winID, title: title)
-                    if !raised {
-                        log.warning("runJumpByUUID matched session but AX raise did not confirm activation")
-                        let activated = AccessibilityRaiser.activateITerm(itermPID: pid)
-                        if !activated {
-                            log.warning("runJumpByUUID matched session but fallback iTerm activation failed")
-                        }
-                    }
-                    cont.resume(returning: .ok)
-                    return
-                }
-                cont.resume(returning: Self.scriptResultToJump(r, emptyMeans: .missing))
+                cont.resume(returning: Self.classify(error: runErr, result: value.stringValue ?? ""))
             }
+        }
+        let result: JumpResult
+        if case .success(let payload) = scriptResult, !payload.isEmpty {
+            // D3-21 — cross-Space raise via Accessibility API. AppleScript has
+            // already selected the UUID match; AX is a best-effort exact-window
+            // activation boost, not evidence that the session disappeared.
+            // NSWorkspace / NSRunningApplication are main-thread AppKit API, so the
+            // raise runs on the MainActor — the serial queue above handles only the
+            // NSAppleScript execution.
+            let log = self.log
+            result = await MainActor.run { () -> JumpResult in
+                guard let (winID, title) = Self.parseJumpPayload(payload),
+                      let pid = AccessibilityRaiser.itermPID() else {
+                    return .missing
+                }
+                let raised = AccessibilityRaiser.raise(itermPID: pid, windowID: winID, title: title)
+                if !raised {
+                    log.warning("runJumpByUUID matched session but AX raise did not confirm activation")
+                    let activated = AccessibilityRaiser.activateITerm(itermPID: pid)
+                    if !activated {
+                        log.warning("runJumpByUUID matched session but fallback iTerm activation failed")
+                    }
+                }
+                return .ok
+            }
+        } else {
+            result = Self.scriptResultToJump(scriptResult, emptyMeans: .missing)
         }
         // State mirror — same contract as frontmostMatches (D2-35/D2-36 inheritance).
         switch result {
@@ -258,8 +261,9 @@ actor AppleScriptHelper {
     /// D3-16 — SET-05 "iTerm2 연결 테스트" button dispatch.
     /// Permission-state branching:
     ///   .denied   → return .permissionDenied immediately (caller deep-links to Privacy & Security).
-    ///   .unknown  → trigger TCC prompt via triggerPermissionPrompt() then return .permissionDenied
-    ///               (post-prompt success will reflect on next press; this press surfaces the dialog).
+    ///   .unknown  → trigger TCC prompt via triggerPermissionPrompt(). If the user clicked
+    ///               Allow, run focus-frontmost right away (one press = full test); otherwise
+    ///               return .permissionDenied so the caller can deep-link.
     ///   .granted  → run focus-frontmost. Empty result → .iTermNotRunning. UUID returned → .ok.
     func testConnection() async -> JumpResult {
         switch lastKnownPermission {
@@ -269,9 +273,10 @@ actor AppleScriptHelper {
         case .unknown:
             log.notice("testConnection: lastKnownPermission == .unknown — triggering TCC prompt")
             await triggerPermissionPrompt()
-            // After the prompt, lastKnownPermission may have flipped to .granted or .denied
-            // depending on the user's choice. Return .permissionDenied here regardless;
-            // the user re-presses to actually exercise focus-frontmost.
+            // triggerPermissionPrompt mirrors the user's Allow/Deny into lastKnownPermission.
+            if lastKnownPermission == .granted {
+                return await runFocusFrontmost()
+            }
             return .permissionDenied
         case .granted:
             return await runFocusFrontmost()

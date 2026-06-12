@@ -266,9 +266,10 @@ verify_3_08_01() {
 }
 
 verify_3_08_02() {
-    local id="3-08-02" name="SettingsView SET-05 wiring — testConnection call + auto-deep-link on denied"
-    grep -q 'AppleScriptHelper.shared.testConnection' App/SettingsView.swift && \
-        grep -q 'PermissionDeepLink.openAutomationPreferences' App/SettingsView.swift && \
+    # SET-05 wiring moved from the (removed) SettingsView window to MenuBarMenuContent.
+    local id="3-08-02" name="Menu SET-05 wiring — testConnection call + auto-deep-link on denied"
+    grep -q 'AppleScriptHelper.shared.testConnection' App/ClaudeAlertBotApp.swift && \
+        grep -q 'PermissionDeepLink.openAutomationPreferences' App/ClaudeAlertBotApp.swift && \
         _record_pass "$id" "$name" || _record_fail "$id" "$name" "missing testConnection or denied auto-deeplink wiring"
 }
 

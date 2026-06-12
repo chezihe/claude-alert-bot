@@ -84,24 +84,37 @@ def is_codex_memory_event(envelope):
     memories = os.path.abspath(os.path.join(home, ".codex", "memories"))
     cwd = os.path.abspath(os.path.expanduser(cwd))
     return envelope.get("transcript_path") is None and (cwd == memories or cwd.startswith(memories + os.sep))
-def transcript_started_at(path):
+def transcript_tail_lines(path, max_bytes=2 * 1024 * 1024):
+    # Long sessions grow the transcript to tens of MB and the stop hook re-reads it on a
+    # retry loop — cap IO to the tail. Both consumers want the LATEST matching line,
+    # which lives at the end of the JSONL file.
     if not isinstance(path, str) or not path:
-        return None
+        return []
     try:
-        latest = None
-        with open(path, "r", encoding="utf-8") as f:
-            for line in f:
-                try:
-                    obj = json.loads(line)
-                except Exception:
-                    continue
-                if obj.get("type") == "user":
-                    ts = epoch(obj.get("timestamp"))
-                    if ts is not None:
-                        latest = ts
-        return latest
+        with open(path, "rb") as f:
+            f.seek(0, 2)
+            size = f.tell()
+            start = max(0, size - max_bytes)
+            f.seek(start)
+            data = f.read()
+        if start > 0:
+            cut = data.find(b"\n")
+            data = data[cut + 1:] if cut != -1 else b""
+        return data.decode("utf-8", "replace").splitlines()
     except Exception:
-        return None
+        return []
+def transcript_started_at(path):
+    latest = None
+    for line in transcript_tail_lines(path):
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+        if obj.get("type") == "user":
+            ts = epoch(obj.get("timestamp"))
+            if ts is not None:
+                latest = ts
+    return latest
 def content_text(content):
     if isinstance(content, str):
         return content
@@ -122,32 +135,26 @@ def payload_text(payload):
             return payload.get(key)
     return content_text(payload.get("content"))
 def transcript_last_output(path):
-    if not isinstance(path, str) or not path:
-        return None
-    try:
-        latest = None
-        with open(path, "r", encoding="utf-8") as f:
-            for line in f:
-                try:
-                    obj = json.loads(line)
-                except Exception:
-                    continue
-                payload = obj.get("payload") if isinstance(obj.get("payload"), dict) else {}
-                message = obj.get("message") if isinstance(obj.get("message"), dict) else {}
-                candidate = None
-                if message.get("role") == "assistant":
-                    candidate = content_text(message.get("content"))
-                elif obj.get("type") == "assistant":
-                    candidate = payload_text(payload) or content_text(obj.get("content"))
-                elif payload.get("type") == "message":
-                    candidate = payload_text(payload)
-                elif obj.get("type") == "event_msg" and payload.get("type") == "agent_message":
-                    candidate = payload.get("message")
-                if isinstance(candidate, str) and candidate.strip():
-                    latest = candidate
-        return latest
-    except Exception:
-        return None
+    latest = None
+    for line in transcript_tail_lines(path):
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+        payload = obj.get("payload") if isinstance(obj.get("payload"), dict) else {}
+        message = obj.get("message") if isinstance(obj.get("message"), dict) else {}
+        candidate = None
+        if message.get("role") == "assistant":
+            candidate = content_text(message.get("content"))
+        elif obj.get("type") == "assistant":
+            candidate = payload_text(payload) or content_text(obj.get("content"))
+        elif payload.get("type") == "message":
+            candidate = payload_text(payload)
+        elif obj.get("type") == "event_msg" and payload.get("type") == "agent_message":
+            candidate = payload.get("message")
+        if isinstance(candidate, str) and candidate.strip():
+            latest = candidate
+    return latest
 def wait_transcript_last_output(path):
     for attempt in range(8):
         output = transcript_last_output(path)

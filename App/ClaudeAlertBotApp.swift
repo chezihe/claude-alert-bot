@@ -200,10 +200,22 @@ private struct MenuBarMenuContent: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+            } else if store.applescriptPermission == .denied {
+                // D2-36 — persistent denied status. The Settings-window banner was removed
+                // with the Settings scene, so the menu is the standing surface for this.
+                Text(SettingsView.connectionDeniedLabel)
+                    .font(.caption)
+                    .foregroundStyle(.red)
             } else if let last = store.lastConnectionTestAt {
                 Text(String(format: SettingsView.connectionTestSuccessFmt, hhmm(last)))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+
+            if store.applescriptPermission == .denied {
+                Button(Self.menuOpenAutomationSettingsLabel) {
+                    PermissionDeepLink.openAutomationPreferences()
+                }
             }
         }
 
@@ -273,6 +285,7 @@ private struct MenuBarMenuContent: View {
     private static let menuTestNotificationLabel = "Send test notification"
     private static let menuConnectionTestHeading = "iTerm2 Connection"
     private static let menuConnectionTestLabel = "Test iTerm2 connection"
+    private static let menuOpenAutomationSettingsLabel = "Open Automation Settings…"
 
     private static let thresholdPresets: [ThresholdPreset] = [
         .init(label: "Direct (0s)", seconds: 0),

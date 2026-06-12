@@ -14,8 +14,7 @@
 // D2-18 RETRACTED — no Focus/DnD detection. Sound is gated solely by SettingsStore.soundEnabled.
 //
 // Concrete WidgetControllerProtocol implementation lives in plan 02-07 (FloatingWidgetWindowController);
-// AppDelegate (Wave 6 / 02-11) wires the concrete controller via `bind(widget:)` after construction
-// to keep 02-06 and 02-07 buildable independently in the same wave.
+// AppDelegate (Wave 6 / 02-11) passes the concrete controller in via init.
 import Foundation
 import os
 
@@ -69,11 +68,6 @@ final class NotificationOrchestrator: NotifierProtocol {
     /// Convenience for production callers that want the default SoundPlayer.
     convenience init(widget: (any WidgetControllerProtocol)?) {
         self.init(widget: widget, sound: SoundPlayer())
-    }
-
-    /// Wave 6 wiring — AppDelegate calls this after constructing the concrete widget controller.
-    func bind(widget: any WidgetControllerProtocol) {
-        self.widget = widget
     }
 
     // MARK: - NotifierProtocol

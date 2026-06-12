@@ -103,14 +103,11 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             widgetPanel.addChildWindow(panel, ordered: .above)
         }
         guard let host = popoverHostView else { return }
+        // applyHostCornerRadius also schedules the deferred flattenScrollViews walk.
         applyHostCornerRadius(host)
         resizePopover(panel, hostView: host, queue: queue)
         panel.orderFront(nil)
         installEventMonitors()
-        DispatchQueue.main.async { [weak host] in
-            guard let host else { return }
-            Self.flattenScrollViews(in: host)
-        }
         log.notice("popover shown rows=\(queue.count, privacy: .public)")
     }
 
@@ -335,7 +332,8 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
                     self.reloadPopoverContent()
                     PermissionDeepLink.openAutomationPreferences()
                     // Row's missing animation still runs → row clears from queue.
-                    // Banner in SettingsView (Phase 2 PermissionBannerView) surfaces via lastKnownPermission update from AppleScriptHelper.
+                    // The menu's iTerm2 Connection section shows the persistent denied
+                    // status via SettingsStore.applescriptPermission (D2-36).
                 }
             }
         }

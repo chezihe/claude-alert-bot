@@ -24,6 +24,8 @@ actor SessionRegistry {
     private let persistence: SessionStore
     private weak var notifier: (any NotifierProtocol)?
     private let clock: Clock
+    /// Formatter construction is expensive — one instance per actor, reused by parseTS.
+    private let isoFormatter = ISO8601DateFormatter()
 
     private var inFlight: [String: InFlightStart] = [:]
     private var completed: [CompletedSession] = []
@@ -47,11 +49,8 @@ actor SessionRegistry {
         if restoredCompleted.count != snap.completed.count {
             await persist()
         }
-        let n = self.notifier
-        let snapshot = self.completed
-        let count = snapshot.count
-        await n?.refreshQueueState(completed: snapshot, count: count)
-        log.notice("restore: inFlight=\(snap.inFlight.count) completed=\(count)")
+        await notifyQueueChanged()
+        log.notice("restore: inFlight=\(snap.inFlight.count) completed=\(self.completed.count)")
     }
 
     func ingest(_ event: HookEvent,
@@ -85,9 +84,7 @@ actor SessionRegistry {
         }
         inFlight[sid] = InFlightStart(startedAt: ts, cwd: event.cwd)
         await persist()
-        let snapshot = self.completed
-        let n = self.notifier
-        await n?.refreshQueueState(completed: snapshot, count: snapshot.count)
+        await notifyQueueChanged()
     }
 
     private func handleStop(_ event: HookEvent,
@@ -169,10 +166,8 @@ actor SessionRegistry {
         completed.append(session)
         await persist()
         let snapshot = self.completed
-        let n = self.notifier
-        await n?.present(session: session, pendingQueue: snapshot, playSoundOnce: soundEnabled && !isDup)
-        let refreshedSnapshot = self.completed
-        await n?.refreshQueueState(completed: refreshedSnapshot, count: refreshedSnapshot.count)
+        await notifier?.present(session: session, pendingQueue: snapshot, playSoundOnce: soundEnabled && !isDup)
+        await notifyQueueChanged()
     }
 
     private func handleNotification(_ event: HookEvent, soundEnabled: Bool) async {
@@ -203,10 +198,8 @@ actor SessionRegistry {
         completed.append(session)
         await persist()
         let snapshot = self.completed
-        let n = self.notifier
-        await n?.present(session: session, pendingQueue: snapshot, playSoundOnce: soundEnabled && !isDup)
-        let refreshedSnapshot = self.completed
-        await n?.refreshQueueState(completed: refreshedSnapshot, count: refreshedSnapshot.count)
+        await notifier?.present(session: session, pendingQueue: snapshot, playSoundOnce: soundEnabled && !isDup)
+        await notifyQueueChanged()
     }
 
     /// SESS-04 — 6h GC. Called from ingest (lazy), wake observer (Wave 4), and timer (Wave 4).
@@ -218,51 +211,29 @@ actor SessionRegistry {
             inFlight.removeValue(forKey: sid)
             log.notice("GC stale in-flight session=\(sid, privacy: .public)")
         }
+        // Dedupe keys are 2s buckets — anything 6h older than the newest key can never
+        // match again. Without pruning, the set grows unbounded over the app's
+        // weeks-long residency. The window is anchored to the newest EVENT time (not
+        // wall clock) so backdated event timestamps stay comparable to each other.
+        if let newestBucket = dedupeSet.map(\.bucketedTS).max() {
+            let cutoffBucket = newestBucket - Int(sixHours) / 2
+            dedupeSet = dedupeSet.filter { $0.bucketedTS >= cutoffBucket }
+        }
         if !stale.isEmpty { await persist() }
-    }
-
-    func clearOne(sessionID: String) async {
-        completed.removeAll(where: { $0.sessionID == sessionID })
-        await persist()
-        let snapshot = self.completed
-        let count = snapshot.count
-        let n = self.notifier
-        await n?.refreshQueueState(completed: snapshot, count: count)
-        log.notice("clearOne session=\(sessionID, privacy: .public)")
     }
 
     func clearOne(alertID: String) async {
         completed.removeAll(where: { $0.id == alertID })
         await persist()
-        let snapshot = self.completed
-        let count = snapshot.count
-        let n = self.notifier
-        await n?.refreshQueueState(completed: snapshot, count: count)
+        await notifyQueueChanged()
         log.notice("clearOne alert=\(alertID, privacy: .public)")
     }
 
     func clearUnpinned(sessionID: String) async {
         completed.removeAll(where: { $0.sessionID == sessionID && !$0.pinned })
         await persist()
-        let snapshot = self.completed
-        let count = snapshot.count
-        let n = self.notifier
-        await n?.refreshQueueState(completed: snapshot, count: count)
+        await notifyQueueChanged()
         log.notice("clearUnpinned session=\(sessionID, privacy: .public)")
-    }
-
-    func markUnavailable(sessionID: String) async {
-        guard let idx = completed.firstIndex(where: { $0.sessionID == sessionID }) else {
-            log.notice("markUnavailable session=\(sessionID, privacy: .public) ignored (no longer in queue)")
-            return
-        }
-        completed[idx].available = false
-        await persist()
-        let snapshot = self.completed
-        let count = snapshot.count
-        let n = self.notifier
-        await n?.refreshQueueState(completed: snapshot, count: count)
-        log.notice("markUnavailable session=\(sessionID, privacy: .public)")
     }
 
     func markUnavailable(alertID: String) async {
@@ -272,26 +243,8 @@ actor SessionRegistry {
         }
         completed[idx].available = false
         await persist()
-        let snapshot = self.completed
-        let count = snapshot.count
-        let n = self.notifier
-        await n?.refreshQueueState(completed: snapshot, count: count)
+        await notifyQueueChanged()
         log.notice("markUnavailable alert=\(alertID, privacy: .public)")
-    }
-
-    func togglePin(sessionID: String) async {
-        guard let idx = completed.firstIndex(where: { $0.sessionID == sessionID }) else {
-            log.notice("togglePin session=\(sessionID, privacy: .public) ignored (no longer in queue)")
-            return
-        }
-        completed[idx].pinned.toggle()
-        let pinned = completed[idx].pinned
-        await persist()
-        let snapshot = self.completed
-        let count = snapshot.count
-        let n = self.notifier
-        await n?.refreshQueueState(completed: snapshot, count: count)
-        log.notice("togglePin session=\(sessionID, privacy: .public) pinned=\(pinned, privacy: .public)")
     }
 
     func togglePin(alertID: String) async {
@@ -302,10 +255,7 @@ actor SessionRegistry {
         completed[idx].pinned.toggle()
         let pinned = completed[idx].pinned
         await persist()
-        let snapshot = self.completed
-        let count = snapshot.count
-        let n = self.notifier
-        await n?.refreshQueueState(completed: snapshot, count: count)
+        await notifyQueueChanged()
         log.notice("togglePin alert=\(alertID, privacy: .public) pinned=\(pinned, privacy: .public)")
     }
 
@@ -318,11 +268,8 @@ actor SessionRegistry {
     func clearAll() async {
         completed.removeAll(where: { !$0.pinned })
         await persist()
-        let snapshot = self.completed
-        let count = snapshot.count
-        let n = self.notifier
-        await n?.refreshQueueState(completed: snapshot, count: count)
-        log.notice("clearAll remaining=\(count, privacy: .public)")
+        await notifyQueueChanged()
+        log.notice("clearAll remaining=\(self.completed.count, privacy: .public)")
     }
 
     /// D2-21 — synthetic injection that walks the standard alert path but does NOT persist.
@@ -330,10 +277,8 @@ actor SessionRegistry {
         let session = CompletedSession.testFixture()
         completed.append(session)   // in-memory only — NO `await persist()` (D2-22)
         let snapshot = self.completed
-        let n = self.notifier
-        await n?.present(session: session, pendingQueue: snapshot, playSoundOnce: soundEnabled)
-        let refreshedSnapshot = self.completed
-        await n?.refreshQueueState(completed: refreshedSnapshot, count: refreshedSnapshot.count)
+        await notifier?.present(session: session, pendingQueue: snapshot, playSoundOnce: soundEnabled)
+        await notifyQueueChanged()
         // Auto-dismiss after 30s (D2-21). Clock injection enables fast-forward in tests.
         let sid = session.sessionID
         Task { [weak self, clock = self.clock] in
@@ -388,8 +333,7 @@ actor SessionRegistry {
 
     private func parseTS(_ s: String?) -> Date? {
         guard let s = s else { return nil }
-        let f = ISO8601DateFormatter()
-        return f.date(from: s)
+        return isoFormatter.date(from: s)
     }
 
     private func discardUnsupportedTerminalEvent(_ event: HookEvent) async {

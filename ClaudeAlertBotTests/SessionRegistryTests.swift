@@ -502,8 +502,9 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(notifier.presentCalls[1].playSound, false)
     }
 
-    /// Test G — frontmost match must not suppress completion alerts.
-    func test_frontmostMatchDoesNotSuppressStopAlert() async {
+    /// Test G — D2-14 (restored in efe0212): a stop whose iTerm session is frontmost
+    /// is pre-suppressed — no alert row, no present call.
+    func test_frontmostMatchSuppressesStopAlert_D2_14() async {
         let r = makeRegistry()
         await bind(r)
         let sid = "sid-G"
@@ -514,11 +515,13 @@ final class SessionRegistryTests: XCTestCase {
                        suppressIfFrontmost: suppressYes)
 
         let snap = await r.snapshotForTesting()
-        XCTAssertEqual(snap.completed.count, 1)
-        XCTAssertEqual(notifier.presentCalls.count, 1)
+        XCTAssertEqual(snap.completed.count, 0)
+        XCTAssertEqual(notifier.presentCalls.count, 0)
     }
 
-    func test_frontmostMatchClearsInFlightAndStillPresentsAlert() async {
+    /// Test G2 — a D2-14-suppressed stop must still clear the in-flight start AND
+    /// persist that clear, so the orphan does not restore after relaunch.
+    func test_frontmostMatchSuppressedStopClearsAndPersistsInFlight() async {
         let r = makeRegistry()
         await bind(r)
         let sid = "sid-G2"
@@ -537,11 +540,11 @@ final class SessionRegistryTests: XCTestCase {
 
         let snap = await r.snapshotForTesting()
         XCTAssertNil(snap.inFlight[sid])
-        XCTAssertEqual(snap.completed.count, 1)
-        XCTAssertEqual(notifier.presentCalls.count, 1)
+        XCTAssertEqual(snap.completed.count, 0)
+        XCTAssertEqual(notifier.presentCalls.count, 0)
         let persisted = await SessionStore(url: tempURL).load()
         XCTAssertNil(persisted?.inFlight[sid],
-                     "Stop ingest should persist the cleared in-flight start so it does not restore after relaunch.")
+                     "Suppressed stop should persist the cleared in-flight start so it does not restore after relaunch.")
     }
 
     /// Frontmost-suppressed stop must still clear (and refresh away) a pending waiting alert.
@@ -616,13 +619,14 @@ final class SessionRegistryTests: XCTestCase {
         let r = makeRegistry()
         await bind(r)
         let a = CompletedSession(sessionID: "a", projectName: "p", stoppedAt: Date(),
-                                 durationSec: 10, itermSessionID: nil, tty: nil, cwd: nil)
+                                 durationSec: 10, itermSessionID: nil, tty: nil, cwd: nil,
+                                 alertID: "a-alert")
         let b = CompletedSession(sessionID: "b", projectName: "p", stoppedAt: Date(),
                                  durationSec: 20, itermSessionID: nil, tty: nil, cwd: nil)
         await r.seedCompletedForTesting(a)
         await r.seedCompletedForTesting(b)
 
-        await r.clearOne(sessionID: "a")
+        await r.clearOne(alertID: "a-alert")
 
         let snap = await r.snapshotForTesting()
         XCTAssertEqual(snap.completed.map(\.sessionID), ["b"])
@@ -696,10 +700,11 @@ final class SessionRegistryTests: XCTestCase {
         let r = makeRegistry()
         await bind(r)
         let session = CompletedSession(sessionID: "a", projectName: "p", stoppedAt: Date(),
-                                       durationSec: 10, itermSessionID: nil, tty: nil, cwd: nil)
+                                       durationSec: 10, itermSessionID: nil, tty: nil, cwd: nil,
+                                       alertID: "a-alert")
         await r.seedCompletedForTesting(session)
 
-        await r.markUnavailable(sessionID: "a")
+        await r.markUnavailable(alertID: "a-alert")
 
         let snap = await r.snapshotForTesting()
         XCTAssertEqual(snap.completed.map(\.sessionID), ["a"])
@@ -748,10 +753,11 @@ final class SessionRegistryTests: XCTestCase {
         let r = makeRegistry()
         await bind(r)
         let session = CompletedSession(sessionID: "pin-me", projectName: "p", stoppedAt: Date(),
-                                       durationSec: 10, itermSessionID: nil, tty: nil, cwd: nil)
+                                       durationSec: 10, itermSessionID: nil, tty: nil, cwd: nil,
+                                       alertID: "pin-alert")
         await r.seedCompletedForTesting(session)
 
-        await r.togglePin(sessionID: "pin-me")
+        await r.togglePin(alertID: "pin-alert")
 
         let snap = await r.snapshotForTesting()
         XCTAssertTrue(snap.completed.first?.pinned ?? false)

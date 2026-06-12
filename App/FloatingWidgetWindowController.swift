@@ -26,6 +26,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     private var accessibilityCancellable: AnyCancellable?
     private var activeAppCancellable: AnyCancellable?
     private var activeScreenEventMonitor: Any?
+    private var repositionTask: Task<Void, Never>?
     private var currentQueue: [CompletedSession] = []
     private var currentPendingCount: Int = 0
     private var currentAlertPulseID: Int = 0
@@ -174,8 +175,12 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
 
     private func scheduleActiveScreenReposition(preferMouseLocation: Bool) {
         guard panel.isVisible else { return }
-        Task { @MainActor [weak self] in
+        // Coalesce — the global mouse-down monitor fires on every click systemwide,
+        // so rapid clicks would otherwise stack overlapping delayed reposition tasks.
+        repositionTask?.cancel()
+        repositionTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 120_000_000)
+            guard !Task.isCancelled else { return }
             self?.repositionIfVisible(preferMouseLocation: preferMouseLocation)
         }
     }

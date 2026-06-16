@@ -65,6 +65,28 @@ enum HookEventFactory {
         return try! JSONDecoder().decode(HookEvent.self, from: data)
     }
 
+    /// PostToolUse(AskUserQuestion) — fired when a "Claude's questions" dialog is answered/dismissed.
+    static func questionAnswered(sessionID: String,
+                                 iTermSessionID: String? = "w0t0p1:TEST-UUID",
+                                 ts: String = ISO8601DateFormatter().string(from: Date()),
+                                 termProgram: String? = nil) -> HookEvent {
+        var dict: [String: Any] = [
+            "schema_version": 1,
+            "event": "question_answered",
+            "session_id": sessionID,
+            "transcript_path": "/tmp/t.jsonl",
+            "cwd": "/Users/test/project",
+            "iterm_session_id": iTermSessionID ?? "",
+            "tty": "/dev/ttys001",
+            "ppid": 1234,
+            "claude_project_dir": "/Users/test/project",
+            "ts": ts
+        ]
+        if let tp = termProgram { dict["term_program"] = tp }
+        let data = try! JSONSerialization.data(withJSONObject: dict, options: [])
+        return try! JSONDecoder().decode(HookEvent.self, from: data)
+    }
+
     static func notification(sessionID: String,
                              iTermSessionID: String? = "w0t0p1:TEST-UUID",
                              cwd: String? = "/Users/test/project",

@@ -53,6 +53,11 @@ enum HookInstaller {
         hooks["Notification"] = mergedEntries(existing: hooks["Notification"],
                                               event: "notification",
                                               matcher: "permission_prompt|elicitation_dialog")
+        // PostToolUse(AskUserQuestion) is the only signal that a "Claude's questions" dialog was
+        // answered/dismissed — without it the waiting alert lingers (SessionRegistry.handleQuestionAnswered).
+        hooks["PostToolUse"] = mergedEntries(existing: hooks["PostToolUse"],
+                                             event: "question_answered",
+                                             matcher: "AskUserQuestion")
         settings["hooks"] = hooks
 
         let data = try JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])

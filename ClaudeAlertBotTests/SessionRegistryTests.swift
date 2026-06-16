@@ -598,6 +598,79 @@ final class SessionRegistryTests: XCTestCase {
                        "widget must be refreshed so the cleared waiting alert disappears")
     }
 
+    /// A "Claude's questions" (AskUserQuestion) dialog is the only path that creates a waiting
+    /// alert with no reliable follow-up event. PostToolUse(AskUserQuestion) → question_answered
+    /// must clear that waiting alert the instant the user answers and refresh the widget away.
+    func test_ingest_questionAnswered_clearsWaitingAlertAndRefreshesWidget() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-question-answered"
+        let waiting = CompletedSession(sessionID: sid, projectName: "p",
+                                       stoppedAt: Date(), durationSec: nil,
+                                       itermSessionID: nil, tty: nil, cwd: nil,
+                                       kind: .waiting)
+        await r.seedCompletedForTesting(waiting)
+        let answered = HookEventFactory.questionAnswered(sessionID: sid, termProgram: "iTerm.app")
+
+        await r.ingest(answered, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.count, 0, "answering a question must clear its waiting alert")
+        XCTAssertEqual(notifier.presentCalls.count, 0, "question_answered emits no new alert")
+        XCTAssertEqual(notifier.refreshCalls.last, 0,
+                       "widget must be refreshed so the cleared waiting alert disappears")
+
+        let persisted = await SessionStore(url: tempURL).load()
+        XCTAssertEqual(persisted?.completed.count, 0, "cleared waiting alert must not restore after relaunch")
+    }
+
+    /// question_answered must only clear the matching unpinned waiting alert — it must leave the
+    /// in-flight turn (so the eventual stop still computes duration), pinned alerts, and other
+    /// sessions' alerts untouched.
+    func test_ingest_questionAnswered_preservesInFlightPinnedAndOtherSessions() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-qa-scope"
+        let start = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
+        await r.seedInFlightForTesting(sessionID: sid, started: start, cwd: "/x")
+        let pinnedWaiting = CompletedSession(sessionID: sid, projectName: "p",
+                                             stoppedAt: Date(), durationSec: nil,
+                                             itermSessionID: nil, tty: nil, cwd: nil,
+                                             kind: .waiting, pinned: true)
+        let otherWaiting = CompletedSession(sessionID: "sid-other", projectName: "p",
+                                            stoppedAt: Date(), durationSec: nil,
+                                            itermSessionID: nil, tty: nil, cwd: nil,
+                                            kind: .waiting)
+        await r.seedCompletedForTesting(pinnedWaiting)
+        await r.seedCompletedForTesting(otherWaiting)
+        let answered = HookEventFactory.questionAnswered(sessionID: sid, termProgram: "iTerm.app")
+
+        await r.ingest(answered, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertNotNil(snap.inFlight[sid], "the turn must stay in flight after a mid-turn answer")
+        XCTAssertEqual(snap.completed.map(\.sessionID).sorted(), ["sid-other", sid],
+                       "pinned same-session and other-session waiting alerts must survive")
+    }
+
+    /// No waiting alert to clear → no persist/refresh churn (mirrors clearUnpinnedWaitingAlert's
+    /// early-out so a stop that already cleared the alert is not double-processed).
+    func test_ingest_questionAnswered_noWaitingAlert_isNoOp() async {
+        let r = makeRegistry()
+        await bind(r)
+        let answered = HookEventFactory.questionAnswered(sessionID: "sid-none", termProgram: "iTerm.app")
+
+        await r.ingest(answered, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertTrue(snap.completed.isEmpty)
+        XCTAssertTrue(notifier.presentCalls.isEmpty)
+        XCTAssertTrue(notifier.refreshCalls.isEmpty, "no waiting alert → no widget refresh")
+    }
+
     /// Test H — SESS-04: runGC removes inFlight entries older than 6 hours.
     func test_runGC_removesStaleInFlight_SESS_04() async {
         let r = makeRegistry()

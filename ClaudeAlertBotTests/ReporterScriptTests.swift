@@ -210,6 +210,10 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertEqual(matchers(in: hooks, event: "Notification"), [
             "permission_prompt|elicitation_dialog"
         ])
+        XCTAssertEqual(cabCommands(in: hooks, event: "PostToolUse"), [
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" question_answered"
+        ])
+        XCTAssertEqual(matchers(in: hooks, event: "PostToolUse"), ["AskUserQuestion"])
     }
 
     func test_hookInstallerCreatesCodexHooksWhenCodexConfigExists() throws {
@@ -381,6 +385,10 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertEqual(matchers(in: hooks, event: "Notification"), [
             "permission_prompt|elicitation_dialog"
         ])
+        XCTAssertEqual(cabCommands(in: hooks, event: "PostToolUse"), [
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" question_answered"
+        ])
+        XCTAssertEqual(matchers(in: hooks, event: "PostToolUse"), ["AskUserQuestion"])
     }
 
     func test_devInstallHookApplyIsIdempotentAndPreservesOtherCodexHooks() throws {

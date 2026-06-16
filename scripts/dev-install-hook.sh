@@ -67,6 +67,14 @@ snippet() {
           { "type": "command", "command": "\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" notification", "timeout": 5 }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          { "type": "command", "command": "\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" question_answered", "timeout": 5 }
+        ]
+      }
     ]
   }
 }
@@ -125,6 +133,7 @@ def merge_event(name):
 merge_event("Stop")
 merge_event("UserPromptSubmit")
 merge_event("Notification")
+merge_event("PostToolUse")
 
 with open(settings_path, "w") as f:
     json.dump(existing, f, indent=2)

@@ -66,6 +66,7 @@ actor SessionRegistry {
         switch event.event {
         case "user_prompt_submit": await handleStart(event)
         case "notification": await handleNotification(event, soundEnabled: soundEnabled)
+        case "question_answered": await handleQuestionAnswered(event)
         case "stop": await handleStop(event,
                                      thresholdSeconds: thresholdSeconds,
                                      soundEnabled: soundEnabled,
@@ -200,6 +201,21 @@ actor SessionRegistry {
         let snapshot = self.completed
         await notifier?.present(session: session, pendingQueue: snapshot, playSoundOnce: soundEnabled && !isDup)
         await notifyQueueChanged()
+    }
+
+    /// A "Claude's questions" dialog (AskUserQuestion / elicitation_dialog) was resolved —
+    /// Claude Code fires PostToolUse(AskUserQuestion) when the user answers or dismisses it.
+    /// That tool result is the only signal the answer happened: no stop / user_prompt_submit
+    /// follows, so without this the waiting alert created by handleNotification lingers until
+    /// the next same-session event happens to arrive (often minutes later, or only when the
+    /// next question appears). Clear it now; leave inFlight untouched so the turn's eventual
+    /// stop still computes duration. Mirrors the stale-stop clear path.
+    private func handleQuestionAnswered(_ event: HookEvent) async {
+        guard let sid = event.session_id else { return }
+        guard clearUnpinnedWaitingAlert(sessionID: sid) else { return }
+        await persist()
+        await notifyQueueChanged()
+        log.notice("question_answered cleared waiting session=\(sid, privacy: .public)")
     }
 
     /// SESS-04 — 6h GC. Called from ingest (lazy), wake observer (Wave 4), and timer (Wave 4).

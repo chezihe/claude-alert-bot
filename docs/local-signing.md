@@ -15,7 +15,7 @@ scripts/build.sh
 open build/export/ClaudeAlertBot.app
 ```
 
-The setup script creates a self-signed identity named `ClaudeAlertBot Local Development` in the login Keychain and writes its certificate fingerprint to the ignored `Config/LocalSigning.xcconfig`. Do not commit or share the certificate or private key.
+The setup script creates a trusted self-signed root named `ClaudeAlertBot Local Root CA v2` and an issued code-signing identity named `ClaudeAlertBot Local Development v2` in the login Keychain. It writes the signing certificate fingerprint to the ignored `Config/LocalSigning.xcconfig`. Do not commit or share the certificate or private key.
 
 This identity is for local development only. It does not replace Developer ID distribution or Apple notarization.
 

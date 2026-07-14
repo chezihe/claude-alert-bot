@@ -94,7 +94,7 @@ final class LocalSigningTests: XCTestCase {
         XCTAssertEqual(first.status, 0, first.output)
         XCTAssertEqual(second.status, 0, second.output)
         let log = try commandLog()
-        XCTAssertEqual(log.components(separatedBy: "security import ").count - 1, 1)
+        XCTAssertEqual(log.components(separatedBy: "security import ").count - 1, 2)
         XCTAssertTrue(log.contains("-T /usr/bin/codesign"))
         XCTAssertFalse(log.contains(" -A"))
         XCTAssertFalse(log.contains(" -P"))
@@ -127,19 +127,54 @@ final class LocalSigningTests: XCTestCase {
         XCTAssertTrue(result.output.contains("configured identity is unavailable"), result.output)
     }
 
-    func test_setupGeneratesRealSelfSignedCodeSigningRoot() throws {
+    func test_setupGeneratesRealRootAndIssuedCodeSigningLeaf() throws {
         let result = try runSetup(useRealOpenSSL: true)
 
         XCTAssertEqual(result.status, 0, result.output)
-        let certificateText = try runProcess(
+        let rootText = try runProcess(
             executable: "/usr/bin/openssl",
-            arguments: ["x509", "-in", capturedCertificateURL().path, "-noout", "-text"]
+            arguments: ["x509", "-in", capturedRootCertificateURL().path, "-noout", "-text"]
         )
-        XCTAssertEqual(certificateText.status, 0, certificateText.output)
-        XCTAssertTrue(certificateText.output.contains("CA:TRUE, pathlen:0"))
-        XCTAssertTrue(certificateText.output.contains("Digital Signature"))
-        XCTAssertTrue(certificateText.output.contains("Certificate Sign"))
-        XCTAssertTrue(certificateText.output.contains("Code Signing"))
+        XCTAssertEqual(rootText.status, 0, rootText.output)
+        XCTAssertTrue(rootText.output.contains("CA:TRUE, pathlen:0"))
+        XCTAssertTrue(rootText.output.contains("Certificate Sign"))
+
+        let leafText = try runProcess(
+            executable: "/usr/bin/openssl",
+            arguments: ["x509", "-in", capturedLeafCertificateURL().path, "-noout", "-text"]
+        )
+        XCTAssertEqual(leafText.status, 0, leafText.output)
+        XCTAssertTrue(leafText.output.contains("CA:FALSE"))
+        XCTAssertTrue(leafText.output.contains("Digital Signature"))
+        XCTAssertTrue(leafText.output.contains("Code Signing"))
+    }
+
+    func test_setupUsesDistinctRootAndCodeSigningLeafCertificates() throws {
+        let script = try source("scripts/setup-local-signing.sh")
+
+        XCTAssertTrue(script.contains(#"ROOT_IDENTITY_NAME="ClaudeAlertBot Local Root CA v2""#))
+        XCTAssertTrue(script.contains(#"IDENTITY_NAME="ClaudeAlertBot Local Development v2""#))
+        XCTAssertTrue(script.contains("basicConstraints = critical,CA:TRUE,pathlen:0"))
+        XCTAssertTrue(script.contains("basicConstraints = critical,CA:FALSE"))
+        XCTAssertTrue(script.contains("-CA \"$ROOT_CERT_PATH\""))
+        XCTAssertTrue(script.contains("-CAkey \"$ROOT_KEY_PATH\""))
+    }
+
+    func test_setupVerifiesSignedProbeBeforeWritingLocalConfig() throws {
+        let script = try source("scripts/setup-local-signing.sh")
+        let verifyRange = try XCTUnwrap(script.range(of: #""$CODESIGN_BIN" --verify"#))
+        let configRange = try XCTUnwrap(script.range(of: #"write_local_config "$fingerprint""#))
+
+        XCTAssertLessThan(verifyRange.lowerBound, configRange.lowerBound)
+    }
+
+    func test_setupDoesNotWriteLocalConfigWhenProbeVerificationFails() throws {
+        try Data().write(to: tempRoot.appendingPathComponent("probe-verification-fail"))
+
+        let result = try runSetup()
+
+        XCTAssertNotEqual(result.status, 0)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: localConfigURL().path))
     }
 
     func test_buildSigningStatusDefaultsToAdHoc() throws {
@@ -185,6 +220,28 @@ final class LocalSigningTests: XCTestCase {
         XCTAssertFalse(script.contains("${SIGN_KEYCHAIN_ARGS[@]}"))
     }
 
+    func test_buildArchiveUsesAdHocBeforeFinalLocalResign() throws {
+        let script = try source("scripts/build.sh")
+
+        XCTAssertTrue(script.contains("CAB_CODE_SIGN_IDENTITY=-"))
+        XCTAssertTrue(script.contains("CODE_SIGN_IDENTITY=-"))
+        XCTAssertTrue(script.contains(#"sign_code --options=runtime --entitlements "$ENTITLEMENTS" "$APP""#))
+    }
+
+    func test_buildExtractsSigningCertificateWithOptionValueSyntax() throws {
+        let script = try source("scripts/build.sh")
+
+        XCTAssertTrue(script.contains(#"--extract-certificates="$certificate_prefix""#))
+        XCTAssertFalse(script.contains(#"--extract-certificates "$certificate_prefix""#))
+    }
+
+    func test_buildDoesNotExitNonzeroWhenOptionalSignatureSummaryIsEmpty() throws {
+        let script = try source("scripts/build.sh")
+
+        XCTAssertFalse(script.contains(#"[ -n "${CABTEST_SIG:-}" ] && echo"#))
+        XCTAssertTrue(script.contains(#"if [[ -n "${CABTEST_SIG:-}" ]]; then"#))
+    }
+
     private func runSetup(
         arguments: [String] = [],
         useRealOpenSSL: Bool = false
@@ -194,6 +251,7 @@ final class LocalSigningTests: XCTestCase {
         environment["CAB_OPENSSL_BIN"] = useRealOpenSSL
             ? "/usr/bin/openssl"
             : tempRoot.appendingPathComponent("fake-openssl").path
+        environment["CAB_CODESIGN_BIN"] = tempRoot.appendingPathComponent("fake-codesign").path
         environment["CAB_KEYCHAIN_PATH"] = keychainURL().path
         environment["CAB_LOCAL_SIGNING_CONFIG_PATH"] = localConfigURL().path
         environment["CAB_FAKE_STATE_DIR"] = tempRoot.path
@@ -302,8 +360,12 @@ final class LocalSigningTests: XCTestCase {
         tempRoot.appendingPathComponent("login.keychain-db")
     }
 
-    private func capturedCertificateURL() -> URL {
-        tempRoot.appendingPathComponent("captured-certificate.pem")
+    private func capturedRootCertificateURL() -> URL {
+        tempRoot.appendingPathComponent("captured-root-certificate.pem")
+    }
+
+    private func capturedLeafCertificateURL() -> URL {
+        tempRoot.appendingPathComponent("captured-leaf-certificate.pem")
     }
 
     private func writeFakeTools() throws {
@@ -317,32 +379,42 @@ final class LocalSigningTests: XCTestCase {
             case "$1" in
               find-identity)
                 if [[ -f "$CAB_FAKE_STATE_DIR/duplicate-identities" ]]; then
-                  printf '  1) %s "ClaudeAlertBot Local Development"\n' "$default_fingerprint"
-                  printf '  2) BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB "ClaudeAlertBot Local Development"\n'
+                  printf '  1) %s "ClaudeAlertBot Local Development v2"\n' "$default_fingerprint"
+                  printf '  2) BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB "ClaudeAlertBot Local Development v2"\n'
                 elif [[ -f "$CAB_FAKE_STATE_DIR/identity-ready" ]]; then
                   fingerprint=$(cat "$CAB_FAKE_STATE_DIR/identity-fingerprint" 2>/dev/null || printf '%s' "$default_fingerprint")
-                  printf '  1) %s "ClaudeAlertBot Local Development"\n' "$fingerprint"
+                  printf '  1) %s "ClaudeAlertBot Local Development v2"\n' "$fingerprint"
                 else
                   printf '     0 valid identities found\n'
                 fi
                 ;;
               find-certificate)
-                [[ -f "$CAB_FAKE_STATE_DIR/certificate-present" ]] || exit 44
+                if [[ "$*" == *"ClaudeAlertBot Local Root CA v2"* ]]; then
+                  [[ -f "$CAB_FAKE_STATE_DIR/root-certificate-present" ]] || exit 44
+                else
+                  [[ -f "$CAB_FAKE_STATE_DIR/certificate-present" || -f "$CAB_FAKE_STATE_DIR/leaf-certificate-present" ]] || exit 44
+                fi
                 ;;
               add-trusted-cert)
                 certificate="${@: -1}"
-                touch "$CAB_FAKE_STATE_DIR/certificate-present"
-                cp "$certificate" "$CAB_FAKE_STATE_DIR/captured-certificate.pem"
-                if fingerprint=$(/usr/bin/openssl x509 -in "$certificate" -noout -fingerprint -sha1 2>/dev/null); then
-                  fingerprint=${fingerprint#*=}
-                  fingerprint=${fingerprint//:/}
-                else
-                  fingerprint="$default_fingerprint"
-                fi
-                printf '%s' "$fingerprint" > "$CAB_FAKE_STATE_DIR/identity-fingerprint"
+                touch "$CAB_FAKE_STATE_DIR/root-certificate-present"
+                cp "$certificate" "$CAB_FAKE_STATE_DIR/captured-root-certificate.pem"
                 ;;
               import)
-                touch "$CAB_FAKE_STATE_DIR/identity-ready"
+                imported="$2"
+                if [[ "$*" == *" -t cert"* ]]; then
+                  touch "$CAB_FAKE_STATE_DIR/leaf-certificate-present"
+                  cp "$imported" "$CAB_FAKE_STATE_DIR/captured-leaf-certificate.pem"
+                  if fingerprint=$(/usr/bin/openssl x509 -in "$imported" -noout -fingerprint -sha1 2>/dev/null); then
+                    fingerprint=${fingerprint#*=}
+                    fingerprint=${fingerprint//:/}
+                  else
+                    fingerprint="$default_fingerprint"
+                  fi
+                  printf '%s' "$fingerprint" > "$CAB_FAKE_STATE_DIR/identity-fingerprint"
+                else
+                  touch "$CAB_FAKE_STATE_DIR/identity-ready"
+                fi
                 ;;
               *)
                 exit 64
@@ -360,7 +432,11 @@ final class LocalSigningTests: XCTestCase {
             default_fingerprint="AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA"
 
             if [[ "$1" == "x509" && "$*" == *" -text"* ]]; then
-              printf 'CA:TRUE, pathlen:0\nDigital Signature, Certificate Sign\nCode Signing\n'
+              if [[ "$*" == *"local-root.crt"* ]]; then
+                printf 'CA:TRUE, pathlen:0\nCertificate Sign\n'
+              else
+                printf 'CA:FALSE\nDigital Signature\nCode Signing\n'
+              fi
               exit 0
             fi
             if [[ "$1" == "x509" && "$*" == *" -fingerprint"* ]]; then
@@ -382,6 +458,19 @@ final class LocalSigningTests: XCTestCase {
             esac
             """,
             at: tempRoot.appendingPathComponent("fake-openssl")
+        )
+
+        try writeExecutable(
+            """
+            #!/bin/bash
+            set -eu
+            printf 'codesign %s\n' "$*" >> "$CAB_FAKE_LOG"
+            if [[ "$*" == *"--verify"* && -f "$CAB_FAKE_STATE_DIR/probe-verification-fail" ]]; then
+              exit 70
+            fi
+            exit 0
+            """,
+            at: tempRoot.appendingPathComponent("fake-codesign")
         )
     }
 

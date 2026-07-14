@@ -10,7 +10,7 @@ ARCHIVE_PATH="$BUILD_DIR/ClaudeAlertBot.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
 APP_NAME="ClaudeAlertBot.app"
 ENTITLEMENTS="$ROOT/App/ClaudeAlertBot.entitlements"
-IDENTITY_NAME="ClaudeAlertBot Local Development"
+IDENTITY_NAME="ClaudeAlertBot Local Development v2"
 SECURITY_BIN="${CAB_SECURITY_BIN:-/usr/bin/security}"
 OPENSSL_BIN="${CAB_OPENSSL_BIN:-/usr/bin/openssl}"
 SIGN_KEYCHAIN="${CAB_KEYCHAIN_PATH:-$HOME/Library/Keychains/login.keychain-db}"
@@ -110,6 +110,8 @@ xcodebuild \
     -configuration Release \
     -archivePath "$ARCHIVE_PATH" \
     -destination 'generic/platform=macOS' \
+    CAB_CODE_SIGN_IDENTITY=- \
+    CODE_SIGN_IDENTITY=- \
     archive
 
 # 2. Export the .app
@@ -168,7 +170,7 @@ else
 
         certificate_dir=$(mktemp -d "${TMPDIR:-/tmp}/claude-alert-bot-certificates.XXXXXX")
         certificate_prefix="$certificate_dir/cert"
-        codesign -d --extract-certificates "$certificate_prefix" "$path" >/dev/null 2>&1
+        codesign -d --extract-certificates="$certificate_prefix" "$path" >/dev/null 2>&1
         fingerprint_output=$("$OPENSSL_BIN" x509 -inform DER -in "${certificate_prefix}0" -noout -fingerprint -sha1)
         rm -rf "$certificate_dir"
         actual_fingerprint=$(normalize_fingerprint "${fingerprint_output#*=}")
@@ -192,4 +194,6 @@ echo "=== Build complete ==="
 echo "App: $APP"
 echo "Bundle: $BUNDLE_SIG"
 echo "Main:   $MAIN_SIG"
-[ -n "${CABTEST_SIG:-}" ] && echo "CabTest: $CABTEST_SIG"
+if [[ -n "${CABTEST_SIG:-}" ]]; then
+    echo "CabTest: $CABTEST_SIG"
+fi

@@ -15,7 +15,7 @@ scripts/build.sh
 open build/export/ClaudeAlertBot.app
 ```
 
-설정 스크립트는 로그인 Keychain에 `ClaudeAlertBot Local Development`라는 self-signed identity를 만들고, 인증서 지문을 Git에서 제외된 `Config/LocalSigning.xcconfig`에 기록합니다. 인증서와 개인 키를 commit하거나 다른 사용자와 공유하지 마세요.
+설정 스크립트는 로그인 Keychain에 `ClaudeAlertBot Local Root CA v2`라는 신뢰된 self-signed 루트와 이 루트가 발급한 `ClaudeAlertBot Local Development v2` 코드 서명 identity를 만듭니다. 서명 인증서 지문은 Git에서 제외된 `Config/LocalSigning.xcconfig`에 기록합니다. 인증서와 개인 키를 commit하거나 다른 사용자와 공유하지 마세요.
 
 이 identity는 로컬 개발 전용입니다. Developer ID 배포나 Apple 공증을 대신하지 않습니다.
 

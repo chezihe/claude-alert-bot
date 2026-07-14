@@ -3,10 +3,12 @@
 set -euo pipefail
 umask 077
 
-IDENTITY_NAME="ClaudeAlertBot Local Development"
+ROOT_IDENTITY_NAME="ClaudeAlertBot Local Root CA v2"
+IDENTITY_NAME="ClaudeAlertBot Local Development v2"
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 SECURITY_BIN="${CAB_SECURITY_BIN:-/usr/bin/security}"
 OPENSSL_BIN="${CAB_OPENSSL_BIN:-/usr/bin/openssl}"
+CODESIGN_BIN="${CAB_CODESIGN_BIN:-/usr/bin/codesign}"
 KEYCHAIN_PATH="${CAB_KEYCHAIN_PATH:-$HOME/Library/Keychains/login.keychain-db}"
 LOCAL_CONFIG="${CAB_LOCAL_SIGNING_CONFIG_PATH:-$ROOT/Config/LocalSigning.xcconfig}"
 
@@ -110,6 +112,17 @@ write_local_config() {
     CONFIG_TEMP=""
 }
 
+verify_signing_identity() {
+    local fingerprint="$1"
+    if [[ -z "$TEMP_DIR" ]]; then
+        TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/claude-alert-bot-signing.XXXXXX")
+    fi
+    local probe_path="$TEMP_DIR/signing-probe"
+    /bin/cp /usr/bin/true "$probe_path"
+    "$CODESIGN_BIN" --force --sign "$fingerprint" --keychain "$KEYCHAIN_PATH" "$probe_path" >/dev/null
+    "$CODESIGN_BIN" --verify --verbose=2 "$probe_path" >/dev/null
+}
+
 show_status() {
     local fingerprint configured_keychain
     if [[ ! -f "$LOCAL_CONFIG" ]]; then
@@ -154,6 +167,7 @@ fi
 
 if [[ "$identity_count" -eq 1 ]]; then
     fingerprint=$(printf '%s\n' "$fingerprints" | /usr/bin/awk 'NF { print; exit }')
+    verify_signing_identity "$fingerprint"
     write_local_config "$fingerprint"
     echo "Reusing local signing identity: $fingerprint"
     echo "Config: $LOCAL_CONFIG"
@@ -163,50 +177,71 @@ fi
 if "$SECURITY_BIN" find-certificate -c "$IDENTITY_NAME" "$KEYCHAIN_PATH" >/dev/null 2>&1; then
     fail "certificate exists but is not a usable signing identity: $IDENTITY_NAME"
 fi
+if "$SECURITY_BIN" find-certificate -c "$ROOT_IDENTITY_NAME" "$KEYCHAIN_PATH" >/dev/null 2>&1; then
+    fail "root certificate exists without a usable signing identity: $ROOT_IDENTITY_NAME"
+fi
 
 TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/claude-alert-bot-signing.XXXXXX")
-KEY_PATH="$TEMP_DIR/local-signing.key"
-CSR_PATH="$TEMP_DIR/local-signing.csr"
-CERT_PATH="$TEMP_DIR/local-signing.crt"
+ROOT_KEY_PATH="$TEMP_DIR/local-root.key"
+ROOT_CERT_PATH="$TEMP_DIR/local-root.crt"
+LEAF_KEY_PATH="$TEMP_DIR/local-signing.key"
+LEAF_CSR_PATH="$TEMP_DIR/local-signing.csr"
+LEAF_CERT_PATH="$TEMP_DIR/local-signing.crt"
 OPENSSL_CONFIG="$TEMP_DIR/openssl.cnf"
 
 cat > "$OPENSSL_CONFIG" <<'EOF'
 [ req ]
-distinguished_name = subject
+distinguished_name = root_subject
 prompt = no
 
-[ subject ]
-CN = ClaudeAlertBot Local Development
+[ root_subject ]
+CN = ClaudeAlertBot Local Root CA v2
 O = ClaudeAlertBot Local Development
 
-[ codesign ]
+[ root_ca ]
 basicConstraints = critical,CA:TRUE,pathlen:0
-keyUsage = critical,digitalSignature,keyCertSign
-extendedKeyUsage = critical,codeSigning
+keyUsage = critical,keyCertSign,cRLSign
 subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid:always
+
+[ leaf_codesign ]
+basicConstraints = critical,CA:FALSE
+keyUsage = critical,digitalSignature
+extendedKeyUsage = critical,codeSigning
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
 EOF
 
-"$OPENSSL_BIN" genrsa -out "$KEY_PATH" 2048
-"$OPENSSL_BIN" req -new -key "$KEY_PATH" -out "$CSR_PATH" -config "$OPENSSL_CONFIG"
+"$OPENSSL_BIN" genrsa -out "$ROOT_KEY_PATH" 2048
+"$OPENSSL_BIN" req -x509 -new -sha256 -days 3650 \
+    -key "$ROOT_KEY_PATH" -out "$ROOT_CERT_PATH" \
+    -config "$OPENSSL_CONFIG" -extensions root_ca
+
+"$OPENSSL_BIN" genrsa -out "$LEAF_KEY_PATH" 2048
+"$OPENSSL_BIN" req -new -key "$LEAF_KEY_PATH" -out "$LEAF_CSR_PATH" \
+    -subj "/CN=ClaudeAlertBot Local Development v2/O=ClaudeAlertBot Local Development"
 serial="0x0$(/usr/bin/uuidgen | /usr/bin/tr -d '-')"
 "$OPENSSL_BIN" x509 -req -sha256 -days 3650 \
     -set_serial "$serial" \
-    -in "$CSR_PATH" -signkey "$KEY_PATH" \
-    -out "$CERT_PATH" -extfile "$OPENSSL_CONFIG" -extensions codesign
+    -in "$LEAF_CSR_PATH" -CA "$ROOT_CERT_PATH" -CAkey "$ROOT_KEY_PATH" \
+    -out "$LEAF_CERT_PATH" -extfile "$OPENSSL_CONFIG" -extensions leaf_codesign
 
-certificate_text=$("$OPENSSL_BIN" x509 -in "$CERT_PATH" -noout -text)
-[[ "$certificate_text" == *"CA:TRUE, pathlen:0"* ]] || fail "generated certificate is not a constrained root"
-[[ "$certificate_text" == *"Digital Signature"* ]] || fail "generated certificate lacks digitalSignature usage"
-[[ "$certificate_text" == *"Certificate Sign"* ]] || fail "generated certificate lacks keyCertSign usage"
-[[ "$certificate_text" == *"Code Signing"* ]] || fail "generated certificate lacks codeSigning usage"
+root_certificate_text=$("$OPENSSL_BIN" x509 -in "$ROOT_CERT_PATH" -noout -text)
+[[ "$root_certificate_text" == *"CA:TRUE, pathlen:0"* ]] || fail "generated root certificate is not a constrained CA"
+[[ "$root_certificate_text" == *"Certificate Sign"* ]] || fail "generated root certificate lacks keyCertSign usage"
 
-fingerprint_output=$("$OPENSSL_BIN" x509 -in "$CERT_PATH" -noout -fingerprint -sha1)
+leaf_certificate_text=$("$OPENSSL_BIN" x509 -in "$LEAF_CERT_PATH" -noout -text)
+[[ "$leaf_certificate_text" == *"CA:FALSE"* ]] || fail "generated signing certificate is not a leaf"
+[[ "$leaf_certificate_text" == *"Digital Signature"* ]] || fail "generated signing certificate lacks digitalSignature usage"
+[[ "$leaf_certificate_text" == *"Code Signing"* ]] || fail "generated signing certificate lacks codeSigning usage"
+
+fingerprint_output=$("$OPENSSL_BIN" x509 -in "$LEAF_CERT_PATH" -noout -fingerprint -sha1)
 fingerprint=$(normalize_fingerprint "${fingerprint_output#*=}")
 is_valid_fingerprint "$fingerprint" || fail "could not read generated certificate fingerprint"
 
-"$SECURITY_BIN" add-trusted-cert -r trustRoot -p codeSign -k "$KEYCHAIN_PATH" "$CERT_PATH"
-"$SECURITY_BIN" import "$KEY_PATH" -k "$KEYCHAIN_PATH" -f openssl -t priv -T /usr/bin/codesign
+"$SECURITY_BIN" add-trusted-cert -r trustRoot -k "$KEYCHAIN_PATH" "$ROOT_CERT_PATH"
+"$SECURITY_BIN" import "$LEAF_CERT_PATH" -k "$KEYCHAIN_PATH" -f openssl -t cert
+"$SECURITY_BIN" import "$LEAF_KEY_PATH" -k "$KEYCHAIN_PATH" -f openssl -t priv -T /usr/bin/codesign
 
 fingerprints=$(exact_identity_fingerprints)
 identity_count=$(exact_identity_count "$fingerprints")
@@ -214,6 +249,7 @@ if [[ "$identity_count" -ne 1 ]] || ! identity_available "$fingerprint"; then
     fail "created certificate is not available as the expected signing identity"
 fi
 
+verify_signing_identity "$fingerprint"
 write_local_config "$fingerprint"
 echo "Created local signing identity: $fingerprint"
 echo "Config: $LOCAL_CONFIG"

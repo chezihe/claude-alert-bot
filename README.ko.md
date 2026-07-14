@@ -126,6 +126,8 @@ Quiet Hours를 켜면 사운드와 강조 애니메이션은 꺼지지만, 큐�
 
 ## 소스에서 빌드하기
 
+### 빠른 ad-hoc 빌드
+
 Xcode 프로젝트를 생성하고 앱을 빌드한 뒤, export된 번들을 실행합니다.
 
 ```bash
@@ -139,6 +141,42 @@ open build/export/ClaudeAlertBot.app
 ```text
 build/export/ClaudeAlertBot.app
 ```
+
+이 방식은 Apple 계정이 필요하지 않지만, 앱을 다시 빌드하면 ad-hoc 코드 identity가 바뀝니다. 따라서 손쉬운 사용 권한을 다시 부여해야 할 수 있습니다.
+
+### 손쉬운 사용 권한을 유지하는 로컬 서명
+
+소스를 반복해서 빌드한다면 개인용 로컬 서명 identity를 한 번 생성합니다.
+
+```bash
+scripts/setup-local-signing.sh
+xcodegen generate
+scripts/build.sh
+open build/export/ClaudeAlertBot.app
+```
+
+Apple 계정은 필요하지 않습니다. 스크립트는 로그인 Keychain에만 self-signed identity를 만들고, 인증서 지문은 git에서 제외된 `Config/LocalSigning.xcconfig`에 기록합니다. 각 사용자가 자기 Mac에서 별도 identity를 생성하므로 인증서와 개인 키는 commit하거나 공유하지 않습니다. 이 identity는 로컬 개발 전용이며 Developer ID 배포나 공증을 대신하지 않습니다.
+
+로컬 서명 앱을 처음 실행할 때는 `Grant Accessibility…`를 누르고 `시스템 설정 > 개인정보 보호 및 보안 > 손쉬운 사용`에서 `ClaudeAlertBot`을 켠 뒤, 앱을 한 번 종료하고 다시 실행해야 합니다. 이후에는 bundle identifier와 로컬 인증서가 유지되는 동안 재빌드해도 같은 권한을 재사용합니다. 실행 중인 이전 앱은 종료하고 새 빌드를 열어야 하지만, 손쉬운 사용 항목을 삭제하고 다시 켤 필요는 없습니다.
+
+Keychain을 변경하지 않고 설정 상태를 확인할 수 있습니다.
+
+```bash
+scripts/setup-local-signing.sh --status
+scripts/build.sh --signing-status
+```
+
+ad-hoc 서명으로 돌아가려면 설정된 정확한 identity만 삭제합니다.
+
+```bash
+FINGERPRINT=$(awk -F ' = ' '$1 == "CAB_CODE_SIGN_IDENTITY" { print $2 }' Config/LocalSigning.xcconfig)
+KEYCHAIN=$(awk -F ' = ' '$1 == "CAB_CODE_SIGN_KEYCHAIN" { print $2 }' Config/LocalSigning.xcconfig)
+security delete-identity -Z "$FINGERPRINT" -t "$KEYCHAIN"
+rm -f Config/LocalSigning.xcconfig
+xcodegen generate
+```
+
+identity를 삭제하거나 새로 만들면 앱의 코드 identity도 바뀌므로 macOS가 손쉬운 사용 권한을 다시 요구할 수 있습니다.
 
 테스트는 다음 명령으로 실행합니다.
 
@@ -169,7 +207,7 @@ xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
 
 듀얼 모니터, 또는 여러 iTerm2 창이 동시에 떠있는 환경에서 행을 클릭했는데 엉뚱한 세션으로 포커스가 가는 경우입니다. 대부분 Accessibility 권한이 비어 있을 때 나타납니다. 권한이 없으면 앱은 단순한 앱 단위 활성화만 시도하고, macOS가 임의의 창(보통 마우스가 있는 화면의 창)을 위로 올리기 때문입니다.
 
-특히 직접 빌드해서 쓰는 경우 자주 발생합니다. 앱이 ad-hoc 서명(개발자 인증서 없이 로컬에서만 통하는 서명 방식)으로 빌드되면, 빌드할 때마다 바이너리 지문(cdhash)이 바뀌어 macOS가 이전 빌드에 부여한 권한을 새 빌드에 자동 적용하지 않습니다.
+특히 ad-hoc 방식으로 직접 빌드해서 쓰는 경우 자주 발생합니다. ad-hoc 서명은 빌드할 때마다 바이너리 지문(cdhash)이 바뀌어 macOS가 이전 빌드에 부여한 권한을 새 빌드에 자동 적용하지 않습니다. 자주 재빌드한다면 위의 로컬 서명 절차를 사용하세요.
 
 해결 순서:
 
@@ -192,7 +230,7 @@ xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
 
 `tccutil reset` 직후에는 시스템 설정에 항목이 바로 안 보일 수 있습니다. 이때 앱 메뉴의 `Grant Accessibility…`를 눌러 새 항목을 만든 뒤 토글을 켜야 합니다.
 
-`scripts/build.sh`로 새 ad-hoc 빌드를 만들면 macOS가 새 바이너리로 인식해서 권한이 다시 stale 될 수 있습니다. 같은 증상이 반복되면 위 순서를 다시 진행하세요.
+`scripts/build.sh --signing-status`가 `mode=ad-hoc`을 표시하면 재빌드 후 권한이 다시 stale 될 수 있으므로, 증상이 반복될 때 위 복구 순서를 다시 진행합니다. `mode=local`이면 TCC를 초기화하기 전에 `scripts/setup-local-signing.sh --status`를 확인하고 새 빌드를 다시 실행하세요. 로컬 identity를 삭제하거나 새로 만들었거나 실제 권한이 사라진 경우에만 복구 순서를 사용합니다.
 
 권한이 실제로 적용됐는지 확인하고 싶으면 다음 로그를 봅니다.
 

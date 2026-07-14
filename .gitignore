@@ -4,6 +4,7 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 *.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+/Config/LocalSigning.xcconfig
 
 # JetBrains
 .idea/
@@ -16,3 +17,5 @@ xcuserdata/
 
 # Local Codex/Superpowers workspace
 .superpowers/
+.worktrees/
+/docs/superpowers/

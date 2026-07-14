@@ -8,6 +8,9 @@ targets:
   ClaudeAlertBot:
     type: application
     platform: macOS
+    configFiles:
+      Debug: Config/Signing.xcconfig
+      Release: Config/Signing.xcconfig
     sources:
       - path: App
         name: App
@@ -28,9 +31,7 @@ targets:
         INFOPLIST_FILE: App/Info.plist
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         SWIFT_VERSION: "5"
-        CODE_SIGN_IDENTITY: "-"
-        CODE_SIGN_STYLE: Manual
-        CODE_SIGNING_ALLOWED: YES
+        CODE_SIGN_ENTITLEMENTS: App/ClaudeAlertBot.entitlements
       configs:
         Debug:
           ENABLE_TESTABILITY: YES

@@ -62,6 +62,7 @@
 		C8F82E4C8E04670D6473A5D6 /* MockTerminalJumper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76DCB8BF2B9B7D78E4D3BD9B /* MockTerminalJumper.swift */; };
 		D3761DE8508B62CF82C7ACA3 /* iTermSessionID.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB92DF8ECD2021AD37F1AAC /* iTermSessionID.swift */; };
 		D4F0BAE2D982705E01F8E9CF /* ClaudeAlertBotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184BC5521D0393073C46E63A /* ClaudeAlertBotApp.swift */; };
+		D7059D9CB85E7E749400A31E /* LocalSigningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C11446AC0723E56476824D2 /* LocalSigningTests.swift */; };
 		DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 422669922C84673FA026FD1E /* HookEvent.swift */; };
 		E571EED85EA6293D7C70BDE2 /* ITerm2JumperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 135F84C6B3B261E51AAD624D /* ITerm2JumperTests.swift */; };
 		E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */; };
@@ -143,11 +144,13 @@
 		8E982CB48D46A37C9DDD56AA /* SessionRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRegistryTests.swift; sourceTree = "<group>"; };
 		94F900B4D713937E545B390C /* MutedProjectsRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MutedProjectsRulesTests.swift; sourceTree = "<group>"; };
 		9A4CF07859800DE5173D901A /* cab-test */ = {isa = PBXFileReference; includeInIndex = 0; path = "cab-test"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9C11446AC0723E56476824D2 /* LocalSigningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalSigningTests.swift; sourceTree = "<group>"; };
 		9DE80FA8FCF86DDC5881D02A /* FloatingWidgetPanelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingWidgetPanelTests.swift; sourceTree = "<group>"; };
 		A2492431EE9304DB1FF24B55 /* PermissionDeepLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionDeepLinkTests.swift; sourceTree = "<group>"; };
 		A7447ADE56CD4CC06C811494 /* DesignTokensTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokensTests.swift; sourceTree = "<group>"; };
 		AA10B9E598D15FE4F984232A /* WidgetIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetIconView.swift; sourceTree = "<group>"; };
 		B10C653B05E6F6D202CE920D /* ProjectName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectName.swift; sourceTree = "<group>"; };
+		B3E12D9B2DFED8560A392772 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 		B4F72727C061DDF64CB7951D /* ClaudeAlertBotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAlertBotTests.swift; sourceTree = "<group>"; };
 		BDA17AB423C7057C45F609A8 /* HookInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookInstaller.swift; sourceTree = "<group>"; };
 		BE75F8C6E2B4371B287E4B6E /* SessionGCTimerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionGCTimerTests.swift; sourceTree = "<group>"; };
@@ -184,6 +187,7 @@
 				E9CA41D38B7C594A1BEF806E /* IdleAnimationTests.swift */,
 				135F84C6B3B261E51AAD624D /* ITerm2JumperTests.swift */,
 				09884DA38C8ABC43B43A4C15 /* iTermSessionIDTests.swift */,
+				9C11446AC0723E56476824D2 /* LocalSigningTests.swift */,
 				31A323BB2411675DC8255249 /* MotionKeyframesTests.swift */,
 				94F900B4D713937E545B390C /* MutedProjectsRulesTests.swift */,
 				36BDD5D1C291C8C40FA6F82D /* NotificationOrchestratorTests.swift */,
@@ -212,6 +216,7 @@
 				3B63D51CE34619A76B883906 /* App */,
 				D5C7AB92EAD16F65A91511C8 /* CabTest */,
 				26BFE5704E04E26F882FA447 /* ClaudeAlertBotTests */,
+				6BF0BF9E7E6228209D290875 /* Config */,
 				4423C7D43C199FFDFEBE574E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -271,6 +276,14 @@
 				62D8CC37BBF74C6D6DCAEADF /* ClaudeAlertBotTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		6BF0BF9E7E6228209D290875 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				B3E12D9B2DFED8560A392772 /* Signing.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 		888C9D5A15931A09DD01E8B4 /* Fixtures */ = {
@@ -485,6 +498,7 @@
 				0536835EBF9ED126642336F4 /* HookEventTests.swift in Sources */,
 				E571EED85EA6293D7C70BDE2 /* ITerm2JumperTests.swift in Sources */,
 				C45C96766C5267557278EABB /* IdleAnimationTests.swift in Sources */,
+				D7059D9CB85E7E749400A31E /* LocalSigningTests.swift in Sources */,
 				967FA8420333A8A7FC015774 /* MockNotifier+NotifierProtocol.swift in Sources */,
 				A8F29327F7881CB4C3E7D507 /* MockNotifier.swift in Sources */,
 				C8F82E4C8E04670D6473A5D6 /* MockTerminalJumper.swift in Sources */,
@@ -665,11 +679,10 @@
 		};
 		5779079A67E51A7A71AD5E93 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B3E12D9B2DFED8560A392772 /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGNING_ALLOWED = YES;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_ENTITLEMENTS = App/ClaudeAlertBot.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_TESTABILITY = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -769,11 +782,10 @@
 		};
 		E0A361A3800C01E66F7DEDC8 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B3E12D9B2DFED8560A392772 /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGNING_ALLOWED = YES;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_ENTITLEMENTS = App/ClaudeAlertBot.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;

@@ -125,6 +125,8 @@ There is also a built-in connection test in the menu bar for diagnosing permissi
 
 ## Build From Source
 
+### Quick ad-hoc build
+
 Generate the Xcode project, build the app, and open the exported bundle:
 
 ```bash
@@ -138,6 +140,42 @@ The release-style build output is:
 ```text
 build/export/ClaudeAlertBot.app
 ```
+
+This path needs no Apple account, but its ad-hoc code identity changes when the app is rebuilt. Accessibility permission may therefore need to be granted again.
+
+### Persistent local permission
+
+For repeated source builds, create a personal local signing identity once:
+
+```bash
+scripts/setup-local-signing.sh
+xcodegen generate
+scripts/build.sh
+open build/export/ClaudeAlertBot.app
+```
+
+No Apple account is required. The script creates a self-signed identity only in your login Keychain and writes its certificate fingerprint to the ignored `Config/LocalSigning.xcconfig`. Every contributor creates their own identity; no certificate or private key is committed or shared. This identity is for local development only and does not provide Developer ID distribution or notarization.
+
+On the first locally signed run, click `Grant Accessibility…`, enable `ClaudeAlertBot` in `System Settings > Privacy & Security > Accessibility`, then quit and relaunch the app once. Later rebuilds reuse that permission while the bundle identifier and local certificate remain unchanged. You still need to quit the old process and open the rebuilt app, but you should not need to remove and grant Accessibility again.
+
+Check the configuration without changing the Keychain:
+
+```bash
+scripts/setup-local-signing.sh --status
+scripts/build.sh --signing-status
+```
+
+To return to ad-hoc signing, delete only the exact configured identity:
+
+```bash
+FINGERPRINT=$(awk -F ' = ' '$1 == "CAB_CODE_SIGN_IDENTITY" { print $2 }' Config/LocalSigning.xcconfig)
+KEYCHAIN=$(awk -F ' = ' '$1 == "CAB_CODE_SIGN_KEYCHAIN" { print $2 }' Config/LocalSigning.xcconfig)
+security delete-identity -Z "$FINGERPRINT" -t "$KEYCHAIN"
+rm -f Config/LocalSigning.xcconfig
+xcodegen generate
+```
+
+Deleting or recreating the identity changes the app's code identity, so macOS may require Accessibility permission to be granted again.
 
 Run the test suite with:
 
@@ -168,7 +206,7 @@ xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
 
 This happens on multi-display setups, or when several iTerm2 windows are open at once, and the clicked row brings up a different session than expected. Almost always it means Accessibility permission is not in effect. Without it, the app falls back to a plain app-level activation and macOS picks whichever iTerm2 window it prefers — typically the one on the screen under the mouse cursor.
 
-It shows up most often with self-built copies. Ad-hoc signing (the local-only signature used when there is no Developer ID certificate) changes the binary fingerprint (cdhash) on every rebuild, so macOS does not carry the previously-granted permission over to the new build.
+It shows up most often with ad-hoc self-built copies. Ad-hoc signing changes the binary fingerprint (cdhash) on every rebuild, so macOS does not carry the previously-granted permission over to the new build. Use the persistent local signing workflow above if you rebuild frequently.
 
 Recovery steps:
 
@@ -191,7 +229,7 @@ Recovery steps:
 
 After `tccutil reset`, the app may not appear in System Settings immediately. Click `Grant Accessibility…` from the app menu to create the new entry, then turn on the toggle.
 
-If you create a new ad-hoc build with `scripts/build.sh`, macOS may treat it as a new binary and the permission can become stale again. Repeat the same recovery steps if the symptom returns.
+If `scripts/build.sh --signing-status` reports `mode=ad-hoc`, a rebuild can make the permission stale again; repeat the recovery steps if the symptom returns. If it reports `mode=local`, first run `scripts/setup-local-signing.sh --status` and relaunch the rebuilt app without resetting TCC. Use the recovery steps only if the local identity was deleted/recreated or the permission is actually missing.
 
 To confirm the permission is actually applied, check the log:
 

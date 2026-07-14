@@ -33,21 +33,31 @@ Claude Alert Bot is built around session-accurate jump-back rather than short-li
 - iTerm2
 - Claude Code and/or Codex CLI
 - Xcode 15.4 or later only if you want to build from source
+- XcodeGen only if you want to build from source
 
-## Install And First Run
+## Quick Start
 
-1. Install a built `ClaudeAlertBot.app`, or build it locally from this repository.
-2. Move the app to `/Applications` if you want a normal app-style install.
-3. Launch the app.
-
-If macOS blocks the unsigned app on first launch, use `System Settings > Privacy & Security > Open Anyway`.
-As a fallback, clear quarantine manually:
+Set up a personal local signature first so repeated source builds keep the same macOS permission identity. No Apple account is required.
 
 ```bash
-xattr -cr /Applications/ClaudeAlertBot.app
+scripts/setup-local-signing.sh
+xcodegen generate
+scripts/build.sh
+open build/export/ClaudeAlertBot.app
 ```
 
-Claude Alert Bot runs as an accessory app, so you control it from the bell icon in the macOS menu bar.
+The build output is `build/export/ClaudeAlertBot.app`. Move it to `/Applications` if you prefer a normal installed-app workflow.
+
+### First Permission Grant
+
+The app is controlled from its bell icon in the menu bar. Configure permissions in this order after the first launch.
+
+1. Run `iTerm2 Connection > Test iTerm2 connection` from the bell menu and allow Automation access.
+2. Click `Grant Accessibility…`.
+3. Enable `ClaudeAlertBot` in `System Settings > Privacy & Security > Accessibility`.
+4. Quit and relaunch the app once.
+
+Later rebuilds reuse the same permission while the bundle identifier and local certificate remain unchanged. See [Local Signing And Accessibility Permission](docs/local-signing.md) for identity management, ad-hoc builds, and recovery steps.
 
 On launch, the app copies the bundled reporter script to:
 
@@ -65,12 +75,6 @@ The installed hook setup covers:
 - `Stop` and `UserPromptSubmit` for Claude Code
 - `Stop` and `UserPromptSubmit` for Codex when `~/.codex` exists
 - `Notification` for Claude permission prompts / elicitation dialogs
-
-After launch, open the bell menu and run `iTerm2 Connection > Test iTerm2 connection`.
-macOS may ask for:
-
-- Automation permission, so the app can control iTerm2
-- Accessibility permission, so the app can reliably raise the exact iTerm2 window across Spaces
 
 ## Daily Use
 
@@ -123,61 +127,11 @@ Repeated alerts from the same project are grouped to keep the popover compact.
 The app tracks the iTerm2 session identity carried by the hook event and uses AppleScript plus window raising to return you to the right place.
 There is also a built-in connection test in the menu bar for diagnosing permission or reachability issues.
 
-## Build From Source
+## Development And Testing
 
-### Quick ad-hoc build
+Follow [Quick Start](#quick-start) for the build and first launch. Identity status checks, one-off ad-hoc builds, certificate removal, and permission recovery are documented separately in [Local Signing And Accessibility Permission](docs/local-signing.md).
 
-Generate the Xcode project, build the app, and open the exported bundle:
-
-```bash
-xcodegen generate
-scripts/build.sh
-open build/export/ClaudeAlertBot.app
-```
-
-The release-style build output is:
-
-```text
-build/export/ClaudeAlertBot.app
-```
-
-This path needs no Apple account, but its ad-hoc code identity changes when the app is rebuilt. Accessibility permission may therefore need to be granted again.
-
-### Persistent local permission
-
-For repeated source builds, create a personal local signing identity once:
-
-```bash
-scripts/setup-local-signing.sh
-xcodegen generate
-scripts/build.sh
-open build/export/ClaudeAlertBot.app
-```
-
-No Apple account is required. The script creates a self-signed identity only in your login Keychain and writes its certificate fingerprint to the ignored `Config/LocalSigning.xcconfig`. Every contributor creates their own identity; no certificate or private key is committed or shared. This identity is for local development only and does not provide Developer ID distribution or notarization.
-
-On the first locally signed run, click `Grant Accessibility…`, enable `ClaudeAlertBot` in `System Settings > Privacy & Security > Accessibility`, then quit and relaunch the app once. Later rebuilds reuse that permission while the bundle identifier and local certificate remain unchanged. You still need to quit the old process and open the rebuilt app, but you should not need to remove and grant Accessibility again.
-
-Check the configuration without changing the Keychain:
-
-```bash
-scripts/setup-local-signing.sh --status
-scripts/build.sh --signing-status
-```
-
-To return to ad-hoc signing, delete only the exact configured identity:
-
-```bash
-FINGERPRINT=$(awk -F ' = ' '$1 == "CAB_CODE_SIGN_IDENTITY" { print $2 }' Config/LocalSigning.xcconfig)
-KEYCHAIN=$(awk -F ' = ' '$1 == "CAB_CODE_SIGN_KEYCHAIN" { print $2 }' Config/LocalSigning.xcconfig)
-security delete-identity -Z "$FINGERPRINT" -t "$KEYCHAIN"
-rm -f Config/LocalSigning.xcconfig
-xcodegen generate
-```
-
-Deleting or recreating the identity changes the app's code identity, so macOS may require Accessibility permission to be granted again.
-
-Run the test suite with:
+Run the full test suite with:
 
 ```bash
 xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
@@ -199,57 +153,14 @@ xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
   ```bash
   tccutil reset AppleEvents com.claudealert.bot
   ```
-- If the connection test passes but row clicks still cannot raise the exact window, follow the Accessibility recovery steps below.
+- If the connection test passes but row clicks still cannot raise the exact window, see [Recover Accessibility Permission](docs/local-signing.md#recover-accessibility-permission).
 - Make sure iTerm2 is already running.
 
 ### Clicking A Row Activates The Wrong Session
 
 This happens on multi-display setups, or when several iTerm2 windows are open at once, and the clicked row brings up a different session than expected. Almost always it means Accessibility permission is not in effect. Without it, the app falls back to a plain app-level activation and macOS picks whichever iTerm2 window it prefers — typically the one on the screen under the mouse cursor.
 
-It shows up most often with ad-hoc self-built copies. Ad-hoc signing changes the binary fingerprint (cdhash) on every rebuild, so macOS does not carry the previously-granted permission over to the new build. Use the persistent local signing workflow above if you rebuild frequently.
-
-Recovery steps:
-
-1. Quit the running app.
-   ```bash
-   pkill -x ClaudeAlertBot
-   ```
-2. Clear the previous Accessibility registration.
-   ```bash
-   tccutil reset Accessibility com.claudealert.bot
-   ```
-3. Open the freshly built app.
-   ```bash
-   open build/export/ClaudeAlertBot.app
-   ```
-4. Open the bell menu and click `Grant Accessibility…`.
-5. In `System Settings > Privacy & Security > Accessibility`, turn on the `ClaudeAlertBot` toggle.
-6. Quit and relaunch the app. Trust state is captured at process startup.
-7. Check the log.
-
-After `tccutil reset`, the app may not appear in System Settings immediately. Click `Grant Accessibility…` from the app menu to create the new entry, then turn on the toggle.
-
-If `scripts/build.sh --signing-status` reports `mode=ad-hoc`, a rebuild can make the permission stale again; repeat the recovery steps if the symptom returns. If it reports `mode=local`, first run `scripts/setup-local-signing.sh --status` and relaunch the rebuilt app without resetting TCC. Use the recovery steps only if the local identity was deleted/recreated or the permission is actually missing.
-
-To confirm the permission is actually applied, check the log:
-
-```bash
-/usr/bin/log show --predicate 'subsystem == "com.claudealert.bot.hook"' --info --last 5m
-```
-
-Healthy logs include:
-
-- `[ax-raised ... code=0]`
-- `[jumped session=...]`
-- When needed, `[ax-match path=focused-main-fallback ...]`
-
-Problem logs include:
-
-- `[ax-trust trusted=false ...]`
-- `[ax-skip reason=not-trusted]`
-- `[activate-fallback]`
-
-If those remain, a stale registration from a previous build is probably still in the way. Start again from recovery step 1.
+Start with `scripts/build.sh --signing-status`. For `mode=local`, quit the old process and reopen the new build before resetting TCC. For ad-hoc builds or a permission state that remains stale, follow the status-based recovery and logging steps in [Local Signing And Accessibility Permission](docs/local-signing.md#recover-accessibility-permission).
 
 ### Hook Repair
 
@@ -259,19 +170,15 @@ If you want to reapply the reporter script and hook configuration manually durin
 scripts/dev-install-hook.sh --apply
 ```
 
-### Unsigned App Warning
+### If macOS Blocks The App
 
-If `Open Anyway` is not enough, clear quarantine:
-
-```bash
-xattr -cr /Applications/ClaudeAlertBot.app
-```
+For an externally downloaded app blocked by Gatekeeper, see [If macOS Blocks The App](docs/local-signing.md#if-macos-blocks-the-app). Locally built copies normally do not need quarantine removal.
 
 ## Current Scope
 
 - iTerm2 only
 - macOS 14+
-- Unsigned / ad-hoc signed distribution
+- Local self-signed or ad-hoc source builds without Developer ID notarization
 - No external Swift dependencies
 
 ## License

@@ -34,22 +34,31 @@ Claude Alert Bot은 잠깐 나타났다 사라지는 시스템 배너보다, 정
 - iTerm2
 - Claude Code 또는 Codex CLI
 - 소스 빌드가 필요하다면 Xcode 15.4 이상
+- 소스 빌드가 필요하다면 XcodeGen
 
-## 설치와 첫 실행
+## 빠른 시작
 
-1. 빌드된 `ClaudeAlertBot.app`을 설치하거나, 이 저장소에서 직접 빌드합니다.
-2. 일반적인 앱 설치 형태로 쓰려면 `/Applications`로 옮깁니다.
-3. 앱을 실행합니다.
-
-macOS가 서명되지 않은 앱 실행을 막으면 `System Settings > Privacy & Security > Open Anyway`를 사용하세요.
-그래도 막히면 quarantine 속성을 직접 지울 수 있습니다.
+반복해서 소스 빌드할 때도 macOS 권한을 유지할 수 있도록 개인용 로컬 서명을 먼저 설정합니다. Apple 계정은 필요하지 않습니다.
 
 ```bash
-xattr -cr /Applications/ClaudeAlertBot.app
+scripts/setup-local-signing.sh
+xcodegen generate
+scripts/build.sh
+open build/export/ClaudeAlertBot.app
 ```
 
-`MenuBarExtra`는 macOS 메뉴 막대 오른쪽에 붙는 상태 아이콘 메뉴입니다.
-Claude Alert Bot은 액세서리 앱으로 동작하므로, 실행 후에는 macOS 메뉴 막대의 벨 아이콘에서 제어합니다.
+빌드 결과는 `build/export/ClaudeAlertBot.app`에 생성됩니다. 일반적인 앱 설치 형태로 쓰려면 `/Applications`로 옮길 수 있습니다.
+
+### 최초 권한 설정
+
+앱은 메뉴 막대의 벨 아이콘에서 제어합니다. 처음 실행한 뒤 다음 순서로 권한을 설정합니다.
+
+1. 벨 메뉴에서 `iTerm2 Connection > Test iTerm2 connection`을 실행하고 Automation 권한을 허용합니다.
+2. `Grant Accessibility…`를 누릅니다.
+3. `시스템 설정 > 개인정보 보호 및 보안 > 손쉬운 사용`에서 `ClaudeAlertBot`을 켭니다.
+4. 앱을 한 번 종료하고 다시 실행합니다.
+
+이후 bundle identifier와 로컬 인증서가 유지되는 동안에는 재빌드해도 같은 권한을 재사용합니다. 자세한 서명 관리, ad-hoc 빌드, 권한 복구 방법은 [로컬 서명 및 손쉬운 사용 권한](docs/local-signing.ko.md)을 참고하세요.
 
 앱이 실행되면 번들된 reporter 스크립트를 아래 경로로 복사합니다.
 
@@ -67,12 +76,6 @@ Claude Alert Bot은 액세서리 앱으로 동작하므로, 실행 후에는 mac
 - Claude Code용 `Stop`, `UserPromptSubmit`
 - `~/.codex`가 있을 때 Codex용 `Stop`, `UserPromptSubmit`
 - Claude 권한 요청 / elicitation dialog용 `Notification`
-
-첫 실행 후 벨 메뉴에서 `iTerm2 Connection > Test iTerm2 connection`을 실행해 두는 것이 좋습니다.
-이 과정에서 macOS가 다음 권한을 요청할 수 있습니다.
-
-- Automation 권한: 앱이 iTerm2를 제어하기 위해 필요
-- Accessibility 권한: 여러 Space를 넘어서도 정확한 iTerm2 창을 앞으로 올리기 위해 필요
 
 ## 사용 흐름
 
@@ -124,61 +127,11 @@ Quiet Hours를 켜면 사운드와 강조 애니메이션은 꺼지지만, 큐�
 앱은 hook 이벤트에 담긴 iTerm2 세션 식별자를 추적하고, AppleScript와 창 올리기 로직을 조합해 정확한 위치로 되돌아갑니다.
 권한이나 연결 상태를 확인할 수 있도록 메뉴 막대에 연결 테스트도 들어 있습니다.
 
-## 소스에서 빌드하기
+## 개발 및 테스트
 
-### 빠른 ad-hoc 빌드
+빌드와 최초 실행은 위의 [빠른 시작](#빠른-시작)을 따릅니다. 로컬 identity 상태 확인, 일회성 ad-hoc 빌드, 인증서 삭제와 권한 복구는 [로컬 서명 및 손쉬운 사용 권한](docs/local-signing.ko.md)에 분리해 두었습니다.
 
-Xcode 프로젝트를 생성하고 앱을 빌드한 뒤, export된 번들을 실행합니다.
-
-```bash
-xcodegen generate
-scripts/build.sh
-open build/export/ClaudeAlertBot.app
-```
-
-릴리스 스타일 결과물은 아래에 생성됩니다.
-
-```text
-build/export/ClaudeAlertBot.app
-```
-
-이 방식은 Apple 계정이 필요하지 않지만, 앱을 다시 빌드하면 ad-hoc 코드 identity가 바뀝니다. 따라서 손쉬운 사용 권한을 다시 부여해야 할 수 있습니다.
-
-### 손쉬운 사용 권한을 유지하는 로컬 서명
-
-소스를 반복해서 빌드한다면 개인용 로컬 서명 identity를 한 번 생성합니다.
-
-```bash
-scripts/setup-local-signing.sh
-xcodegen generate
-scripts/build.sh
-open build/export/ClaudeAlertBot.app
-```
-
-Apple 계정은 필요하지 않습니다. 스크립트는 로그인 Keychain에만 self-signed identity를 만들고, 인증서 지문은 git에서 제외된 `Config/LocalSigning.xcconfig`에 기록합니다. 각 사용자가 자기 Mac에서 별도 identity를 생성하므로 인증서와 개인 키는 commit하거나 공유하지 않습니다. 이 identity는 로컬 개발 전용이며 Developer ID 배포나 공증을 대신하지 않습니다.
-
-로컬 서명 앱을 처음 실행할 때는 `Grant Accessibility…`를 누르고 `시스템 설정 > 개인정보 보호 및 보안 > 손쉬운 사용`에서 `ClaudeAlertBot`을 켠 뒤, 앱을 한 번 종료하고 다시 실행해야 합니다. 이후에는 bundle identifier와 로컬 인증서가 유지되는 동안 재빌드해도 같은 권한을 재사용합니다. 실행 중인 이전 앱은 종료하고 새 빌드를 열어야 하지만, 손쉬운 사용 항목을 삭제하고 다시 켤 필요는 없습니다.
-
-Keychain을 변경하지 않고 설정 상태를 확인할 수 있습니다.
-
-```bash
-scripts/setup-local-signing.sh --status
-scripts/build.sh --signing-status
-```
-
-ad-hoc 서명으로 돌아가려면 설정된 정확한 identity만 삭제합니다.
-
-```bash
-FINGERPRINT=$(awk -F ' = ' '$1 == "CAB_CODE_SIGN_IDENTITY" { print $2 }' Config/LocalSigning.xcconfig)
-KEYCHAIN=$(awk -F ' = ' '$1 == "CAB_CODE_SIGN_KEYCHAIN" { print $2 }' Config/LocalSigning.xcconfig)
-security delete-identity -Z "$FINGERPRINT" -t "$KEYCHAIN"
-rm -f Config/LocalSigning.xcconfig
-xcodegen generate
-```
-
-identity를 삭제하거나 새로 만들면 앱의 코드 identity도 바뀌므로 macOS가 손쉬운 사용 권한을 다시 요구할 수 있습니다.
-
-테스트는 다음 명령으로 실행합니다.
+전체 테스트는 다음 명령으로 실행합니다.
 
 ```bash
 xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
@@ -200,57 +153,14 @@ xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
   ```bash
   tccutil reset AppleEvents com.claudealert.bot
   ```
-- 연결 테스트는 통과하지만 클릭한 행이 정확한 창을 앞으로 못 올린다면 아래 Accessibility 복구 순서를 따릅니다.
+- 연결 테스트는 통과하지만 클릭한 행이 정확한 창을 앞으로 못 올린다면 [손쉬운 사용 문제 복구](docs/local-signing.ko.md#손쉬운-사용-문제-복구)를 확인합니다.
 - iTerm2가 이미 실행 중인지 확인합니다.
 
 ### 클릭한 세션이 아닌 다른 세션으로 이동할 때
 
 듀얼 모니터, 또는 여러 iTerm2 창이 동시에 떠있는 환경에서 행을 클릭했는데 엉뚱한 세션으로 포커스가 가는 경우입니다. 대부분 Accessibility 권한이 비어 있을 때 나타납니다. 권한이 없으면 앱은 단순한 앱 단위 활성화만 시도하고, macOS가 임의의 창(보통 마우스가 있는 화면의 창)을 위로 올리기 때문입니다.
 
-특히 ad-hoc 방식으로 직접 빌드해서 쓰는 경우 자주 발생합니다. ad-hoc 서명은 빌드할 때마다 바이너리 지문(cdhash)이 바뀌어 macOS가 이전 빌드에 부여한 권한을 새 빌드에 자동 적용하지 않습니다. 자주 재빌드한다면 위의 로컬 서명 절차를 사용하세요.
-
-해결 순서:
-
-1. 실행 중인 앱을 종료합니다.
-   ```bash
-   pkill -x ClaudeAlertBot
-   ```
-2. 이전 Accessibility 등록을 지웁니다.
-   ```bash
-   tccutil reset Accessibility com.claudealert.bot
-   ```
-3. 방금 빌드한 앱을 다시 엽니다.
-   ```bash
-   open build/export/ClaudeAlertBot.app
-   ```
-4. 벨 메뉴에서 `Grant Accessibility…`를 클릭합니다.
-5. `시스템 설정 > 개인정보 보호 및 보안 > 손쉬운 사용`에서 `ClaudeAlertBot` 토글을 켭니다.
-6. 앱을 종료 후 다시 실행합니다. 권한 상태는 프로세스 시작 시점에 잡힙니다.
-7. 로그를 확인합니다.
-
-`tccutil reset` 직후에는 시스템 설정에 항목이 바로 안 보일 수 있습니다. 이때 앱 메뉴의 `Grant Accessibility…`를 눌러 새 항목을 만든 뒤 토글을 켜야 합니다.
-
-`scripts/build.sh --signing-status`가 `mode=ad-hoc`을 표시하면 재빌드 후 권한이 다시 stale 될 수 있으므로, 증상이 반복될 때 위 복구 순서를 다시 진행합니다. `mode=local`이면 TCC를 초기화하기 전에 `scripts/setup-local-signing.sh --status`를 확인하고 새 빌드를 다시 실행하세요. 로컬 identity를 삭제하거나 새로 만들었거나 실제 권한이 사라진 경우에만 복구 순서를 사용합니다.
-
-권한이 실제로 적용됐는지 확인하고 싶으면 다음 로그를 봅니다.
-
-```bash
-/usr/bin/log show --predicate 'subsystem == "com.claudealert.bot.hook"' --info --last 5m
-```
-
-정상 동작에서는 다음과 같은 로그가 보입니다.
-
-- `[ax-raised ... code=0]`
-- `[jumped session=...]`
-- 필요 시 `[ax-match path=focused-main-fallback ...]`
-
-문제가 남아 있으면 다음 로그가 보일 수 있습니다.
-
-- `[ax-trust trusted=false ...]`
-- `[ax-skip reason=not-trusted]`
-- `[activate-fallback]`
-
-이 경우 권한 등록이 이전 빌드와 충돌한 상태일 가능성이 높으므로 해결 순서 1단계부터 다시 진행합니다.
+먼저 `scripts/build.sh --signing-status`로 현재 빌드가 `mode=local`인지 확인하세요. 로컬 서명이라면 TCC를 초기화하기 전에 기존 앱을 종료하고 새 빌드를 다시 실행합니다. ad-hoc이거나 권한 상태가 계속 잘못된 경우의 단계별 복구와 로그 확인 방법은 [로컬 서명 및 손쉬운 사용 권한](docs/local-signing.ko.md#손쉬운-사용-문제-복구)에 정리되어 있습니다.
 
 ### Hook 재설치
 
@@ -260,19 +170,15 @@ xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
 scripts/dev-install-hook.sh --apply
 ```
 
-### 서명되지 않은 앱 경고
+### macOS가 앱 실행을 차단할 때
 
-`Open Anyway`로도 해결되지 않으면 quarantine 속성을 지웁니다.
-
-```bash
-xattr -cr /Applications/ClaudeAlertBot.app
-```
+외부에서 받은 앱이 Gatekeeper에 차단되면 [앱 실행이 차단될 때](docs/local-signing.ko.md#앱-실행이-차단될-때)를 참고하세요. 직접 만든 로컬 빌드는 일반적으로 quarantine 제거가 필요하지 않습니다.
 
 ## 현재 범위
 
 - iTerm2 전용
 - macOS 14+
-- unsigned / ad-hoc signed 배포
+- Developer ID 공증 없이 로컬 self-signed 또는 ad-hoc 소스 빌드
 - 외부 Swift 의존성 없음
 
 ## 라이선스

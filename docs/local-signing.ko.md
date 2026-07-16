@@ -100,7 +100,7 @@ open build/export/ClaudeAlertBot.app
 /usr/bin/log show --predicate 'subsystem == "com.claudealert.bot.hook"' --info --last 5m
 ```
 
-정상 동작에서는 `[ax-raised ... code=0]` 또는 `[jumped session=...]`가 보입니다. `[ax-trust trusted=false ...]`, `[ax-skip reason=not-trusted]`, `[activate-fallback]`이 보이면 손쉬운 사용 권한이 적용되지 않은 상태입니다.
+정상 동작에서는 `[ax-raised ... code=0]` 또는 `[jumped session=...]`가 보입니다. `[ax-trust trusted=false ...]`, `[ax-skip reason=not-trusted]`가 보이면 손쉬운 사용 권한이 적용되지 않은 상태입니다. `[ax-miss ...]`는 권한은 살아 있지만 대상 창을 찾지 못한 경우이며, 그때 사용 가능했던 창 ID와 제목이 함께 남습니다.
 
 ## 앱 실행이 차단될 때
 

@@ -100,7 +100,7 @@ Click `Grant Accessibility…`, enable the toggle in System Settings, then quit 
 /usr/bin/log show --predicate 'subsystem == "com.claudealert.bot.hook"' --info --last 5m
 ```
 
-A working jump logs `[ax-raised ... code=0]` or `[jumped session=...]`. Entries such as `[ax-trust trusted=false ...]`, `[ax-skip reason=not-trusted]`, or `[activate-fallback]` indicate that Accessibility permission is not active.
+A working jump logs `[ax-raised ... code=0]` or `[jumped session=...]`. Entries such as `[ax-trust trusted=false ...]` or `[ax-skip reason=not-trusted]` indicate that Accessibility permission is not active. An `[ax-miss ...]` entry means the permission is active but the target window could not be matched; it lists the window IDs and titles that were available.
 
 ## If macOS Blocks The App
 

@@ -194,6 +194,13 @@ final class AppleScriptHelperTests: XCTestCase {
             jumpSource.contains("AccessibilityRaiser.activateITerm"),
             "App-level activation can surface a different iTerm Space after an exact-window miss"
         )
+        XCTAssertTrue(
+            jumpSource.contains("if !AccessibilityRaiser.isTrusted()")
+                && jumpSource.contains("AccessibilityRaiser.requestTrust()")
+                && jumpSource.contains("PermissionDeepLink.openAccessibilityPreferences()"),
+            "Without AX trust no window can be raised at all, so the click must surface the missing "
+                + "permission instead of being a silent no-op"
+        )
     }
 
     func test_accessibilityRaiser_fallsBackToFocusedOrMainWindowWhenWindowListIsEmpty() throws {

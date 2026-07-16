@@ -20,11 +20,11 @@ Claude Alert Bot is built around session-accurate jump-back rather than short-li
 - Keeps a pending session queue until you clear it or jump back to the terminal.
 - Jumps to the exact iTerm2 session for a row when you activate it.
 - Filters noisy short runs with a configurable notification threshold.
-- Supports waiting-input alerts from Claude notification hooks for permission prompts and elicitation dialogs.
+- Supports waiting-input alerts from Claude notification hooks for permission prompts and elicitation dialogs, and clears a waiting alert automatically once you answer the question.
 - Lets you pin important rows, mute a project for 1 hour, or clear unpinned rows.
 - Groups repeated alerts from the same project and shows a compact count badge.
 - Can show a one-line Last Output preview of the latest captured assistant message or output under each Claude Code or Codex row when enabled from `Notification > Alert Details > Last Output`.
-- Offers menu bar controls for sound, Quiet Hours, notification threshold, alert details, widget position, animation, appearance, reduce motion, launch at login, muted projects, test notification, and iTerm2 connection testing.
+- Offers menu bar controls for sound, Quiet Hours, notification threshold, alert details, widget position, widget icon, animation, appearance, reduce motion, open at login, muted projects, test notification, and iTerm2 connection testing.
 - Installs and maintains the bundled hook reporter automatically on launch.
 
 ## Requirements
@@ -75,6 +75,7 @@ The installed hook setup covers:
 - `Stop` and `UserPromptSubmit` for Claude Code
 - `Stop` and `UserPromptSubmit` for Codex when `~/.codex` exists
 - `Notification` for Claude permission prompts / elicitation dialogs
+- `PostToolUse` for Claude's `AskUserQuestion` dialogs — the only signal that a question was answered, without which its waiting alert would linger
 
 ## Daily Use
 
@@ -158,7 +159,7 @@ xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
 
 ### Clicking A Row Activates The Wrong Session
 
-This happens on multi-display setups, or when several iTerm2 windows are open at once, and the clicked row brings up a different session than expected. Almost always it means Accessibility permission is not in effect. Without it, the app falls back to a plain app-level activation and macOS picks whichever iTerm2 window it prefers — typically the one on the screen under the mouse cursor.
+This happens on multi-display setups, or when several iTerm2 windows are open at once, and the clicked row brings up a different session than expected. Almost always it means Accessibility permission is not in effect — it is the only way the app can raise one exact window. Without it, clicking a row asks for Accessibility permission and opens System Settings rather than activating an arbitrary iTerm2 window.
 
 Start with `scripts/build.sh --signing-status`. For `mode=local`, quit the old process and reopen the new build before resetting TCC. For ad-hoc builds or a permission state that remains stale, follow the status-based recovery and logging steps in [Local Signing And Accessibility Permission](docs/local-signing.md#recover-accessibility-permission).
 

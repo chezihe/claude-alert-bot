@@ -21,11 +21,11 @@ Claude Alert Bot은 잠깐 나타났다 사라지는 시스템 배너보다, 정
 - 사용자가 직접 정리하거나 터미널로 돌아갈 때까지 대기 중인 세션 큐를 유지합니다.
 - 행을 클릭하면 해당 iTerm2 세션으로 정확히 점프합니다.
 - 알림 임계값을 설정해서 너무 짧은 실행은 걸러낼 수 있습니다.
-- Claude의 권한 요청 / elicitation dialog 같은 입력 대기 알림도 받을 수 있습니다.
+- Claude의 권한 요청 / elicitation dialog 같은 입력 대기 알림도 받을 수 있고, 질문에 답하면 해당 대기 알림은 자동으로 사라집니다.
 - 중요한 행을 고정하거나, 특정 프로젝트를 1시간 동안 음소거하거나, 고정되지 않은 행만 한 번에 지울 수 있습니다.
 - 같은 프로젝트에서 반복된 알림은 그룹으로 묶고 카운트 배지로 보여줍니다.
 - `Notification > Alert Details > Last Output`을 켜면 Claude Code 또는 Codex 행 아래에 최신 assistant 메시지/출력 preview 1줄을 표시할 수 있습니다.
-- 메뉴 막대에서 사운드, Quiet Hours, 알림 임계값, 알림 상세 표시, 위젯 위치, 애니메이션, 테마, Reduce Motion, 로그인 시 실행, 음소거된 프로젝트, 테스트 알림, iTerm2 연결 테스트를 제어할 수 있습니다.
+- 메뉴 막대에서 사운드, Quiet Hours, 알림 임계값, 알림 상세 표시, 위젯 위치, 위젯 아이콘, 애니메이션, 테마, Reduce Motion, 로그인 시 실행, 음소거된 프로젝트, 테스트 알림, iTerm2 연결 테스트를 제어할 수 있습니다.
 - 앱 실행 시 번들된 hook reporter를 자동으로 설치하고 유지합니다.
 
 ## 요구사항
@@ -76,6 +76,7 @@ open build/export/ClaudeAlertBot.app
 - Claude Code용 `Stop`, `UserPromptSubmit`
 - `~/.codex`가 있을 때 Codex용 `Stop`, `UserPromptSubmit`
 - Claude 권한 요청 / elicitation dialog용 `Notification`
+- Claude의 `AskUserQuestion` 질문 창용 `PostToolUse`. 질문에 답했다는 것을 알 수 있는 유일한 신호이며, 없으면 해당 대기 알림이 계속 남습니다.
 
 ## 사용 흐름
 
@@ -158,7 +159,7 @@ xcodebuild test -scheme ClaudeAlertBot -destination 'platform=macOS'
 
 ### 클릭한 세션이 아닌 다른 세션으로 이동할 때
 
-듀얼 모니터, 또는 여러 iTerm2 창이 동시에 떠있는 환경에서 행을 클릭했는데 엉뚱한 세션으로 포커스가 가는 경우입니다. 대부분 Accessibility 권한이 비어 있을 때 나타납니다. 권한이 없으면 앱은 단순한 앱 단위 활성화만 시도하고, macOS가 임의의 창(보통 마우스가 있는 화면의 창)을 위로 올리기 때문입니다.
+듀얼 모니터, 또는 여러 iTerm2 창이 동시에 떠있는 환경에서 행을 클릭했는데 엉뚱한 세션으로 포커스가 가는 경우입니다. 대부분 Accessibility 권한이 비어 있을 때 나타납니다. 정확한 창 하나를 올리려면 이 권한이 필요하기 때문입니다. 권한이 없으면 임의의 iTerm2 창을 올리는 대신, 행을 클릭할 때 Accessibility 권한을 요청하고 시스템 설정을 엽니다.
 
 먼저 `scripts/build.sh --signing-status`로 현재 빌드가 `mode=local`인지 확인하세요. 로컬 서명이라면 TCC를 초기화하기 전에 기존 앱을 종료하고 새 빌드를 다시 실행합니다. ad-hoc이거나 권한 상태가 계속 잘못된 경우의 단계별 복구와 로그 확인 방법은 [로컬 서명 및 손쉬운 사용 권한](docs/local-signing.ko.md#손쉬운-사용-문제-복구)에 정리되어 있습니다.
 

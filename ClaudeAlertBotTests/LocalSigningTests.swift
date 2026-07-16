@@ -31,13 +31,17 @@ final class LocalSigningTests: XCTestCase {
         )
     }
 
-    func test_signingConfigDefaultsToAdHocAndOptionallyIncludesLocalOverride() throws {
+    func test_signingConfigKeepsXcodeDrivenBuildsAdHoc() throws {
         let config = try source("Config/Signing.xcconfig")
 
         XCTAssertTrue(config.contains("CAB_CODE_SIGN_IDENTITY = -"))
-        XCTAssertTrue(config.contains("#include? \"LocalSigning.xcconfig\""))
         XCTAssertTrue(config.contains("CODE_SIGN_IDENTITY = $(CAB_CODE_SIGN_IDENTITY)"))
         XCTAssertTrue(config.contains("CODE_SIGN_STYLE = Manual"))
+        XCTAssertFalse(
+            config.contains("#include? \"LocalSigning.xcconfig\""),
+            "Feeding the local identity to Xcode makes `xcodebuild test` fail with "
+                + "\"Signing certificate is invalid\"; scripts/build.sh applies it after archiving instead"
+        )
     }
 
     func test_projectUsesSigningConfigAndAutomationEntitlementsForAppOnly() throws {

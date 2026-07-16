@@ -256,6 +256,14 @@ actor AppleScriptHelper {
                 let raised = AccessibilityRaiser.raise(itermPID: pid, windowID: winID, title: title)
                 if !raised {
                     log.warning("runJumpByUUID matched session but AX raise did not confirm activation")
+                    // Without AX trust no window can be raised at all, and the app-level activate
+                    // fallback is gone because it can surface a window from another Space. Ask for
+                    // the permission instead of leaving the click as a silent no-op. A raise that
+                    // failed *with* trust is an exact-window miss — logged as [ax-miss], no prompt.
+                    if !AccessibilityRaiser.isTrusted() {
+                        _ = AccessibilityRaiser.requestTrust()
+                        PermissionDeepLink.openAccessibilityPreferences()
+                    }
                 }
                 return .ok
             }

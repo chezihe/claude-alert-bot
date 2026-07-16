@@ -1,5 +1,9 @@
+// Xcode-driven builds (including `xcodebuild test`) always sign ad-hoc. Xcode's own signing
+// validation rejects the local development leaf certificate with "Signing certificate is
+// invalid", so including LocalSigning.xcconfig here breaks the documented test command.
+// scripts/build.sh reads LocalSigning.xcconfig directly and re-signs the exported app with
+// the local identity via codesign after archiving — that is the only path that needs it.
 CAB_CODE_SIGN_IDENTITY = -
-#include? "LocalSigning.xcconfig"
 
 CODE_SIGN_IDENTITY = $(CAB_CODE_SIGN_IDENTITY)
 CODE_SIGN_STYLE = Manual

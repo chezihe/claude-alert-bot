@@ -180,15 +180,6 @@ struct DedupeKey: Hashable, Codable {
 enum WidgetCorner: String, CaseIterable, Codable, Identifiable {
     case topLeft, topRight, bottomLeft, bottomRight
     var id: String { rawValue }
-    /// UI-SPEC: "왼쪽 위 / 오른쪽 위 / 왼쪽 아래 / 오른쪽 아래"
-    var localizedLabel: String {
-        switch self {
-        case .topLeft: return "왼쪽 위"
-        case .topRight: return "오른쪽 위"
-        case .bottomLeft: return "왼쪽 아래"
-        case .bottomRight: return "오른쪽 아래"
-        }
-    }
 }
 
 /// D2-35/D2-36 — Apple Events permission state machine.

@@ -4,6 +4,25 @@
 import XCTest
 @testable import ClaudeAlertBot
 
+private actor SuppressionGate {
+    private var entered = false
+    private var continuation: CheckedContinuation<Void, Never>?
+
+    func suspend() async {
+        entered = true
+        await withCheckedContinuation { continuation = $0 }
+    }
+
+    func waitUntilEntered() async {
+        while !entered { await Task.yield() }
+    }
+
+    func resume() {
+        continuation?.resume()
+        continuation = nil
+    }
+}
+
 @MainActor
 final class SessionRegistryTests: XCTestCase {
     private var tempURL: URL!
@@ -45,8 +64,8 @@ final class SessionRegistryTests: XCTestCase {
 
     private func iso(_ d: Date) -> String { ISO8601DateFormatter().string(from: d) }
 
-    private func suppressNo(_ id: String?) async -> Bool { false }
-    private func suppressYes(_ id: String?) async -> Bool { true }
+    private let suppressNo: @Sendable (String?) async -> Bool = { _ in false }
+    private let suppressYes: @Sendable (String?) async -> Bool = { _ in true }
 
     // MARK: tests
 
@@ -221,6 +240,127 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(snap.completed.count, 0, "stale reordered stop must not create an alert")
         XCTAssertTrue(notifier.presentCalls.isEmpty)
         XCTAssertNotNil(snap.inFlight[sid], "newer turn must stay in flight")
+    }
+
+    func test_ingest_fractionalStaleStop_reorderedBehindNewerPrompt_discarded() async throws {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-fractional-stale-reorder"
+        let base = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970) - 1)
+        let staleStopAt = base.addingTimeInterval(0.1)
+        let newerStart = base.addingTimeInterval(0.9)
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions.insert(.withFractionalSeconds)
+        let staleStopTimestamp = formatter.string(from: staleStopAt)
+        let newerStartTimestamp = formatter.string(from: newerStart)
+        let expectedNewerStart = try XCTUnwrap(formatter.date(from: newerStartTimestamp))
+
+        let newerPrompt = HookEventFactory.userPromptSubmit(
+            sessionID: sid,
+            ts: newerStartTimestamp,
+            termProgram: "iTerm.app"
+        )
+        await r.ingest(newerPrompt, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let staleStop = HookEventFactory.stop(
+            sessionID: sid,
+            ts: staleStopTimestamp,
+            termProgram: "iTerm.app",
+            kind: .error
+        )
+        await r.ingest(staleStop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertEqual(snap.completed.count, 0, "fractional stale stop must not create an alert")
+        XCTAssertEqual(snap.inFlight[sid]?.startedAt, expectedNewerStart,
+                       "newer fractional turn must stay in flight")
+        XCTAssertTrue(notifier.presentCalls.isEmpty)
+    }
+
+    func test_ingest_stop_sameLegacySecondAsStart_isNotAssumedStale() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-same-legacy-second"
+        let startedAt = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
+        await r.seedInFlightForTesting(sessionID: sid, started: startedAt, cwd: "/x")
+        let stop = HookEventFactory.stop(
+            sessionID: sid,
+            ts: iso(startedAt),
+            termProgram: "iTerm.app",
+            kind: .error
+        )
+
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertNil(snap.inFlight[sid], "a legitimate same-second stop must consume its start")
+        XCTAssertEqual(snap.completed.map(\.sessionID), [sid])
+        XCTAssertEqual(notifier.presentCalls.map(\.session), [sid])
+    }
+
+    func test_ingest_staleStop_frontmostMatch_preservesNewerInFlight() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-stale-frontmost"
+        let newerStart = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
+        await r.seedInFlightForTesting(sessionID: sid, started: newerStart, cwd: "/x")
+        let staleStop = HookEventFactory.stop(
+            sessionID: sid,
+            ts: iso(newerStart.addingTimeInterval(-1)),
+            termProgram: "iTerm.app"
+        )
+
+        await r.ingest(staleStop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressYes)
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertTrue(snap.completed.isEmpty)
+        XCTAssertEqual(snap.inFlight[sid]?.startedAt, newerStart,
+                       "frontmost suppression must not remove the newer turn")
+        XCTAssertTrue(notifier.presentCalls.isEmpty)
+    }
+
+    func test_ingest_stop_newerPromptDuringFrontmostQuery_preservesNewerInFlight() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-frontmost-reentrant"
+        let initialStart = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
+        let stoppedAt = initialStart.addingTimeInterval(10)
+        let newerStart = stoppedAt.addingTimeInterval(1)
+        await r.seedInFlightForTesting(sessionID: sid, started: initialStart, cwd: "/x")
+        let stop = HookEventFactory.stop(
+            sessionID: sid,
+            ts: iso(stoppedAt),
+            termProgram: "iTerm.app"
+        )
+        let gate = SuppressionGate()
+
+        let stopTask = Task {
+            await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true) { _ in
+                await gate.suspend()
+                return true
+            }
+        }
+        await gate.waitUntilEntered()
+
+        let newerPrompt = HookEventFactory.userPromptSubmit(
+            sessionID: sid,
+            ts: iso(newerStart),
+            termProgram: "iTerm.app"
+        )
+        await r.ingest(newerPrompt, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+        await gate.resume()
+        await stopTask.value
+
+        let snap = await r.snapshotForTesting()
+        XCTAssertTrue(snap.completed.isEmpty)
+        XCTAssertEqual(snap.inFlight[sid]?.startedAt, newerStart,
+                       "a stop resumed after frontmost lookup must not remove the newer turn")
+        XCTAssertTrue(notifier.presentCalls.isEmpty)
     }
 
     func test_ingest_stop_nonZeroExitCodeWithoutKind_emitsErrorBelowThreshold() async {

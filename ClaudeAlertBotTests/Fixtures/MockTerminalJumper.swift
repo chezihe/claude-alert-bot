@@ -36,9 +36,6 @@ final class MockTerminalJumper: TerminalJumper {
         return resultQueue.removeFirst()
     }
 
-    /// Convenience for tests that want to assert the last call without index math.
-    var lastCall: (sessionID: String, itermSessionID: String?)? { jumpCalls.last }
-
     /// Reset between tests.
     func reset() {
         resultQueue.removeAll()

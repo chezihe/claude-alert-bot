@@ -24,8 +24,13 @@ actor SessionRegistry {
     private let persistence: SessionStore
     private weak var notifier: (any NotifierProtocol)?
     private let clock: Clock
-    /// Formatter construction is expensive — one instance per actor, reused by parseTS.
+    /// Formatter construction is expensive — cache both accepted ISO-8601 variants per actor.
     private let isoFormatter = ISO8601DateFormatter()
+    private let fractionalISOFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions.insert(.withFractionalSeconds)
+        return formatter
+    }()
 
     private var inFlight: [String: InFlightStart] = [:]
     private var completed: [CompletedSession] = []
@@ -97,24 +102,25 @@ actor SessionRegistry {
         // refresh the widget too, or the cleared alert lingers on screen (e.g. the user answered
         // a confirmation prompt while iTerm2 was frontmost → D2-14 suppress).
         let clearedWaiting = clearUnpinnedWaitingAlert(sessionID: sid)
-        // D2-14 cheap-query (only relevant when permission granted — caller decides via closure)
-        if await suppressIfFrontmost(event.iterm_session_id) {
-            log.notice("D2-14 pre-suppress session=\(sid, privacy: .public)")
-            inFlight.removeValue(forKey: sid)
-            await persist()
-            if clearedWaiting { await notifyQueueChanged() }
-            return
-        }
         // Reorder guard: cab-report.sh's stop hook lags (it waits up to ~0.8s reading the
         // transcript for last_output). If the user replied within that window, a newer
         // user_prompt_submit landed first and this stop's ts predates that in-flight start —
         // the stop is stale. Discard it without creating an alert; the new turn stays in flight.
-        if let start = inFlight[sid]?.startedAt, stoppedAt < start {
-            log.notice("stale stop discarded session=\(sid, privacy: .public) (reordered behind newer prompt)")
-            if clearedWaiting {
-                await persist()
-                await notifyQueueChanged()
-            }
+        if await discardStaleStopIfNeeded(sessionID: sid,
+                                           stoppedAt: stoppedAt,
+                                           clearedWaiting: clearedWaiting) { return }
+        // D2-14 cheap-query (only relevant when permission granted — caller decides via closure)
+        let shouldSuppress = await suppressIfFrontmost(event.iterm_session_id)
+        // The actor can accept a newer prompt while the frontmost query is suspended.
+        // Re-check before consuming inFlight so this older stop cannot remove the new turn.
+        if await discardStaleStopIfNeeded(sessionID: sid,
+                                           stoppedAt: stoppedAt,
+                                           clearedWaiting: clearedWaiting) { return }
+        if shouldSuppress {
+            log.notice("D2-14 pre-suppress session=\(sid, privacy: .public)")
+            inFlight.removeValue(forKey: sid)
+            await persist()
+            if clearedWaiting { await notifyQueueChanged() }
             return
         }
         // AUD-01 dedupe (sound-only scope per D2-20)
@@ -305,6 +311,18 @@ actor SessionRegistry {
 
     // MARK: helpers
 
+    private func discardStaleStopIfNeeded(sessionID: String,
+                                          stoppedAt: Date,
+                                          clearedWaiting: Bool) async -> Bool {
+        guard let start = inFlight[sessionID]?.startedAt, stoppedAt < start else { return false }
+        log.notice("stale stop discarded session=\(sessionID, privacy: .public) (reordered behind newer prompt)")
+        if clearedWaiting {
+            await persist()
+            await notifyQueueChanged()
+        }
+        return true
+    }
+
     private func persist() async {
         let snap = SessionsSnapshot(schema: SessionsSnapshot.currentSchema,
                                     inFlight: inFlight,
@@ -349,7 +367,7 @@ actor SessionRegistry {
 
     private func parseTS(_ s: String?) -> Date? {
         guard let s = s else { return nil }
-        return isoFormatter.date(from: s)
+        return fractionalISOFormatter.date(from: s) ?? isoFormatter.date(from: s)
     }
 
     private func discardUnsupportedTerminalEvent(_ event: HookEvent) async {

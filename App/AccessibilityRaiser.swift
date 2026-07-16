@@ -46,7 +46,7 @@ enum AccessibilityRaiser {
         return AXIsProcessTrustedWithOptions([key: true] as CFDictionary)
     }
 
-    /// Raise the iTerm2 window matching `windowID` (preferred) or `title` (fallback).
+    /// Raise the iTerm2 window matching `windowID`, or `title` only when no ID is available.
     /// Returns true if a raise action was performed. Silently returns false if AX
     /// permission is not granted or no matching window is found.
     static func raise(itermPID: pid_t, windowID: CGWindowID?, title: String?) -> Bool {
@@ -65,9 +65,7 @@ enum AccessibilityRaiser {
         var axWindows = (windowsRef as? [AXUIElement]) ?? []
         axWindows.append(contentsOf: fallbackAXWindows)
 
-        let matchedWindow = matchWindow(axWindows, windowID: windowID, title: title)
-        let target = matchedWindow ?? fallbackAXWindows.first
-        guard let win = target else {
+        guard let win = matchWindow(axWindows, windowID: windowID, title: title) else {
             // Emit available AX titles + CGWindowIDs when match fails so the user-side
             // log shows exactly why the title didn't line up (decoration drift between
             // iTerm AS `name of w` and AX kAXTitleAttribute is the likely cause).
@@ -81,9 +79,6 @@ enum AccessibilityRaiser {
             }.joined(separator: " || ")
             log.notice("[ax-miss windowID=\(windowID ?? 0, privacy: .public) title=\(title ?? "", privacy: .public) available=\(available, privacy: .public)]")
             return false
-        }
-        if matchedWindow == nil && fallbackAXWindows.contains(where: { CFEqual($0, win) }) {
-            log.notice("[ax-match path=focused-main-fallback windowID=\(windowID ?? 0, privacy: .public)]")
         }
 
         // Order matters on multi-display setups: activate() FIRST so macOS picks
@@ -108,18 +103,6 @@ enum AccessibilityRaiser {
             .processIdentifier
     }
 
-    /// Best-effort foreground activation after AppleScript has selected a matched session.
-    /// Does not require Accessibility permission, but may not cross every Space layout.
-    static func activateITerm(itermPID: pid_t) -> Bool {
-        guard let app = NSRunningApplication(processIdentifier: itermPID) else {
-            log.notice("[activate-miss reason=no-running-app]")
-            return false
-        }
-        app.activate()
-        log.notice("[activate-fallback]")
-        return true
-    }
-
     // MARK: - private
 
     private static func matchWindow(_ axWindows: [AXUIElement], windowID: CGWindowID?, title: String?) -> AXUIElement? {
@@ -133,10 +116,9 @@ enum AccessibilityRaiser {
                 }
             }
         }
-        // 2) Title match — belt-and-suspenders for the rare case where iTerm's
-        //    AppleScript `id` and CGWindowID diverge. iTerm window title reflects
-        //    the currently-selected tab's name, which AppleScript just set.
-        if let wantedTitle = title, !wantedTitle.isEmpty {
+        // 2) Title match is only safe for legacy payloads without a window ID.
+        //    When an ID was supplied, a duplicate title could select another Space.
+        if windowID == nil, let wantedTitle = title, !wantedTitle.isEmpty {
             for w in axWindows {
                 var titleRef: CFTypeRef?
                 if AXUIElementCopyAttributeValue(w, kAXTitleAttribute as CFString, &titleRef) == .success,

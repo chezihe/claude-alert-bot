@@ -181,9 +181,12 @@ else
     }
 
     verify_local_signature "bundle" "$APP"
+    BUNDLE_SIG="Authority=$IDENTITY_NAME"
     verify_local_signature "main executable" "$APP/Contents/MacOS/ClaudeAlertBot"
+    MAIN_SIG="Authority=$IDENTITY_NAME"
     if [ -f "$APP/Contents/MacOS/cab-test" ]; then
         verify_local_signature "cab-test" "$APP/Contents/MacOS/cab-test"
+        CABTEST_SIG="Authority=$IDENTITY_NAME"
     fi
 fi
 

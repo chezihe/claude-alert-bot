@@ -17,12 +17,22 @@ enum ScriptResult: Equatable {
     case otherError(Int)
 }
 
+/// `NSAppleScript` is not `Sendable`. This wrapper is safe only because every
+/// execution after construction is serialized on `AppleScriptHelper.queue`.
+private final class SerializedAppleScript: @unchecked Sendable {
+    let value: NSAppleScript
+
+    init(_ value: NSAppleScript) {
+        self.value = value
+    }
+}
+
 actor AppleScriptHelper {
     static let shared = AppleScriptHelper()
 
     private let log = Logger(subsystem: "com.claudealert.bot.hook", category: "applescript")
     private let queue = DispatchQueue(label: "com.claudealert.bot.applescript", qos: .userInitiated)
-    private var compiled: NSAppleScript?
+    private var compiled: SerializedAppleScript?
     private(set) var lastKnownPermission: PermissionStatus = .unknown
 
     /// AppleScript source — read-only cheap-query against iTerm2 frontmost session.
@@ -65,6 +75,7 @@ actor AppleScriptHelper {
                         if id of s is targetUUID then
                             tell s to select
                             tell t to select
+                            tell w to select
                             tell w to set index to 1
                             return ((id of w) as string) & "|" & (name of w)
                         end if
@@ -94,22 +105,26 @@ actor AppleScriptHelper {
     end timeout
     """
 
-    private var compiledFocusFrontmost: NSAppleScript?
+    private var compiledFocusFrontmost: SerializedAppleScript?
 
     private init() {}
+
+    func restorePermissionState(_ permission: PermissionStatus) {
+        lastKnownPermission = permission == .denied ? .unknown : permission
+    }
 
     private func ensureCompiled() {
         guard compiled == nil else { return }
         let s = NSAppleScript(source: Self.scriptSource)
         _ = s?.compileAndReturnError(nil)
-        compiled = s
+        compiled = s.map(SerializedAppleScript.init)
     }
 
     private func ensureCompiledFocusFrontmost() {
         guard compiledFocusFrontmost == nil else { return }
         let s = NSAppleScript(source: Self.focusFrontmostSource)
         _ = s?.compileAndReturnError(nil)
-        compiledFocusFrontmost = s
+        compiledFocusFrontmost = s.map(SerializedAppleScript.init)
     }
 
     /// D2-14 — returns true iff frontmost iTerm2 session id matches `target`.
@@ -122,9 +137,7 @@ actor AppleScriptHelper {
         // poisons lastKnownPermission to .denied before the prompt completes —
         // observed via -1712 timeout followed by -1743 silent skips on launch.
         // Returning false = "treat as different session, don't suppress" — safe.
-        if lastKnownPermission == .unknown {
-            return false
-        }
+        guard Self.shouldQueryFrontmost(permission: lastKnownPermission) else { return false }
         // The scriptSource below only reads iTerm2's *internal* current session, which
         // stays set even when iTerm2 is in the background. Without this gate D2-14 would
         // suppress alerts while the user is in another app entirely (the stopped session
@@ -150,6 +163,10 @@ actor AppleScriptHelper {
             log.warning("AppleScript error code=\(code, privacy: .public)")
             return false
         }
+    }
+
+    static func shouldQueryFrontmost(permission: PermissionStatus) -> Bool {
+        permission == .granted
     }
 
     /// D2-35 — used by Path A (Settings open) and Path B (first Stop) to surface the TCC dialog.
@@ -239,10 +256,6 @@ actor AppleScriptHelper {
                 let raised = AccessibilityRaiser.raise(itermPID: pid, windowID: winID, title: title)
                 if !raised {
                     log.warning("runJumpByUUID matched session but AX raise did not confirm activation")
-                    let activated = AccessibilityRaiser.activateITerm(itermPID: pid)
-                    if !activated {
-                        log.warning("runJumpByUUID matched session but fallback iTerm activation failed")
-                    }
                 }
                 return .ok
             }
@@ -289,7 +302,7 @@ actor AppleScriptHelper {
         let result: JumpResult = await withCheckedContinuation { (cont: CheckedContinuation<JumpResult, Never>) in
             queue.async {
                 var errInfo: NSDictionary?
-                let value = script.executeAndReturnError(&errInfo)
+                let value = script.value.executeAndReturnError(&errInfo)
                 let s = value.stringValue ?? ""
                 let r = Self.classify(error: errInfo, result: s)
                 cont.resume(returning: Self.scriptResultToJump(r, emptyMeans: .iTermNotRunning))
@@ -326,7 +339,7 @@ actor AppleScriptHelper {
         return await withCheckedContinuation { (cont: CheckedContinuation<ScriptResult, Never>) in
             queue.async {
                 var errInfo: NSDictionary?
-                let result = script.executeAndReturnError(&errInfo)
+                let result = script.value.executeAndReturnError(&errInfo)
                 let value = result.stringValue ?? ""
                 cont.resume(returning: Self.classify(error: errInfo, result: value))
             }
@@ -372,15 +385,11 @@ actor AppleScriptHelper {
     var rawSource: String { Self.scriptSource }
     static var jumpRawTemplate: String { jumpByUUIDTemplate }
     static var focusFrontmostRawSource: String { focusFrontmostSource }
-    var compiledForTesting: NSAppleScript? {
+    var compiledIdentifierForTesting: ObjectIdentifier? {
         ensureCompiled()
-        return compiled
+        return compiled.map { ObjectIdentifier($0.value) }
     }
     func markGrantedForTesting() async { await markGranted() }
     func markDeniedForTesting() async { await markDenied() }
-    func markUnknownForTesting() async {
-        lastKnownPermission = .unknown
-        await MainActor.run { SettingsStore.shared.applescriptPermission = .unknown }
-    }
     #endif
 }

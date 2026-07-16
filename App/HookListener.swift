@@ -12,15 +12,33 @@ import AppKit
 import os
 
 final class HookListener {
+    struct SocketIdentity: Equatable {
+        let device: UInt64
+        let inode: UInt64
+    }
+
+    enum ReceiveDisposition: Equatable {
+        case continueReceiving
+        case handleBuffer
+        case discardBuffer
+    }
+
     private let log = Logger(subsystem: "com.claudealert.bot.hook", category: "listener")
     private let ingressLog = Logger(subsystem: "com.claudealert.bot.hook", category: "ingress")
     private let socketPath: String
     private let queue = DispatchQueue(label: "com.claudealert.bot.hook.listener")
+    private let ownershipLock = NSLock()
     private var listener: NWListener?
+    private var ownedSocketIdentity: SocketIdentity?
+    private var isCancelled = false
 
     init(socketPath: String) { self.socketPath = socketPath }
 
     func start() throws {
+        ownershipLock.withLock {
+            isCancelled = false
+            ownedSocketIdentity = nil
+        }
         let params = NWParameters()
         params.defaultProtocolStack.transportProtocol = NWProtocolTCP.Options()
         params.requiredLocalEndpoint = NWEndpoint.unix(path: socketPath)
@@ -34,6 +52,7 @@ final class HookListener {
                 self.log.notice("listener bound on \(self.socketPath, privacy: .public)")
                 // T-IPC-01 mitigation: chmod 0600 socket file after bind succeeds.
                 chmod(self.socketPath, 0o600)
+                self.recordSocketOwnership()
             case .failed(let err):
                 self.log.error("listener failed: \(String(describing: err), privacy: .public) — assuming another instance owns the socket; terminating (D-09)")
                 DispatchQueue.main.async { NSApp.terminate(nil) }
@@ -49,9 +68,54 @@ final class HookListener {
     }
 
     func cancel() {
+        let ownedIdentity = ownershipLock.withLock {
+            isCancelled = true
+            defer { ownedSocketIdentity = nil }
+            return ownedSocketIdentity
+        }
         listener?.cancel()
         listener = nil
-        try? FileManager.default.removeItem(atPath: socketPath)
+        guard let ownedIdentity else { return }
+        if Self.removeSocketIfOwned(at: socketPath, ownedIdentity: ownedIdentity) {
+            log.notice("removed owned socket at \(self.socketPath, privacy: .public)")
+        } else {
+            log.notice("preserved socket at \(self.socketPath, privacy: .public) because ownership changed")
+        }
+    }
+
+    private func recordSocketOwnership() {
+        guard let identity = Self.socketIdentity(at: socketPath) else {
+            log.error("listener ready but socket identity is unavailable at \(self.socketPath, privacy: .public)")
+            return
+        }
+        let cancelled = ownershipLock.withLock {
+            guard !isCancelled else { return true }
+            ownedSocketIdentity = identity
+            return false
+        }
+        if cancelled {
+            _ = Self.removeSocketIfOwned(at: socketPath, ownedIdentity: identity)
+        }
+    }
+
+    static func socketIdentity(at path: String) -> SocketIdentity? {
+        guard let attributes = try? FileManager.default.attributesOfItem(atPath: path),
+              attributes[.type] as? FileAttributeType == .typeSocket,
+              let device = attributes[.systemNumber] as? NSNumber,
+              let inode = attributes[.systemFileNumber] as? NSNumber
+        else { return nil }
+        return SocketIdentity(device: device.uint64Value, inode: inode.uint64Value)
+    }
+
+    @discardableResult
+    static func removeSocketIfOwned(at path: String, ownedIdentity: SocketIdentity) -> Bool {
+        guard socketIdentity(at: path) == ownedIdentity else { return false }
+        do {
+            try FileManager.default.removeItem(atPath: path)
+            return true
+        } catch {
+            return false
+        }
     }
 
     private func accept(_ conn: NWConnection) {
@@ -62,14 +126,20 @@ final class HookListener {
         // V5 input validation: cap at 64KB across the whole connection.
         let maxBytes = 65_536
         func loop() {
-            conn.receive(minimumIncompleteLength: 1, maximumLength: maxBytes) { [weak self] data, _, isComplete, _ in
+            conn.receive(minimumIncompleteLength: 1, maximumLength: maxBytes) { [weak self] data, _, isComplete, error in
+                let disposition = Self.receiveDisposition(isComplete: isComplete, hasError: error != nil)
+                if disposition == .discardBuffer {
+                    self?.log.warning("dropping connection: receive failed: \(String(describing: error), privacy: .public)")
+                    conn.cancel()
+                    return
+                }
                 if let data { buffer.append(data) }
                 if buffer.count > maxBytes {
                     self?.log.warning("dropping connection: envelope > 64KB")
                     conn.cancel()
                     return
                 }
-                if isComplete {
+                if disposition == .handleBuffer {
                     self?.handle(buffer: buffer)
                     conn.cancel()
                 } else {
@@ -79,6 +149,11 @@ final class HookListener {
         }
         conn.start(queue: queue)
         loop()
+    }
+
+    static func receiveDisposition(isComplete: Bool, hasError: Bool) -> ReceiveDisposition {
+        if hasError { return .discardBuffer }
+        return isComplete ? .handleBuffer : .continueReceiving
     }
 
     private func handle(buffer: Data) {

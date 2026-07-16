@@ -100,6 +100,28 @@ final class FloatingWidgetWindowControllerTests: XCTestCase {
         XCTAssertEqual(after.y, expected.y, accuracy: 0.0001)
     }
 
+    func test_newAlertDuringExitAnimationKeepsWidgetVisible() async throws {
+        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
+            throw XCTSkip("Exit animation is disabled by the system Reduce Motion setting")
+        }
+
+        let controller = FloatingWidgetWindowController()
+        defer { controller.window?.orderOut(nil) }
+
+        controller.showWidget(pendingCount: 1, latest: nil)
+        try await Task.sleep(nanoseconds: 250_000_000)
+
+        controller.updatePendingCount(0, latest: nil)
+        controller.hideWidget()
+        try await Task.sleep(nanoseconds: 50_000_000)
+        controller.showWidget(pendingCount: 1, latest: nil)
+        try await Task.sleep(nanoseconds: 250_000_000)
+
+        XCTAssertTrue(controller.window?.isVisible == true,
+                      "a stale exit completion must not hide a newly-presented alert")
+        XCTAssertEqual(controller.window?.alphaValue ?? 0, 1, accuracy: 0.001)
+    }
+
     private func readFloatingWidgetWindowControllerSource(_ thisFile: StaticString = #filePath) -> String {
         let here = URL(fileURLWithPath: "\(thisFile)")
         let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()

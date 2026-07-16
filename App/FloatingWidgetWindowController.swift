@@ -27,6 +27,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     private var activeAppCancellable: AnyCancellable?
     private var activeScreenEventMonitor: Any?
     private var repositionTask: Task<Void, Never>?
+    private var visibilityGeneration: UInt = 0
     private var currentQueue: [CompletedSession] = []
     private var currentPendingCount: Int = 0
     private var currentAlertPulseID: Int = 0
@@ -105,6 +106,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     // MARK: - WidgetControllerProtocol
 
     func showWidget(pendingCount: Int, latest: CompletedSession?) {
+        visibilityGeneration &+= 1
         currentPendingCount = pendingCount
         if latest != nil && !SettingsStore.shared.quietHoursEnabled {
             currentAlertPulseID += 1
@@ -115,14 +117,27 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
         if !panel.isVisible {
             applyEnterAnimation()
             panel.orderFront(nil)
+        } else {
+            panel.alphaValue = 1.0
         }
         log.notice("showWidget count=\(pendingCount, privacy: .public)")
     }
 
     func hideWidget() {
+        visibilityGeneration &+= 1
+        let generation = visibilityGeneration
         if panel.isVisible {
             applyExitAnimation { [weak self] in
-                self?.panel.orderOut(nil)
+                guard let self else { return }
+                guard self.visibilityGeneration == generation else {
+                    if self.currentPendingCount > 0 {
+                        self.panel.alphaValue = 1.0
+                        self.reposition()
+                        self.panel.orderFront(nil)
+                    }
+                    return
+                }
+                self.panel.orderOut(nil)
             }
         }
         log.notice("hideWidget")
@@ -250,7 +265,7 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
         }
     }
 
-    private func applyExitAnimation(completion: @escaping () -> Void) {
+    private func applyExitAnimation(completion: @escaping @MainActor @Sendable () -> Void) {
         guard !reducedMotion else { panel.alphaValue = 0.0; completion(); return }
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.20
@@ -259,6 +274,8 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
             var to = panel.frame.origin
             to.y += 4
             panel.animator().setFrameOrigin(to)
-        }, completionHandler: completion)
+        }, completionHandler: {
+            Task { @MainActor in completion() }
+        })
     }
 }

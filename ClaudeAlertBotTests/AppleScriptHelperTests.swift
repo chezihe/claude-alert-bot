@@ -9,6 +9,7 @@ final class AppleScriptHelperTests: XCTestCase {
     override func setUp() async throws {
         // Reset to unknown so state-mirror tests have a known starting point.
         SettingsStore.shared.applescriptPermission = .unknown
+        await AppleScriptHelper.shared.restorePermissionState(.unknown)
     }
 
     func test_scriptSource_containsAppleScriptTimeout() async {
@@ -43,11 +44,11 @@ final class AppleScriptHelperTests: XCTestCase {
     }
 
     func test_compileOnce_secondCallReusesInstance() async {
-        let first = await AppleScriptHelper.shared.compiledForTesting
-        let second = await AppleScriptHelper.shared.compiledForTesting
+        let first = await AppleScriptHelper.shared.compiledIdentifierForTesting
+        let second = await AppleScriptHelper.shared.compiledIdentifierForTesting
         XCTAssertNotNil(first)
-        XCTAssertTrue(
-            first === second,
+        XCTAssertEqual(
+            first, second,
             "ensureCompiled() must reuse the NSAppleScript instance — compile-once contract"
         )
     }
@@ -64,6 +65,26 @@ final class AppleScriptHelperTests: XCTestCase {
         await MainActor.run {
             XCTAssertEqual(SettingsStore.shared.applescriptPermission, .granted)
         }
+    }
+
+    func test_restorePermissionState_usesPersistedValue() async {
+        await AppleScriptHelper.shared.restorePermissionState(.granted)
+
+        let permission = await AppleScriptHelper.shared.lastKnownPermission
+        XCTAssertEqual(permission, .granted)
+    }
+
+    func test_restorePermissionState_allowsPersistedDenialToBeRechecked() async {
+        await AppleScriptHelper.shared.restorePermissionState(.denied)
+
+        let permission = await AppleScriptHelper.shared.lastKnownPermission
+        XCTAssertEqual(permission, .unknown)
+    }
+
+    func test_frontmostQueryRequiresGrantedPermission() {
+        XCTAssertFalse(AppleScriptHelper.shouldQueryFrontmost(permission: .unknown))
+        XCTAssertFalse(AppleScriptHelper.shouldQueryFrontmost(permission: .denied))
+        XCTAssertTrue(AppleScriptHelper.shouldQueryFrontmost(permission: .granted))
     }
 
     func test_queueLabel_isSerial_byConvention() {
@@ -117,6 +138,16 @@ final class AppleScriptHelperTests: XCTestCase {
                        "Cross-Space jump must not activate iTerm2 before AccessibilityRaiser raises the exact target window")
     }
 
+    func test_jumpByUUIDTemplate_selectsMatchedWindowExplicitly() throws {
+        let source = AppleScriptHelper.jumpRawTemplate
+        let sessionSelect = try XCTUnwrap(source.range(of: "tell s to select"))
+        let windowSelect = try XCTUnwrap(source.range(of: "tell w to select"))
+        let payloadReturn = try XCTUnwrap(source.range(of: "return ((id of w) as string)"))
+
+        XCTAssertLessThan(sessionSelect.lowerBound, windowSelect.lowerBound)
+        XCTAssertLessThan(windowSelect.lowerBound, payloadReturn.lowerBound)
+    }
+
     func test_runJumpByUUID_attemptsAccessibilityRaiseWithoutMarkingMatchedSessionMissing() throws {
         let testFile = URL(fileURLWithPath: #filePath)
         let projectRoot = testFile
@@ -145,7 +176,7 @@ final class AppleScriptHelperTests: XCTestCase {
         )
     }
 
-    func test_runJumpByUUID_fallsBackToITermActivationWhenAccessibilityRaiseFails() throws {
+    func test_runJumpByUUID_doesNotActivateArbitraryITermWindowWhenExactRaiseFails() throws {
         let testFile = URL(fileURLWithPath: #filePath)
         let projectRoot = testFile
             .deletingLastPathComponent()
@@ -155,14 +186,13 @@ final class AppleScriptHelperTests: XCTestCase {
             .appendingPathComponent("AppleScriptHelper.swift")
         let src = (try? String(contentsOf: helperURL, encoding: .utf8)) ?? ""
         XCTAssertFalse(src.isEmpty, "Could not read App/AppleScriptHelper.swift at \(helperURL.path)")
+        let jumpStart = try XCTUnwrap(src.range(of: "func runJumpByUUID"))
+        let testConnectionStart = try XCTUnwrap(src.range(of: "func testConnection"))
+        let jumpSource = String(src[jumpStart.lowerBound..<testConnectionStart.lowerBound])
 
-        XCTAssertTrue(
-            src.contains("let activated = AccessibilityRaiser.activateITerm"),
-            "When AX raise cannot confirm activation, runJumpByUUID must still activate iTerm after selecting the matched session"
-        )
-        XCTAssertTrue(
-            src.contains("if !activated"),
-            "Fallback activation failure should be handled explicitly for diagnostics"
+        XCTAssertFalse(
+            jumpSource.contains("AccessibilityRaiser.activateITerm"),
+            "App-level activation can surface a different iTerm Space after an exact-window miss"
         )
     }
 
@@ -186,7 +216,7 @@ final class AppleScriptHelperTests: XCTestCase {
         )
     }
 
-    func test_accessibilityRaiser_usesFocusedOrMainWindowWhenWindowIDAndTitleMiss() throws {
+    func test_accessibilityRaiser_rejectsFocusedOrMainWindowWhenWindowIDAndTitleMiss() throws {
         let testFile = URL(fileURLWithPath: #filePath)
         let projectRoot = testFile
             .deletingLastPathComponent()
@@ -199,16 +229,23 @@ final class AppleScriptHelperTests: XCTestCase {
 
         XCTAssertTrue(
             src.contains("let fallbackAXWindows = fallbackWindows(appElement)"),
-            "When iTerm2's AppleScript window id/title drift from AX, raise should keep focused/main AX windows for a post-miss fallback"
+            "Focused/main AX windows should remain exact-match candidates when the normal AX list is empty"
+        )
+        XCTAssertFalse(
+            src.contains("matchedWindow ?? fallbackAXWindows.first"),
+            "An unmatched focused/main window may belong to another Mission Control Space"
         )
         XCTAssertTrue(
-            src.contains("let matchedWindow = matchWindow(axWindows, windowID: windowID, title: title)")
-                && src.contains("let target = matchedWindow ?? fallbackAXWindows.first"),
-            "After AppleScript selected the target session, AX raise should fall back to the focused/main iTerm window if id/title matching misses"
+            src.contains("guard let win = matchWindow(axWindows, windowID: windowID, title: title)"),
+            "Accessibility raise must require an exact window match"
         )
         XCTAssertTrue(
-            src.contains("[ax-match path=focused-main-fallback"),
-            "The focused/main fallback path should be visible in logs for diagnosis"
+            src.contains("if windowID == nil, let wantedTitle = title"),
+            "A duplicate window title must not override a supplied target window ID"
+        )
+        XCTAssertFalse(
+            src.contains("static func activateITerm"),
+            "The unsafe app-level activation fallback must not remain as dead production code"
         )
     }
 

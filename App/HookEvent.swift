@@ -1,4 +1,4 @@
-// App/HookEvent.swift — D-08 envelope schema (10 fields, schema_version=1).
+// App/HookEvent.swift — D-08 envelope schema (schema_version=1).
 // Locked for Phase 2 to consume; Phase 1 only decodes/logs.
 // RESEARCH Pitfall #11: stop_hook_active is NOT in current Claude Code docs — do NOT add it.
 // RESEARCH Open Question 4: keep `event` as String (not enum) so Phase 2's UserPromptSubmit
@@ -16,7 +16,7 @@ struct HookEvent: Decodable {
     let ppid: Int?
     let claude_project_dir: String?
     let ts: String?
-    let term_program: String?              // D3-05 — $TERM_PROGRAM capture; v1 unused, v2 dispatch key (MTERM-01..04).
+    let term_program: String?              // D3-05 — supported-terminal dispatch key.
     let exit_code: Int?
     let started_at: Date?
     let kind: AlertKind?

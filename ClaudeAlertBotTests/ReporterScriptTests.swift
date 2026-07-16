@@ -17,6 +17,21 @@ final class ReporterScriptTests: XCTestCase {
         tempHome = nil
     }
 
+    func test_reporterEmitsFractionalISO8601Timestamp() throws {
+        let envelope = try runReporter(
+            event: "user_prompt_submit",
+            stdin: #"{"session_id":"sid-reporter","cwd":"/tmp/project"}"#
+        )
+
+        let timestamp = try XCTUnwrap(envelope["ts"] as? String)
+        XCTAssertNotNil(
+            timestamp.range(
+                of: #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$"#,
+                options: .regularExpression
+            )
+        )
+    }
+
     func test_reporterPassesThroughOptionalExtendedFields() throws {
         let envelope = try runReporter(stdin: """
         {
@@ -790,16 +805,20 @@ final class ReporterScriptTests: XCTestCase {
         process.environment = environment
 
         let input = Pipe()
+        let outputPipe = Pipe()
         process.standardInput = input
-        process.standardOutput = Pipe()
-        process.standardError = Pipe()
+        process.standardOutput = outputPipe
+        process.standardError = outputPipe
 
         try process.run()
         input.fileHandleForWriting.write(Data(stdin.utf8))
         try input.fileHandleForWriting.close()
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
 
-        XCTAssertEqual(process.terminationStatus, 0)
+        let output = String(data: outputData, encoding: .utf8) ?? ""
+        XCTAssertEqual(process.terminationStatus, 0, output)
+        XCTAssertTrue(output.isEmpty, "reporter wrote to stdout/stderr: \(output)")
 
         let logURL = tempHome
             .appendingPathComponent("Library/Logs/ClaudeAlertBot/hook.log")
@@ -820,18 +839,17 @@ final class ReporterScriptTests: XCTestCase {
         environment["HOME"] = tempHome.path
         process.environment = environment
 
-        let stdout = Pipe()
-        let stderr = Pipe()
-        process.standardOutput = stdout
-        process.standardError = stderr
+        let outputPipe = Pipe()
+        process.standardOutput = outputPipe
+        process.standardError = outputPipe
 
         try process.run()
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
 
-        let output = String(data: stdout.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-        let error = String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-        XCTAssertEqual(process.terminationStatus, 0, output + error)
-        return output + error
+        let output = String(data: outputData, encoding: .utf8) ?? ""
+        XCTAssertEqual(process.terminationStatus, 0, output)
+        return output
     }
 
     private func loadInstalledSettings() throws -> [String: Any] {

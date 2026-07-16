@@ -97,11 +97,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             timer.start()
             self.gcTimer = timer
 
-            // 11. AppleScriptHelper eager compile — keeps first cheap-query latency low.
-            //     No permission trigger here: the TCC prompt fires from the menu's
-            //     "Test iTerm2 connection" (AppleScriptHelper.testConnection) or from
-            //     HookListener.handle (D2-35 Path B) on the first Stop with .unknown perm.
-            _ = AppleScriptHelper.shared
+            // 11. Restore the actor's permission gate. A persisted denial remains re-checkable
+            //     so System Settings changes can be detected by the explicit connection test.
+            await AppleScriptHelper.shared.restorePermissionState(SettingsStore.shared.applescriptPermission)
 
             self.log.notice("Phase 2 components wired (orchestrator, widget, popover, observers, GC timer)")
 
@@ -125,8 +123,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // now exposed from `MenuBarExtra` directly.
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        MainActor.assumeIsolated {
+            listener?.cancel()
+        }
+    }
+
     private static var isRunningUnitTests: Bool {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
+    enum SocketProbeOutcome: Equatable {
+        case ready
+        case failed
+        case waiting
+        case cancelled
+    }
+
+    static func socketProbeOutcome(for state: NWConnection.State) -> SocketProbeOutcome? {
+        switch state {
+        case .ready:
+            return .ready
+        case .failed:
+            return .failed
+        case .waiting(let error):
+            if case .posix(let code) = error, code == .ECONNREFUSED {
+                return .failed
+            }
+            return nil
+        case .cancelled:
+            return .cancelled
+        default:
+            return nil
+        }
     }
 
     private func ensureDirectories() {
@@ -146,30 +175,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let probe = NWConnection(to: .unix(path: path), using: NWParameters.tcp)
         let group = DispatchGroup()
         group.enter()
-        var alive = false
-        // NWConnection states are not single-shot — `.failed`/`.cancelled`/`.waiting`
+        var outcome: SocketProbeOutcome = .waiting
+        // NWConnection states are not single-shot — terminal states
         // can fire repeatedly (e.g. after our own probe.cancel()). Multiple group.leave()
         // calls crash libdispatch ("Unbalanced call to dispatch_group_leave()"), which
         // surfaced as test-runner crashes when the TEST_HOST app boots.
         var leftOnce = false
         probe.stateUpdateHandler = { state in
-            guard !leftOnce else { return }
-            switch state {
-            case .ready:
-                alive = true
-                leftOnce = true
-                group.leave()
-            case .failed, .cancelled, .waiting:
-                leftOnce = true
-                group.leave()
-            default: break
-            }
+            guard !leftOnce, let terminalOutcome = Self.socketProbeOutcome(for: state) else { return }
+            outcome = terminalOutcome
+            leftOnce = true
+            group.leave()
         }
         probe.start(queue: DispatchQueue.global())
-        _ = group.wait(timeout: .now() + .milliseconds(200))
+        let probeCompleted = group.wait(timeout: .now() + .milliseconds(200)) == .success
         probe.cancel()
 
-        if !alive {
+        guard probeCompleted else {
+            log.info("socket probe timed out; preserving socket at \(path, privacy: .public)")
+            return
+        }
+
+        if outcome == .failed {
             try? fm.removeItem(atPath: path)
             log.info("removed stale socket at \(path, privacy: .public)")
         }

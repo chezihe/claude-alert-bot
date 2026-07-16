@@ -15,7 +15,6 @@ enum SettingsView {
     static let quietHoursToggleLabel = "Quiet Hours"
     static let idleAnimationHeading = "Idle Animation"
     static let idleAnimationLabel = "Animation"
-    static let widgetIconHeading = "Widget Icon"
     static let widgetIconLabel = "Icon"
     static let themeHeading = "Theme"
     static let themeLabel = "Appearance"
@@ -29,7 +28,6 @@ enum SettingsView {
     static let offsetYLabel = "Vertical Offset"
     static let mutedProjectsHeading = "Muted Projects"
     static let unmuteButtonLabel = "Unmute"
-    static let testHeading = "테스트"
     static let testButtonLabel = "테스트 알림 보내기"
 
     // D3-15 — Korean section header + button label (T-COPY-DRIFT-01;

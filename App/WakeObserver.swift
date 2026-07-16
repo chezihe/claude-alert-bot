@@ -19,8 +19,10 @@ final class WakeObserver {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.log.notice("wake — kicking GC")
-            self?.onWake()
+            MainActor.assumeIsolated {
+                self?.log.notice("wake — kicking GC")
+                self?.onWake()
+            }
         }
         log.notice("WakeObserver installed")
     }

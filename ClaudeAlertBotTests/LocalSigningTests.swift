@@ -242,6 +242,24 @@ final class LocalSigningTests: XCTestCase {
         XCTAssertTrue(script.contains(#"if [[ -n "${CABTEST_SIG:-}" ]]; then"#))
     }
 
+    func test_buildReportsVerifiedLocalSignatureAuthority() throws {
+        let script = try source("scripts/build.sh")
+
+        XCTAssertTrue(script.contains(#"BUNDLE_SIG="Authority=$IDENTITY_NAME""#))
+        XCTAssertTrue(script.contains(#"MAIN_SIG="Authority=$IDENTITY_NAME""#))
+        XCTAssertTrue(script.contains(#"CABTEST_SIG="Authority=$IDENTITY_NAME""#))
+    }
+
+    func test_runProcessHandlesOutputLargerThanPipeBuffer() throws {
+        let result = try runProcess(
+            executable: "/usr/bin/awk",
+            arguments: [#"BEGIN { for (i = 0; i < 100000; i++) print "0123456789" }"#]
+        )
+
+        XCTAssertEqual(result.status, 0)
+        XCTAssertEqual(result.output.utf8.count, 1_100_000)
+    }
+
     private func runSetup(
         arguments: [String] = [],
         useRealOpenSSL: Bool = false
@@ -316,9 +334,10 @@ final class LocalSigningTests: XCTestCase {
         process.standardOutput = outputPipe
         process.standardError = outputPipe
         try process.run()
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
         let output = String(
-            data: outputPipe.fileHandleForReading.readDataToEndOfFile(),
+            data: outputData,
             encoding: .utf8
         ) ?? ""
         return (process.terminationStatus, output)

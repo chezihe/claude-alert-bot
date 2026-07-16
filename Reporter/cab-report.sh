@@ -39,11 +39,12 @@ JSON=$(STDIN_JSON="$STDIN_JSON" \
        CLAUDE_DIR="$CLAUDE_PROJECT_DIR_VAL" \
        CWD_FALLBACK="$CWD_FALLBACK" \
        TTY_VAL="$TTY_VAL" \
-       TS="$TS" \
        PPID_VAL="$PPID_VAL" \
        /usr/bin/python3 -S -c '
 import json, os, sys, time
-from datetime import datetime
+from datetime import datetime, timezone
+
+captured_at = datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
 
 raw = os.environ.get("STDIN_JSON", "")
 parsed = {}
@@ -175,7 +176,7 @@ envelope = {
     "tty": nz(env("TTY_VAL")),
     "ppid": int(env("PPID_VAL", "0")) or None,
     "claude_project_dir": nz(env("CLAUDE_DIR")),
-    "ts": env("TS"),
+    "ts": captured_at,
 }
 tool_use = parsed.get("tool_use") if isinstance(parsed.get("tool_use"), dict) else {}
 exit_code = parsed.get("exit_code")

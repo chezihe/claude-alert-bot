@@ -27,7 +27,6 @@ struct WidgetIconView: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @State private var roamPhase: Double = 0
     @State private var rageGeneration: Int = 0
-    @State private var rageActive: Bool = false
     @State private var rageWorkItem: DispatchWorkItem?
     @State private var alertPulseScale: CGFloat = 1.0
     @State private var alertPulseRotation: Double = 0

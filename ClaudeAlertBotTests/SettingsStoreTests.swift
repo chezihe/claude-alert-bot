@@ -248,6 +248,14 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertTrue(src.contains("LoginItemController.apply(enabled: true)"))
     }
 
+    func test_appDelegateRestoresAppleScriptPermissionStateOnLaunch() {
+        let src = readAppDelegateSource()
+
+        XCTAssertTrue(src.contains(
+            "await AppleScriptHelper.shared.restorePermissionState(SettingsStore.shared.applescriptPermission)"
+        ))
+    }
+
     func test_loginItemControllerSource_usesSMAppServiceMainApp() {
         let src = readAppDelegateSource()
 

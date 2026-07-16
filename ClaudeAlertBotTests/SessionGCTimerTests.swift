@@ -19,8 +19,8 @@ final class SessionGCTimerTests: XCTestCase {
         timer.start()
         try await Task.sleep(nanoseconds: 350_000_000)   // 0.35s
         timer.cancel()
-        lock.lock(); defer { lock.unlock() }
-        XCTAssertGreaterThanOrEqual(count, 2, "Got count=\(count)")
+        let observedCount = lock.withLock { count }
+        XCTAssertGreaterThanOrEqual(observedCount, 2, "Got count=\(observedCount)")
     }
 
     func test_timer_cancelStopsHandler() async throws {

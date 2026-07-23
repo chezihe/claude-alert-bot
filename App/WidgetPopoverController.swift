@@ -40,6 +40,9 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         self.widgetController = widgetController
         self.jumper = jumper
         super.init()
+        // Live refresh: re-render the open popover whenever the queue changes
+        // (new alerts, auto-clear, GC). reloadPopoverContent no-ops when closed.
+        widgetController.onQueueChange = { [weak self] in self?.reloadPopoverContent() }
     }
 
     /// Convenience for production callers — wraps the designated init with `ITerm2Jumper()`.
@@ -324,14 +327,16 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
                         }
                     }
                 case .iTermNotRunning, .timeout, .otherError:
-                    self.rowStates[alertID] = .missing
+                    // Transient failure (iTerm2 busy/not running) — keep the alert so the
+                    // user can retry; only a confirmed .missing session may destroy a row.
+                    self.rowStates.removeValue(forKey: alertID)
                     self.reloadPopoverContent()
-                    // Row's missing-animation completion will fire onRowMissingComplete → SessionRegistry.clearOne.
                 case .permissionDenied:
-                    self.rowStates[alertID] = .missing
+                    // Keep the alert: the user is likely about to grant the permission
+                    // in System Settings and come back to click the same row again.
+                    self.rowStates.removeValue(forKey: alertID)
                     self.reloadPopoverContent()
                     PermissionDeepLink.openAutomationPreferences()
-                    // Row's missing animation still runs → row clears from queue.
                     // The menu's iTerm2 Connection section shows the persistent denied
                     // status via SettingsStore.applescriptPermission (D2-36).
                 }

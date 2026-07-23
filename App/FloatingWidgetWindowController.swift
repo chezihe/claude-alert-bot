@@ -33,6 +33,8 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
     private var currentAlertPulseID: Int = 0
     private var currentAlertEffect: WidgetAlertEffect = .heal
     weak var hoverDelegate: WidgetHoverDelegate?
+    /// Fired after every setQueue so an open popover can re-render live (D3-11 companion).
+    var onQueueChange: (() -> Void)?
 
     init() {
         let store = SettingsStore.shared
@@ -151,7 +153,9 @@ final class FloatingWidgetWindowController: NSWindowController, WidgetController
 
     func setQueue(_ queue: [CompletedSession]) {
         self.currentQueue = queue
-        // Popover (02-08) consumes via queueSnapshot or its own queue source — Wave 6 wires.
+        // Popover (02-08) consumes via queueSnapshot; notify it so an open popover
+        // re-renders on queue changes (no-op while the popover is closed).
+        onQueueChange?()
     }
 
     /// Read-only snapshot of the latest queue passed to setQueue. Consumed by 02-08 popover.

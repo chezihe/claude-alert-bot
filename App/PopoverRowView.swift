@@ -22,7 +22,7 @@ import AppKit
 enum RowState: Equatable {
     case normal
     case jumping     // click in flight; row visually dimmed + non-interactive (JUMP-05 self-debounce)
-    case missing     // jump returned .missing/.iTermNotRunning/.timeout/.permissionDenied/.otherError → 도리도리+collapse
+    case missing     // jump returned .missing (session confirmed gone) → 도리도리+collapse; transient failures reset to .normal instead
 }
 
 struct PopoverRowView: View {

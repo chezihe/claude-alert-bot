@@ -156,7 +156,8 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             onRowClick: { [weak self] alertID in self?.onRowClick(alertID: alertID) },
             onClearAll: { [weak self] in self?.onClearAll() },
             onTogglePin: { [weak self] alertID in self?.onTogglePin(alertID: alertID) },
-            onToggleMute: { [weak self] projectName in self?.onToggleMute(projectName: projectName) },
+            onMute: { [weak self] projectName, option in self?.onMute(projectName: projectName, for: option) },
+            onUnmute: { [weak self] projectName in self?.onUnmute(projectName: projectName) },
             isProjectMuted: { projectName in
                 SettingsStore.shared.isMuted(project: projectName, now: Date())
             },
@@ -369,13 +370,13 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         }
     }
 
-    private func onToggleMute(projectName: String) {
-        let settings = SettingsStore.shared
-        if settings.isMuted(project: projectName, now: Date()) {
-            settings.unmute(project: projectName)
-        } else {
-            settings.mute(project: projectName, now: Date())
-        }
+    private func onMute(projectName: String, for option: MuteDuration) {
+        SettingsStore.shared.mute(project: projectName, for: option, now: Date())
+        reloadPopoverContent()
+    }
+
+    private func onUnmute(projectName: String) {
+        SettingsStore.shared.unmute(project: projectName)
         reloadPopoverContent()
     }
 

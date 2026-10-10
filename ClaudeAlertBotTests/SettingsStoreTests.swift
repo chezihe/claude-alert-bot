@@ -372,6 +372,21 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertFalse(store.isMuted(project: "beta", now: now))
     }
 
+    func test_muteProject_withDurationOption_usesOptionExpiry() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let store = SettingsStore(defaults: defaults)
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+
+        store.mute(project: "alpha", for: .fifteenMinutes, now: now)
+
+        XCTAssertEqual(store.mutedProjects["alpha"], now.addingTimeInterval(15 * 60))
+        XCTAssertTrue(store.isMuted(project: "alpha", now: now.addingTimeInterval(15 * 60 - 1)))
+        XCTAssertFalse(store.isMuted(project: "alpha", now: now.addingTimeInterval(15 * 60)))
+    }
+
     func test_unmuteProject_removesMute() {
         let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!

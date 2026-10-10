@@ -21,7 +21,7 @@ Claude Alert Bot is built around session-accurate jump-back rather than short-li
 - Jumps to the exact iTerm2 session for a row when you activate it.
 - Filters noisy short runs with a configurable notification threshold.
 - Supports waiting-input alerts from Claude notification hooks for permission prompts and elicitation dialogs, and clears a waiting alert automatically once you answer the question.
-- Lets you pin important rows, mute a project for 1 hour, or clear unpinned rows.
+- Lets you pin important rows, mute a project for 15 minutes, 1 hour, 4 hours, or the rest of today, or clear unpinned rows.
 - Groups repeated alerts from the same project and shows a compact count badge.
 - Can show a one-line Last Output preview of the latest captured assistant message or output under each Claude Code or Codex row when enabled from `Notification > Alert Details > Last Output`.
 - Offers menu bar controls for sound, Quiet Hours, notification threshold, alert details, widget position, widget icon, animation, appearance, reduce motion, open at login, muted projects, test notification, and iTerm2 connection testing.
@@ -84,7 +84,7 @@ The installed hook setup covers:
 3. When a session qualifies for notification, the floating widget appears with a pending count badge.
 4. Hover the widget to open the session list popover.
 5. Activate a row to jump back to the exact terminal session.
-6. Right-click a row to pin it or mute that project for 1 hour.
+6. Right-click a row to pin it or mute that project for 15 minutes, 1 hour, 4 hours, or the rest of today.
 
 If you want more context in the popover, open the bell menu and choose `Notification > Alert Details > Last Output`.
 Rows will show the first non-empty line of the latest captured assistant message or output when one is available.
@@ -129,7 +129,7 @@ Change how the widget looks from `Style` in the bell menu.
 ### Queue Controls
 
 Rows can be pinned so they survive bulk clear actions.
-Projects can be muted for 1 hour.
+Projects can be muted for 15 minutes, 1 hour, 4 hours, or the rest of today.
 Repeated alerts from the same project are grouped to keep the popover compact.
 
 ### iTerm2 Jump Reliability

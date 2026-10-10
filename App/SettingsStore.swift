@@ -181,6 +181,10 @@ final class SettingsStore: ObservableObject {
         mutedProjects[project] = now.addingTimeInterval(duration)
     }
 
+    func mute(project: String, for option: MuteDuration, now: Date, calendar: Calendar = .current) {
+        mutedProjects[project] = option.expiresAt(from: now, calendar: calendar)
+    }
+
     func unmute(project: String) {
         mutedProjects.removeValue(forKey: project)
     }

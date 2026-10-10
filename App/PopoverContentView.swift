@@ -199,7 +199,8 @@ struct PopoverContentView: View {
     let onRowClick: (String) -> Void   // alertID
     let onClearAll: () -> Void
     var onTogglePin: (String) -> Void = { _ in }
-    var onToggleMute: (String) -> Void = { _ in }
+    var onMute: (String, MuteDuration) -> Void = { _, _ in }
+    var onUnmute: (String) -> Void = { _ in }
     var isProjectMuted: (String) -> Bool = { _ in false }
     /// Phase 3 D3-11 — state map keyed by sessionID. Default empty → all rows render in `.normal`.
     /// Owned by WidgetPopoverController (03-07); content view stays pure (no @State).
@@ -294,7 +295,8 @@ struct PopoverContentView: View {
                                         isExpanded: isExpanded,
                                         isMuted: isProjectMuted(projectName),
                                         onClick: { onToggleGroup(projectName) },
-                                        onToggleMute: { onToggleMute(projectName) }
+                                        onMute: { onMute(projectName, $0) },
+                                        onUnmute: { onUnmute(projectName) }
                                     )
                                 case .session(let session, let showTimeSuffix):
                                     PopoverRowView(
@@ -305,7 +307,8 @@ struct PopoverContentView: View {
                                         isMuted: isProjectMuted(session.projectName),
                                         onClick: { onRowClick(session.id) },
                                         onTogglePin: { onTogglePin(session.id) },
-                                        onToggleMute: { onToggleMute(session.projectName) },
+                                        onMute: { onMute(session.projectName, $0) },
+                                        onUnmute: { onUnmute(session.projectName) },
                                         onMissingComplete: { onRowMissingComplete(session.id) }
                                     )
                                 }
@@ -446,7 +449,8 @@ private struct ProjectGroupHeaderView: View {
     let isExpanded: Bool
     let isMuted: Bool
     let onClick: () -> Void
-    let onToggleMute: () -> Void
+    let onMute: (MuteDuration) -> Void
+    let onUnmute: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
     @State private var isHovered: Bool = false
@@ -485,7 +489,7 @@ private struct ProjectGroupHeaderView: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
-            Button(isMuted ? "Unmute This Project" : "Mute this project for 1h") { onToggleMute() }
+            MuteMenuItems(isMuted: isMuted, onMute: onMute, onUnmute: onUnmute)
         }
         .onHover { hovering in
             isHovered = hovering

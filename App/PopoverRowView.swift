@@ -25,6 +25,25 @@ enum RowState: Equatable {
     case missing     // jump returned .missing (session confirmed gone) → 도리도리+collapse; transient failures reset to .normal instead
 }
 
+/// Shared context-menu items for muting a project from a row or a group header.
+struct MuteMenuItems: View {
+    let isMuted: Bool
+    let onMute: (MuteDuration) -> Void
+    let onUnmute: () -> Void
+
+    var body: some View {
+        if isMuted {
+            Button("Unmute This Project") { onUnmute() }
+        } else {
+            Menu("Mute This Project") {
+                ForEach(MuteDuration.allCases) { option in
+                    Button(option.label) { onMute(option) }
+                }
+            }
+        }
+    }
+}
+
 struct PopoverRowView: View {
     let session: CompletedSession
     let showTimeSuffix: Bool
@@ -35,7 +54,8 @@ struct PopoverRowView: View {
     var isMuted: Bool = false
     let onClick: () -> Void
     var onTogglePin: () -> Void = {}
-    var onToggleMute: () -> Void = {}
+    var onMute: (MuteDuration) -> Void = { _ in }
+    var onUnmute: () -> Void = {}
     /// Phase 3 D3-11 — fired after the missing-collapse animation completes; parent should
     /// then clear this row by alertID. No-op default for call sites
     /// that pin state to `.normal` and will never reach the failure branch.
@@ -122,7 +142,7 @@ struct PopoverRowView: View {
         .disabled(state != .normal)                         // belt-and-suspenders for JUMP-05
         .contextMenu {
             Button(session.pinned ? "Unpin" : "Pin") { onTogglePin() }
-            Button(isMuted ? "Unmute This Project" : "Mute this project for 1h") { onToggleMute() }
+            MuteMenuItems(isMuted: isMuted, onMute: onMute, onUnmute: onUnmute)
         }
         .onHover { hovering in
             isHovered = hovering

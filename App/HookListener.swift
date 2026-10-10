@@ -4,8 +4,7 @@
 //   - T-IPC-02 mitigation: reject envelopes whose schema_version != 1
 //   - T-IPC-03 mitigation: 64KB cap per connection (V5 input validation)
 // D-09: bind exclusivity = single-instance lock; .failed → NSApp.terminate(nil).
-// D-07: OSLog subsystem "com.claudealert.bot.hook"; "listener bound" line is what
-//       verify-phase-1.sh row 1-02-02 greps for.
+// D-07: OSLog subsystem "com.claudealert.bot.hook"; "listener bound" marks a live socket.
 import Network
 import Foundation
 import AppKit
@@ -175,6 +174,7 @@ final class HookListener {
                 let store = SettingsStore.shared
                 let threshold = store.thresholdSeconds
                 let soundOn = store.soundEnabled
+                let mutes = store.mutedProjects
                 let perm = store.applescriptPermission
 
                 if Self.shouldTriggerPermissionPrompt(permission: perm, event: event) {
@@ -186,6 +186,7 @@ final class HookListener {
                     event,
                     thresholdSeconds: threshold,
                     soundEnabled: soundOn,
+                    mutedProjects: mutes,
                     suppressIfFrontmost: { iTermID in
                         guard permGranted, let normalized = iTermSessionID.uuid(fromRaw: iTermID) else { return false }
                         return await AppleScriptHelper.shared.frontmostMatches(itermSessionID: normalized)

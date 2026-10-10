@@ -117,12 +117,6 @@ final class PositioningTests: XCTestCase {
             reduceMotion: false,
             widgetIconStyle: .claude
         )
-        let magicSize = GeometryTokens.widgetDrawableSize(
-            idleAnimation: .magic,
-            quietHoursEnabled: false,
-            reduceMotion: false,
-            widgetIconStyle: .claude
-        )
         let baseOrigin = WidgetPositioning.origin(
             visibleFrame: visibleFrame,
             safeAreaInsets: zeroSafe,
@@ -151,28 +145,11 @@ final class PositioningTests: XCTestCase {
                 widgetIconStyle: .claude
             )
         )
-        let magicOrigin = WidgetPositioning.origin(
-            visibleFrame: visibleFrame,
-            safeAreaInsets: zeroSafe,
-            corner: .topRight,
-            offsetX: 16,
-            offsetY: 16,
-            panelSize: magicSize,
-            positioningAnchor: GeometryTokens.widgetPositioningAnchor(
-                idleAnimation: .magic,
-                quietHoursEnabled: false,
-                reduceMotion: false,
-                widgetIconStyle: .claude
-            )
-        )
         let baseAnchorPoint = NSPoint(x: baseOrigin.x + 32, y: baseOrigin.y + 44)
         let roamAnchorPoint = NSPoint(x: roamOrigin.x + 48, y: roamOrigin.y + 44)
-        let magicAnchorPoint = NSPoint(x: magicOrigin.x + 32, y: magicOrigin.y + 52)
 
         XCTAssertEqual(baseAnchorPoint.x, roamAnchorPoint.x, accuracy: 0.0001)
         XCTAssertEqual(baseAnchorPoint.y, roamAnchorPoint.y, accuracy: 0.0001)
-        XCTAssertEqual(baseAnchorPoint.x, magicAnchorPoint.x, accuracy: 0.0001)
-        XCTAssertEqual(baseAnchorPoint.y, magicAnchorPoint.y, accuracy: 0.0001)
     }
 
     func test_widgetPositioning_alignsZeldaAnchorWithClaudeAnchor() {

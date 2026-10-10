@@ -119,7 +119,20 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         popoverPanel?.contentView = nil
         popoverHostView = nil
         removeEventMonitors()
+        // Tearing down the view drops any in-flight 도리도리 animation, so its
+        // onRowMissingComplete never fires — finish those rows here or they stay
+        // stuck in .missing (and unclickable) on the next open.
+        for (alertID, state) in rowStates where state == .missing {
+            finishMissingRow(alertID: alertID)
+        }
         log.notice("popover dismissed")
+    }
+
+    /// D3-11 tail for a confirmed-missing session: drop the row state and the alert.
+    private func finishMissingRow(alertID: String) {
+        Task { await SessionRegistry.shared.clearOne(alertID: alertID) }
+        rowStates.removeValue(forKey: alertID)
+        reloadPopoverContent()
     }
 
     /// Re-render the popover with the current rowStates dict.
@@ -149,10 +162,7 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
             },
             rowStates: rowStates,
             onRowMissingComplete: { [weak self] alertID in
-                guard let self else { return }
-                Task { await SessionRegistry.shared.clearOne(alertID: alertID) }
-                self.rowStates.removeValue(forKey: alertID)
-                self.reloadPopoverContent()
+                self?.finishMissingRow(alertID: alertID)
             },
             onPopoverHoverChange: { [weak self] hovering in self?.onPopoverHover(hovering) },
             expandedProjects: expandedProjects,
@@ -193,12 +203,12 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
         view.layer?.cornerRadius = GeometryTokens.popoverCornerRadius
         view.layer?.cornerCurve = .continuous
         view.layer?.masksToBounds = true
-        // The SwiftUI .background(HideScrollerIntrospector()) probe sometimes
-        // attaches outside the NSScrollView subtree, so its enclosingScrollView
-        // is nil. Walk the actual AppKit view tree the popover hosts and force
+        // Walk the AppKit view tree the popover hosts: hide scrollers and force
         // every NSScrollView's drawsBackground off — that is what was painting
-        // the faint blue strips above/below the row. Defer one runloop tick so
-        // NSHostingController has materialised the SwiftUI content into AppKit.
+        // the faint blue strips above/below the row. `.scrollIndicators(.never)`
+        // and SwiftUI's clear background do not reliably handle either on macOS.
+        // Defer one runloop tick so NSHostingController has materialised the
+        // SwiftUI content into AppKit.
         DispatchQueue.main.async { [weak view] in
             guard let view else { return }
             Self.flattenScrollViews(in: view)
@@ -318,14 +328,16 @@ final class WidgetPopoverController: NSObject, WidgetHoverDelegate {
                     Task { await SessionRegistry.shared.clearOne(alertID: alertID) }
                     self.dismissPopover()
                 case .missing:
-                    Task { [weak self] in
-                        guard let self else { return }
-                        await SessionRegistry.shared.markUnavailable(alertID: alertID)
-                        await MainActor.run {
-                            self.rowStates.removeValue(forKey: alertID)
-                            self.reloadPopoverContent()
-                        }
+                    // D3-11 — play the 도리도리+collapse row animation;
+                    // onRowMissingComplete then clears the row by alertID.
+                    // If the popover closed while the jump was in flight there is no
+                    // view to animate, so clear the row right away.
+                    guard self.popoverPanel?.isVisible == true else {
+                        self.finishMissingRow(alertID: alertID)
+                        return
                     }
+                    self.rowStates[alertID] = .missing
+                    self.reloadPopoverContent()
                 case .iTermNotRunning, .timeout, .otherError:
                     // Transient failure (iTerm2 busy/not running) — keep the alert so the
                     // user can retry; only a confirmed .missing session may destroy a row.

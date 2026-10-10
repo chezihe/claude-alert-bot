@@ -33,6 +33,8 @@ final class SoundPlayer {
     private let log = Logger(subsystem: "com.claudealert.bot.hook", category: "notification")
     private var player: AVAudioPlayer?
     private var cuePlayers: [SoundCue: AVAudioPlayer] = [:]
+    /// Cues whose file failed to load — not retried, so the error is logged once, not per alert.
+    private var failedCues: Set<SoundCue> = []
 
     /// Default = system Funk.aiff. Test/dev can pass a custom URL.
     init(soundURL: URL = URL(fileURLWithPath: "/System/Library/Sounds/Funk.aiff")) {
@@ -59,11 +61,16 @@ final class SoundPlayer {
             if let cached = cuePlayers[cue] {
                 return cached
             }
+            guard !failedCues.contains(cue) else { return nil }
             guard let url = cue.bundledURL else {
                 log.error("Sound cue missing: \(String(describing: cue), privacy: .public)")
+                failedCues.insert(cue)
                 return nil
             }
-            let loaded = Self.loadPlayer(soundURL: url, log: log)
+            guard let loaded = Self.loadPlayer(soundURL: url, log: log) else {
+                failedCues.insert(cue)
+                return nil
+            }
             cuePlayers[cue] = loaded
             return loaded
         }

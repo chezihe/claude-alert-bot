@@ -20,6 +20,7 @@ private func _AXUIElementGetWindow(_ element: AXUIElement, _ wid: UnsafeMutableP
 
 enum AccessibilityRaiser {
     private static let log = Logger(subsystem: "com.claudealert.bot.hook", category: "ax")
+    private static let axMessagingTimeout: Float = 0.5
 
     /// True iff this app is in the TCC Accessibility allow-list.
     static func isTrusted() -> Bool {
@@ -55,6 +56,9 @@ enum AccessibilityRaiser {
             return false
         }
         let appElement = AXUIElementCreateApplication(itermPID)
+        // Runs on the MainActor: cap each AX round-trip so a hung iTerm2 cannot freeze
+        // the menu-bar UI for the ~6s system default.
+        AXUIElementSetMessagingTimeout(appElement, axMessagingTimeout)
         var windowsRef: CFTypeRef?
         let copyErr = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsRef)
         guard copyErr == .success else {
@@ -93,13 +97,13 @@ enum AccessibilityRaiser {
         AXUIElementSetAttributeValue(win, kAXMainAttribute as CFString, kCFBooleanTrue)
         AXUIElementSetAttributeValue(win, kAXFocusedAttribute as CFString, kCFBooleanTrue)
         log.notice("[ax-raised windowID=\(windowID ?? 0, privacy: .public) code=\(raiseErr.rawValue, privacy: .public)]")
-        return true
+        return raiseErr == .success
     }
 
     /// Look up the iTerm2 process PID. Returns nil if iTerm2 is not running.
     static func itermPID() -> pid_t? {
         NSWorkspace.shared.runningApplications
-            .first(where: { $0.bundleIdentifier == "com.googlecode.iterm2" })?
+            .first(where: { $0.bundleIdentifier == iTermSessionID.bundleIdentifier })?
             .processIdentifier
     }
 

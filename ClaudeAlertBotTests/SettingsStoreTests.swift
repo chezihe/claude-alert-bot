@@ -1,6 +1,7 @@
 // ClaudeAlertBotTests/SettingsStoreTests.swift
 // WO-003 — UserDefaults persistence for widget corner settings.
 import XCTest
+import Combine
 import AppKit
 @testable import ClaudeAlertBot
 
@@ -28,6 +29,28 @@ final class SettingsStoreTests: XCTestCase {
 
         let second = SettingsStore(defaults: defaults)
         XCTAssertEqual(second.widgetCorner, .bottomLeft)
+    }
+
+    /// FloatingWidgetWindowController re-renders/repositions off objectWillChange, so plain
+    /// @AppStorage properties (not just the computed enum setters) must publish too.
+    func test_plainAppStorageProperties_publishObjectWillChange() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = SettingsStore(defaults: defaults)
+        var fired = 0
+        let cancellable = store.objectWillChange.sink { _ in fired += 1 }
+        defer { cancellable.cancel() }
+
+        var last = fired
+        store.quietHoursEnabled.toggle()
+        XCTAssertGreaterThan(fired, last, "quietHoursEnabled must publish"); last = fired
+        store.offsetX += 4
+        XCTAssertGreaterThan(fired, last, "offsetX must publish"); last = fired
+        store.offsetY += 4
+        XCTAssertGreaterThan(fired, last, "offsetY must publish")
     }
 
     func test_quietHours_defaultIsOff() {
@@ -137,7 +160,7 @@ final class SettingsStoreTests: XCTestCase {
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
         let store = SettingsStore(defaults: defaults)
-        store.idleAnimation = .magic
+        store.idleAnimation = .rage
         store.zeldaAlertEffect = .hit
 
         store.widgetIconStyle = .zelda

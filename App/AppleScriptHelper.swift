@@ -38,14 +38,19 @@ actor AppleScriptHelper {
     /// AppleScript source — read-only cheap-query against iTerm2 frontmost session.
     /// `with timeout of 1 second` is the AppleScript-side hard timeout (D2-34, Pitfall 3).
     /// SECURITY (T-INJECTION-01): static string constant — no `target` interpolation. Match is in Swift.
-    private static let scriptSource: String = """
-    with timeout of 1 second
-        tell application "iTerm2"
-            if (count of windows) is 0 then return ""
-            return id of current session of current tab of current window
-        end tell
-    end timeout
-    """
+    private static let scriptSource: String = frontmostQuerySource(timeout: "1 second")
+
+    /// Shared by the 1s cheap-query and the 30s D2-35 permission prompt — only the timeout differs.
+    private static func frontmostQuerySource(timeout: String) -> String {
+        """
+        with timeout of \(timeout)
+            tell application "iTerm2"
+                if (count of windows) is 0 then return ""
+                return id of current session of current tab of current window
+            end tell
+        end timeout
+        """
+    }
 
     /// jump-by-uuid script (D3-06 + D3-09). 3-second AppleScript-side timeout.
     /// SECURITY (T-INJECTION-01): UUID is whitelist-validated by iTermSessionID.isValid(_:)
@@ -106,6 +111,9 @@ actor AppleScriptHelper {
     """
 
     private var compiledFocusFrontmost: SerializedAppleScript?
+    /// In-flight D2-35 prompt. Repeated Stops while permission is `.unknown` join it instead
+    /// of queueing another 30s script behind it on the serial queue.
+    private var promptTask: Task<Void, Never>?
 
     private init() {}
 
@@ -130,38 +138,46 @@ actor AppleScriptHelper {
     /// D2-14 — returns true iff frontmost iTerm2 session id matches `target`.
     /// Permission denial / timeout / other failure → returns false (silent skip per D2-36).
     func frontmostMatches(itermSessionID target: String) async -> Bool {
+        guard let frontmost = await frontmostSessionID() else { return false }
+        return frontmost == target
+    }
+
+    /// D2-14/D2-15 — UUID of iTerm2's current session, or nil when iTerm2 is not the
+    /// frontmost app, has no windows, permission is not granted, or the query fails.
+    /// Callers comparing several alerts should query once and compare locally.
+    func frontmostSessionID() async -> String? {
         // Phase 3 03-09 fix — gate cheap-query while permission is unknown so the
         // FIRST AppleScript call against TCC is the deliberate 30s prompt from
         // Settings (D2-35 Path A). Otherwise this 1s cheap-query races the user
         // (Stop hook auto-suppress, NSWorkspace iTerm2-frontmost re-query) and
         // poisons lastKnownPermission to .denied before the prompt completes —
         // observed via -1712 timeout followed by -1743 silent skips on launch.
-        // Returning false = "treat as different session, don't suppress" — safe.
-        guard Self.shouldQueryFrontmost(permission: lastKnownPermission) else { return false }
+        // Returning nil = "treat as different session, don't suppress" — safe.
+        guard Self.shouldQueryFrontmost(permission: lastKnownPermission) else { return nil }
         // The scriptSource below only reads iTerm2's *internal* current session, which
         // stays set even when iTerm2 is in the background. Without this gate D2-14 would
         // suppress alerts while the user is in another app entirely (the stopped session
         // merely happens to be iTerm2's last-used one). Honor the "frontmost" contract:
         // if iTerm2 is not the frontmost application, the user is not looking at it.
         let iTermIsFrontmost = await MainActor.run {
-            NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.googlecode.iterm2"
+            NSWorkspace.shared.frontmostApplication?.bundleIdentifier == iTermSessionID.bundleIdentifier
         }
-        guard iTermIsFrontmost else { return false }
+        guard iTermIsFrontmost else { return nil }
         let result = await runQuery()
         switch result {
         case .success(let s):
             await markGranted()
-            return !s.isEmpty && s == target
+            return s.isEmpty ? nil : s
         case .denied:
             await markDenied()
             log.error("permission denied (-1743) — silent skip")
-            return false
+            return nil
         case .timeout:
             log.warning("AppleScript timeout (-1712)")
-            return false
+            return nil
         case .otherError(let code):
             log.warning("AppleScript error code=\(code, privacy: .public)")
-            return false
+            return nil
         }
     }
 
@@ -176,30 +192,18 @@ actor AppleScriptHelper {
     /// before the user can click Allow/Deny. The cheap-query 1s contract (D2-34) is
     /// unaffected — only this prompt-trigger path uses 30s.
     func triggerPermissionPrompt() async {
-        let source = """
-        with timeout of 30 seconds
-            tell application "iTerm2"
-                if (count of windows) is 0 then return ""
-                return id of current session of current tab of current window
-            end tell
-        end timeout
-        """
-        let result: ScriptResult = await withCheckedContinuation { (cont: CheckedContinuation<ScriptResult, Never>) in
-            queue.async {
-                guard let script = NSAppleScript(source: source) else {
-                    cont.resume(returning: .otherError(0)); return
-                }
-                var compileErr: NSDictionary?
-                guard script.compileAndReturnError(&compileErr) else {
-                    cont.resume(returning: Self.classify(error: compileErr, result: ""))
-                    return
-                }
-                var runErr: NSDictionary?
-                let value = script.executeAndReturnError(&runErr)
-                let s = value.stringValue ?? ""
-                cont.resume(returning: Self.classify(error: runErr, result: s))
-            }
+        if let inFlight = promptTask {
+            await inFlight.value
+            return
         }
+        let task = Task { await runPermissionPrompt() }
+        promptTask = task
+        await task.value
+        promptTask = nil
+    }
+
+    private func runPermissionPrompt() async {
+        let result = await compileAndRun(Self.frontmostQuerySource(timeout: "30 seconds"))
         switch result {
         case .success:
             await markGranted()
@@ -223,22 +227,7 @@ actor AppleScriptHelper {
             log.error("runJumpByUUID rejected non-UUID input — possible injection attempt")
             return .otherError(0)
         }
-        let source = String(format: Self.jumpByUUIDTemplate, uuid)
-        let scriptResult: ScriptResult = await withCheckedContinuation { (cont: CheckedContinuation<ScriptResult, Never>) in
-            queue.async {
-                guard let script = NSAppleScript(source: source) else {
-                    cont.resume(returning: .otherError(0)); return
-                }
-                var compileErr: NSDictionary?
-                guard script.compileAndReturnError(&compileErr) else {
-                    cont.resume(returning: Self.classify(error: compileErr, result: ""))
-                    return
-                }
-                var runErr: NSDictionary?
-                let value = script.executeAndReturnError(&runErr)
-                cont.resume(returning: Self.classify(error: runErr, result: value.stringValue ?? ""))
-            }
-        }
+        let scriptResult = await compileAndRun(String(format: Self.jumpByUUIDTemplate, uuid))
         let result: JumpResult
         if case .success(let payload) = scriptResult, !payload.isEmpty {
             // D3-21 — cross-Space raise via Accessibility API. AppleScript has
@@ -331,8 +320,7 @@ actor AppleScriptHelper {
     private static func scriptResultToJump(_ result: ScriptResult, emptyMeans: JumpResult) -> JumpResult {
         switch result {
         case .success(let s):
-            if s == "ok" { return .ok }
-            return s.isEmpty ? emptyMeans : .ok   // non-empty non-"ok" treated as success (focus-frontmost returns UUID string)
+            return s.isEmpty ? emptyMeans : .ok   // scripts return a UUID or "id|title" on success
         case .denied:    return .permissionDenied
         case .timeout:   return .timeout
         case .otherError(let c): return .otherError(c)
@@ -340,6 +328,25 @@ actor AppleScriptHelper {
     }
 
     // MARK: - private
+
+    /// Per-call compile + execute on the serial queue (dynamic sources: prompt, jump-by-UUID).
+    private func compileAndRun(_ source: String) async -> ScriptResult {
+        await withCheckedContinuation { (cont: CheckedContinuation<ScriptResult, Never>) in
+            queue.async {
+                guard let script = NSAppleScript(source: source) else {
+                    cont.resume(returning: .otherError(0)); return
+                }
+                var compileErr: NSDictionary?
+                guard script.compileAndReturnError(&compileErr) else {
+                    cont.resume(returning: Self.classify(error: compileErr, result: ""))
+                    return
+                }
+                var runErr: NSDictionary?
+                let value = script.executeAndReturnError(&runErr)
+                cont.resume(returning: Self.classify(error: runErr, result: value.stringValue ?? ""))
+            }
+        }
+    }
 
     private func runQuery() async -> ScriptResult {
         ensureCompiled()

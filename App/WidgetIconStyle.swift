@@ -1,6 +1,6 @@
 // App/WidgetIconStyle.swift — widget icon selector.
 // Persisted by SettingsStore; drives WidgetIconView's glyph asset.
-// New case = add rawValue + assetName mapping + matching imageset.
+// New case = add rawValue + glyph rendering in WidgetIconView + matching assets.
 import Foundation
 
 enum WidgetIconStyle: String, CaseIterable {
@@ -8,13 +8,6 @@ enum WidgetIconStyle: String, CaseIterable {
     case zelda
 
     static let `default`: WidgetIconStyle = .claude
-
-    var assetName: String {
-        switch self {
-        case .claude: return "ClaudeCodeIcon"
-        case .zelda: return "zelda_frame_00"
-        }
-    }
 
     func alertSoundCue(effect: WidgetAlertEffect) -> SoundCue {
         switch self {
@@ -54,7 +47,7 @@ extension WidgetCorner {
 enum ZeldaFrame {
     static let idleFrames = ["zelda_frame_00", "zelda_frame_01"]
 
-    static func alertFrames(side: WidgetSide, effect: WidgetAlertEffect) -> [String] {
+    static func alertFrames(effect: WidgetAlertEffect) -> [String] {
         switch effect {
         case .heal:
             return ["zelda_frame_02", "zelda_frame_03", "zelda_frame_04_heal"]

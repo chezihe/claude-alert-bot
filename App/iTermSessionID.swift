@@ -12,6 +12,9 @@
 import Foundation
 
 enum iTermSessionID {
+    /// iTerm2's bundle identifier — single source for frontmost / running-app checks.
+    static let bundleIdentifier = "com.googlecode.iterm2"
+
     /// D3-01: Reporter envelope `iterm_session_id` is shaped `wXtYpZ:UUID`.
     /// iTerm2 AppleScript `id of session` is UUID-only — Swift-side strips before comparison.
     /// Returns nil for nil/empty input (so call sites can flow `?.let`).

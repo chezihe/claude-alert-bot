@@ -118,6 +118,15 @@ stop 이벤트의 exit code가 0이 아니면 실패한 실행으로 취급합�
 Quiet Hours를 켜면 사운드와 강조 애니메이션은 꺼지지만, 큐와 카운트 배지는 계속 유지됩니다.
 알림을 잃지 않으면서도 조용하게 앱을 켜 둘 수 있습니다.
 
+### 위젯 스타일
+
+벨 메뉴의 `Style`에서 위젯 모양을 바꿀 수 있습니다.
+
+- `Icon`: `Claude` 또는 `Zelda`
+- `Animation`: `Claude` 아이콘은 `Bounce`, `Heart`, `Ring`, `Roam`, `Zelda` 아이콘은 `Heal`, `Hit` 중에서 고릅니다.
+- `Appearance`: `System`, `Light`, `Dark`
+- `Mode`: `System`이면 macOS 동작 줄이기 설정을 따르고, `Reduced`면 항상 움직임을 줄입니다.
+
 ### 큐 제어
 
 행을 고정하면 일괄 삭제에서도 살아남습니다.

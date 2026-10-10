@@ -1,5 +1,5 @@
 // MotionKeyframesTests.swift — Phase 1 motion rework.
-// Drift-guard for App/MotionKeyframes.swift. Bounce / Heart / Ring cycles mirror
+// Drift-guard for App/MotionKeyframes.swift. Bounce / Heart / Ring / Rage cycles mirror
 // internal motion prototype @keyframes blocks.
 import XCTest
 @testable import ClaudeAlertBot
@@ -136,5 +136,62 @@ final class MotionKeyframesTests: XCTestCase {
             XCTAssertEqual(kf.percent,   exp.0, accuracy: 0.0001)
             XCTAssertEqual(kf.rotation,  exp.1, accuracy: 0.0001)
         }
+    }
+
+    // MARK: - Rage cycle
+
+    func test_rageTiming_windupPlusHoldMatchesPrototypeInterval() {
+        XCTAssertEqual(MotionKeyframes.rageWindupDuration, 0.95, accuracy: 0.0001)
+        XCTAssertEqual(MotionKeyframes.ragePeriod, 2.4, accuracy: 0.0001)
+        XCTAssertEqual(MotionKeyframes.rageHoldDuration, 1.45, accuracy: 0.0001)
+    }
+
+    func test_rageCycle_startsAtPercent0_endsAtPercent100_andLoops() {
+        let cycle = MotionKeyframes.rageCycle
+        XCTAssertEqual(cycle.first?.percent, 0)
+        XCTAssertEqual(cycle.last?.percent, 100)
+        XCTAssertEqual(cycle.first, RageKeyframe(percent: 0, rotation: 0, translateX: 0, translateY: 0, scale: 1))
+        XCTAssertEqual(cycle.first?.rotation, cycle.last?.rotation)
+        XCTAssertEqual(cycle.first?.scale, cycle.last?.scale)
+        for i in 1..<cycle.count {
+            XCTAssertGreaterThan(cycle[i].percent, cycle[i - 1].percent)
+        }
+    }
+
+    // MARK: - KeyframeAnimator steps
+
+    func test_segmentFractions_areDeltasBetweenPercents() {
+        let fractions = MotionKeyframes.segmentFractions([0, 18, 50, 82, 100])
+        XCTAssertEqual(fractions.count, 4)
+        for (got, want) in zip(fractions, [0.18, 0.32, 0.32, 0.18]) {
+            XCTAssertEqual(got, want, accuracy: 1e-12)
+        }
+        XCTAssertTrue(MotionKeyframes.segmentFractions([0]).isEmpty)
+    }
+
+    func test_steps_skipInitialFrame_andSumToEachCyclePeriod() {
+        let cases: [(count: Int, cycleCount: Int, total: TimeInterval, period: TimeInterval)] = [
+            (MotionKeyframes.bounceSteps.count, MotionKeyframes.bounceCycle.count,
+             MotionKeyframes.bounceSteps.map(\.duration).reduce(0, +), MotionKeyframes.bouncePeriod),
+            (MotionKeyframes.heartSteps.count, MotionKeyframes.heartCycle.count,
+             MotionKeyframes.heartSteps.map(\.duration).reduce(0, +), MotionKeyframes.heartPeriod),
+            (MotionKeyframes.ringSteps.count, MotionKeyframes.ringCycle.count,
+             MotionKeyframes.ringSteps.map(\.duration).reduce(0, +), MotionKeyframes.ringPeriod),
+        ]
+        for c in cases {
+            XCTAssertEqual(c.count, c.cycleCount - 1)
+            XCTAssertEqual(c.total, c.period, accuracy: 1e-9)
+        }
+        // Rage: one step per windup keyframe after the first, plus the trailing hold.
+        XCTAssertEqual(MotionKeyframes.rageSteps.count, MotionKeyframes.rageCycle.count)
+        XCTAssertEqual(MotionKeyframes.rageSteps.map(\.duration).reduce(0, +), MotionKeyframes.ragePeriod, accuracy: 1e-9)
+    }
+
+    func test_steps_allDurationsArePositive() {
+        let durations = MotionKeyframes.bounceSteps.map(\.duration)
+            + MotionKeyframes.heartSteps.map(\.duration)
+            + MotionKeyframes.ringSteps.map(\.duration)
+            + MotionKeyframes.rageSteps.map(\.duration)
+        XCTAssertTrue(durations.allSatisfy { $0 > 0 })
     }
 }

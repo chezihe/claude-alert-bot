@@ -64,9 +64,6 @@ enum GeometryTokens {
     static let statusDotDiameter: CGFloat = 7
     // Project contract: hollow ring stroke 1.5pt
     static let statusDotRingStroke: CGFloat = 1.5
-    // Magic animation expands vertically to keep falling stars visible outside the base 64×64 icon.
-    static let magicDrawableExtraWidth: CGFloat = 30
-    static let magicDrawableExtraHeight: CGFloat = 40
     static let zeldaWidgetDrawableSize = CGSize(width: 128, height: 128)
     static let widgetBadgeTopClearance: CGFloat = 12
     // Project contract: max 4 visible rows — WO-009 enforces; rows beyond scroll vertically.
@@ -87,13 +84,7 @@ enum GeometryTokens {
             height: widgetBaseSize.height + widgetBadgeTopClearance * 2
         )
         guard !quietHoursEnabled, !reduceMotion else { return baseDrawableSize }
-        guard idleAnimation == .roam || idleAnimation == .magic else { return baseDrawableSize }
-        if idleAnimation == .magic {
-            return CGSize(
-                width: widgetBaseSize.width + magicDrawableExtraWidth,
-                height: max(widgetBaseSize.height + magicDrawableExtraHeight, baseDrawableSize.height)
-            )
-        }
+        guard idleAnimation == .roam else { return baseDrawableSize }
         return CGSize(
             width: widgetBaseSize.width + MotionTokens.roamRadiusX * 2,
             height: max(widgetBaseSize.height + MotionTokens.roamRadiusY * 2, baseDrawableSize.height)
@@ -122,9 +113,6 @@ enum GeometryTokens {
             reduceMotion: reduceMotion,
             widgetIconStyle: widgetIconStyle
         )
-        if idleAnimation == .magic && !quietHoursEnabled && !reduceMotion {
-            return CGPoint(x: widgetBaseSize.width / 2, y: size.height / 2)
-        }
         return CGPoint(x: size.width / 2, y: size.height / 2)
     }
 }
@@ -141,26 +129,6 @@ enum MotionTokens {
     static let roamDuration: TimeInterval = 1.6
     static let roamRadiusX: CGFloat = 16
     static let roamRadiusY: CGFloat = 4
-    // Magic idle v2 — "magical girl" Tap-Cast: wand 4-phase cycle + wand-tip trail + radial burst.
-    // Each cycle: idle (long, gentle wand sway) → windup (pull back) → strike (cast!) → recoil.
-    static let magicCastInterval: TimeInterval = 4.0
-    static let magicCastIdleDuration: TimeInterval = 3.0
-    static let magicCastWindupDuration: TimeInterval = 0.3
-    static let magicCastStrikeDuration: TimeInterval = 0.2
-    static let magicCastRecoilDuration: TimeInterval = 0.5
-    // Wand-tip trail — small sparkles drift off the wand tip during idle motion.
-    static let magicTrailSpawnInterval: TimeInterval = 0.18
-    static let magicTrailLifetime: TimeInterval = 0.6
-    static let magicTrailMaxCount: Int = 6
-    static let magicTrailSize: CGFloat = 4
-    // Burst spray — radial sparkles fired from the wand tip at the strike moment.
-    static let magicBurstSparkCount: Int = 8
-    static let magicBurstSparkRadius: CGFloat = 20
-    static let magicBurstSparkDuration: TimeInterval = 0.6
-    static let magicBurstSparkSize: CGFloat = 5
-    // Project contract: rage — 950ms throw-windup looped every 2.4s.
-    static let ragePeriod: TimeInterval = 2.4
-    static let rageWindupDuration: TimeInterval = 0.95
     // Project contract: new-alert pulse and sonar wave.
     static let newAlertPulseDuration: TimeInterval = 0.45
     static let newAlertPulsePeakScale: CGFloat = 1.14

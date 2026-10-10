@@ -58,9 +58,13 @@ actor SessionRegistry {
         log.notice("restore: inFlight=\(snap.inFlight.count) completed=\(self.completed.count)")
     }
 
+    /// Settings arrive as a caller-side snapshot (`mutedProjects` = project → expiry) so the
+    /// actor never hops to MainActor mid-ingest; every extra suspension point is a window
+    /// for a newer event to interleave.
     func ingest(_ event: HookEvent,
                 thresholdSeconds: Int,
                 soundEnabled: Bool,
+                mutedProjects: [String: Date] = [:],
                 suppressIfFrontmost: @Sendable (String?) async -> Bool) async {
         // Lazy GC kick (Pattern 6 third trigger)
         await runGC()
@@ -70,11 +74,14 @@ actor SessionRegistry {
         }
         switch event.event {
         case "user_prompt_submit": await handleStart(event)
-        case "notification": await handleNotification(event, soundEnabled: soundEnabled)
+        case "notification": await handleNotification(event,
+                                                     soundEnabled: soundEnabled,
+                                                     mutedProjects: mutedProjects)
         case "question_answered": await handleQuestionAnswered(event)
         case "stop": await handleStop(event,
                                      thresholdSeconds: thresholdSeconds,
                                      soundEnabled: soundEnabled,
+                                     mutedProjects: mutedProjects,
                                      suppressIfFrontmost: suppressIfFrontmost)
         default: log.warning("unknown event=\(event.event, privacy: .public)")
         }
@@ -96,6 +103,7 @@ actor SessionRegistry {
     private func handleStop(_ event: HookEvent,
                             thresholdSeconds: Int,
                             soundEnabled: Bool,
+                            mutedProjects: [String: Date],
                             suppressIfFrontmost: @Sendable (String?) async -> Bool) async {
         guard let sid = event.session_id, let stoppedAt = parseTS(event.ts) else { return }
         // Removing the waiting alert in memory is not enough — early-return paths below must
@@ -116,16 +124,18 @@ actor SessionRegistry {
         if await discardStaleStopIfNeeded(sessionID: sid,
                                            stoppedAt: stoppedAt,
                                            clearedWaiting: clearedWaiting) { return }
+        // No suspension point from here until the alert is queued: inFlight is consumed below,
+        // so a prompt interleaving after that would be overwritten by this older stop.
         if shouldSuppress {
             log.notice("D2-14 pre-suppress session=\(sid, privacy: .public)")
             inFlight.removeValue(forKey: sid)
-            await persist()
-            if clearedWaiting { await notifyQueueChanged() }
+            await finishWithoutAlert(clearedWaiting: clearedWaiting)
             return
         }
-        // AUD-01 dedupe (sound-only scope per D2-20)
-        let key = DedupeKey.from(sessionID: sid, at: stoppedAt)
-        let isDup = !dedupeSet.insert(key).inserted
+        // AUD-01 dedupe (sound-only scope per D2-20). Record before the threshold check so a
+        // below-threshold stop still marks its bucket — otherwise a redelivered copy finds
+        // inFlight already consumed, passes THR-02, and plays the sound.
+        let isDup = recordDedupe(sessionID: sid, event: event.event, at: stoppedAt)
         // Threshold + THR-02 fallback
         let durationSec: Int? = {
             guard let start = inFlight.removeValue(forKey: sid)?.startedAt else { return nil }
@@ -144,27 +154,60 @@ actor SessionRegistry {
         }()
         guard passes else {
             log.notice("THR-01 below-threshold session=\(sid, privacy: .public) dur=\(durationSec ?? -1)")
-            await persist()
-            if clearedWaiting { await notifyQueueChanged() }
+            await finishWithoutAlert(clearedWaiting: clearedWaiting)
             return
         }
         let projectName = ProjectName.derive(cwd: event.cwd, claudeProjectDir: event.claude_project_dir)
-        let muteCheckNow = clock.now()
-        if await MainActor.run(body: { SettingsStore.shared.isMuted(project: projectName, now: muteCheckNow) }) {
+        if MutedProjectsRules.isMuted(mutedProjects, project: projectName, now: clock.now()) {
             log.notice("ingest_stop muted project=\(projectName, privacy: .public) session=\(sid, privacy: .public)")
-            await persist()
-            if clearedWaiting { await notifyQueueChanged() }
+            await finishWithoutAlert(clearedWaiting: clearedWaiting)
             return
         }
+        await enqueueAlert(event, sessionID: sid, projectName: projectName, at: stoppedAt,
+                           durationSec: durationSec, kind: effectiveKind,
+                           playSound: soundEnabled && !isDup)
+    }
+
+    private func handleNotification(_ event: HookEvent,
+                                    soundEnabled: Bool,
+                                    mutedProjects: [String: Date]) async {
+        guard let sid = event.session_id, let notifiedAt = parseTS(event.ts) else { return }
+        let projectName = ProjectName.derive(cwd: event.cwd, claudeProjectDir: event.claude_project_dir)
+        if MutedProjectsRules.isMuted(mutedProjects, project: projectName, now: clock.now()) {
+            log.notice("ingest_notification muted project=\(projectName, privacy: .public) session=\(sid, privacy: .public)")
+            return
+        }
+        let isDup = recordDedupe(sessionID: sid, event: event.event, at: notifiedAt)
+        clearUnpinnedWaitingAlert(sessionID: sid)
+        await enqueueAlert(event, sessionID: sid, projectName: projectName, at: notifiedAt,
+                           durationSec: nil, kind: event.kind ?? .waiting,
+                           playSound: soundEnabled && !isDup)
+    }
+
+    /// AUD-01 dedupe is sound-only (D2-20) and keyed per event type so a stop landing in a
+    /// notification's 2s bucket still plays its sound. Returns true when the key was already seen.
+    private func recordDedupe(sessionID sid: String, event: String, at date: Date) -> Bool {
+        !dedupeSet.insert(DedupeKey.from(sessionID: sid, event: event, at: date)).inserted
+    }
+
+    /// Shared tail of stop/notification: build the row, replace stale rows for the same
+    /// iTerm2 session, persist, present.
+    private func enqueueAlert(_ event: HookEvent,
+                              sessionID sid: String,
+                              projectName: String,
+                              at date: Date,
+                              durationSec: Int?,
+                              kind: AlertKind,
+                              playSound: Bool) async {
         let session = CompletedSession(
             sessionID: sid,
             projectName: projectName,
-            stoppedAt: stoppedAt,
+            stoppedAt: date,
             durationSec: durationSec,
             itermSessionID: iTermSessionID.uuid(fromRaw: event.iterm_session_id),   // D3-02 — UUID-only on write
             tty: event.tty,
             cwd: event.cwd,
-            kind: effectiveKind,
+            kind: kind,
             exitCode: event.exit_code,
             startedAt: event.started_at,
             lastOutput: event.last_output
@@ -173,39 +216,7 @@ actor SessionRegistry {
         completed.append(session)
         await persist()
         let snapshot = self.completed
-        await notifier?.present(session: session, pendingQueue: snapshot, playSoundOnce: soundEnabled && !isDup)
-        await notifyQueueChanged()
-    }
-
-    private func handleNotification(_ event: HookEvent, soundEnabled: Bool) async {
-        guard let sid = event.session_id, let notifiedAt = parseTS(event.ts) else { return }
-        let projectName = ProjectName.derive(cwd: event.cwd, claudeProjectDir: event.claude_project_dir)
-        let muteCheckNow = clock.now()
-        if await MainActor.run(body: { SettingsStore.shared.isMuted(project: projectName, now: muteCheckNow) }) {
-            log.notice("ingest_notification muted project=\(projectName, privacy: .public) session=\(sid, privacy: .public)")
-            return
-        }
-        let key = DedupeKey.from(sessionID: sid, at: notifiedAt)
-        let isDup = !dedupeSet.insert(key).inserted
-        clearUnpinnedWaitingAlert(sessionID: sid)
-        let session = CompletedSession(
-            sessionID: sid,
-            projectName: projectName,
-            stoppedAt: notifiedAt,
-            durationSec: nil,
-            itermSessionID: iTermSessionID.uuid(fromRaw: event.iterm_session_id),
-            tty: event.tty,
-            cwd: event.cwd,
-            kind: event.kind ?? .waiting,
-            exitCode: event.exit_code,
-            startedAt: event.started_at,
-            lastOutput: event.last_output
-        )
-        clearUnpinnedByItermSession(session.itermSessionID)
-        completed.append(session)
-        await persist()
-        let snapshot = self.completed
-        await notifier?.present(session: session, pendingQueue: snapshot, playSoundOnce: soundEnabled && !isDup)
+        await notifier?.present(session: session, pendingQueue: snapshot, playSoundOnce: playSound)
         await notifyQueueChanged()
     }
 
@@ -256,17 +267,6 @@ actor SessionRegistry {
         await persist()
         await notifyQueueChanged()
         log.notice("clearUnpinned session=\(sessionID, privacy: .public)")
-    }
-
-    func markUnavailable(alertID: String) async {
-        guard let idx = completed.firstIndex(where: { $0.id == alertID }) else {
-            log.notice("markUnavailable alert=\(alertID, privacy: .public) ignored (no longer in queue)")
-            return
-        }
-        completed[idx].available = false
-        await persist()
-        await notifyQueueChanged()
-        log.notice("markUnavailable alert=\(alertID, privacy: .public)")
     }
 
     func togglePin(alertID: String) async {
@@ -321,6 +321,13 @@ actor SessionRegistry {
             await notifyQueueChanged()
         }
         return true
+    }
+
+    /// Early-return tail for stops that produce no alert: persist the consumed inFlight and
+    /// refresh the widget only if a waiting alert was removed.
+    private func finishWithoutAlert(clearedWaiting: Bool) async {
+        await persist()
+        if clearedWaiting { await notifyQueueChanged() }
     }
 
     private func persist() async {

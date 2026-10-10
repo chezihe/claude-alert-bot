@@ -17,6 +17,11 @@ enum MutedProjectsRules {
             .sorted { $0.project < $1.project }
     }
 
+    /// Single source of the mute-expiry rule; shared by SettingsStore and SessionRegistry.
+    static func isMuted(_ mutes: [String: Date], project: String, now: Date) -> Bool {
+        (mutes[project] ?? .distantPast) > now
+    }
+
     /// Minimal English remaining-time label, floored to minutes.
     static func remainingMinutesLabel(expiresAt: Date, now: Date) -> String {
         let secs = expiresAt.timeIntervalSince(now)

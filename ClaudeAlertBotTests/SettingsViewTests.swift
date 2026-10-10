@@ -54,7 +54,6 @@ final class SettingsViewTests: XCTestCase {
         XCTAssertEqual(SettingsView.idleAnimationName(.ring), "Ring")
         XCTAssertEqual(SettingsView.idleAnimationName(.roam), "Roam")
         XCTAssertEqual(SettingsView.idleAnimationName(.rage), "🤬 Rage")
-        XCTAssertEqual(SettingsView.idleAnimationName(.magic), "Magic")
     }
 
     func test_widgetIconStyle_allCasesIncludesZeldaAndDefaultStaysClaude() {
@@ -70,13 +69,13 @@ final class SettingsViewTests: XCTestCase {
 
     func test_zeldaFramePaths_matchWidgetSideAndEffect() {
         XCTAssertEqual(ZeldaFrame.idleFrames, ["zelda_frame_00", "zelda_frame_01"])
-        XCTAssertEqual(ZeldaFrame.alertFrames(side: .left, effect: .heal),
+        XCTAssertEqual(ZeldaFrame.alertFrames(effect: .heal),
                        ["zelda_frame_02", "zelda_frame_03", "zelda_frame_04_heal"])
-        XCTAssertEqual(ZeldaFrame.alertFrames(side: .left, effect: .hit),
+        XCTAssertEqual(ZeldaFrame.alertFrames(effect: .hit),
                        ["zelda_frame_02", "zelda_frame_03", "zelda_frame_04_hit"])
-        XCTAssertEqual(ZeldaFrame.alertFrames(side: .right, effect: .heal),
+        XCTAssertEqual(ZeldaFrame.alertFrames(effect: .heal),
                        ["zelda_frame_02", "zelda_frame_03", "zelda_frame_04_heal"])
-        XCTAssertEqual(ZeldaFrame.alertFrames(side: .right, effect: .hit),
+        XCTAssertEqual(ZeldaFrame.alertFrames(effect: .hit),
                        ["zelda_frame_02", "zelda_frame_03", "zelda_frame_04_hit"])
         XCTAssertEqual(ZeldaFrame.characterSubdirectory(side: .left), "adventure-widget/character/left")
         XCTAssertEqual(ZeldaFrame.characterSubdirectory(side: .right), "adventure-widget/character/right")

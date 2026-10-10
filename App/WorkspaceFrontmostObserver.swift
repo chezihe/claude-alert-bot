@@ -22,7 +22,7 @@ final class WorkspaceFrontmostObserver {
             // Cheap heuristic — only run the AppleScript path if the activated app is iTerm2.
             // (Other apps gain frontmost frequently; we don't want to spam AppleScript on every Cmd-Tab.)
             let app = (note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)
-            guard app?.bundleIdentifier == "com.googlecode.iterm2" else { return }
+            guard app?.bundleIdentifier == iTermSessionID.bundleIdentifier else { return }
             self.log.notice("iTerm2 became frontmost — D2-15 re-query")
             Task { await self.evaluatePendingAlerts() }
         }
@@ -37,13 +37,23 @@ final class WorkspaceFrontmostObserver {
 
     private func evaluatePendingAlerts() async {
         let pending = await SessionRegistry.shared.peekPending()
-        for session in pending {
-            guard !session.pinned else { continue }
-            guard let target = session.itermSessionID else { continue }
-            if await AppleScriptHelper.shared.frontmostMatches(itermSessionID: target) {
-                log.notice("D2-15 auto-clear session=\(session.sessionID, privacy: .public)")
-                await SessionRegistry.shared.clearUnpinned(sessionID: session.sessionID)
-            }
+        guard pending.contains(where: { !$0.pinned && $0.itermSessionID != nil }) else { return }
+        // One AppleScript round-trip: the frontmost session is the same for every alert.
+        guard let frontmost = await AppleScriptHelper.shared.frontmostSessionID() else { return }
+        for sessionID in Self.sessionIDsToClear(pending: pending, frontmostItermSessionID: frontmost) {
+            log.notice("D2-15 auto-clear session=\(sessionID, privacy: .public)")
+            // clearUnpinned, not clearOne: pinned rows sharing the sessionID must survive.
+            await SessionRegistry.shared.clearUnpinned(sessionID: sessionID)
         }
+    }
+
+    /// Claude session IDs whose unpinned alerts belong to the frontmost iTerm2 session.
+    /// Pinned alerts never trigger an auto-clear.
+    static func sessionIDsToClear(pending: [CompletedSession], frontmostItermSessionID: String) -> [String] {
+        var seen: Set<String> = []
+        return pending
+            .filter { !$0.pinned && $0.itermSessionID == frontmostItermSessionID }
+            .map(\.sessionID)
+            .filter { seen.insert($0).inserted }
     }
 }

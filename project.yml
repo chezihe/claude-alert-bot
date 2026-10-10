@@ -44,7 +44,8 @@ targets:
         script: |
           SRC="${BUILT_PRODUCTS_DIR}/cab-test"
           DEST="${TARGET_BUILD_DIR}/${EXECUTABLE_FOLDER_PATH}/cab-test"
-          if [ -f "$SRC" ]; then
+          # Dev smoke-test helper — never ship it in Release bundles.
+          if [ "$CONFIGURATION" = "Debug" ] && [ -f "$SRC" ]; then
               cp "$SRC" "$DEST"
               chmod +x "$DEST"
               codesign --force --sign - "$DEST" 2>/dev/null || true
@@ -77,6 +78,7 @@ targets:
     sources:
       - path: CabTest
         name: CabTest
+      - path: App/SocketPaths.swift
     settings:
       base:
         GENERATE_INFOPLIST_FILE: NO

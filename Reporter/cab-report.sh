@@ -11,6 +11,7 @@ APP_DIR="$HOME/Library/Application Support/ClaudeAlertBot"
 SOCK="$APP_DIR/sock"
 LOG_DIR="$HOME/Library/Logs/ClaudeAlertBot"
 LOG="$LOG_DIR/hook.log"
+LOG_MAX_BYTES=1048576                   # rotate to hook.log.1 past 1 MiB (one generation kept)
 
 # Event name from $1 (callers pass "stop", "user_prompt_submit", or "notification"); default "stop"
 EVENT="${1:-stop}"
@@ -87,7 +88,7 @@ def is_codex_memory_event(envelope):
     return envelope.get("transcript_path") is None and (cwd == memories or cwd.startswith(memories + os.sep))
 def transcript_tail_lines(path, max_bytes=2 * 1024 * 1024):
     # Long sessions grow the transcript to tens of MB and the stop hook re-reads it on a
-    # retry loop — cap IO to the tail. Both consumers want the LATEST matching line,
+    # retry loop — cap IO to the tail. The consumer wants the LATEST matching line,
     # which lives at the end of the JSONL file.
     if not isinstance(path, str) or not path:
         return []
@@ -104,18 +105,6 @@ def transcript_tail_lines(path, max_bytes=2 * 1024 * 1024):
         return data.decode("utf-8", "replace").splitlines()
     except Exception:
         return []
-def transcript_started_at(path):
-    latest = None
-    for line in transcript_tail_lines(path):
-        try:
-            obj = json.loads(line)
-        except Exception:
-            continue
-        if obj.get("type") == "user":
-            ts = epoch(obj.get("timestamp"))
-            if ts is not None:
-                latest = ts
-    return latest
 def content_text(content):
     if isinstance(content, str):
         return content
@@ -187,8 +176,6 @@ if isinstance(exit_code, int) and not isinstance(exit_code, bool):
 started_at = epoch(parsed.get("started_at"))
 if started_at is None:
     started_at = epoch(parsed.get("prompt_started_at"))
-if started_at is None:
-    started_at = transcript_started_at(parsed.get("transcript_path"))
 if started_at is not None:
     envelope["started_at"] = started_at
 kind = parsed.get("kind")
@@ -218,13 +205,24 @@ if is_codex_memory_event(envelope):
 print(json.dumps(envelope, ensure_ascii=False))
 ' 2>/dev/null) || JSON=""
 
+# JSON string escape for the shell-built log fields (backslash, double quote).
+json_escape() {
+    printf '%s' "$1" | /usr/bin/sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
+
+# Size-capped log: each stop line can carry up to 4 KB of last_output.
+LOG_SIZE=$(/usr/bin/stat -f %z "$LOG" 2>/dev/null) || LOG_SIZE=0
+if [ "${LOG_SIZE:-0}" -gt "$LOG_MAX_BYTES" ]; then
+    /bin/mv -f "$LOG" "$LOG.1" 2>/dev/null || true
+fi
+
 # Debug log FIRST (HOOK-06): record envelope + ppid chain BEFORE network
 {
     printf '{"ts":"%s","entry":"hook_fire","envelope":%s,"ppid_chain":"%s","cwd":"%s"}\n' \
         "$TS" \
         "${JSON:-null}" \
-        "$(/bin/ps -o pid=,ppid=,comm= -p "$PPID_VAL" 2>/dev/null | /usr/bin/head -1 | /usr/bin/tr -d '\n')" \
-        "$CWD_FALLBACK"
+        "$(json_escape "$(/bin/ps -o pid=,ppid=,comm= -p "$PPID_VAL" 2>/dev/null | /usr/bin/head -1 | /usr/bin/tr -d '\n')")" \
+        "$(json_escape "$CWD_FALLBACK")"
 } >> "$LOG" 2>/dev/null || true
 
 # Forward to App (HOOK-01). Silently no-op if socket missing (HOOK-05).

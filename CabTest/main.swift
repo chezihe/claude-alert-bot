@@ -1,5 +1,5 @@
 // CabTest/main.swift — Sends a synthetic D-08 envelope to the App's socket.
-// Used by scripts/verify-phase-1.sh row 1-04-01 as e2e smoke check.
+// Dev-only e2e smoke check (embedded in Debug builds only). Exits non-zero on failure.
 // RESEARCH "Code Examples → Embedded cab-test CLI helper" — verbatim.
 
 import Foundation
@@ -14,7 +14,7 @@ private func parseEventArg() -> String? {
     return nil
 }
 
-let socketPath = "\(NSHomeDirectory())/Library/Application Support/ClaudeAlertBot/sock"
+let socketPath = SocketPaths.socketPath
 let payload: [String: Any] = [
     "schema_version": 1,
     "event": parseEventArg() ?? "stop",
@@ -38,6 +38,7 @@ guard let data = try? JSONSerialization.data(withJSONObject: payload, options: [
 let conn = NWConnection(to: .unix(path: socketPath), using: NWParameters.tcp)
 let group = DispatchGroup()
 group.enter()
+var succeeded = false   // written once on the connection queue before leave()
 
 conn.stateUpdateHandler = { state in
     switch state {
@@ -48,6 +49,7 @@ conn.stateUpdateHandler = { state in
                 FileHandle.standardError.write(Data("cab-test: send error \(err)\n".utf8))
             } else {
                 print("cab-test: sent \(bytes.count) bytes to \(socketPath)")
+                succeeded = true
             }
             conn.cancel()
             group.leave()
@@ -60,5 +62,8 @@ conn.stateUpdateHandler = { state in
     }
 }
 conn.start(queue: .global())
-_ = group.wait(timeout: .now() + 2.0)
-exit(0)
+if group.wait(timeout: .now() + 2.0) == .timedOut {
+    FileHandle.standardError.write(Data("cab-test: timed out connecting to \(socketPath)\n".utf8))
+    exit(1)
+}
+exit(succeeded ? 0 : 1)

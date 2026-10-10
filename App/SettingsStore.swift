@@ -186,7 +186,7 @@ final class SettingsStore: ObservableObject {
     }
 
     func isMuted(project: String, now: Date) -> Bool {
-        (mutedProjects[project] ?? .distantPast) > now
+        MutedProjectsRules.isMuted(mutedProjects, project: project, now: now)
     }
 
     private func persistMutedProjects() {

@@ -120,19 +120,6 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(size.height, 88)
     }
 
-    func test_geometryTokens_widgetDrawableSize_expandsForActiveMagic() {
-        let size = GeometryTokens.widgetDrawableSize(
-            idleAnimation: .magic,
-            quietHoursEnabled: false,
-            reduceMotion: false,
-            widgetIconStyle: .claude
-        )
-
-        // 64 + magicDrawableExtraWidth(30), 64 + magicDrawableExtraHeight(40)
-        XCTAssertEqual(size.width, 94)
-        XCTAssertEqual(size.height, 104)
-    }
-
     func test_geometryTokens_widgetDrawableSize_expandsForZeldaIcon() {
         let size = GeometryTokens.widgetDrawableSize(
             idleAnimation: .bounce,
@@ -158,18 +145,10 @@ final class DesignTokensTests: XCTestCase {
             reduceMotion: false,
             widgetIconStyle: .claude
         )
-        let magicSize = GeometryTokens.widgetDrawableSize(
-            idleAnimation: .magic,
-            quietHoursEnabled: false,
-            reduceMotion: false,
-            widgetIconStyle: .claude
-        )
-
         XCTAssertEqual(baseSize.width, 64)
         XCTAssertEqual(baseSize.height, 88)
         XCTAssertGreaterThanOrEqual(baseSize.height, GeometryTokens.widgetBaseSize.height + GeometryTokens.widgetBadgeTopClearance * 2)
         XCTAssertGreaterThanOrEqual(roamSize.height, GeometryTokens.widgetBaseSize.height + GeometryTokens.widgetBadgeTopClearance * 2)
-        XCTAssertGreaterThanOrEqual(magicSize.height, GeometryTokens.widgetBaseSize.height + GeometryTokens.widgetBadgeTopClearance * 2)
     }
 
     func test_geometryTokens_widgetPositioningAnchor_tracksVisibleIconCenter() {
@@ -181,12 +160,6 @@ final class DesignTokensTests: XCTestCase {
         )
         let roamAnchor = GeometryTokens.widgetPositioningAnchor(
             idleAnimation: .roam,
-            quietHoursEnabled: false,
-            reduceMotion: false,
-            widgetIconStyle: .claude
-        )
-        let magicAnchor = GeometryTokens.widgetPositioningAnchor(
-            idleAnimation: .magic,
             quietHoursEnabled: false,
             reduceMotion: false,
             widgetIconStyle: .claude
@@ -208,7 +181,6 @@ final class DesignTokensTests: XCTestCase {
 
         XCTAssertEqual(baseAnchor, CGPoint(x: 32, y: 44))
         XCTAssertEqual(roamAnchor, CGPoint(x: 48, y: 44))
-        XCTAssertEqual(magicAnchor, CGPoint(x: 32, y: 52))
         XCTAssertEqual(zeldaLeftAnchor, CGPoint(x: 41, y: 60))
         XCTAssertEqual(zeldaAnchor, CGPoint(x: 87, y: 60))
     }
@@ -235,30 +207,19 @@ final class DesignTokensTests: XCTestCase {
             quietHoursEnabled: false,
             reduceMotion: false
         )
-        let magicSuppressedSize = GeometryTokens.widgetDrawableSize(
-            idleAnimation: .magic,
-            quietHoursEnabled: true,
-            reduceMotion: false
-        )
-        let magicReduceMotionSize = GeometryTokens.widgetDrawableSize(
-            idleAnimation: .magic,
-            quietHoursEnabled: false,
-            reduceMotion: true
-        )
 
         XCTAssertEqual(quietSize, base)
         XCTAssertEqual(reduceMotionSize, base)
         XCTAssertEqual(bounceSize, base)
         XCTAssertEqual(rageSize, base)
-        XCTAssertEqual(magicSuppressedSize, base)
-        XCTAssertEqual(magicReduceMotionSize, base)
     }
 
     // MARK: - MotionTokens (project contract "Motion")
 
     func test_motionTokens_rageValues_matchPrototype() {
-        XCTAssertEqual(MotionTokens.ragePeriod, 2.4, accuracy: 0.001)
-        XCTAssertEqual(MotionTokens.rageWindupDuration, 0.95, accuracy: 0.001)
+        // Project contract: rage — 950ms throw-windup looped every 2.4s (owned by MotionKeyframes).
+        XCTAssertEqual(MotionKeyframes.ragePeriod, 2.4, accuracy: 0.001)
+        XCTAssertEqual(MotionKeyframes.rageWindupDuration, 0.95, accuracy: 0.001)
     }
 
     func test_motionTokensSource_ringValues_movedToMotionKeyframes() {

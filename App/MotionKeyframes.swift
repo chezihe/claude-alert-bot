@@ -2,7 +2,7 @@
 // Pure keyframe data (no view code). Source of truth: HTML prototype
 // internal motion prototype @keyframes bounce-cute (117–123),
 // heartbeat (147–153), and ring (154–162). Loop-continuous; consumed by
-// WidgetIconView's KeyframeAnimator multi-track wiring.
+// KeyframeIdleGlyph's KeyframeAnimator multi-track wiring via the `*Steps` tables.
 import CoreGraphics
 import Foundation
 
@@ -23,6 +23,14 @@ struct HeartKeyframe: Equatable {
 struct RingKeyframe: Equatable {
     let percent: Double   // 0...100 along the cycle
     let rotation: Double  // degrees, anchored near glyph top (0.5, 0.1)
+}
+
+/// One CubicKeyframe in a KeyframeAnimator track: the target frame plus how long
+/// the segment leading into it lasts. Every track of a cycle shares the same steps,
+/// so each keyframe's timing is defined exactly once.
+struct KeyframeStep<Frame> {
+    let frame: Frame
+    let duration: TimeInterval
 }
 
 struct RageKeyframe: Equatable {
@@ -85,13 +93,8 @@ enum MotionKeyframes {
     static let rageWindupDuration: TimeInterval = 0.95
     static let ragePeriod: TimeInterval = 2.4
     static let rageHoldDuration: TimeInterval = ragePeriod - rageWindupDuration // 1.45s rest
-
-    // Magic idle v2 — gentle float sway only; the wand owns the "cast" motion.
-    // Sin-driven hover/tilt have intentionally different periods so the loops don't lockstep.
-    static let magicHoverPeriod: TimeInterval = 3.6
-    static let magicHoverAmplitude: CGFloat = 4
-    static let magicTiltPeriod: TimeInterval = 4.0
-    static let magicTiltAmplitude: Double = 3
+    // The MacBook projectile leaves at peak forward whip (the 44% windup keyframe ≈ 418ms).
+    static let rageReleaseOffset: TimeInterval = rageWindupDuration * 0.44
 
     // internal prototype @keyframes throw-windup.
     // Wind back → hold → whip forward → settle.
@@ -104,4 +107,34 @@ enum MotionKeyframes {
         RageKeyframe(percent:  78, rotation:   8, translateX:  1, translateY:  1, scale: 1.00),
         RageKeyframe(percent: 100, rotation:   0, translateX:  0, translateY:  0, scale: 1.00),
     ]
+
+    // MARK: - KeyframeAnimator steps
+    // Segment durations are derived from each cycle's `percent` column, so the
+    // fractions (bounce 0.18/0.32/0.32/0.18, heart 0.14×4/0.44, ring 0.10×6/0.15×2,
+    // rage 0.18/0.12/0.14/0.14/0.20/0.22) live only in the tables above.
+
+    static let bounceSteps = steps(bounceCycle, percent: \.percent, period: bouncePeriod)
+    static let heartSteps = steps(heartCycle, percent: \.percent, period: heartPeriod)
+    static let ringSteps = steps(ringCycle, percent: \.percent, period: ringPeriod)
+    // 6 throw-windup segments spread across 0.95s, then a 1.45s hold at the final
+    // (identity) frame so the loop matches the prototype's 2.4s rage interval.
+    static let rageSteps = steps(rageCycle, percent: \.percent, period: rageWindupDuration)
+        + [KeyframeStep(frame: rageCycle[rageCycle.count - 1], duration: rageHoldDuration)]
+
+    /// Fraction of the cycle spent travelling into each keyframe after the first.
+    static func segmentFractions(_ percents: [Double]) -> [Double] {
+        zip(percents.dropFirst(), percents).map { ($0 - $1) / 100 }
+    }
+
+    /// Steps for keyframes 1...n of `cycle`; keyframe 0 is the animator's initial value.
+    static func steps<Frame>(
+        _ cycle: [Frame],
+        percent: KeyPath<Frame, Double>,
+        period: TimeInterval
+    ) -> [KeyframeStep<Frame>] {
+        let fractions = segmentFractions(cycle.map { $0[keyPath: percent] })
+        return zip(cycle.dropFirst(), fractions).map {
+            KeyframeStep(frame: $0, duration: period * $1)
+        }
+    }
 }

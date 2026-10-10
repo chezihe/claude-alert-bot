@@ -9,6 +9,11 @@ enum HookInstaller {
     private static let log = Logger(subsystem: "com.claudealert.bot.hook", category: "lifecycle")
     private static let cabMarker = "ClaudeAlertBot/cab-report.sh"
     private static let reporterRelativePath = "Library/Application Support/ClaudeAlertBot/cab-report.sh"
+
+    /// Shell command a hook runs for `event` — single source for Claude JSON and Codex TOML.
+    static func reporterCommand(event: String) -> String {
+        "\"$HOME/\(reporterRelativePath)\" \(event)"
+    }
     private static let codexDirRelativePath = ".codex"
     private static let codexHooksRelativePath = ".codex/hooks.json"
     private static let codexConfigRelativePath = ".codex/config.toml"
@@ -35,10 +40,19 @@ enum HookInstaller {
         try fileManager.createDirectory(at: appSupportDir,
                                         withIntermediateDirectories: true,
                                         attributes: [.posixPermissions: 0o700])
-        if fileManager.fileExists(atPath: reporterDest.path) {
-            try fileManager.removeItem(at: reporterDest)
+        // Hooks may fire at any moment, so never leave the reporter path missing: skip when
+        // unchanged, otherwise stage a copy and swap it in with an atomic rename.
+        let reporterData = try Data(contentsOf: reporterSourceURL)
+        if (try? Data(contentsOf: reporterDest)) != reporterData {
+            let staged = appSupportDir.appendingPathComponent(".cab-report.sh.\(UUID().uuidString)")
+            try reporterData.write(to: staged)
+            try fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: staged.path)
+            if rename(staged.path, reporterDest.path) != 0 {
+                let code = errno
+                try? fileManager.removeItem(at: staged)
+                throw POSIXError(POSIXErrorCode(rawValue: code) ?? .EIO)
+            }
         }
-        try fileManager.copyItem(at: reporterSourceURL, to: reporterDest)
         try fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: reporterDest.path)
 
         let claudeDir = homeDirectory.appendingPathComponent(".claude")
@@ -224,7 +238,7 @@ enum HookInstaller {
             "matcher": matcher,
             "hooks": [[
                 "type": "command",
-                "command": "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" \(event)",
+                "command": reporterCommand(event: event),
                 "timeout": 5
             ]]
         ]
@@ -293,14 +307,14 @@ enum HookInstaller {
             #"matcher = """#,
             "[[hooks.Stop.hooks]]",
             #"type = "command""#,
-            #"command = '"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh" stop'"#,
+            "command = '\(reporterCommand(event: "stop"))'",
             "timeout = 5",
             "",
             "[[hooks.UserPromptSubmit]]",
             #"matcher = """#,
             "[[hooks.UserPromptSubmit.hooks]]",
             #"type = "command""#,
-            #"command = '"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh" user_prompt_submit'"#,
+            "command = '\(reporterCommand(event: "user_prompt_submit"))'",
             "timeout = 5"
         ])
     }

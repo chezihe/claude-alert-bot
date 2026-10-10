@@ -642,6 +642,24 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(notifier.presentCalls[1].playSound, false)
     }
 
+    /// AUD-01 — a below-threshold stop must still record its dedupe key: the redelivered
+    /// copy finds inFlight consumed, passes THR-02 as an orphan, and must stay silent.
+    func test_AUD_01_redeliveredBelowThresholdStop_noSound() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-F2"
+        let t0 = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
+        await r.seedInFlightForTesting(sessionID: sid, started: t0, cwd: "/x")
+        let stop = HookEventFactory.stop(sessionID: sid, ts: iso(t0.addingTimeInterval(5)))
+
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+                       suppressIfFrontmost: suppressNo)
+
+        XCTAssertEqual(notifier.presentCalls.map(\.playSound), [false])
+    }
+
     /// Test G — D2-14 (restored in efe0212): a stop whose iTerm session is frontmost
     /// is pre-suppressed — no alert row, no present call.
     func test_frontmostMatchSuppressesStopAlert_D2_14() async {
@@ -909,41 +927,6 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertEqual(snap.completed.map(\.pinned), [true, true])
     }
 
-    func test_markUnavailable_keepsRowAndRefreshes() async {
-        let r = makeRegistry()
-        await bind(r)
-        let session = CompletedSession(sessionID: "a", projectName: "p", stoppedAt: Date(),
-                                       durationSec: 10, itermSessionID: nil, tty: nil, cwd: nil,
-                                       alertID: "a-alert")
-        await r.seedCompletedForTesting(session)
-
-        await r.markUnavailable(alertID: "a-alert")
-
-        let snap = await r.snapshotForTesting()
-        XCTAssertEqual(snap.completed.map(\.sessionID), ["a"])
-        XCTAssertFalse(snap.completed.first?.available ?? true)
-        XCTAssertTrue(notifier.refreshCalls.contains(1))
-    }
-
-    func test_markUnavailableByAlertID_targetsOnlyMatchingDuplicateSessionID() async {
-        let r = makeRegistry()
-        await bind(r)
-        let pinned = CompletedSession(sessionID: "dup", projectName: "p", stoppedAt: Date(),
-                                      durationSec: 10, itermSessionID: "target", tty: nil, cwd: nil,
-                                      pinned: true, alertID: "pinned-alert")
-        let unpinned = CompletedSession(sessionID: "dup", projectName: "p", stoppedAt: Date(),
-                                        durationSec: 11, itermSessionID: "target", tty: nil, cwd: nil,
-                                        alertID: "new-alert")
-        await r.seedCompletedForTesting(pinned)
-        await r.seedCompletedForTesting(unpinned)
-
-        await r.markUnavailable(alertID: "new-alert")
-
-        let snap = await r.snapshotForTesting()
-        XCTAssertEqual(snap.completed.map(\.available), [true, false])
-        XCTAssertTrue(notifier.refreshCalls.contains(2))
-    }
-
     /// Test J — clearAll empties the queue and broadcasts count=0.
     func test_clearAll_emptiesQueue() async {
         let r = makeRegistry()
@@ -999,27 +982,41 @@ final class SessionRegistryTests: XCTestCase {
         XCTAssertTrue(notifier.refreshCalls.contains(1))
     }
 
-    func test_workspaceFrontmostObserver_autoClearSkipsPinnedSessionsBeforeMatching() {
-        let src = readWorkspaceFrontmostObserverSource()
-        guard let loopStart = src.range(of: "for session in pending {") else {
-            return XCTFail("WorkspaceFrontmostObserver must iterate pending sessions")
+    @MainActor
+    func test_workspaceFrontmostObserver_autoClearSkipsPinnedSessions() {
+        let frontmost = "11111111-2222-3333-4444-555555555555"
+        func row(_ sid: String, iterm: String?, pinned: Bool = false) -> CompletedSession {
+            CompletedSession(sessionID: sid, projectName: "p", stoppedAt: Date(), durationSec: 40,
+                             itermSessionID: iterm, tty: nil, cwd: nil, pinned: pinned)
         }
-        guard let matchStart = src.range(
-            of: "AppleScriptHelper.shared.frontmostMatches",
-            range: loopStart.upperBound..<src.endIndex
-        ) else {
-            return XCTFail("WorkspaceFrontmostObserver must still perform frontmost matching")
-        }
-        let beforeMatch = String(src[loopStart.upperBound..<matchStart.lowerBound])
+        let pending = [
+            row("pinned", iterm: frontmost, pinned: true),
+            row("match", iterm: frontmost),
+            row("match", iterm: frontmost),
+            row("other", iterm: "AAAAAAAA-2222-3333-4444-555555555555"),
+            row("none", iterm: nil),
+        ]
 
-        XCTAssertTrue(beforeMatch.contains("session.pinned"),
-                      "Pinned alerts must not be auto-cleared when iTerm2 becomes frontmost.")
-        XCTAssertTrue(beforeMatch.contains("continue"),
-                      "Pinned alerts should be skipped before the AppleScript matching path.")
-        XCTAssertTrue(src.contains("SessionRegistry.shared.clearUnpinned(sessionID: session.sessionID)"),
-                      "Frontmost auto-clear must remove only unpinned rows for the matched sessionID.")
-        XCTAssertFalse(src.contains("SessionRegistry.shared.clearOne(sessionID: session.sessionID)"),
-                       "Frontmost auto-clear must not call clearOne because duplicate pinned rows can share the sessionID.")
+        XCTAssertEqual(
+            WorkspaceFrontmostObserver.sessionIDsToClear(pending: pending, frontmostItermSessionID: frontmost),
+            ["match"],
+            "Only unpinned alerts for the frontmost iTerm2 session are cleared, once per sessionID."
+        )
+    }
+
+    /// AUD-01 dedupe is per event type: a stop landing in the same 2s bucket as the
+    /// session's permission notification must still play its own sound.
+    func test_stopInSameBucketAsNotification_stillPlaysSound() async {
+        let r = makeRegistry()
+        await bind(r)
+        let sid = "sid-dedupe-kinds"
+        let at = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970 / 2) * 2)
+        await r.ingest(HookEventFactory.notification(sessionID: sid, ts: iso(at)),
+                       thresholdSeconds: 30, soundEnabled: true, suppressIfFrontmost: suppressNo)
+        await r.ingest(HookEventFactory.stop(sessionID: sid, ts: iso(at)),
+                       thresholdSeconds: 30, soundEnabled: true, suppressIfFrontmost: suppressNo)
+
+        XCTAssertEqual(notifier.presentCalls.map(\.playSound), [true, true])
     }
 
     func test_ingestStop_mutedProjectSkipsAppendAndPresent() async {
@@ -1028,8 +1025,7 @@ final class SessionRegistryTests: XCTestCase {
         let sid = "sid-muted"
         let project = "muted-\(UUID().uuidString)"
         let stoppedAt = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970))
-        SettingsStore.shared.mute(project: project, duration: 3600, now: stoppedAt)
-        defer { SettingsStore.shared.unmute(project: project) }
+        let mutes = [project: stoppedAt.addingTimeInterval(3600)]
         await r.seedInFlightForTesting(sessionID: sid,
                                        started: stoppedAt.addingTimeInterval(-31),
                                        cwd: "/tmp/\(project)")
@@ -1037,7 +1033,7 @@ final class SessionRegistryTests: XCTestCase {
                                          cwd: "/tmp/\(project)",
                                          ts: iso(stoppedAt))
 
-        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true, mutedProjects: mutes,
                        suppressIfFrontmost: suppressNo)
 
         let snap = await r.snapshotForTesting()
@@ -1057,8 +1053,7 @@ final class SessionRegistryTests: XCTestCase {
         await bind(r)
         let sid = "sid-muted-expired"
         let project = "muted-expired-\(UUID().uuidString)"
-        SettingsStore.shared.mute(project: project, duration: 3_600, now: muteStart)
-        defer { SettingsStore.shared.unmute(project: project) }
+        let mutes = [project: muteStart.addingTimeInterval(3_600)]
         await r.seedInFlightForTesting(sessionID: sid,
                                        started: stoppedAt.addingTimeInterval(-31),
                                        cwd: "/tmp/\(project)")
@@ -1066,7 +1061,7 @@ final class SessionRegistryTests: XCTestCase {
                                          cwd: "/tmp/\(project)",
                                          ts: iso(stoppedAt))
 
-        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true,
+        await r.ingest(stop, thresholdSeconds: 30, soundEnabled: true, mutedProjects: mutes,
                        suppressIfFrontmost: suppressNo)
 
         let snap = await r.snapshotForTesting()
@@ -1244,17 +1239,6 @@ final class SessionRegistryTests: XCTestCase {
 
         let cleaned = await SessionStore(url: tempURL).load()
         XCTAssertEqual(cleaned?.completed.map(\.id), ["real-alert"])
-    }
-
-    private func readWorkspaceFrontmostObserverSource(_ thisFile: StaticString = #filePath) -> String {
-        let here = URL(fileURLWithPath: "\(thisFile)")
-        let repoRoot = here.deletingLastPathComponent().deletingLastPathComponent()
-        let target = repoRoot.appendingPathComponent("App/WorkspaceFrontmostObserver.swift")
-        guard let data = try? String(contentsOf: target, encoding: .utf8) else {
-            XCTFail("Could not read App/WorkspaceFrontmostObserver.swift at \(target.path)")
-            return ""
-        }
-        return data
     }
 }
 

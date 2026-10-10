@@ -196,7 +196,7 @@ private struct MenuBarMenuContent: View {
                         .font(.caption)
                         .foregroundStyle(.red)
                 case .missing, .timeout, .otherError:
-                    Text(SettingsView.iTermNotRunningLabel)
+                    Text(SettingsView.connectionFailedLabel)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -252,9 +252,7 @@ private struct MenuBarMenuContent: View {
     }
 
     private func hhmm(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm"
-        return f.string(from: date)
+        PopoverContentRules.hhmmFormatter.string(from: date)
     }
 
     private struct OffsetPreset: Identifiable {

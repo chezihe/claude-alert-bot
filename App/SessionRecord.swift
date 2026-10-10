@@ -51,7 +51,7 @@ struct CompletedSession: Codable, Equatable, Identifiable {
     let projectName: String         // ProjectName.derive(...) result — D2-06
     let stoppedAt: Date
     let durationSec: Int?           // nil iff THR-02 fallback (start missing) — D2-16/D2-17
-    let itermSessionID: String?
+    var itermSessionID: String?     // var only for the D3-03 load-time migration
     let tty: String?
     let cwd: String?
     let kind: AlertKind
@@ -164,15 +164,17 @@ struct CompletedSession: Codable, Equatable, Identifiable {
 /// Phase 4 may extend with transcript_path; Phase 2 ships these two fields per D2-20.
 struct DedupeKey: Hashable, Codable {
     let sessionID: String
+    let event: String               // hook event type — stop and notification dedupe independently
     let bucketedTS: Int             // Int(ts.timeIntervalSince1970) / 2
 
-    init(sessionID: String, bucketedTS: Int) {
+    init(sessionID: String, event: String = "stop", bucketedTS: Int) {
         self.sessionID = sessionID
+        self.event = event
         self.bucketedTS = bucketedTS
     }
 
-    static func from(sessionID: String, at date: Date) -> DedupeKey {
-        DedupeKey(sessionID: sessionID, bucketedTS: Int(date.timeIntervalSince1970) / 2)
+    static func from(sessionID: String, event: String = "stop", at date: Date) -> DedupeKey {
+        DedupeKey(sessionID: sessionID, event: event, bucketedTS: Int(date.timeIntervalSince1970) / 2)
     }
 }
 

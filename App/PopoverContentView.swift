@@ -70,10 +70,14 @@ enum PopoverContentRules {
 
     /// "HH:mm" formatter for the secondary time-suffix label.
     static func timeSuffix(for date: Date) -> String {
+        hhmmFormatter.string(from: date)
+    }
+
+    static let hhmmFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "HH:mm"
-        return f.string(from: date)
-    }
+        return f
+    }()
 
     /// D2-16: durationSec == nil → orphan stop, show trailing `?` indicator.
     static func showsOrphanIndicator(session: CompletedSession) -> Bool {
@@ -280,8 +284,6 @@ struct PopoverContentView: View {
                 )
                 ScrollView {
                     VStack(spacing: 0) {
-                        HideScrollerIntrospector()
-                            .frame(width: 0, height: 0)
                         ForEach(listItems) { item in
                             Group {
                                 switch item {
@@ -420,29 +422,6 @@ private struct PopoverScrollContentFramePreferenceKey: PreferenceKey {
     static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
         value = nextValue()
     }
-}
-
-/// Walks up the AppKit hierarchy from the SwiftUI ScrollView's content view to
-/// find the enclosing NSScrollView and (a) disable its scrollers outright and
-/// (b) make its background fully transparent so the popover's material shows
-/// through. `.scrollIndicators(.never)` and SwiftUI's clear background do not
-/// reliably handle either on macOS.
-private struct HideScrollerIntrospector: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView {
-        let probe = NSView(frame: .zero)
-        DispatchQueue.main.async { [weak probe] in
-            guard let scrollView = probe?.enclosingScrollView else { return }
-            scrollView.hasVerticalScroller = false
-            scrollView.hasHorizontalScroller = false
-            scrollView.autohidesScrollers = true
-            scrollView.drawsBackground = false
-            scrollView.backgroundColor = .clear
-            scrollView.borderType = .noBorder
-            scrollView.contentView.drawsBackground = false
-        }
-        return probe
-    }
-    func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
 private struct PopoverMaterialBackground: NSViewRepresentable {

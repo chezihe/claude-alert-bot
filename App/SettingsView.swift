@@ -40,6 +40,7 @@ enum SettingsView {
     static let connectionTestSuccessFmt = "Connected at %@"           // %@ = HH:mm
     static let iTermNotRunningLabel = "iTerm2 is not running"
     static let connectionDeniedLabel = "Automation permission denied"
+    static let connectionFailedLabel = "iTerm2 did not respond"
 
     static func widgetCornerLabel(_ corner: WidgetCorner) -> String {
         switch corner {
@@ -57,7 +58,6 @@ enum SettingsView {
         case .ring: return "Ring"
         case .roam: return "Roam"
         case .rage: return "🤬 Rage"
-        case .magic: return "Magic"
         }
     }
 

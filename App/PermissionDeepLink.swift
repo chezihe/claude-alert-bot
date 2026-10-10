@@ -19,10 +19,7 @@ enum PermissionDeepLink {
     /// first one that NSWorkspace can open returns. Silent no-op if all three fail
     /// (extremely unlikely — root URL is generic and always handled by Settings.app).
     static func openAutomationPreferences() {
-        for s in urls {
-            guard let u = URL(string: s) else { continue }
-            if NSWorkspace.shared.open(u) { return }
-        }
+        openFirst(urls)
     }
 
     /// D3-21 — opens System Settings → Privacy & Security → Accessibility, needed for
@@ -34,7 +31,11 @@ enum PermissionDeepLink {
     ]
 
     static func openAccessibilityPreferences() {
-        for s in accessibilityURLs {
+        openFirst(accessibilityURLs)
+    }
+
+    private static func openFirst(_ candidates: [String]) {
+        for s in candidates {
             guard let u = URL(string: s) else { continue }
             if NSWorkspace.shared.open(u) { return }
         }

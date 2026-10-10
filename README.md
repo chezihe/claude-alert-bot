@@ -117,6 +117,15 @@ Blank output is ignored, multiline output uses the first non-empty line, and lon
 Quiet Hours suppresses sound and animated alert emphasis while still keeping the queue and count badge active.
 You can leave the app running without losing pending sessions.
 
+### Widget Style
+
+Change how the widget looks from `Style` in the bell menu.
+
+- `Icon`: `Claude` or `Zelda`
+- `Animation`: `Bounce`, `Heart`, `Ring`, or `Roam` with the `Claude` icon; `Heal` or `Hit` with the `Zelda` icon
+- `Appearance`: `System`, `Light`, or `Dark`
+- `Mode`: `System` follows the macOS Reduce motion setting; `Reduced` always reduces motion
+
 ### Queue Controls
 
 Rows can be pinned so they survive bulk clear actions.

@@ -75,22 +75,9 @@ actor SessionStore {
             guard let raw = c.itermSessionID, raw.contains(":") else { return c }
             guard let stripped = iTermSessionID.uuid(fromRaw: raw), stripped != raw else { return c }
             migrationCount += 1
-            return CompletedSession(
-                sessionID: c.sessionID,
-                projectName: c.projectName,
-                stoppedAt: c.stoppedAt,
-                durationSec: c.durationSec,
-                itermSessionID: stripped,
-                tty: c.tty,
-                cwd: c.cwd,
-                kind: c.kind,
-                exitCode: c.exitCode,
-                startedAt: c.startedAt,
-                lastOutput: c.lastOutput,
-                available: c.available,
-                pinned: c.pinned,
-                alertID: c.alertID
-            )
+            var migrated = c
+            migrated.itermSessionID = stripped
+            return migrated
         }
         var result = snap
         result.completed = newCompleted

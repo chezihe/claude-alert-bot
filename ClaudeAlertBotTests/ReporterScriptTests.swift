@@ -57,6 +57,22 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertNil(envelope["started_at"])
         XCTAssertNil(envelope["kind"])
         XCTAssertNil(envelope["last_output"])
+        XCTAssertNil(try lastLogEntry()["transcript_attempts"], "no transcript → no wait to measure")
+    }
+
+    func test_reporterLogsTranscriptGiveUp() throws {
+        let transcript = tempHome.appendingPathComponent("transcript.jsonl")
+        try """
+        {"type":"user","message":{"role":"user","content":"hi"}}
+        """.write(to: transcript, atomically: true, encoding: .utf8)
+
+        _ = try runReporter(stdin: """
+        {"session_id":"sid-reporter","cwd":"/tmp/project","transcript_path":"\(transcript.path)"}
+        """)
+
+        let entry = try lastLogEntry()
+        XCTAssertEqual(entry["transcript_attempts"] as? Int, 8)
+        XCTAssertEqual(entry["transcript_found"] as? Bool, false)
     }
 
     func test_reporterFallsBackToTranscriptAssistantMessageForLastOutput() throws {
@@ -75,6 +91,9 @@ final class ReporterScriptTests: XCTestCase {
         """)
 
         XCTAssertEqual(envelope["last_output"] as? String, "xcodebuild test passed\nAll checks green")
+        let entry = try lastLogEntry()
+        XCTAssertEqual(entry["transcript_attempts"] as? Int, 1)
+        XCTAssertEqual(entry["transcript_found"] as? Bool, true)
     }
 
     func test_reporterPrefersTranscriptAssistantMessageOverExplicitLastOutputForStop() throws {
@@ -129,6 +148,9 @@ final class ReporterScriptTests: XCTestCase {
         wait(for: [appendDone], timeout: 2)
 
         XCTAssertEqual(envelope["last_output"] as? String, "안녕하세요")
+        let entry = try lastLogEntry()
+        XCTAssertGreaterThan(try XCTUnwrap(entry["transcript_attempts"] as? Int), 1)
+        XCTAssertEqual(entry["transcript_found"] as? Bool, true)
     }
 
     func test_reporterDoesNotUsePromptSubmitTranscriptForLastOutput() throws {
@@ -858,13 +880,15 @@ final class ReporterScriptTests: XCTestCase {
                                      environmentOverrides: [String: String] = [:]) throws -> [String: Any]? {
         try runReporterProcess(executable: executable, arguments: arguments, stdin: stdin,
                                environmentOverrides: environmentOverrides)
+        return try lastLogEntry()["envelope"] as? [String: Any]
+    }
+
+    private func lastLogEntry() throws -> [String: Any] {
         let logURL = tempHome
             .appendingPathComponent("Library/Logs/ClaudeAlertBot/hook.log")
         let log = try String(contentsOf: logURL, encoding: .utf8)
         let line = try XCTUnwrap(log.split(separator: "\n").last)
-        let data = Data(line.utf8)
-        let outer = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
-        return outer["envelope"] as? [String: Any]
+        return try XCTUnwrap(JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any])
     }
 
     private func runReporterProcess(executable: URL,

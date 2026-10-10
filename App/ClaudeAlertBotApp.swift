@@ -29,6 +29,8 @@ private struct MenuBarMenuContent: View {
     @State private var connectionTestResult: JumpResult? = nil
     @State private var connectionTestResultAt: Date = Date()
     @State private var hideResultTask: Task<Void, Never>? = nil
+    /// Bumped by "Reinstall Hooks" so the Diagnostics rows re-run their file checks.
+    @State private var diagnosticsRefresh = 0
     private var menuIdleAnimations: [IdleAnimation] {
         IdleAnimation.allCases.filter { $0 != .rage }
     }
@@ -219,13 +221,49 @@ private struct MenuBarMenuContent: View {
             }
         }
 
-        Button("Grant Accessibility…") {
-            AccessibilityRaiser.requestTrust()
-            PermissionDeepLink.openAccessibilityPreferences()
-        }
+        diagnosticsMenu(now: now)
 
         Divider()
         Button("Quit") { NSApp.terminate(nil) }
+    }
+
+    @ViewBuilder
+    private func diagnosticsMenu(now: Date) -> some View {
+        let _ = diagnosticsRefresh
+        let report = HookDiagnostics.check(lastEventAt: store.lastHookEventAt)
+        Menu {
+            ForEach(HookDiagnostics.rows(report), id: \.text) { row in
+                Label(row.text, systemImage: row.systemImage)
+            }
+            Label(HookDiagnostics.lastEventLabel(report.lastEventAt, now: now), systemImage: "clock")
+            Divider()
+            if !report.accessibilityGranted {
+                // AX trust is usually only picked up after a relaunch (README first-run steps).
+                Button(Self.menuGrantAccessibilityLabel) {
+                    AccessibilityRaiser.requestTrust()
+                    PermissionDeepLink.openAccessibilityPreferences()
+                    diagnosticsRefresh += 1
+                }
+            }
+            Button(Self.menuReinstallHooksLabel) {
+                HookInstaller.installBundledReporterIfNeeded()
+                diagnosticsRefresh += 1
+            }
+            Button(Self.menuShowHookLogLabel) {
+                let log = HookDiagnostics.hookLogURL
+                if FileManager.default.fileExists(atPath: log.path) {
+                    NSWorkspace.shared.activateFileViewerSelecting([log])
+                } else {
+                    NSWorkspace.shared.open(log.deletingLastPathComponent())
+                }
+            }
+        } label: {
+            if report.allOK {
+                Text(Self.menuDiagnosticsHeading)
+            } else {
+                Label(Self.menuDiagnosticsHeading, systemImage: "exclamationmark.triangle")
+            }
+        }
     }
 
     private func runConnectionTest() async {
@@ -284,6 +322,10 @@ private struct MenuBarMenuContent: View {
     private static let menuConnectionTestHeading = "iTerm2 Connection"
     private static let menuConnectionTestLabel = "Test iTerm2 connection"
     private static let menuOpenAutomationSettingsLabel = "Open Automation Settings…"
+    private static let menuDiagnosticsHeading = "Diagnostics"
+    private static let menuReinstallHooksLabel = "Reinstall Hooks"
+    private static let menuGrantAccessibilityLabel = "Grant Accessibility… (then restart app)"
+    private static let menuShowHookLogLabel = "Show Hook Log in Finder"
 
     private static let thresholdPresets: [ThresholdPreset] = [
         .init(label: "Direct (0s)", seconds: 0),

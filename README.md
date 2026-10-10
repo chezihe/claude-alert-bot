@@ -53,7 +53,7 @@ The build output is `build/export/ClaudeAlertBot.app`. Move it to `/Applications
 The app is controlled from its bell icon in the menu bar. Configure permissions in this order after the first launch.
 
 1. Run `iTerm2 Connection > Test iTerm2 connection` from the bell menu and allow Automation access.
-2. Click `Grant Accessibility…`.
+2. Open `Diagnostics` and click `Grant Accessibility…` (shown only until the permission is granted).
 3. Enable `ClaudeAlertBot` in `System Settings > Privacy & Security > Accessibility`.
 4. Quit and relaunch the app once.
 

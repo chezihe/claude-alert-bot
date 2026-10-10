@@ -149,6 +149,17 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    /// Diagnostics — when the App last decoded a hook envelope. Same Date? bridge as above.
+    @Published var lastHookEventAt: Date? {
+        didSet {
+            if let d = lastHookEventAt {
+                defaults.set(d.timeIntervalSince1970, forKey: "last_hook_event_at")
+            } else {
+                defaults.removeObject(forKey: "last_hook_event_at")
+            }
+        }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         self._thresholdSeconds = AppStorage(wrappedValue: 30, "threshold_seconds", store: defaults)
@@ -175,6 +186,8 @@ final class SettingsStore: ObservableObject {
         }
         let ti = defaults.double(forKey: "last_connection_test_at")
         self.lastConnectionTestAt = ti > 0 ? Date(timeIntervalSince1970: ti) : nil
+        let hookTI = defaults.double(forKey: "last_hook_event_at")
+        self.lastHookEventAt = hookTI > 0 ? Date(timeIntervalSince1970: hookTI) : nil
     }
 
     func mute(project: String, duration: TimeInterval = 3600, now: Date) {

@@ -65,10 +65,12 @@
 		C73E74AC8F7704391017FF17 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 475896401C55A5D20FD0DA99 /* main.swift */; };
 		C7419C65428643DFBE1C1607 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F0532EA5559479069D65C1F /* SettingsStore.swift */; };
 		C8F82E4C8E04670D6473A5D6 /* MockTerminalJumper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76DCB8BF2B9B7D78E4D3BD9B /* MockTerminalJumper.swift */; };
+		CBC59173A62FF7F665677BF9 /* HookDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85F3026520CDFB3988B1316B /* HookDiagnostics.swift */; };
 		D3761DE8508B62CF82C7ACA3 /* iTermSessionID.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB92DF8ECD2021AD37F1AAC /* iTermSessionID.swift */; };
 		D4F0BAE2D982705E01F8E9CF /* ClaudeAlertBotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184BC5521D0393073C46E63A /* ClaudeAlertBotApp.swift */; };
 		D7059D9CB85E7E749400A31E /* LocalSigningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C11446AC0723E56476824D2 /* LocalSigningTests.swift */; };
 		DD2013C166EBC4AB026B9827 /* WidgetIconView+Rules.swift in Sources */ = {isa = PBXBuildFile; fileRef = A75C80D0638C45827B09583B /* WidgetIconView+Rules.swift */; };
+		DDEA714DBEAE9F59A52246E1 /* HookDiagnosticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42C26E721F0B71D14891BBF8 /* HookDiagnosticsTests.swift */; };
 		DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 422669922C84673FA026FD1E /* HookEvent.swift */; };
 		E571EED85EA6293D7C70BDE2 /* ITerm2JumperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 135F84C6B3B261E51AAD624D /* ITerm2JumperTests.swift */; };
 		E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = C896A90AD54C9C464DBD09B3 /* HookEventFactory.swift */; };
@@ -134,6 +136,7 @@
 		36BDD5D1C291C8C40FA6F82D /* NotificationOrchestratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOrchestratorTests.swift; sourceTree = "<group>"; };
 		3AD080323016E4B964B92C69 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		422669922C84673FA026FD1E /* HookEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookEvent.swift; sourceTree = "<group>"; };
+		42C26E721F0B71D14891BBF8 /* HookDiagnosticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookDiagnosticsTests.swift; sourceTree = "<group>"; };
 		448CBA41A1B75922D5F85801 /* ITerm2Jumper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ITerm2Jumper.swift; sourceTree = "<group>"; };
 		4727020E044B4D9690900BC4 /* PermissionDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionDeepLink.swift; sourceTree = "<group>"; };
 		475896401C55A5D20FD0DA99 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
@@ -156,6 +159,7 @@
 		800FA652B76F41855EDB0DEA /* SessionGCTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionGCTimer.swift; sourceTree = "<group>"; };
 		803213E148F2B54B47DD8FD3 /* AccessibilityRaiser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityRaiser.swift; sourceTree = "<group>"; };
 		8446BA9DA3DB2F6E24A02697 /* SessionRecordTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRecordTests.swift; sourceTree = "<group>"; };
+		85F3026520CDFB3988B1316B /* HookDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookDiagnostics.swift; sourceTree = "<group>"; };
 		88A38BFC17EEAB4C4B2B9BEE /* WidgetIconStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetIconStyle.swift; sourceTree = "<group>"; };
 		8A714300C48D443F40C0A625 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		8C36CCE076DF94EE489D1688 /* RoamIdleMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoamIdleMotion.swift; sourceTree = "<group>"; };
@@ -204,6 +208,7 @@
 				0A2AAE01066E19E3CC60E865 /* EmptyStateViewTests.swift */,
 				9DE80FA8FCF86DDC5881D02A /* FloatingWidgetPanelTests.swift */,
 				5EF5D9778A789F1B7E663648 /* FloatingWidgetWindowControllerTests.swift */,
+				42C26E721F0B71D14891BBF8 /* HookDiagnosticsTests.swift */,
 				1D0E5FF61663BD940052B098 /* HookEventTests.swift */,
 				E9CA41D38B7C594A1BEF806E /* IdleAnimationTests.swift */,
 				135F84C6B3B261E51AAD624D /* ITerm2JumperTests.swift */,
@@ -256,6 +261,7 @@
 				C1285336F5A35E2874B0371E /* EmptyStateView.swift */,
 				10A1150F9BBA13057C1B014A /* FloatingWidgetPanel.swift */,
 				F3804D51921660FB395D4326 /* FloatingWidgetWindowController.swift */,
+				85F3026520CDFB3988B1316B /* HookDiagnostics.swift */,
 				422669922C84673FA026FD1E /* HookEvent.swift */,
 				BDA17AB423C7057C45F609A8 /* HookInstaller.swift */,
 				1D54D1C911C95F984BA6C8A1 /* HookListener.swift */,
@@ -573,6 +579,7 @@
 				EFC543B63DC12C38938E69E7 /* EmptyStateViewTests.swift in Sources */,
 				2185CDDB44AD540DCB31275C /* FloatingWidgetPanelTests.swift in Sources */,
 				EA430EDC2166E2232996BB1F /* FloatingWidgetWindowControllerTests.swift in Sources */,
+				DDEA714DBEAE9F59A52246E1 /* HookDiagnosticsTests.swift in Sources */,
 				E5B6251F50104B7D839E2107 /* HookEventFactory.swift in Sources */,
 				0536835EBF9ED126642336F4 /* HookEventTests.swift in Sources */,
 				E571EED85EA6293D7C70BDE2 /* ITerm2JumperTests.swift in Sources */,
@@ -613,6 +620,7 @@
 				399D2EA67DA5BAF6E5600AD5 /* EmptyStateView.swift in Sources */,
 				E6AD2F8FB235BC0F741D5F1A /* FloatingWidgetPanel.swift in Sources */,
 				F9DEF37670C35DB441688F45 /* FloatingWidgetWindowController.swift in Sources */,
+				CBC59173A62FF7F665677BF9 /* HookDiagnostics.swift in Sources */,
 				DF194D2E6CD0D2CD10F3A3D3 /* HookEvent.swift in Sources */,
 				B8436C1DD5325A86473D9FFB /* HookInstaller.swift in Sources */,
 				8ECAB8E9D4C43DADEF756A7A /* HookListener.swift in Sources */,

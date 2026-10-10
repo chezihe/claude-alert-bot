@@ -146,12 +146,19 @@ func transcriptLastOutput(_ path: String) -> String? {
     return latest
 }
 
+/// Logged to hook.log to measure how often the Stop hook actually waits for the transcript.
+var transcriptWait: (attempts: Int, found: Bool)?
+
 func waitTranscriptLastOutput(_ path: String) -> String? {
     // Claude may write the final assistant line just after Stop fires — retry briefly.
     for attempt in 0..<8 {
-        if let output = transcriptLastOutput(path) { return output }
+        if let output = transcriptLastOutput(path) {
+            transcriptWait = (attempt + 1, true)
+            return output
+        }
         if attempt < 7 { usleep(100_000) }
     }
+    transcriptWait = (8, false)
     return nil
 }
 
@@ -254,7 +261,9 @@ func appendLog(envelopeJSON: String?, ppid: pid_t, cwd: String) {
         + ",\"entry\":\"hook_fire\""
         + ",\"envelope\":\(envelopeJSON ?? "null")"
         + ",\"ppid_chain\":\(jsonText(parentDescription(ppid)) ?? "\"\"")"
-        + ",\"cwd\":\(jsonText(cwd) ?? "\"\"")}\n"
+        + ",\"cwd\":\(jsonText(cwd) ?? "\"\"")"
+        + (transcriptWait.map { ",\"transcript_attempts\":\($0.attempts),\"transcript_found\":\($0.found)" } ?? "")
+        + "}\n"
     let fd = open(logPath, O_WRONLY | O_CREAT | O_APPEND, 0o644)
     guard fd >= 0 else { return }
     defer { close(fd) }

@@ -402,6 +402,19 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertNil(store.mutedProjects["alpha"])
     }
 
+    func test_lastHookEventAt_persistsAcrossInit() {
+        let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let eventAt = Date(timeIntervalSince1970: 1_700_000_000)
+
+        XCTAssertNil(SettingsStore(defaults: defaults).lastHookEventAt)
+        SettingsStore(defaults: defaults).lastHookEventAt = eventAt
+
+        XCTAssertEqual(SettingsStore(defaults: defaults).lastHookEventAt, eventAt)
+    }
+
     func test_mutedProjects_persistAcrossInit() {
         let suiteName = "SettingsStoreTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!

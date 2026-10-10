@@ -24,7 +24,7 @@ This identity is for local development only. It does not replace Developer ID di
 Configure permissions in this order on the first locally signed run.
 
 1. Run `iTerm2 Connection > Test iTerm2 connection` from the bell menu and allow Automation access.
-2. Click `Grant Accessibility…`.
+2. Open `Diagnostics` and click `Grant Accessibility…`.
 3. Enable `ClaudeAlertBot` in `System Settings > Privacy & Security > Accessibility`.
 4. Quit and relaunch the app once.
 
@@ -92,7 +92,7 @@ tccutil reset Accessibility com.claudealert.bot
 open build/export/ClaudeAlertBot.app
 ```
 
-Click `Grant Accessibility…`, enable the toggle in System Settings, then quit and relaunch the app.
+Click `Diagnostics > Grant Accessibility…`, enable the toggle in System Settings, then quit and relaunch the app.
 
 ## Inspect Logs
 

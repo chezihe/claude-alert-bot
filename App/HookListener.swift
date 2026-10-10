@@ -172,6 +172,7 @@ final class HookListener {
             // The first Stop alert fires normally (Path B trade-off — see CONTEXT D2-35).
             Task { @MainActor in
                 let store = SettingsStore.shared
+                store.lastHookEventAt = Date()
                 let threshold = store.thresholdSeconds
                 let soundOn = store.soundEnabled
                 let mutes = store.mutedProjects

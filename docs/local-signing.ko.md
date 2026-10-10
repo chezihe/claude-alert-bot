@@ -24,7 +24,7 @@ open build/export/ClaudeAlertBot.app
 처음 실행한 앱에서 다음 순서로 권한을 설정합니다.
 
 1. 벨 메뉴에서 `iTerm2 Connection > Test iTerm2 connection`을 실행하고 Automation 권한을 허용합니다.
-2. `Grant Accessibility…`를 누릅니다.
+2. `Diagnostics`를 열고 `Grant Accessibility…`를 누릅니다.
 3. `시스템 설정 > 개인정보 보호 및 보안 > 손쉬운 사용`에서 `ClaudeAlertBot`을 켭니다.
 4. 앱을 한 번 종료하고 다시 실행합니다.
 
@@ -92,7 +92,7 @@ tccutil reset Accessibility com.claudealert.bot
 open build/export/ClaudeAlertBot.app
 ```
 
-앱의 `Grant Accessibility…`를 누르고 시스템 설정에서 토글을 켠 다음 앱을 종료하고 다시 실행합니다.
+앱의 `Diagnostics > Grant Accessibility…`를 누르고 시스템 설정에서 토글을 켠 다음 앱을 종료하고 다시 실행합니다.
 
 ## 로그 확인
 

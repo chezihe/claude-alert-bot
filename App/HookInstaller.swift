@@ -87,6 +87,61 @@ enum HookInstaller {
         }
     }
 
+    // MARK: - Diagnostics checks
+
+    /// Claude hook event key → reporter event argument; the set `install` registers.
+    private static let claudeHookEvents = [
+        ("Stop", "stop"),
+        ("UserPromptSubmit", "user_prompt_submit"),
+        ("Notification", "notification"),
+        ("PostToolUse", "question_answered"),
+    ]
+    private static let codexHookEvents = [
+        ("Stop", "stop"),
+        ("UserPromptSubmit", "user_prompt_submit"),
+    ]
+
+    static func reporterURL(homeDirectory: URL) -> URL {
+        homeDirectory.appendingPathComponent(reporterRelativePath)
+    }
+
+    /// True when every hook `install` registers in ~/.claude/settings.json points at the reporter.
+    static func claudeHooksInstalled(homeDirectory: URL, fileManager: FileManager = .default) -> Bool {
+        let settingsURL = homeDirectory.appendingPathComponent(".claude/settings.json")
+        guard let settings = try? loadSettings(at: settingsURL, fileManager: fileManager) else { return false }
+        return hooksContainReporter(settings, events: claudeHookEvents)
+    }
+
+    /// nil when Codex is not installed (~/.codex missing); otherwise whether its hooks point
+    /// at the reporter, via hooks.json or inline config.toml hooks.
+    static func codexHooksInstalled(homeDirectory: URL, fileManager: FileManager = .default) -> Bool? {
+        var isDirectory: ObjCBool = false
+        let codexDir = homeDirectory.appendingPathComponent(codexDirRelativePath)
+        guard fileManager.fileExists(atPath: codexDir.path, isDirectory: &isDirectory),
+              isDirectory.boolValue
+        else { return nil }
+
+        let hooksURL = homeDirectory.appendingPathComponent(codexHooksRelativePath)
+        if fileManager.fileExists(atPath: hooksURL.path) {
+            guard let settings = try? loadSettings(at: hooksURL, fileManager: fileManager) else { return false }
+            return hooksContainReporter(settings, events: codexHookEvents)
+        }
+        let config = (try? String(contentsOf: homeDirectory.appendingPathComponent(codexConfigRelativePath),
+                                  encoding: .utf8)) ?? ""
+        return codexHookEvents.allSatisfy { config.contains("command = '\(reporterCommand(event: $0.1))'") }
+    }
+
+    private static func hooksContainReporter(_ settings: [String: Any], events: [(String, String)]) -> Bool {
+        let hooks = settings["hooks"] as? [String: Any] ?? [:]
+        return events.allSatisfy { key, event in
+            let entries = hooks[key] as? [[String: Any]] ?? []
+            return entries.contains { entry in
+                let commands = entry["hooks"] as? [[String: Any]] ?? []
+                return commands.contains { $0["command"] as? String == reporterCommand(event: event) }
+            }
+        }
+    }
+
     /// Hooks may fire at any moment, so never leave a reporter path missing: skip when
     /// unchanged, otherwise stage a copy and swap it in with an atomic rename.
     private static func installFile(from source: URL, to dest: URL, fileManager: FileManager) throws {

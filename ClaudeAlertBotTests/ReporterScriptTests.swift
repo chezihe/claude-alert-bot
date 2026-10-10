@@ -200,6 +200,65 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertEqual((envelope["last_output"] as? String)?.utf8.count, 4_096)
     }
 
+    func test_reporterRunsWithoutPython() throws {
+        let envelope = try runReporterEnvelope(
+            executable: bundledReporterURL(),
+            arguments: ["user_prompt_submit"],
+            stdin: #"{"session_id":"sid-no-python","cwd":"/tmp/project"}"#,
+            environmentOverrides: ["PATH": "/nonexistent"]
+        )
+
+        XCTAssertEqual(envelope?["session_id"] as? String, "sid-no-python")
+        XCTAssertEqual(envelope?["event"] as? String, "user_prompt_submit")
+    }
+
+    func test_legacyShimExecsInstalledReporter() throws {
+        let installDir = tempHome.appendingPathComponent("Library/Application Support/ClaudeAlertBot")
+        try FileManager.default.createDirectory(at: installDir, withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: bundledReporterURL(),
+                                         to: installDir.appendingPathComponent("cab-report"))
+        let shim = installDir.appendingPathComponent("cab-report.sh")
+        try FileManager.default.copyItem(at: repoRootURL().appendingPathComponent("Reporter/cab-report.sh"), to: shim)
+
+        let envelope = try runReporterEnvelope(
+            executable: URL(fileURLWithPath: "/bin/sh"),
+            arguments: [shim.path, "notification"],
+            stdin: #"{"session_id":"sid-shim","cwd":"/tmp/project","message":"waiting"}"#
+        )
+
+        XCTAssertEqual(envelope?["session_id"] as? String, "sid-shim")
+        XCTAssertEqual(envelope?["kind"] as? String, "waiting")
+    }
+
+    func test_legacyShimWithoutReporterExitsQuietly() throws {
+        try runReporterProcess(
+            executable: URL(fileURLWithPath: "/bin/sh"),
+            arguments: [repoRootURL().appendingPathComponent("Reporter/cab-report.sh").path, "stop"],
+            stdin: #"{"session_id":"sid-shim"}"#
+        )
+
+        let logURL = tempHome.appendingPathComponent("Library/Logs/ClaudeAlertBot/hook.log")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: logURL.path))
+    }
+
+    func test_hookInstallerInstallsLegacyShimNextToReporter() throws {
+        let reporter = tempHome.appendingPathComponent("source-cab-report")
+        try "binary".write(to: reporter, atomically: true, encoding: .utf8)
+        let shim = tempHome.appendingPathComponent("source-cab-report.sh")
+        try "#!/bin/sh\nexit 0\n".write(to: shim, atomically: true, encoding: .utf8)
+
+        try HookInstaller.install(reporterSourceURL: reporter, shimSourceURL: shim, homeDirectory: tempHome)
+
+        let installDir = tempHome.appendingPathComponent("Library/Application Support/ClaudeAlertBot")
+        XCTAssertEqual(try String(contentsOf: installDir.appendingPathComponent("cab-report"), encoding: .utf8), "binary")
+        XCTAssertEqual(try String(contentsOf: installDir.appendingPathComponent("cab-report.sh"), encoding: .utf8),
+                       "#!/bin/sh\nexit 0\n")
+        let shimMode = try FileManager.default.attributesOfItem(
+            atPath: installDir.appendingPathComponent("cab-report.sh").path
+        )[.posixPermissions] as? NSNumber
+        XCTAssertEqual(shimMode?.intValue, 0o700)
+    }
+
     func test_hookInstallerCopiesReporterAndCreatesClaudeHooks() throws {
         let reporter = tempHome.appendingPathComponent("source-cab-report.sh")
         try "#!/bin/sh\nexit 0\n".write(to: reporter, atomically: true, encoding: .utf8)
@@ -207,26 +266,26 @@ final class ReporterScriptTests: XCTestCase {
         try HookInstaller.install(reporterSourceURL: reporter, homeDirectory: tempHome)
 
         let installedReporter = tempHome
-            .appendingPathComponent("Library/Application Support/ClaudeAlertBot/cab-report.sh")
+            .appendingPathComponent("Library/Application Support/ClaudeAlertBot/cab-report")
         XCTAssertTrue(FileManager.default.fileExists(atPath: installedReporter.path))
         let installedMode = try FileManager.default.attributesOfItem(atPath: installedReporter.path)[.posixPermissions] as? NSNumber
         XCTAssertEqual(installedMode?.intValue, 0o700)
 
         let hooks = try loadInstalledHooks()
         XCTAssertEqual(cabCommands(in: hooks, event: "Stop"), [
-            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" stop"
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" stop"
         ])
         XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit"), [
-            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" user_prompt_submit"
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" user_prompt_submit"
         ])
         XCTAssertEqual(cabCommands(in: hooks, event: "Notification"), [
-            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" notification"
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" notification"
         ])
         XCTAssertEqual(matchers(in: hooks, event: "Notification"), [
             "permission_prompt|elicitation_dialog"
         ])
         XCTAssertEqual(cabCommands(in: hooks, event: "PostToolUse"), [
-            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" question_answered"
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" question_answered"
         ])
         XCTAssertEqual(matchers(in: hooks, event: "PostToolUse"), ["AskUserQuestion"])
     }
@@ -244,10 +303,10 @@ final class ReporterScriptTests: XCTestCase {
 
         let hooks = try loadInstalledCodexHooks()
         XCTAssertEqual(cabCommands(in: hooks, event: "Stop"), [
-            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" stop"
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" stop"
         ])
         XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit"), [
-            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" user_prompt_submit"
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" user_prompt_submit"
         ])
 
         let config = try String(contentsOf: codexDir.appendingPathComponent("config.toml"), encoding: .utf8)
@@ -330,9 +389,9 @@ final class ReporterScriptTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: codexDir.appendingPathComponent("hooks.json").path))
 
         let config = try String(contentsOf: codexDir.appendingPathComponent("config.toml"), encoding: .utf8)
-        XCTAssertEqual(config.components(separatedBy: "ClaudeAlertBot/cab-report.sh").count - 1, 2)
-        XCTAssertEqual(config.components(separatedBy: "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" stop").count - 1, 1)
-        XCTAssertEqual(config.components(separatedBy: "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" user_prompt_submit").count - 1, 1)
+        XCTAssertEqual(config.components(separatedBy: "ClaudeAlertBot/cab-report").count - 1, 2)
+        XCTAssertEqual(config.components(separatedBy: "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" stop").count - 1, 1)
+        XCTAssertEqual(config.components(separatedBy: "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" user_prompt_submit").count - 1, 1)
         XCTAssertFalse(config.contains("old/ClaudeAlertBot/cab-report.sh"))
         XCTAssertTrue(config.contains(#"command = "echo keep""#))
     }
@@ -379,10 +438,10 @@ final class ReporterScriptTests: XCTestCase {
 
         let hooks = try loadInstalledCodexHooks()
         XCTAssertEqual(cabCommands(in: hooks, event: "Stop"), [
-            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" stop"
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" stop"
         ])
         XCTAssertEqual(cabCommands(in: hooks, event: "UserPromptSubmit"), [
-            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" user_prompt_submit"
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" user_prompt_submit"
         ])
 
         let config = try String(contentsOf: codexDir.appendingPathComponent("config.toml"), encoding: .utf8)
@@ -395,13 +454,13 @@ final class ReporterScriptTests: XCTestCase {
 
         let hooks = try loadInstalledHooks()
         XCTAssertEqual(cabCommands(in: hooks, event: "Notification"), [
-            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" notification"
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" notification"
         ])
         XCTAssertEqual(matchers(in: hooks, event: "Notification"), [
             "permission_prompt|elicitation_dialog"
         ])
         XCTAssertEqual(cabCommands(in: hooks, event: "PostToolUse"), [
-            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" question_answered"
+            "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" question_answered"
         ])
         XCTAssertEqual(matchers(in: hooks, event: "PostToolUse"), ["AskUserQuestion"])
     }
@@ -555,8 +614,8 @@ final class ReporterScriptTests: XCTestCase {
 
         XCTAssertFalse(FileManager.default.fileExists(atPath: codexDir.appendingPathComponent("hooks.json").path))
         let config = try String(contentsOf: codexDir.appendingPathComponent("config.toml"), encoding: .utf8)
-        XCTAssertEqual(config.components(separatedBy: "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" stop").count - 1, 1)
-        XCTAssertEqual(config.components(separatedBy: "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" user_prompt_submit").count - 1, 1)
+        XCTAssertEqual(config.components(separatedBy: "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" stop").count - 1, 1)
+        XCTAssertEqual(config.components(separatedBy: "\"$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" user_prompt_submit").count - 1, 1)
         XCTAssertFalse(config.contains("old/ClaudeAlertBot/cab-report.sh"))
         XCTAssertTrue(config.contains(#"command = "echo keep""#))
     }
@@ -790,18 +849,38 @@ final class ReporterScriptTests: XCTestCase {
     }
 
     private func runReporterEnvelope(event: String = "stop", stdin: String) throws -> [String: Any]? {
-        let repoRoot = repoRootURL()
-        let reporter = repoRoot.appendingPathComponent("Reporter/cab-report.sh")
+        try runReporterEnvelope(executable: bundledReporterURL(), arguments: [event], stdin: stdin)
+    }
 
+    private func runReporterEnvelope(executable: URL,
+                                     arguments: [String],
+                                     stdin: String,
+                                     environmentOverrides: [String: String] = [:]) throws -> [String: Any]? {
+        try runReporterProcess(executable: executable, arguments: arguments, stdin: stdin,
+                               environmentOverrides: environmentOverrides)
+        let logURL = tempHome
+            .appendingPathComponent("Library/Logs/ClaudeAlertBot/hook.log")
+        let log = try String(contentsOf: logURL, encoding: .utf8)
+        let line = try XCTUnwrap(log.split(separator: "\n").last)
+        let data = Data(line.utf8)
+        let outer = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        return outer["envelope"] as? [String: Any]
+    }
+
+    private func runReporterProcess(executable: URL,
+                                    arguments: [String],
+                                    stdin: String,
+                                    environmentOverrides: [String: String] = [:]) throws {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/sh")
-        process.arguments = [reporter.path, event]
-        process.currentDirectoryURL = repoRoot
+        process.executableURL = executable
+        process.arguments = arguments
+        process.currentDirectoryURL = repoRootURL()
         var environment = ProcessInfo.processInfo.environment
         environment["HOME"] = tempHome.path
         environment["ITERM_SESSION_ID"] = ""
         environment["TERM_PROGRAM"] = ""
         environment["CLAUDE_PROJECT_DIR"] = ""
+        environment.merge(environmentOverrides) { _, new in new }
         process.environment = environment
 
         let input = Pipe()
@@ -819,14 +898,11 @@ final class ReporterScriptTests: XCTestCase {
         let output = String(data: outputData, encoding: .utf8) ?? ""
         XCTAssertEqual(process.terminationStatus, 0, output)
         XCTAssertTrue(output.isEmpty, "reporter wrote to stdout/stderr: \(output)")
+    }
 
-        let logURL = tempHome
-            .appendingPathComponent("Library/Logs/ClaudeAlertBot/hook.log")
-        let log = try String(contentsOf: logURL, encoding: .utf8)
-        let line = try XCTUnwrap(log.split(separator: "\n").last)
-        let data = Data(line.utf8)
-        let outer = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
-        return outer["envelope"] as? [String: Any]
+    private func bundledReporterURL() throws -> URL {
+        try XCTUnwrap(Bundle.main.url(forAuxiliaryExecutable: "cab-report"),
+                      "cab-report must be embedded in Contents/MacOS")
     }
 
     @discardableResult
@@ -871,11 +947,11 @@ final class ReporterScriptTests: XCTestCase {
     }
 
     private func cabCommands(in hooks: [String: Any], event: String) -> [String] {
-        commands(in: hooks, event: event).filter { $0.contains("ClaudeAlertBot/cab-report.sh") }
+        commands(in: hooks, event: event).filter { $0.contains("ClaudeAlertBot/cab-report") }
     }
 
     private func otherCommands(in hooks: [String: Any], event: String) -> [String] {
-        commands(in: hooks, event: event).filter { !$0.contains("ClaudeAlertBot/cab-report.sh") }
+        commands(in: hooks, event: event).filter { !$0.contains("ClaudeAlertBot/cab-report") }
     }
 
     private func matchers(in hooks: [String: Any], event: String) -> [String] {

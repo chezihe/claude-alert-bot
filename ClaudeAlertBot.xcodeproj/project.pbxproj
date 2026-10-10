@@ -62,6 +62,7 @@
 		C2E97DBA3A369EDCD3C83066 /* PermissionDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4727020E044B4D9690900BC4 /* PermissionDeepLink.swift */; };
 		C4488CFEBDE80820E8D541D6 /* ITerm2Jumper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 448CBA41A1B75922D5F85801 /* ITerm2Jumper.swift */; };
 		C45C96766C5267557278EABB /* IdleAnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CA41D38B7C594A1BEF806E /* IdleAnimationTests.swift */; };
+		C73E74AC8F7704391017FF17 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 475896401C55A5D20FD0DA99 /* main.swift */; };
 		C7419C65428643DFBE1C1607 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F0532EA5559479069D65C1F /* SettingsStore.swift */; };
 		C8F82E4C8E04670D6473A5D6 /* MockTerminalJumper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76DCB8BF2B9B7D78E4D3BD9B /* MockTerminalJumper.swift */; };
 		D3761DE8508B62CF82C7ACA3 /* iTermSessionID.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB92DF8ECD2021AD37F1AAC /* iTermSessionID.swift */; };
@@ -85,6 +86,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		0F682A9A24C80B714F22FF5E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 84897E797E6747BEE564B262 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9CED5094BC7E893C71F60393;
+			remoteInfo = "cab-report";
+		};
 		3BC07237C511F9B9F5C792A5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 84897E797E6747BEE564B262 /* Project object */;
@@ -120,6 +128,7 @@
 		1D54D1C911C95F984BA6C8A1 /* HookListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookListener.swift; sourceTree = "<group>"; };
 		1E3620A12CD42DCB6520993E /* MacBookProjectile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacBookProjectile.swift; sourceTree = "<group>"; };
 		22B1AABE29B040176423CE0A /* SettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStoreTests.swift; sourceTree = "<group>"; };
+		24A42C7035FEBD7723C5E1DC /* cab-report */ = {isa = PBXFileReference; includeInIndex = 0; path = "cab-report"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F0532EA5559479069D65C1F /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		31A323BB2411675DC8255249 /* MotionKeyframesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionKeyframesTests.swift; sourceTree = "<group>"; };
 		36BDD5D1C291C8C40FA6F82D /* NotificationOrchestratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOrchestratorTests.swift; sourceTree = "<group>"; };
@@ -127,6 +136,7 @@
 		422669922C84673FA026FD1E /* HookEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookEvent.swift; sourceTree = "<group>"; };
 		448CBA41A1B75922D5F85801 /* ITerm2Jumper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ITerm2Jumper.swift; sourceTree = "<group>"; };
 		4727020E044B4D9690900BC4 /* PermissionDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionDeepLink.swift; sourceTree = "<group>"; };
+		475896401C55A5D20FD0DA99 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		4BCACF080D2BE209AC3408BB /* PopoverRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverRowView.swift; sourceTree = "<group>"; };
 		4EFE56B7A8F24FC8FDBB7726 /* ClaudeAlertBot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeAlertBot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		50B23882ED554CD89626EEA0 /* SessionRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRecord.swift; sourceTree = "<group>"; };
@@ -228,6 +238,7 @@
 				D5C7AB92EAD16F65A91511C8 /* CabTest */,
 				26BFE5704E04E26F882FA447 /* ClaudeAlertBotTests */,
 				6BF0BF9E7E6228209D290875 /* Config */,
+				66708FF9E5C09EC379D6F7E0 /* Reporter */,
 				4423C7D43C199FFDFEBE574E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -287,11 +298,21 @@
 		4423C7D43C199FFDFEBE574E /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				24A42C7035FEBD7723C5E1DC /* cab-report */,
 				9A4CF07859800DE5173D901A /* cab-test */,
 				4EFE56B7A8F24FC8FDBB7726 /* ClaudeAlertBot.app */,
 				62D8CC37BBF74C6D6DCAEADF /* ClaudeAlertBotTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		66708FF9E5C09EC379D6F7E0 /* Reporter */ = {
+			isa = PBXGroup;
+			children = (
+				475896401C55A5D20FD0DA99 /* main.swift */,
+			);
+			name = Reporter;
+			path = Reporter;
 			sourceTree = "<group>";
 		};
 		6BF0BF9E7E6228209D290875 /* Config */ = {
@@ -366,14 +387,16 @@
 			buildPhases = (
 				B37F43BA76B7FF38C73C91D7 /* Sources */,
 				E91A92EBBEF2F146AF2DE9BA /* Resources */,
+				38DC868A4D9356DAD616F14A /* Embed cab-report hook reporter into Contents/MacOS */,
 				64AA2AC3ADACB0F5DCB01F42 /* Embed cab-test helper into Contents/MacOS */,
-				D838B4AB29EFC4F6F0B17286 /* Embed Reporter shell script */,
+				6E46B4439CEED0A036C9136D /* Embed legacy cab-report.sh shim */,
 				214E95C7A496D9555B390419 /* Embed adventure widget assets */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				05B4060F23882B9118F84C74 /* PBXTargetDependency */,
+				308349B32709E18439292BDF /* PBXTargetDependency */,
 			);
 			name = ClaudeAlertBot;
 			packageProductDependencies = (
@@ -381,6 +404,23 @@
 			productName = ClaudeAlertBot;
 			productReference = 4EFE56B7A8F24FC8FDBB7726 /* ClaudeAlertBot.app */;
 			productType = "com.apple.product-type.application";
+		};
+		9CED5094BC7E893C71F60393 /* cab-report */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F61EDE851ABB47D4599B818B /* Build configuration list for PBXNativeTarget "cab-report" */;
+			buildPhases = (
+				F3B519E9E6075F26587077C3 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "cab-report";
+			packageProductDependencies = (
+			);
+			productName = "cab-report";
+			productReference = 24A42C7035FEBD7723C5E1DC /* cab-report */;
+			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
@@ -398,6 +438,9 @@
 						ProvisioningStyle = Manual;
 					};
 					823DB98E11E4259B1256DB07 = {
+						ProvisioningStyle = Manual;
+					};
+					9CED5094BC7E893C71F60393 = {
 						ProvisioningStyle = Manual;
 					};
 				};
@@ -418,6 +461,7 @@
 			targets = (
 				823DB98E11E4259B1256DB07 /* ClaudeAlertBot */,
 				4AECCF09EEDC2BE89E5F9C13 /* ClaudeAlertBotTests */,
+				9CED5094BC7E893C71F60393 /* cab-report */,
 				56E080BC3FA9D36D01D8287A /* cab-test */,
 			);
 		};
@@ -453,6 +497,24 @@
 			shellPath = /bin/sh;
 			shellScript = "SRC=\"${SRCROOT}/App/Resources/adventure-widget\"\nDEST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/adventure-widget\"\nif [ -d \"$SRC\" ]; then\n    rm -rf \"$DEST\"\n    mkdir -p \"$DEST\"\n    cp -R \"$SRC\"/. \"$DEST\"/\n    find \"$DEST\" -name .DS_Store -delete\nfi\n";
 		};
+		38DC868A4D9356DAD616F14A /* Embed cab-report hook reporter into Contents/MacOS */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed cab-report hook reporter into Contents/MacOS";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "SRC=\"${BUILT_PRODUCTS_DIR}/cab-report\"\nDEST=\"${TARGET_BUILD_DIR}/${EXECUTABLE_FOLDER_PATH}/cab-report\"\n# Shipped in every configuration — HookInstaller copies it into Application Support.\nif [ -f \"$SRC\" ]; then\n    cp \"$SRC\" \"$DEST\"\n    chmod +x \"$DEST\"\nfi\n";
+		};
 		64AA2AC3ADACB0F5DCB01F42 /* Embed cab-test helper into Contents/MacOS */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -471,7 +533,7 @@
 			shellPath = /bin/sh;
 			shellScript = "SRC=\"${BUILT_PRODUCTS_DIR}/cab-test\"\nDEST=\"${TARGET_BUILD_DIR}/${EXECUTABLE_FOLDER_PATH}/cab-test\"\n# Dev smoke-test helper — never ship it in Release bundles.\nif [ \"$CONFIGURATION\" = \"Debug\" ] && [ -f \"$SRC\" ]; then\n    cp \"$SRC\" \"$DEST\"\n    chmod +x \"$DEST\"\n    codesign --force --sign - \"$DEST\" 2>/dev/null || true\nfi\n";
 		};
-		D838B4AB29EFC4F6F0B17286 /* Embed Reporter shell script */ = {
+		6E46B4439CEED0A036C9136D /* Embed legacy cab-report.sh shim */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -480,7 +542,7 @@
 			);
 			inputPaths = (
 			);
-			name = "Embed Reporter shell script";
+			name = "Embed legacy cab-report.sh shim";
 			outputFileListPaths = (
 			);
 			outputPaths = (
@@ -587,6 +649,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F3B519E9E6075F26587077C3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C73E74AC8F7704391017FF17 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -594,6 +664,11 @@
 			isa = PBXTargetDependency;
 			target = 56E080BC3FA9D36D01D8287A /* cab-test */;
 			targetProxy = 432A4AA980FA1A622F745884 /* PBXContainerItemProxy */;
+		};
+		308349B32709E18439292BDF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9CED5094BC7E893C71F60393 /* cab-report */;
+			targetProxy = 0F682A9A24C80B714F22FF5E /* PBXContainerItemProxy */;
 		};
 		8A373EC483D5DE742C92779D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -603,6 +678,25 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		207676ED6A9DEAF82A59BF8F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5;
+			};
+			name = Release;
+		};
 		37D924460EDE1F5698BCC340 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -802,6 +896,25 @@
 			};
 			name = Debug;
 		};
+		D8B33640BD232EF08248E80E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5;
+			};
+			name = Debug;
+		};
 		E0A361A3800C01E66F7DEDC8 /* Release */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = B3E12D9B2DFED8560A392772 /* Signing.xcconfig */;
@@ -878,6 +991,15 @@
 			buildConfigurations = (
 				5779079A67E51A7A71AD5E93 /* Debug */,
 				E0A361A3800C01E66F7DEDC8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F61EDE851ABB47D4599B818B /* Build configuration list for PBXNativeTarget "cab-report" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D8B33640BD232EF08248E80E /* Debug */,
+				207676ED6A9DEAF82A59BF8F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

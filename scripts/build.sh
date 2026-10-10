@@ -130,6 +130,11 @@ echo "=== $SIGN_MODE signing ==="
 if [ -f "$APP/Contents/MacOS/cab-test" ]; then
     sign_code --options=runtime "$APP/Contents/MacOS/cab-test"
 fi
+if [ ! -f "$APP/Contents/MacOS/cab-report" ]; then
+    echo "FAIL: cab-report hook reporter missing from bundle" >&2
+    exit 1
+fi
+sign_code --options=runtime "$APP/Contents/MacOS/cab-report"
 sign_code --options=runtime --entitlements "$ENTITLEMENTS" "$APP/Contents/MacOS/ClaudeAlertBot"
 # Bundle seal LAST
 sign_code --options=runtime --entitlements "$ENTITLEMENTS" "$APP"
@@ -138,6 +143,7 @@ sign_code --options=runtime --entitlements "$ENTITLEMENTS" "$APP"
 echo "=== Verifying signatures ==="
 BUNDLE_SIG=$(codesign -dv --verbose=4 "$APP" 2>&1 | grep -E '^Signature=' | head -1 || true)
 MAIN_SIG=$(codesign -dv --verbose=4 "$APP/Contents/MacOS/ClaudeAlertBot" 2>&1 | grep -E '^Signature=' | head -1 || true)
+REPORTER_SIG=$(codesign -dv --verbose=4 "$APP/Contents/MacOS/cab-report" 2>&1 | grep -E '^Signature=' | head -1 || true)
 
 CABTEST_SIG=""
 if [ -f "$APP/Contents/MacOS/cab-test" ]; then
@@ -151,6 +157,10 @@ if [[ "$SIGN_MODE" == "ad-hoc" ]]; then
     fi
     if ! echo "$MAIN_SIG" | grep -q "Signature=adhoc"; then
         echo "FAIL: main executable is not ad-hoc signed: $MAIN_SIG" >&2
+        exit 1
+    fi
+    if ! echo "$REPORTER_SIG" | grep -q "Signature=adhoc"; then
+        echo "FAIL: cab-report is not ad-hoc signed: $REPORTER_SIG" >&2
         exit 1
     fi
     if [[ -n "$CABTEST_SIG" ]] && ! echo "$CABTEST_SIG" | grep -q "Signature=adhoc"; then
@@ -184,6 +194,8 @@ else
     BUNDLE_SIG="Authority=$IDENTITY_NAME"
     verify_local_signature "main executable" "$APP/Contents/MacOS/ClaudeAlertBot"
     MAIN_SIG="Authority=$IDENTITY_NAME"
+    verify_local_signature "cab-report" "$APP/Contents/MacOS/cab-report"
+    REPORTER_SIG="Authority=$IDENTITY_NAME"
     if [ -f "$APP/Contents/MacOS/cab-test" ]; then
         verify_local_signature "cab-test" "$APP/Contents/MacOS/cab-test"
         CABTEST_SIG="Authority=$IDENTITY_NAME"
@@ -197,6 +209,7 @@ echo "=== Build complete ==="
 echo "App: $APP"
 echo "Bundle: $BUNDLE_SIG"
 echo "Main:   $MAIN_SIG"
+echo "Reporter: $REPORTER_SIG"
 if [[ -n "${CABTEST_SIG:-}" ]]; then
     echo "CabTest: $CABTEST_SIG"
 fi

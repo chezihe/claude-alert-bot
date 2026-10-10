@@ -217,7 +217,7 @@ final class SessionRegistryTests: XCTestCase {
     }
 
     /// Reorder guard — a delayed stop whose ts predates the current in-flight start (the
-    /// user replied within cab-report.sh's transcript-wait window, so a newer
+    /// user replied within cab-report's transcript-wait window, so a newer
     /// user_prompt_submit landed first) is stale and must NOT create an alert — even for
     /// error kind, which otherwise bypasses the threshold. The newer turn stays in flight.
     func test_ingest_staleStop_reorderedBehindNewerPrompt_discarded() async {

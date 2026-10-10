@@ -43,6 +43,20 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "9CED5094BC7E893C71F60393"
+               BuildableName = "cab-report"
+               BlueprintName = "cab-report"
+               ReferencedContainer = "container:ClaudeAlertBot.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "56E080BC3FA9D36D01D8287A"
                BuildableName = "cab-test"
                BlueprintName = "cab-test"

@@ -7,9 +7,11 @@
 set -uo pipefail
 
 REPO_ROOT=$(cd "$(dirname "$0")/.." && pwd)
-SRC_REPORTER="$REPO_ROOT/Reporter/cab-report.sh"
+SRC_SHIM="$REPO_ROOT/Reporter/cab-report.sh"
+SRC_REPORTER="${CAB_REPORT_BIN:-$REPO_ROOT/build/export/ClaudeAlertBot.app/Contents/MacOS/cab-report}"
 USER_DATA_DIR="$HOME/Library/Application Support/ClaudeAlertBot"
-DEST_REPORTER="$USER_DATA_DIR/cab-report.sh"
+DEST_SHIM="$USER_DATA_DIR/cab-report.sh"
+DEST_REPORTER="$USER_DATA_DIR/cab-report"
 SETTINGS="$HOME/.claude/settings.json"
 CODEX_DIR="$HOME/.codex"
 CODEX_HOOKS="$CODEX_DIR/hooks.json"
@@ -27,14 +29,16 @@ EOF
 }
 
 copy_reporter() {
-    if [ ! -f "$SRC_REPORTER" ]; then
-        echo "error: $SRC_REPORTER missing — Plan 02 not yet shipped?" >&2
-        exit 1
-    fi
     mkdir -p "$USER_DATA_DIR"
-    cp "$SRC_REPORTER" "$DEST_REPORTER"
-    chmod +x "$DEST_REPORTER"
-    echo "Copied Reporter to: $DEST_REPORTER"
+    if [ -f "$SRC_REPORTER" ]; then
+        cp "$SRC_REPORTER" "$DEST_REPORTER"
+        chmod +x "$DEST_REPORTER"
+        echo "Copied Reporter to: $DEST_REPORTER"
+    else
+        echo "warning: $SRC_REPORTER missing — run scripts/build.sh first or set CAB_REPORT_BIN" >&2
+    fi
+    cp "$SRC_SHIM" "$DEST_SHIM"
+    chmod +x "$DEST_SHIM"
 }
 
 snippet() {
@@ -48,7 +52,7 @@ snippet() {
       {
         "matcher": "",
         "hooks": [
-          { "type": "command", "command": "\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" stop", "timeout": 5 }
+          { "type": "command", "command": "\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" stop", "timeout": 5 }
         ]
       }
     ],
@@ -56,7 +60,7 @@ snippet() {
       {
         "matcher": "",
         "hooks": [
-          { "type": "command", "command": "\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" user_prompt_submit", "timeout": 5 }
+          { "type": "command", "command": "\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" user_prompt_submit", "timeout": 5 }
         ]
       }
     ],
@@ -64,7 +68,7 @@ snippet() {
       {
         "matcher": "permission_prompt|elicitation_dialog",
         "hooks": [
-          { "type": "command", "command": "\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" notification", "timeout": 5 }
+          { "type": "command", "command": "\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" notification", "timeout": 5 }
         ]
       }
     ],
@@ -72,7 +76,7 @@ snippet() {
       {
         "matcher": "AskUserQuestion",
         "hooks": [
-          { "type": "command", "command": "\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh\" question_answered", "timeout": 5 }
+          { "type": "command", "command": "\"\$HOME/Library/Application Support/ClaudeAlertBot/cab-report\" question_answered", "timeout": 5 }
         ]
       }
     ]
@@ -113,7 +117,7 @@ except Exception as e:
 
 existing.setdefault("hooks", {})
 
-cab_marker = "ClaudeAlertBot/cab-report.sh"
+cab_marker = "ClaudeAlertBot/cab-report"
 
 def merge_event(name):
     new_entries = snippet["hooks"][name]
@@ -153,7 +157,7 @@ import json, os, sys
 hooks_path = os.environ["CODEX_HOOKS_PATH"]
 config_path = os.environ["CODEX_CONFIG_PATH"]
 snippet = json.loads(os.environ["SNIPPET"])
-cab_marker = "ClaudeAlertBot/cab-report.sh"
+cab_marker = "ClaudeAlertBot/cab-report"
 
 def strip_json_comments(text):
     result = []
@@ -366,14 +370,14 @@ def append_inline_hooks(text):
 matcher = ""
 [[hooks.Stop.hooks]]
 type = "command"
-command = '"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh" stop'
+command = '"$HOME/Library/Application Support/ClaudeAlertBot/cab-report" stop'
 timeout = 5
 
 [[hooks.UserPromptSubmit]]
 matcher = ""
 [[hooks.UserPromptSubmit.hooks]]
 type = "command"
-command = '"$HOME/Library/Application Support/ClaudeAlertBot/cab-report.sh" user_prompt_submit'
+command = '"$HOME/Library/Application Support/ClaudeAlertBot/cab-report" user_prompt_submit'
 timeout = 5
 """
     return text + block

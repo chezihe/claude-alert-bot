@@ -59,11 +59,13 @@ The app is controlled from its bell icon in the menu bar. Configure permissions 
 
 Later rebuilds reuse the same permission while the bundle identifier and local certificate remain unchanged. See [Local Signing And Accessibility Permission](docs/local-signing.md) for identity management, ad-hoc builds, and recovery steps.
 
-On launch, the app copies the bundled reporter script to:
+On launch, the app copies the bundled reporter (a small compiled helper with no python3 dependency) to:
 
 ```text
-~/Library/Application Support/ClaudeAlertBot/cab-report.sh
+~/Library/Application Support/ClaudeAlertBot/cab-report
 ```
+
+A `cab-report.sh` shim is installed next to it so Claude sessions started before an upgrade keep reporting.
 
 It then merges hook registrations into:
 

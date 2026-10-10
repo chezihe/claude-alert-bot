@@ -1,14 +1,18 @@
-// App/HookInstaller.swift — installs the bundled cab-report.sh and the Claude/Codex hook
-// entries that invoke it. Extracted from AppDelegate.swift (lifecycle file): everything in
-// here is pure file/JSON/TOML manipulation with no AppKit dependency.
+// App/HookInstaller.swift — installs the bundled cab-report reporter (plus the legacy
+// cab-report.sh shim) and the Claude/Codex hook entries that invoke it. Extracted from
+// AppDelegate.swift (lifecycle file): everything in here is pure file/JSON/TOML manipulation
+// with no AppKit dependency.
 // Tested by ReporterScriptTests (install idempotency, comment/CRLF tolerance, codex paths).
 import Foundation
 import os
 
 enum HookInstaller {
     private static let log = Logger(subsystem: "com.claudealert.bot.hook", category: "lifecycle")
-    private static let cabMarker = "ClaudeAlertBot/cab-report.sh"
-    private static let reporterRelativePath = "Library/Application Support/ClaudeAlertBot/cab-report.sh"
+    /// Matches both the current binary and legacy `cab-report.sh` commands, so re-registering
+    /// replaces old `.sh` entries in place.
+    private static let cabMarker = "ClaudeAlertBot/cab-report"
+    private static let reporterRelativePath = "Library/Application Support/ClaudeAlertBot/cab-report"
+    private static let legacyShimRelativePath = "Library/Application Support/ClaudeAlertBot/cab-report.sh"
 
     /// Shell command a hook runs for `event` — single source for Claude JSON and Codex TOML.
     static func reporterCommand(event: String) -> String {
@@ -20,12 +24,13 @@ enum HookInstaller {
 
     static func installBundledReporterIfNeeded(bundle: Bundle = .main,
                                                 homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) {
-        guard let reporter = bundle.url(forResource: "cab-report", withExtension: "sh") else {
-            log.error("bundled cab-report.sh missing; hook install skipped")
+        guard let reporter = bundle.url(forAuxiliaryExecutable: "cab-report") else {
+            log.error("bundled cab-report missing; hook install skipped")
             return
         }
+        let shim = bundle.url(forResource: "cab-report", withExtension: "sh")
         do {
-            try install(reporterSourceURL: reporter, homeDirectory: homeDirectory)
+            try install(reporterSourceURL: reporter, shimSourceURL: shim, homeDirectory: homeDirectory)
             log.notice("Claude Alert Bot hooks installed")
         } catch {
             log.error("Claude Alert Bot hook install failed: \(String(describing: error), privacy: .public)")
@@ -33,27 +38,20 @@ enum HookInstaller {
     }
 
     static func install(reporterSourceURL: URL,
+                        shimSourceURL: URL? = nil,
                         homeDirectory: URL,
                         fileManager: FileManager = .default) throws {
         let reporterDest = homeDirectory.appendingPathComponent(reporterRelativePath)
-        let appSupportDir = reporterDest.deletingLastPathComponent()
-        try fileManager.createDirectory(at: appSupportDir,
+        try fileManager.createDirectory(at: reporterDest.deletingLastPathComponent(),
                                         withIntermediateDirectories: true,
                                         attributes: [.posixPermissions: 0o700])
-        // Hooks may fire at any moment, so never leave the reporter path missing: skip when
-        // unchanged, otherwise stage a copy and swap it in with an atomic rename.
-        let reporterData = try Data(contentsOf: reporterSourceURL)
-        if (try? Data(contentsOf: reporterDest)) != reporterData {
-            let staged = appSupportDir.appendingPathComponent(".cab-report.sh.\(UUID().uuidString)")
-            try reporterData.write(to: staged)
-            try fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: staged.path)
-            if rename(staged.path, reporterDest.path) != 0 {
-                let code = errno
-                try? fileManager.removeItem(at: staged)
-                throw POSIXError(POSIXErrorCode(rawValue: code) ?? .EIO)
-            }
+        // Binary first, so the shim never points at a missing reporter.
+        try installFile(from: reporterSourceURL, to: reporterDest, fileManager: fileManager)
+        if let shimSourceURL {
+            try installFile(from: shimSourceURL,
+                            to: homeDirectory.appendingPathComponent(legacyShimRelativePath),
+                            fileManager: fileManager)
         }
-        try fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: reporterDest.path)
 
         let claudeDir = homeDirectory.appendingPathComponent(".claude")
         try fileManager.createDirectory(at: claudeDir,
@@ -87,6 +85,24 @@ enum HookInstaller {
         } catch {
             log.warning("Codex hook install skipped: \(String(describing: error), privacy: .public)")
         }
+    }
+
+    /// Hooks may fire at any moment, so never leave a reporter path missing: skip when
+    /// unchanged, otherwise stage a copy and swap it in with an atomic rename.
+    private static func installFile(from source: URL, to dest: URL, fileManager: FileManager) throws {
+        let data = try Data(contentsOf: source)
+        if (try? Data(contentsOf: dest)) != data {
+            let staged = dest.deletingLastPathComponent()
+                .appendingPathComponent(".\(dest.lastPathComponent).\(UUID().uuidString)")
+            try data.write(to: staged)
+            try fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: staged.path)
+            if rename(staged.path, dest.path) != 0 {
+                let code = errno
+                try? fileManager.removeItem(at: staged)
+                throw POSIXError(POSIXErrorCode(rawValue: code) ?? .EIO)
+            }
+        }
+        try fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: dest.path)
     }
 
     private static func installCodexHooksIfNeeded(homeDirectory: URL,

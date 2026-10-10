@@ -60,11 +60,13 @@ open build/export/ClaudeAlertBot.app
 
 이후 bundle identifier와 로컬 인증서가 유지되는 동안에는 재빌드해도 같은 권한을 재사용합니다. 자세한 서명 관리, ad-hoc 빌드, 권한 복구 방법은 [로컬 서명 및 손쉬운 사용 권한](docs/local-signing.ko.md)을 참고하세요.
 
-앱이 실행되면 번들된 reporter 스크립트를 아래 경로로 복사합니다.
+앱이 실행되면 번들된 reporter(python3 없이 동작하는 작은 컴파일된 helper)를 아래 경로로 복사합니다.
 
 ```text
-~/Library/Application Support/ClaudeAlertBot/cab-report.sh
+~/Library/Application Support/ClaudeAlertBot/cab-report
 ```
+
+업그레이드 전에 시작된 Claude 세션도 계속 알림을 보낼 수 있도록 같은 위치에 `cab-report.sh` shim도 함께 설치합니다.
 
 그 다음 아래 설정 파일에 hook 등록을 병합합니다.
 

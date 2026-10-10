@@ -39,7 +39,20 @@ targets:
       - target: cab-test
         embed: false
         link: false
+      - target: cab-report
+        embed: false
+        link: false
     postBuildScripts:
+      - name: "Embed cab-report hook reporter into Contents/MacOS"
+        script: |
+          SRC="${BUILT_PRODUCTS_DIR}/cab-report"
+          DEST="${TARGET_BUILD_DIR}/${EXECUTABLE_FOLDER_PATH}/cab-report"
+          # Shipped in every configuration — HookInstaller copies it into Application Support.
+          if [ -f "$SRC" ]; then
+              cp "$SRC" "$DEST"
+              chmod +x "$DEST"
+          fi
+        shell: /bin/sh
       - name: "Embed cab-test helper into Contents/MacOS"
         script: |
           SRC="${BUILT_PRODUCTS_DIR}/cab-test"
@@ -51,7 +64,7 @@ targets:
               codesign --force --sign - "$DEST" 2>/dev/null || true
           fi
         shell: /bin/sh
-      - name: "Embed Reporter shell script"
+      - name: "Embed legacy cab-report.sh shim"
         script: |
           SRC="${SRCROOT}/Reporter/cab-report.sh"
           DEST="${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/cab-report.sh"
@@ -88,6 +101,23 @@ targets:
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGN_STYLE: Manual
         CODE_SIGNING_ALLOWED: YES
+  cab-report:
+    type: tool
+    platform: macOS
+    sources:
+      - path: Reporter
+        name: Reporter
+        excludes:
+          - "*.sh"
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: ""
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        SWIFT_VERSION: "5"
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGNING_ALLOWED: YES
   ClaudeAlertBotTests:
     type: bundle.unit-test
     platform: macOS
@@ -112,6 +142,7 @@ schemes:
       targets:
         ClaudeAlertBot: all
         cab-test: all
+        cab-report: all
         ClaudeAlertBotTests: [test]
     run:
       config: Debug

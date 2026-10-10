@@ -110,7 +110,7 @@ actor SessionRegistry {
         // refresh the widget too, or the cleared alert lingers on screen (e.g. the user answered
         // a confirmation prompt while iTerm2 was frontmost → D2-14 suppress).
         let clearedWaiting = clearUnpinnedWaitingAlert(sessionID: sid)
-        // Reorder guard: cab-report.sh's stop hook lags (it waits up to ~0.8s reading the
+        // Reorder guard: cab-report's stop hook lags (it waits up to ~0.8s reading the
         // transcript for last_output). If the user replied within that window, a newer
         // user_prompt_submit landed first and this stop's ts predates that in-flight start —
         // the stop is stale. Discard it without creating an alert; the new turn stays in flight.
